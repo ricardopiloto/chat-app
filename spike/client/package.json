@@ -1,0 +1,19 @@
+{
+  "name": "spike-client",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "tsc && vite build",
+    "preview": "vite preview --host"
+  },
+  "dependencies": {
+    "livekit-client": "^2.15.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-basic-ssl": "^2.1.0",
+    "typescript": "~5.8.0",
+    "vite": "^6.3.0"
+  }
+}

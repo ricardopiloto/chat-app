@@ -1,0 +1,93 @@
+openapi: 3.0.3
+info:
+  title: Spike Token Service
+  version: 0.1.0
+  description: >
+    Stub do TokenSvc. Emite JWT LiveKit. O API secret nunca aparece nas respostas.
+    Sem autenticação de usuário (só bind de rede). Descartável.
+servers:
+  - url: http://127.0.0.1:8080
+    description: LAN / mesma máquina
+  - url: http://{host}:8080
+    description: Host alcançável (LAN ou IP público no teste hotspot)
+paths:
+  /health:
+    get:
+      summary: Liveness
+      responses:
+        "200":
+          description: Processo no ar
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok]
+                properties:
+                  ok:
+                    type: boolean
+                    enum: [true]
+  /token:
+    post:
+      summary: Emitir credencial de join
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenRequest"
+      responses:
+        "200":
+          description: JWT aceito pelo LiveKit desta instância
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+        "400":
+          description: identity/room ausentes ou inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: falha ao assinar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  schemas:
+    TokenRequest:
+      type: object
+      required: [identity, room]
+      properties:
+        identity:
+          type: string
+          minLength: 1
+          examples: [alice, bob]
+        room:
+          type: string
+          enum: [spike-room]
+        name:
+          type: string
+    TokenResponse:
+      type: object
+      required: [token, url]
+      additionalProperties: false
+      properties:
+        token:
+          type: string
+          description: JWT. Não contém a API secret.
+        url:
+          type: string
+          description: URL de sinalização LiveKit (ws://host:7880)
+      not:
+        anyOf:
+          - required: [secret]
+          - required: [apiSecret]
+          - required: [api_secret]
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string

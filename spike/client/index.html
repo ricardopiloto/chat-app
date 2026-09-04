@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spike Fase 0</title>
+    <link rel="stylesheet" href="/src/grid.css" />
+    <style>
+      body { font-family: sans-serif; margin: 12px; background: #111; color: #eee; }
+      label, input, select, button, textarea { margin: 4px; }
+      #log, #ice, #e2ee { font-size: 12px; white-space: pre-wrap; background: #222; padding: 8px; max-height: 160px; overflow: auto; }
+      .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; }
+    </style>
+  </head>
+  <body>
+    <h1>Spike Fase 0 (feio de propósito)</h1>
+    <div class="row">
+      <label>URL <input id="url" size="36" value="ws://127.0.0.1:7880" /></label>
+      <label>identity
+        <select id="identity">
+          <option value="alice">alice</option>
+          <option value="bob">bob</option>
+        </select>
+      </label>
+      <label>token svc <input id="tokenUrl" size="28" value="http://127.0.0.1:8080" /></label>
+    </div>
+    <div class="row">
+      <label><input type="checkbox" id="useTokenSvc" /> usar POST /token (Onda 2)</label>
+      <label>JWT manual <input id="jwt" size="48" placeholder="cole mint-dev-token.mjs (Onda 1)" /></label>
+    </div>
+    <div class="row">
+      <button id="join">Join</button>
+      <button id="leave">Leave</button>
+      <label><input type="checkbox" id="e2eeOn" /> E2EE LiveKit (chave de teste)</label>
+      <button id="probe">Probe Encoded Transform</button>
+      <button id="xor">XOR loopback</button>
+      <button id="ice">Dump ICE</button>
+    </div>
+    <div id="grid" class="grid">
+      <div class="slot" data-index="0"><span class="label">0 alice</span><video id="slot-0" autoplay playsinline muted></video></div>
+      <div class="slot" data-index="1"><span class="label">1 bob</span><video id="slot-1" autoplay playsinline></video></div>
+      <div class="slot empty" data-index="2"><span class="label">2 vazio</span></div>
+      <div class="slot empty" data-index="3"><span class="label">3 vazio</span></div>
+    </div>
+    <h2>log</h2>
+    <div id="log"></div>
+    <h2>ICE</h2>
+    <div id="ice"></div>
+    <h2>E2EE probe</h2>
+    <div id="e2ee"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

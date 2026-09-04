@@ -1,0 +1,16 @@
+port: 7880
+rtc:
+  tcp_port: 7881
+  port_range_start: 50000
+  port_range_end: 50100
+  use_external_ip: false
+
+keys:
+  spikekey: spikesecretspikesecretspikesecret
+
+# Embedded TURN (alternative to running coturn separately — LiveKit can serve
+# TURN/TLS itself on 443/3478). Disabled for the first local pass; we'll turn
+# this on when testing real NAT traversal across two networks.
+turn:
+  enabled: false
+  udp_port: 3478

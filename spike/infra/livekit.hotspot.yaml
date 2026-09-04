@@ -1,0 +1,15 @@
+# Copy over livekit.yaml (or pass --config) when running the hotspot / NAT test.
+# Requires port-forward: 7880/tcp, 7881/tcp, 3478/udp, 50000-50100/udp.
+port: 7880
+rtc:
+  tcp_port: 7881
+  port_range_start: 50000
+  port_range_end: 50100
+  use_external_ip: true
+
+keys:
+  spikekey: spikesecretspikesecretspikesecret
+
+turn:
+  enabled: true
+  udp_port: 3478

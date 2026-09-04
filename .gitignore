@@ -1,0 +1,29 @@
+# Obsidian vault config (personal, not project-relevant)
+.obsidian/
+.claude/
+.cursor/
+
+# Rust
+target/
+Cargo.lock
+
+# Node / Vite
+node_modules/
+dist/
+build/
+*.log
+
+# Tauri
+src-tauri/gen/
+
+# Spike token secrets (keep .env.example)
+spike/token/.env
+
+# Env/secrets
+.env
+.env.local
+*.pem
+*.key
+
+# OS
+.DS_Store

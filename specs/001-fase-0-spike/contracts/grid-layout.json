@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "grid-layout.json",
+  "title": "Spike camera grid",
+  "type": "object",
+  "required": ["columns", "rows", "slots"],
+  "additionalProperties": false,
+  "properties": {
+    "columns": { "const": 2 },
+    "rows": { "const": 2 },
+    "slots": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "required": ["index", "identity"],
+        "additionalProperties": false,
+        "properties": {
+          "index": { "type": "integer", "minimum": 0, "maximum": 3 },
+          "identity": {
+            "anyOf": [
+              { "type": "string", "enum": ["alice", "bob"] },
+              { "type": "null" }
+            ]
+          }
+        }
+      }
+    }
+  }
+}
