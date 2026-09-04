@@ -1,0 +1,13 @@
+services:
+  livekit:
+    image: livekit/livekit-server:v1.13.5
+    command: --config /etc/livekit.yaml
+    restart: unless-stopped
+    # Host network: ICE/TURN anunciam o IP da LAN (telemóvel na mesma Wi‑Fi).
+    # `ports:` é ignorado neste modo.
+    network_mode: host
+    volumes:
+      - ./livekit.yaml:/etc/livekit.yaml:ro
+    env_file:
+      - path: .env
+        required: false

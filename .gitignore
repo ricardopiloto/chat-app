@@ -2,6 +2,7 @@
 .obsidian/
 .claude/
 .cursor/
+.specify/
 
 # Rust
 target/
@@ -22,8 +23,15 @@ spike/token/.env
 # Env/secrets
 .env
 .env.local
+.env*
 *.pem
 *.key
+
+# SQLite instance data
+*.db
+*.sqlite
+*.sqlite3
+backend/chat.db-*
 
 # OS
 .DS_Store

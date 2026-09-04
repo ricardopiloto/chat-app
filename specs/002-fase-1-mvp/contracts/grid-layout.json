@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "grid-layout.json",
+  "title": "Camera grid (Fase 1 MVP)",
+  "description": "Mapa de slots de um canal voice_video. Generaliza o layout fixo 2x2 do spike Fase 0 para 2-4 slots configuráveis pelo dono (FR-010, FR-012).",
+  "type": "object",
+  "required": ["slot_count", "slots", "assigned_by"],
+  "additionalProperties": false,
+  "properties": {
+    "slot_count": {
+      "type": "integer",
+      "minimum": 2,
+      "maximum": 4,
+      "description": "Total de slots do canal; default 4 na criação (FR-010)."
+    },
+    "assigned_by": {
+      "type": "string",
+      "enum": ["auto", "owner"],
+      "description": "auto = primeiro-vazio (FR-011); owner = mapa manual substituiu o automático (FR-012)."
+    },
+    "slots": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "required": ["index", "account_id"],
+        "additionalProperties": false,
+        "properties": {
+          "index": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 3,
+            "description": "Ordem esquerda->direita, cima->baixo (FR-011)."
+          },
+          "account_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "description": "null = slot vazio; permanece visível, grade não compacta (FR-010)."
+          }
+        }
+      }
+    }
+  },
+  "$comment": "len(slots) MUST == slot_count; index MUST ser único e < slot_count; no máximo uma ocorrência de cada account_id não-nulo (uma conta ocupa no máximo um slot, FR-009/FR-010)."
+}

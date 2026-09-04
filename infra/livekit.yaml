@@ -1,0 +1,14 @@
+# LiveKit self-hosted + embedded TURN (D7). Keys must match backend LIVEKIT_API_KEY/SECRET.
+port: 7880
+rtc:
+  tcp_port: 7881
+  port_range_start: 50000
+  port_range_end: 50100
+  use_external_ip: false
+
+keys:
+  instkey: instsecretinstsecretinstsecret12
+
+turn:
+  enabled: true
+  udp_port: 3478

@@ -1,0 +1,283 @@
+openapi: 3.0.3
+info:
+  title: Chat App — Instância de Hospedagem (Fase 1 MVP)
+  version: 0.1.0
+  description: >
+    API do backend de uma Instância de Hospedagem. Corpo de mensagens e
+    material de chave sempre viajam como ciphertext opaco ao servidor
+    (FR-015). Sessão via cookie httpOnly (ver auth). Endpoints exigem
+    Membership no server_id do recurso, exceto onde indicado.
+servers:
+  - url: /api
+paths:
+  /auth/register:
+    post:
+      summary: Cria conta. Só sem body extra se a instância não tem NENHUMA conta; caso contrário exige invite_code válido.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [handle, password, identity_pubkey]
+              properties:
+                handle: { type: string, minLength: 1 }
+                password: { type: string, minLength: 8 }
+                identity_pubkey: { type: string, description: "X25519 pubkey, base64" }
+                invite_code: { type: string, description: "Obrigatório se a instância já tem alguma conta" }
+      responses:
+        "201":
+          description: Conta criada, sessão iniciada (cookie de sessão setado)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Account" }
+        "409":
+          description: handle já existe
+          content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+        "403":
+          description: instância já tem contas e nenhum invite_code válido foi enviado (FR-002)
+          content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+  /auth/login:
+    post:
+      summary: Autentica com handle+senha; seta cookie de sessão httpOnly
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [handle, password]
+              properties:
+                handle: { type: string }
+                password: { type: string }
+      responses:
+        "200": { description: Sessão criada, content: { application/json: { schema: { $ref: "#/components/schemas/Account" } } } }
+        "401": { description: Credenciais inválidas, content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+  /auth/logout:
+    post:
+      summary: Revoga a sessão atual (FR-002 — sessão MUST poder ser encerrada pela pessoa)
+      responses:
+        "204": { description: Sessão revogada }
+  /auth/me:
+    get:
+      summary: Conta autenticada atual
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Account" } } } }
+        "401": { description: Sem sessão válida }
+
+  /servers:
+    post:
+      summary: Cria um Servidor (a conta autenticada vira dona)
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, required: [name], properties: { name: { type: string } } } } }
+      responses:
+        "201": { description: Criado, content: { application/json: { schema: { $ref: "#/components/schemas/Server" } } } }
+    get:
+      summary: Lista Servidores dos quais a conta autenticada é membro (FR-005 — nunca lista Servidores alheios)
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Server" } } } } }
+
+  /servers/{serverId}/channels:
+    post:
+      summary: Cria canal (só dono/admin do Servidor)
+      parameters: [{ $ref: "#/components/parameters/ServerId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, type]
+              properties:
+                name: { type: string }
+                type: { type: string, enum: [text, voice_video] }
+                grid_slot_count: { type: integer, minimum: 2, maximum: 4, default: 4, description: "Só para voice_video" }
+      responses:
+        "201": { description: Criado, content: { application/json: { schema: { $ref: "#/components/schemas/Channel" } } } }
+        "403": { description: Sem membership ou sem permissão de admin }
+    get:
+      summary: Lista todos os canais do Servidor (todo membro vê todos — FR-005)
+      parameters: [{ $ref: "#/components/parameters/ServerId" }]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Channel" } } } } }
+
+  /servers/{serverId}/invites:
+    post:
+      summary: Gera convite (só dono/admin do Servidor)
+      parameters: [{ $ref: "#/components/parameters/ServerId" }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                expires_in_seconds: { type: integer, nullable: true, description: "null = convite permanente" }
+                include_history: { type: boolean, default: false }
+      responses:
+        "201": { description: Criado, content: { application/json: { schema: { $ref: "#/components/schemas/Invite" } } } }
+    get:
+      summary: Lista convites do Servidor (só dono/admin)
+      parameters: [{ $ref: "#/components/parameters/ServerId" }]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Invite" } } } } }
+
+  /invites/{code}/revoke:
+    post:
+      summary: Revoga um convite (só dono/admin do Servidor do convite)
+      parameters: [{ name: code, in: path, required: true, schema: { type: string } }]
+      responses:
+        "204": { description: Revogado }
+
+  /invites/{code}:
+    get:
+      summary: Consulta um convite antes de aceitar (nome do Servidor, se inclui histórico, validade)
+      parameters: [{ name: code, in: path, required: true, schema: { type: string } }]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/InvitePreview" } } } }
+        "404": { description: "Convite inexistente, expirado ou revogado (FR-006, US2 Acceptance 7)" }
+  /invites/{code}/accept:
+    post:
+      summary: Aceita convite. Sem sessão, exige body de cadastro (delegam para /auth/register com invite_code); com sessão, só adiciona Membership.
+      parameters: [{ name: code, in: path, required: true, schema: { type: string } }]
+      responses:
+        "200": { description: "Passou a ser membro", content: { application/json: { schema: { $ref: "#/components/schemas/Membership" } } } }
+        "410": { description: Convite expirado, inválido ou revogado }
+
+  /channels/{channelId}/messages:
+    get:
+      summary: Lista mensagens (ciphertext) em ordem cronológica; filtra por Membership.joined_at quando o convite não incluiu histórico (FR-008)
+      parameters:
+        - { $ref: "#/components/parameters/ChannelId" }
+        - { name: before, in: query, schema: { type: string, format: date-time }, description: paginação }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Message" } } } } }
+    post:
+      summary: Envia mensagem cifrada (o servidor nunca vê o texto em claro)
+      parameters: [{ $ref: "#/components/parameters/ChannelId" }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, required: [content_ciphertext], properties: { content_ciphertext: { type: string, description: base64 } } } } }
+      responses:
+        "201": { description: Criada; distribuída via WS message.new, content: { application/json: { schema: { $ref: "#/components/schemas/Message" } } } }
+
+  /channels/{channelId}/voice/join:
+    post:
+      summary: Emite credencial de acesso à sala LiveKit para este canal (FR-014)
+      parameters: [{ $ref: "#/components/parameters/ChannelId" }]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/VoiceJoinResponse" } } } }
+        "403": { description: Sem membership no Servidor do canal }
+
+  /channels/{channelId}/grid:
+    get:
+      summary: Mapa atual da grade (auto ou definido pelo dono)
+      parameters: [{ $ref: "#/components/parameters/ChannelId" }]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/GridLayout" } } } }
+    put:
+      summary: Dono/admin substitui o mapa (número de slots 2–4 + ocupação) — FR-012
+      parameters: [{ $ref: "#/components/parameters/ChannelId" }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/GridLayout" } } }
+      responses:
+        "200": { description: Atualizado, content: { application/json: { schema: { $ref: "#/components/schemas/GridLayout" } } } }
+        "403": { description: Sem permissão de administrar o canal }
+
+  /servers/{serverId}/key-envelopes:
+    post:
+      summary: >
+        Cliente já sincronizado publica o envelope da server_key para um membro pendente
+        (handoff E2EE — ver contracts/key-handoff.md). O servidor só armazena/roteia bytes opacos.
+      parameters: [{ $ref: "#/components/parameters/ServerId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [account_id, sealed_key]
+              properties:
+                account_id: { type: string, format: uuid }
+                sealed_key: { type: string, description: "crypto_box_seal output, base64" }
+      responses:
+        "201": { description: "Envelope armazenado; Membership.key_handoff_status vira synced" }
+
+components:
+  parameters:
+    ServerId: { name: serverId, in: path, required: true, schema: { type: string, format: uuid } }
+    ChannelId: { name: channelId, in: path, required: true, schema: { type: string, format: uuid } }
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties: { error: { type: string } }
+    Account:
+      type: object
+      required: [id, handle, is_initial_operator]
+      properties:
+        id: { type: string, format: uuid }
+        handle: { type: string }
+        is_initial_operator: { type: boolean }
+    Server:
+      type: object
+      required: [id, name, owner_account_id]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        owner_account_id: { type: string, format: uuid }
+    Channel:
+      type: object
+      required: [id, server_id, name, type]
+      properties:
+        id: { type: string, format: uuid }
+        server_id: { type: string, format: uuid }
+        name: { type: string }
+        type: { type: string, enum: [text, voice_video] }
+        grid_slot_count: { type: integer, nullable: true }
+    Invite:
+      type: object
+      required: [code, server_id, expires_at, include_history]
+      properties:
+        code: { type: string }
+        server_id: { type: string, format: uuid }
+        expires_at: { type: string, format: date-time, nullable: true }
+        include_history: { type: boolean }
+    InvitePreview:
+      type: object
+      required: [server_name, include_history, requires_account_creation]
+      properties:
+        server_name: { type: string }
+        include_history: { type: boolean }
+        requires_account_creation: { type: boolean, description: "true se quem abre o link ainda não tem sessão" }
+    Membership:
+      type: object
+      required: [account_id, server_id, key_handoff_status]
+      properties:
+        account_id: { type: string, format: uuid }
+        server_id: { type: string, format: uuid }
+        key_handoff_status: { type: string, enum: [synced, pending] }
+    Message:
+      type: object
+      required: [id, channel_id, sender_account_id, content_ciphertext, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        channel_id: { type: string, format: uuid }
+        sender_account_id: { type: string, format: uuid }
+        content_ciphertext: { type: string, description: base64 }
+        created_at: { type: string, format: date-time }
+    VoiceJoinResponse:
+      type: object
+      required: [token, url, room]
+      properties:
+        token: { type: string, description: "JWT LiveKit; nunca contém o API secret" }
+        url: { type: string, description: "URL de sinalização LiveKit (wss://...)" }
+        room: { type: string, description: "= channelId" }
+      not:
+        anyOf:
+          - required: [secret]
+          - required: [apiSecret]
+          - required: [api_secret]
+    GridLayout:
+      $ref: "./grid-layout.json"

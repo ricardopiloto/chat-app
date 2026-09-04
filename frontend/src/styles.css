@@ -1,0 +1,64 @@
+:root {
+  color-scheme: dark;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: #121212;
+  color: #eee;
+}
+body { margin: 0; }
+a { color: #8ab4ff; }
+button, input, select {
+  font: inherit;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: #1e1e1e;
+  color: inherit;
+}
+button { cursor: pointer; background: #2b4c7e; border-color: #2b4c7e; }
+button.secondary { background: #333; }
+.layout { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+.sidebar { border-right: 1px solid #333; padding: 1rem; }
+.main { padding: 1rem 1.25rem; }
+.row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+.error { color: #f88; }
+.muted { color: #999; font-size: 0.9rem; }
+.msg { margin: 0.35rem 0; }
+.composer { display: flex; gap: 0.5rem; margin-top: 1rem; }
+.composer input { flex: 1; }
+.grid {
+  display: grid;
+  gap: 8px;
+  width: min(100%, 960px);
+  height: min(65vh, 560px);
+  margin: 12px 0;
+}
+.slot {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  background: #1a1a1a;
+  border: 2px dashed #666;
+  overflow: hidden;
+}
+.slot .label {
+  position: absolute;
+  z-index: 2;
+  top: 4px;
+  left: 6px;
+  font-size: 12px;
+  background: #0008;
+  padding: 2px 6px;
+}
+.slot-media {
+  position: absolute;
+  inset: 0;
+}
+.slot video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  background: #000;
+}
