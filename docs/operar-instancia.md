@@ -74,3 +74,16 @@ Não copie `spike/` — é descartável. Este binário é o produto.
 | LiveKit RTC TCP | 7881 | TCP |
 | TURN | 3478 | UDP |
 | Mídia | 50000–50100 | UDP |
+
+Cenas de câmara (Fase 2) não abrem portas novas: são só composições da grade no canal de vídeo. Trocar de cena não reinicia a chamada.
+
+A SPA (Fase 3) segue o visual **Mesa / Nocturne** (tema claro/escuro, shell com sidebar). Não há portas nem processos novos — só o frontend em `1420` (dev) ou o estático servido com a API.
+
+Layouts de cena nomeados (**Mestre em destaque**, **Painel 2×2**, **Faixa 5-up**) podem usar até **5** slots; isso continua só dados SQLite + API, sem portas novas.
+
+## Gravar cena / E2EE (Fase 006)
+
+- Canais de voz **antigos** (sem `channel_key` na base) não permitem **Gravar** / **Religar** — recrie o canal de voz após actualizar o backend (migração `0006_*`).
+- Ao criar um canal de voz, o cliente gera a chave de mídia do canal: guarde-a (checkbox de custódia) — o servidor só guarda o envelope selado.
+- Artefacto de gravação (LiveKit Egress) é **opcional**. Sem storage configurado, Gravar falha com erro claro e a E2EE **não** fica desligada a falso.
+- Para activar artefacto: configure o LiveKit Egress na instância e exporte `LIVEKIT_EGRESS_FILE_PREFIX` (caminho/prefixo de ficheiro aceite pelo egress, ex. `/out/mesa` ou `s3://bucket/mesa`). Não abre portas novas além das já listadas.

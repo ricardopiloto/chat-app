@@ -11,7 +11,7 @@ async fn owner_overrides_grid_member_forbidden() {
         .request(
             "POST",
             "/api/servers",
-            Some(json!({ "name": "Mesa" })),
+            Some(crate::common::create_server_body("Mesa")),
             Some(&alice),
         )
         .await;
@@ -20,7 +20,7 @@ async fn owner_overrides_grid_member_forbidden() {
         .request(
             "POST",
             &format!("/api/servers/{server_id}/channels"),
-            Some(json!({ "name": "mesa", "type": "voice_video" })),
+            Some(json!({ "name": "mesa", "type": "voice_video", "custody_ack": true, "channel_key_sealed": "c2VhbGVkLWNoYW5uZWwta2V5LWJsb2I=" })),
             Some(&alice),
         )
         .await;
@@ -39,11 +39,14 @@ async fn owner_overrides_grid_member_forbidden() {
     let (_, bob_me, _) = app.request("GET", "/api/auth/me", None, Some(&bob)).await;
     let bob_id = bob_me["id"].as_str().unwrap();
     let layout = json!({
-        "slot_count": 2,
+        "layout_key": "quad",
+        "slot_count": 4,
         "assigned_by": "owner",
         "slots": [
             { "index": 0, "account_id": bob_id },
-            { "index": 1, "account_id": null }
+            { "index": 1, "account_id": null },
+            { "index": 2, "account_id": null },
+            { "index": 3, "account_id": null }
         ]
     });
     let (status, grid, _) = app
@@ -55,7 +58,8 @@ async fn owner_overrides_grid_member_forbidden() {
         )
         .await;
     assert_eq!(status, StatusCode::OK, "{grid}");
-    assert_eq!(grid["slot_count"], 2);
+    assert_eq!(grid["slot_count"], 4);
+    assert_eq!(grid["layout_key"], "quad");
     assert_eq!(grid["assigned_by"], "owner");
     let (status, _, _) = app
         .request(
@@ -74,6 +78,6 @@ async fn owner_overrides_grid_member_forbidden() {
             Some(&alice),
         )
         .await;
-    assert_eq!(grid2["slot_count"], 2);
+    assert_eq!(grid2["slot_count"], 4);
     assert_eq!(grid2["slots"][0]["account_id"], bob_id);
 }

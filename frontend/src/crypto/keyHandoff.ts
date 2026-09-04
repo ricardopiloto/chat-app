@@ -1,7 +1,7 @@
-import { api } from "../api/client";
+import { api, type Server, type ServerMember } from "../api/client";
 import type { WsEnvelope } from "../api/ws";
 import { fromB64, seal, unseal, type Identity, b64 } from "./identity";
-import { getServerKey, rememberServerKey } from "./serverKey";
+import { generateServerKey, getServerKey, rememberServerKey } from "./serverKey";
 
 export async function publishOwnEnvelope(
   serverId: string,
@@ -41,9 +41,41 @@ export async function loadServerKey(
   return undefined;
 }
 
-export async function loadAllServerKeys(identity: Identity): Promise<void> {
-  const servers = await api<{ id: string }[]>("/api/servers");
-  await Promise.all(servers.map((s) => loadServerKey(s.id, identity)));
+export async function ensureServerKey(
+  serverId: string,
+  identity: Identity,
+  accountId: string,
+): Promise<Uint8Array | undefined> {
+  const existing = await loadServerKey(serverId, identity);
+  if (existing) return existing;
+
+  const servers = await api<Server[]>("/api/servers");
+  const server = servers.find((s) => s.id === serverId);
+  if (!server || server.owner_account_id !== accountId) return undefined;
+
+  const key = generateServerKey();
+  await publishOwnEnvelope(serverId, accountId, identity, key);
+  const members = await api<ServerMember[]>(`/api/servers/${serverId}/members`);
+  await Promise.all(
+    members
+      .filter((m) => m.account_id !== accountId)
+      .map((m) => {
+        const sealed = seal(key, fromB64(m.identity_pubkey));
+        return api(`/api/servers/${serverId}/key-envelopes`, {
+          method: "POST",
+          body: JSON.stringify({
+            account_id: m.account_id,
+            sealed_key: b64(sealed),
+          }),
+        });
+      }),
+  );
+  return key;
+}
+
+export async function loadAllServerKeys(identity: Identity, accountId: string): Promise<void> {
+  const servers = await api<Server[]>("/api/servers");
+  await Promise.all(servers.map((s) => ensureServerKey(s.id, identity, accountId)));
 }
 
 export async function handleHandoffEvent(msg: WsEnvelope, identity: Identity, myId: string) {

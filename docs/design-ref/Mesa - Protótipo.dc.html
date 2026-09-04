@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/modernist-1f0b001a-ca3b-4aa4-b217-92d33546b4ad/styles.css">
+<style>
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--color-bg); overflow: hidden; }
+  a { color: var(--color-accent-700); }
+  a:hover { color: var(--color-accent); }
+  @keyframes recpulse { 0%,100% { opacity: 1 } 50% { opacity: 0.25 } }
+  input, button { font-family: inherit; }
+  input[type="checkbox"], input[type="radio"] { accent-color: var(--color-accent); width: 16px; height: 16px; }
+</style>
+</helmet>
+
+<div style="height:100vh; display:flex; flex-direction:column; font-family:var(--font-body); color:var(--color-text); background:var(--color-bg)">
+
+  <div style="height:44px; flex:none; border-bottom:2px solid var(--color-text); display:flex; align-items:center; gap:16px; padding:0 20px; background:var(--color-bg)">
+    <div style="font-family:var(--font-heading); font-weight:800; font-size:15px; letter-spacing:-0.01em">MESA</div>
+    <div style="width:2px; height:16px; background:var(--color-divider)"></div>
+    <div style="font-family:ui-monospace,monospace; font-size:11px; color:color-mix(in srgb, var(--color-text) 60%, transparent)">instância&nbsp;·&nbsp;{{ instanceName }}</div>
+    <div style="margin-left:auto; display:flex; align-items:center; gap:14px">
+      <span style="font-family:ui-monospace,monospace; font-size:11px; color:color-mix(in srgb, var(--color-text) 60%, transparent)">chave de identidade em backup</span>
+      <div style="display:flex; align-items:center; gap:8px">
+        <div style="width:22px; height:22px; background:var(--color-text); color:var(--color-bg); font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center">MA</div>
+        <span style="font-size:13px; font-weight:600">Marina</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="flex:1; min-height:0; display:grid; grid-template-columns:{{ shellCols }}">
+
+    <aside style="border-right:2px solid var(--color-text); min-width:0; overflow:hidden; display:flex; flex-direction:column; background:var(--color-bg)">
+      <button onClick="{{ noop }}" style="flex:none; height:52px; border:0; border-bottom:2px solid var(--color-text); background:var(--color-neutral-200); display:flex; align-items:center; gap:10px; padding:0 16px; cursor:pointer; text-align:left" style-hover="background:var(--color-neutral-300)">
+        <span style="font-family:var(--font-heading); font-weight:800; font-size:14px; white-space:nowrap">Mesa do Porão</span>
+        <span style="margin-left:auto; font-size:10px; color:var(--color-neutral-700)">▾</span>
+      </button>
+
+      <nav style="flex:1; overflow:auto; padding:20px 12px; display:flex; flex-direction:column; gap:6px">
+        <div style="font-family:ui-monospace,monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-700); padding:0 6px 4px">Texto</div>
+        <sc-for list="{{ textChannels }}" as="c" hint-placeholder-count="3">
+          <button onClick="{{ c.onClick }}" style="display:flex; align-items:center; gap:8px; width:100%; border:0; border-left:2px solid {{ c.mark }}; background:{{ c.bg }}; color:{{ c.fg }}; padding:7px 10px; font-size:13.5px; font-weight:{{ c.weight }}; cursor:pointer; text-align:left; white-space:nowrap" style-hover="background:color-mix(in srgb, var(--color-text) 7%, transparent)">
+            <span style="font-family:ui-monospace,monospace; opacity:0.5">#</span>
+            <span>{{ c.name }}</span>
+            <span style="margin-left:auto; font-family:ui-monospace,monospace; font-size:10px; opacity:0.55">{{ c.badge }}</span>
+          </button>
+        </sc-for>
+
+        <div style="font-family:ui-monospace,monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-neutral-700); padding:16px 6px 4px">Voz e vídeo</div>
+        <sc-for list="{{ voiceChannels }}" as="c" hint-placeholder-count="2">
+          <button onClick="{{ c.onClick }}" style="display:flex; align-items:center; gap:8px; width:100%; border:0; border-left:2px solid {{ c.mark }}; background:{{ c.bg }}; color:{{ c.fg }}; padding:7px 10px; font-size:13.5px; font-weight:{{ c.weight }}; cursor:pointer; text-align:left; white-space:nowrap" style-hover="background:color-mix(in srgb, var(--color-text) 7%, transparent)">
+            <span>{{ c.name }}</span>
+            <span style="margin-left:auto; font-family:ui-monospace,monospace; font-size:10px; opacity:0.55">{{ c.badge }}</span>
+          </button>
+        </sc-for>
+
+        <button class="btn btn-secondary btn-block" onClick="{{ openCanal }}" style="margin-top:20px">Criar canal</button>
+        <button class="btn btn-ghost btn-block" onClick="{{ openServidor }}" style="justify-content:flex-start; padding-left:10px">Criar servidor</button>
+      </nav>
+
+      <div style="flex:none; border-top:2px solid var(--color-divider); padding:12px 16px; font-family:ui-monospace,monospace; font-size:10px; line-height:1.7; color:var(--color-neutral-700); white-space:nowrap">
+        6 membros · convite ativo<br>self-hosted · sem federação
+      </div>
+    </aside>
+
+    <main style="min-width:0; display:flex; flex-direction:column; background:var(--color-bg)">
+
+      <sc-if value="{{ isTexto }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="Canal de texto" style="flex:1; min-height:0; display:flex; flex-direction:column">
+          <header style="flex:none; border-bottom:2px solid var(--color-text); padding:22px 32px; display:flex; align-items:flex-end; gap:16px">
+            <div>
+              <h3 style="margin:0"># regras-da-mesa</h3>
+              <div style="font-size:13px; color:color-mix(in srgb, var(--color-text) 60%, transparent); margin-top:4px">Canal de texto · visível a todo o servidor</div>
+            </div>
+            <span class="tag tag-neutral" style="margin-left:auto; font-family:ui-monospace,monospace; font-size:10px; padding:4px 8px; border:1px solid var(--color-divider)">E2EE ATIVA</span>
+          </header>
+          <div style="flex:1; min-height:0; overflow:auto; padding:32px; display:flex; flex-direction:column; gap:28px">
+            <sc-for list="{{ messages }}" as="m" hint-placeholder-count="4">
+              <article style="display:grid; grid-template-columns:36px 1fr; gap:16px; max-width:70ch">
+                <div style="width:36px; height:36px; background:var(--color-text); color:var(--color-bg); font-size:11px; font-weight:800; display:flex; align-items:center; justify-content:center">{{ m.initials }}</div>
+                <div>
+                  <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:6px">
+                    <span style="font-family:var(--font-heading); font-weight:800; font-size:14px">{{ m.author }}</span>
+                    <span style="font-family:ui-monospace,monospace; font-size:10px; color:var(--color-neutral-600)">{{ m.time }}</span>
+                  </div>
+                  <p style="margin:0; font-size:15px; line-height:1.65; text-wrap:pretty">{{ m.text }}</p>
+                </div>
+              </article>
+            </sc-for>
+          </div>
+          <div style="flex:none; border-top:2px solid var(--color-text); padding:20px 32px; display:flex; gap:12px; align-items:center">
+            <input class="input" value="{{ draft }}" onChange="{{ onDraft }}" onKeyDown="{{ onDraftKey }}" placeholder="Escreva em #regras-da-mesa" style="min-height:44px">
+            <button class="btn btn-primary" onClick="{{ send }}" style="min-height:44px; padding-inline:20px">Enviar</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isVideo }}" hint-placeholder-val="{{ true }}">
+        <div data-screen-label="Canal de vídeo — cena fixa" style="flex:1; min-height:0; display:flex; flex-direction:column">
+
+          <header style="flex:none; border-bottom:2px solid var(--color-text); padding:22px 32px; display:flex; align-items:center; gap:20px; flex-wrap:wrap">
+            <div>
+              <h3 style="margin:0">Mesa Principal</h3>
+              <div style="font-size:13px; color:color-mix(in srgb, var(--color-text) 60%, transparent); margin-top:4px">Canal de voz e vídeo · cena fixa "{{ layoutLabel }}" · 5 de 6 em cena</div>
+            </div>
+
+            <div style="margin-left:auto; display:flex; align-items:center; gap:10px">
+              <div style="display:flex; border:1px solid var(--color-divider)">
+                <button onClick="{{ setComposicao }}" style="border:0; padding:9px 14px; font-family:var(--font-heading); font-weight:800; font-size:12.5px; cursor:pointer; background:{{ tabCompBg }}; color:{{ tabCompFg }}">Composição</button>
+                <button onClick="{{ setGrade }}" style="border:0; border-left:1px solid var(--color-divider); padding:9px 14px; font-family:var(--font-heading); font-weight:800; font-size:12.5px; cursor:pointer; background:{{ tabGradeBg }}; color:{{ tabGradeFg }}">Grade automática</button>
+              </div>
+              <button class="btn btn-secondary" onClick="{{ toggleStage }}" style="min-height:38px">{{ stageLabel }}</button>
+              <button class="btn btn-primary" onClick="{{ goEditor }}" style="min-height:38px">Editar cena</button>
+            </div>
+          </header>
+
+          <sc-if value="{{ e2eeOff }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:none; background:var(--color-accent); color:var(--color-bg); padding:10px 32px; display:flex; align-items:center; gap:16px">
+              <span style="flex:none; width:10px; height:10px; background:var(--color-bg); animation:recpulse 1.4s infinite"></span>
+              <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:2px">
+                <span style="font-family:var(--font-heading); font-weight:800; font-size:13px; text-wrap:pretty">E2EE DESLIGADA — GRAVANDO PELO SERVIDOR</span>
+                <span style="font-family:ui-monospace,monospace; font-size:11px; opacity:0.9; text-wrap:pretty">desligada por Marina · hoje 20:41 · registrado no log de auditoria · religar pede a chave do canal</span>
+              </div>
+              <button class="btn" onClick="{{ reenableE2ee }}" style="flex:none; min-height:32px; white-space:nowrap; border:1px solid var(--color-bg); color:var(--color-bg)" style-hover="background:color-mix(in srgb, #f3f2f2 18%, transparent)">Religar E2EE</button>
+            </div>
+          </sc-if>
+
+          <div style="flex:1; min-height:0; padding:24px 32px; display:flex">
+            <div style="flex:1; min-height:0; background:var(--color-neutral-900); border:2px solid var(--color-text); padding:2px; display:grid; grid-template-columns:{{ gridCols }}; grid-template-rows:{{ gridRows }}; gap:2px">
+              <sc-for list="{{ tiles }}" as="t" hint-placeholder-count="5">
+                <div style="grid-column:{{ t.col }}; grid-row:{{ t.row }}; min-height:0; background:repeating-linear-gradient(135deg, #35322f 0 10px, #2a2726 10px 20px); border:1px solid #4a4644; display:flex; flex-direction:column; justify-content:space-between; align-items:flex-start; gap:6px; padding:10px; overflow:hidden">
+                  <div style="flex:0 1 auto; min-height:0; font-family:ui-monospace,monospace; font-size:10px; letter-spacing:0.06em; color:#9b9797; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%">{{ t.slotHint }}</div>
+                  <div style="flex:none; display:flex; align-items:center; gap:8px; background:#201e1d; padding:5px 9px; max-width:100%; overflow:hidden">
+                    <span style="width:6px; height:6px; background:{{ t.micColor }}"></span>
+                    <span style="font-family:var(--font-heading); font-weight:800; font-size:12px; color:#f3f2f2">{{ t.name }}</span>
+                    <span style="font-family:ui-monospace,monospace; font-size:10px; color:#9b9797">{{ t.role }}</span>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="flex:none; border-top:2px solid var(--color-text); padding:16px 32px; display:flex; align-items:center; gap:12px; flex-wrap:wrap">
+            <button class="btn btn-secondary" onClick="{{ toggleMic }}" style="min-height:40px">{{ micLabel }}</button>
+            <button class="btn btn-secondary" onClick="{{ toggleCam }}" style="min-height:40px">{{ camLabel }}</button>
+            <button class="btn btn-secondary" onClick="{{ openGravar }}" style="min-height:40px">{{ recLabel }}</button>
+            <div style="font-family:ui-monospace,monospace; font-size:11px; color:var(--color-neutral-700); margin-left:8px">{{ statusLine }}</div>
+            <button class="btn btn-secondary" onClick="{{ goTexto }}" style="margin-left:auto; min-height:40px">Sair da chamada</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isEditor }}" hint-placeholder-val="{{ false }}">
+        <div data-screen-label="Editor de cena (admin)" style="flex:1; min-height:0; display:flex; flex-direction:column">
+          <header style="flex:none; border-bottom:2px solid var(--color-text); padding:22px 32px; display:flex; align-items:center; gap:20px">
+            <div>
+              <h3 style="margin:0">Editar cena — Mesa Principal</h3>
+              <div style="font-size:13px; color:color-mix(in srgb, var(--color-text) 60%, transparent); margin-top:4px">{{ editorHint }}</div>
+            </div>
+            <div style="margin-left:auto; display:flex; gap:10px">
+              <button class="btn btn-secondary" onClick="{{ goVideo }}" style="min-height:38px; white-space:nowrap">Descartar</button>
+              <button class="btn btn-primary" onClick="{{ goVideo }}" style="min-height:38px; white-space:nowrap">Salvar cena</button>
+            </div>
+          </header>
+
+          <div style="flex:1; min-height:0; display:grid; grid-template-columns:1fr 300px">
+            <div style="min-width:0; padding:28px 32px; display:flex; flex-direction:column; gap:16px; border-right:2px solid var(--color-text)">
+              <div style="flex:1; min-height:0; background:var(--color-neutral-900); border:2px solid var(--color-text); padding:2px; display:grid; grid-template-columns:{{ gridCols }}; grid-template-rows:{{ gridRows }}; gap:2px">
+                <sc-for list="{{ editSlots }}" as="s" hint-placeholder-count="5">
+                  <div onDragOver="{{ s.onDragOver }}" onDrop="{{ s.onDrop }}" onClick="{{ s.onClear }}" style="grid-column:{{ s.col }}; grid-row:{{ s.row }}; position:relative; min-height:0; background:{{ s.bg }}; border:2px {{ s.borderStyle }} {{ s.border }}; display:flex; flex-direction:column; justify-content:space-between; padding:10px; cursor:pointer; overflow:hidden">
+                    <span style="font-family:ui-monospace,monospace; font-size:11px; color:{{ s.numColor }}">{{ s.num }}</span>
+                    <div style="display:flex; align-items:baseline; gap:10px; min-width:0">
+                      <span style="font-family:var(--font-heading); font-weight:800; font-size:14px; color:{{ s.nameColor }}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ s.name }}</span>
+                      <span style="font-family:ui-monospace,monospace; font-size:10px; color:#9b9797; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ s.hint }}</span>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+              <p style="margin:0; font-family:ui-monospace,monospace; font-size:11px; color:var(--color-neutral-700)">Arraste uma pessoa do banco para um slot. Clique num slot ocupado para devolver a pessoa ao banco. A posição fica atrelada à pessoa: ela sempre reaparece no mesmo lugar ao reentrar.</p>
+            </div>
+
+            <div style="min-width:0; overflow:auto; padding:28px 24px; display:flex; flex-direction:column; gap:24px">
+              <div>
+                <h6 style="margin:0 0 10px">Layout da cena</h6>
+                <div style="display:flex; flex-direction:column; gap:8px">
+                  <sc-for list="{{ layoutOptions }}" as="l" hint-placeholder-count="3">
+                    <button onClick="{{ l.onClick }}" style="display:flex; align-items:center; gap:12px; border:2px solid {{ l.border }}; background:transparent; padding:10px; cursor:pointer; text-align:left" style-hover="background:color-mix(in srgb, var(--color-text) 6%, transparent)">
+                      <span style="font-family:ui-monospace,monospace; font-size:11px; color:var(--color-neutral-700)">{{ l.glyph }}</span>
+                      <span style="font-family:var(--font-heading); font-weight:800; font-size:13px">{{ l.label }}</span>
+                      <span style="margin-left:auto; font-family:ui-monospace,monospace; font-size:10px; color:var(--color-neutral-600)">{{ l.slots }}</span>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+
+              <hr class="hr" style="margin:0">
+
+              <div>
+                <h6 style="margin:0 0 10px">No banco</h6>
+                <div style="display:flex; flex-direction:column; gap:8px">
+                  <sc-for list="{{ bench }}" as="p" hint-placeholder-count="1">
+                    <div draggable="true" onDragStart="{{ p.onDragStart }}" style="display:flex; align-items:center; gap:10px; border:2px solid var(--color-divider); background:var(--color-surface); padding:9px 10px; cursor:grab">
+                      <span style="width:22px; height:22px; background:var(--color-text); color:var(--color-bg); font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center">{{ p.initials }}</span>
+                      <span style="font-size:13.5px; font-weight:600">{{ p.name }}</span>
+                      <span style="margin-left:auto; font-family:ui-monospace,monospace; font-size:10px; color:var(--color-neutral-600)">arraste</span>
+                    </div>
+                  </sc-for>
+                </div>
+                <p style="margin:10px 0 0; font-family:ui-monospace,monospace; font-size:10.5px; line-height:1.6; color:var(--color-neutral-700)">Quem está no banco continua na chamada com áudio, só não aparece na composição.</p>
+              </div>
+
+              <sc-if value="{{ isCanvasModel }}" hint-placeholder-val="{{ false }}">
+                <div style="border:2px solid var(--color-divider); padding:12px; display:flex; flex-direction:column; gap:6px">
+                  <h6 style="margin:0">Posição livre</h6>
+                  <div style="font-family:ui-monospace,monospace; font-size:11px; line-height:1.8; color:var(--color-neutral-700)">x 230 · y 16<br>w 120 · h 82<br>encaixar na grade ✓</div>
+                  <p style="margin:4px 0 0; font-family:ui-monospace,monospace; font-size:10.5px; color:var(--color-accent-700)">Modo livre: mais controle, mas a cena pode quebrar quando alguém entra ou sai.</p>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+    </main>
+  </div>
+
+  <sc-if value="{{ dialogServidor }}" hint-placeholder-val="{{ false }}">
+    <div class="dialog-backdrop" style="position:fixed; inset:0; background:color-mix(in srgb, #201e1d 55%, transparent); display:flex; align-items:center; justify-content:center; padding:32px; z-index:50">
+      <div class="dialog" style="width:520px; max-width:100%; background:var(--color-bg); border:2px solid var(--color-text); box-shadow:var(--shadow-lg)">
+        <div style="border-bottom:2px solid var(--color-text); padding:20px 24px"><h4 style="margin:0">Criar servidor nesta instância</h4></div>
+        <div style="padding:24px; display:flex; flex-direction:column; gap:20px">
+          <sc-if value="{{ serverStep1 }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex; flex-direction:column; gap:20px">
+              <div class="field"><label>Nome do servidor</label><input class="input" value="{{ newServerName }}" onChange="{{ onServerName }}" placeholder="Mesa do Porão"></div>
+              <label style="display:flex; gap:10px; align-items:flex-start; cursor:pointer">
+                <input type="checkbox" style="margin-top:2px">
+                <span style="font-size:13.5px; line-height:1.5">Listar no diretório público desta instância<br><span style="font-family:ui-monospace,monospace; font-size:11px; color:var(--color-neutral-700)">Opt-in. Desligado, o servidor só existe para quem tem o convite.</span></span>
+              </label>
+              <p style="margin:0; font-family:ui-monospace,monospace; font-size:11px; line-height:1.7; color:var(--color-neutral-700)">Você é dono deste servidor. Ninguém de outro servidor desta instância vê seus canais, membros ou mensagens.</p>
+            </div>
+          </sc-if>
+          <sc-if value="{{ serverStep2 }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; flex-direction:column; gap:20px">
+              <div>
+                <h6 style="margin:0 0 8px">Convite</h6>
+                <div style="display:flex; gap:8px">
+                  <input class="input" value="{{ inviteUrl }}" readOnly="{{ true }}" style="font-family:ui-monospace,monospace; font-size:12px">
+                  <button class="btn btn-primary" onClick="{{ copyInvite }}" style="white-space:nowrap">{{ copyLabel }}</button>
+                </div>
+              </div>
+              <div>
+                <h6 style="margin:0 0 8px">Validade</h6>
+                <div style="display:flex; border:1px solid var(--color-divider); width:fit-content">
+                  <button onClick="{{ setExpire7 }}" style="border:0; padding:9px 14px; font-family:var(--font-heading); font-weight:800; font-size:12.5px; cursor:pointer; background:{{ exp7Bg }}; color:{{ exp7Fg }}">Expira em 7 dias</button>
+                  <button onClick="{{ setExpireNever }}" style="border:0; border-left:1px solid var(--color-divider); padding:9px 14px; font-family:var(--font-heading); font-weight:800; font-size:12.5px; cursor:pointer; background:{{ expNBg }}; color:{{ expNFg }}">Permanente</button>
+                </div>
+              </div>
+              <p style="margin:0; font-family:ui-monospace,monospace; font-size:11px; line-height:1.7; color:var(--color-neutral-700)">Quem abrir o link sem o app instalado entra pelo navegador — mesma versão web, sem download.</p>
+            </div>
+          </sc-if>
+        </div>
+        <div style="border-top:2px solid var(--color-text); padding:16px 24px; display:flex; gap:10px; justify-content:flex-end">
+          <button class="btn btn-secondary" onClick="{{ closeDialog }}">{{ serverCancelLabel }}</button>
+          <button class="btn btn-primary" onClick="{{ serverPrimary }}">{{ serverPrimaryLabel }}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ dialogCanal }}" hint-placeholder-val="{{ false }}">
+    <div class="dialog-backdrop" style="position:fixed; inset:0; background:color-mix(in srgb, #201e1d 55%, transparent); display:flex; align-items:center; justify-content:center; padding:32px; z-index:50">
+      <div class="dialog" style="width:560px; max-width:100%; background:var(--color-bg); border:2px solid var(--color-text); box-shadow:var(--shadow-lg)">
+        <div style="border-bottom:2px solid var(--color-text); padding:20px 24px"><h4 style="margin:0">Criar canal</h4></div>
+        <div style="padding:24px; display:flex; flex-direction:column; gap:22px; max-height:60vh; overflow:auto">
+          <div class="field"><label>Nome do canal</label><input class="input" value="{{ newChannelName }}" onChange="{{ onChannelName }}" placeholder="mesa-principal"></div>
+          <div>
+            <h6 style="margin:0 0 10px">Tipo</h6>
+            <div style="display:flex; flex-direction:column; gap:8px">
+              <label style="display:flex; gap:10px; align-items:center; border:2px solid {{ typeTextoBorder }}; padding:11px; cursor:pointer">
+                <input type="radio" name="chtype" checked="{{ typeIsTexto }}" onChange="{{ setTypeTexto }}">
+                <span style="font-size:14px; font-weight:600">Só texto</span>
+              </label>
+              <label style="display:flex; gap:10px; align-items:center; border:2px solid {{ typeVozBorder }}; padding:11px; cursor:pointer">
+                <input type="radio" name="chtype" checked="{{ typeIsVoz }}" onChange="{{ setTypeVoz }}">
+                <span style="font-size:14px; font-weight:600">Voz e vídeo <span style="font-weight:400; color:var(--color-neutral-700)">(+ texto do canal)</span></span>
+              </label>
+            </div>
+          </div>
+          <label style="display:flex; gap:10px; align-items:center; cursor:pointer">
+            <input type="checkbox">
+            <span style="font-size:13.5px">Privado — visível só a quem for convidado a este canal</span>
+          </label>
+
+          <sc-if value="{{ typeIsVoz }}" hint-placeholder-val="{{ true }}">
+            <div style="border:2px solid var(--color-accent); display:flex; flex-direction:column">
+              <div style="background:var(--color-accent); color:var(--color-bg); padding:10px 14px; font-family:var(--font-heading); font-weight:800; font-size:12.5px">GUARDE A CHAVE DE E2EE DESTE CANAL</div>
+              <div style="padding:16px; display:flex; flex-direction:column; gap:14px">
+                <p style="margin:0; font-size:13.5px; line-height:1.6; text-wrap:pretty">Esta chave é gerada agora, no seu dispositivo, e não fica com o servidor. <strong>Sem ela salva, você não consegue religar a E2EE do canal</strong> depois de desligá-la para gravar.</p>
+                <div style="display:flex; gap:8px">
+                  <input class="input" value="{{ channelKey }}" readOnly="{{ true }}" style="font-family:ui-monospace,monospace; font-size:12px; letter-spacing:0.02em">
+                  <button class="btn btn-secondary" onClick="{{ copyKey }}" style="white-space:nowrap">{{ keyCopyLabel }}</button>
+                </div>
+                <label style="display:flex; gap:10px; align-items:flex-start; cursor:pointer">
+                  <input type="checkbox" checked="{{ keySaved }}" onChange="{{ toggleKeySaved }}" style="margin-top:2px">
+                  <span style="font-size:13.5px; line-height:1.5">Salvei a chave em local seguro (gerenciador de senhas ou arquivo fora deste computador)</span>
+                </label>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+        <div style="border-top:2px solid var(--color-text); padding:16px 24px; display:flex; gap:10px; justify-content:flex-end; align-items:center">
+          <span style="font-family:ui-monospace,monospace; font-size:11px; color:var(--color-neutral-700); margin-right:auto">{{ canalFootnote }}</span>
+          <button class="btn btn-secondary" onClick="{{ closeDialog }}">Cancelar</button>
+          <button class="btn btn-primary" onClick="{{ createChannel }}" disabled="{{ createDisabled }}">Criar canal</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ dialogGravar }}" hint-placeholder-val="{{ false }}">
+    <div class="dialog-backdrop" style="position:fixed; inset:0; background:color-mix(in srgb, #201e1d 55%, transparent); display:flex; align-items:center; justify-content:center; padding:32px; z-index:50">
+      <div class="dialog" style="width:540px; max-width:100%; background:var(--color-bg); border:2px solid var(--color-text); box-shadow:var(--shadow-lg)">
+        <div style="border-bottom:2px solid var(--color-text); padding:20px 24px"><h4 style="margin:0">{{ recDialogTitle }}</h4></div>
+        <div style="padding:24px; display:flex; flex-direction:column; gap:16px">
+          <p style="margin:0; font-size:14.5px; line-height:1.65; text-wrap:pretty">{{ recDialogBody }}</p>
+          <div style="border-left:2px solid var(--color-accent); padding:10px 0 10px 14px; font-family:ui-monospace,monospace; font-size:11.5px; line-height:1.8; color:var(--color-neutral-800)">{{ recDialogLog }}</div>
+        </div>
+        <div style="border-top:2px solid var(--color-text); padding:16px 24px; display:flex; gap:10px; justify-content:flex-end">
+          <button class="btn btn-secondary" onClick="{{ closeDialog }}">Cancelar</button>
+          <button class="btn btn-primary" onClick="{{ confirmRec }}">{{ recDialogConfirm }}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;cameraModel&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;slots&quot;,&quot;templates&quot;,&quot;canvas&quot;],&quot;default&quot;:&quot;slots&quot;,&quot;tsType&quot;:&quot;'slots' | 'templates' | 'canvas'&quot;,&quot;section&quot;:&quot;Conceito&quot;},&quot;defaultView&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;composicao&quot;,&quot;grade&quot;],&quot;default&quot;:&quot;composicao&quot;,&quot;tsType&quot;:&quot;'composicao' | 'grade'&quot;,&quot;section&quot;:&quot;Conceito&quot;},&quot;instanceName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;porao.local&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Conteúdo&quot;}}">
+const PEOPLE = [
+  { name: 'Marina', role: 'mestre' },
+  { name: 'Téo', role: 'jogador' },
+  { name: 'Bia', role: 'jogadora' },
+  { name: 'Caio', role: 'jogador' },
+  { name: 'Rafa', role: 'jogador' },
+  { name: 'Nina', role: 'jogadora' }
+];
+
+const LAYOUTS = {
+  mestre: { label: 'Mestre em destaque', glyph: '▉▁▁', cols: '2fr 1fr 1fr', rows: '1fr 1fr',
+    cells: [[1, '1', '1 / span 2'], [2, '2', '1'], [3, '3', '1'], [4, '2', '2'], [5, '3', '2']] },
+  quad: { label: 'Painel 2×2', glyph: '▚▚', cols: '1fr 1fr', rows: '1fr 1fr',
+    cells: [[1, '1', '1'], [2, '2', '1'], [3, '1', '2'], [4, '2', '2']] },
+  faixa: { label: 'Faixa 5-up', glyph: '▮▮▮', cols: 'repeat(5, 1fr)', rows: '1fr',
+    cells: [[1, '1', '1'], [2, '2', '1'], [3, '3', '1'], [4, '4', '1'], [5, '5', '1']] }
+};
+
+const initials = (n) => n.slice(0, 2).toUpperCase();
+
+class Component extends DCLogic {
+  state = {
+    screen: 'video',
+    dialog: null,
+    view: null,
+    stage: false,
+    e2ee: true,
+    mic: true,
+    cam: true,
+    layout: 'mestre',
+    assign: { 1: 'Marina', 2: 'Téo', 3: 'Bia', 4: 'Caio', 5: 'Rafa' },
+    drag: null,
+    keySaved: false,
+    chType: 'voz',
+    newChannelName: '',
+    newServerName: '',
+    serverStep: 1,
+    expire: '7d',
+    copied: false,
+    keyCopied: false,
+    draft: '',
+    messages: [
+      { author: 'Marina', time: 'ontem 21:04', text: 'Cena travada: eu no destaque à esquerda, vocês quatro à direita na ordem de iniciativa. Quem entrar depois cai no banco e eu puxo pra cena.' },
+      { author: 'Téo', time: 'ontem 21:07', text: 'A live vai puxar a composição direto do canal então? Sem OBS?' },
+      { author: 'Marina', time: 'ontem 21:09', text: 'Sem OBS. Só lembrem que pra gravar eu preciso desligar a E2EE do canal — vai aparecer a faixa vermelha em cima pra todo mundo enquanto estiver assim.' },
+      { author: 'Nina', time: 'hoje 19:52', text: 'Hoje eu entro sem câmera, tô no celular. Me deixa no banco.' }
+    ]
+  };
+
+  set = (patch) => this.setState(patch);
+
+  visibleSlots() {
+    const L = LAYOUTS[this.state.layout];
+    return L.cells.map(([n, col, row]) => ({ n, col, row, name: this.state.assign[n] || null }));
+  }
+
+  benchNames() {
+    const used = this.visibleSlots().map((s) => s.name).filter(Boolean);
+    return PEOPLE.map((p) => p.name).filter((n) => used.indexOf(n) === -1);
+  }
+
+  roleOf(name) {
+    const p = PEOPLE.find((x) => x.name === name);
+    return p ? p.role : '';
+  }
+
+  assignTo(n) {
+    const who = this.state.drag;
+    if (!who) return;
+    const next = Object.assign({}, this.state.assign);
+    Object.keys(next).forEach((k) => { if (next[k] === who) delete next[k]; });
+    next[n] = who;
+    this.setState({ assign: next, drag: null });
+  }
+
+  clearSlot(n) {
+    const next = Object.assign({}, this.state.assign);
+    delete next[n];
+    this.setState({ assign: next });
+  }
+
+  renderVals() {
+    const s = this.state;
+    const model = this.props.cameraModel || 'slots';
+    const view = s.view || this.props.defaultView || 'composicao';
+    const L = LAYOUTS[s.layout];
+    const slots = this.visibleSlots();
+    const on = 'color-mix(in srgb, var(--color-text) 10%, transparent)';
+
+    const chan = (name, id, badge, screen) => ({
+      name, badge,
+      active: s.screen === screen,
+      bg: s.screen === screen ? on : 'transparent',
+      fg: 'var(--color-text)',
+      weight: s.screen === screen ? '800' : '400',
+      mark: s.screen === screen ? 'var(--color-accent)' : 'transparent',
+      onClick: () => this.set({ screen, stage: false })
+    });
+
+    const tiles = view === 'composicao'
+      ? slots.filter((x) => x.name).map((x) => ({
+          col: x.col, row: x.row, name: x.name, role: this.roleOf(x.name),
+          slotHint: 'câmera fixa · slot ' + String(x.n).padStart(2, '0'),
+          micColor: x.name === 'Marina' && !s.mic ? '#7d7979' : '#ff563c'
+        }))
+      : PEOPLE.map((p, i) => ({
+          col: String((i % 3) + 1), row: String(Math.floor(i / 3) + 1),
+          name: p.name, role: p.role, slotHint: 'grade automática',
+          micColor: '#ff563c'
+        }));
+
+    return {
+      instanceName: this.props.instanceName || 'porao.local',
+      shellCols: s.stage ? '0px 1fr' : '236px 1fr',
+      noop: () => {},
+
+      isTexto: s.screen === 'texto',
+      isVideo: s.screen === 'video',
+      isEditor: s.screen === 'editor',
+      goTexto: () => this.set({ screen: 'texto', stage: false }),
+      goVideo: () => this.set({ screen: 'video' }),
+      goEditor: () => this.set({ screen: 'editor', stage: false }),
+
+      textChannels: [
+        chan('regras-da-mesa', 't1', '', 'texto'),
+        chan('ficha-e-loot', 't2', '', 'texto2'),
+        chan('bastidores', 't3', 'privado', 'texto3')
+      ],
+      voiceChannels: [
+        Object.assign(chan('Mesa Principal', 'v1', '5', 'video'), { name: 'Mesa Principal' }),
+        chan('Sala de Espera', 'v2', '0', 'video2')
+      ],
+
+      messages: s.messages.map((m) => Object.assign({}, m, { initials: initials(m.author) })),
+      draft: s.draft,
+      onDraft: (e) => this.set({ draft: e.target.value }),
+      onDraftKey: (e) => { if (e.key === 'Enter') this.sendMsg(); },
+      send: () => this.sendMsg(),
+
+      layoutLabel: L.label,
+      gridCols: view === 'composicao' ? L.cols : 'repeat(3, 1fr)',
+      gridRows: view === 'composicao' ? L.rows : 'repeat(2, 1fr)',
+      tiles,
+
+      tabCompBg: view === 'composicao' ? 'var(--color-text)' : 'transparent',
+      tabCompFg: view === 'composicao' ? 'var(--color-bg)' : 'var(--color-text)',
+      tabGradeBg: view === 'grade' ? 'var(--color-text)' : 'transparent',
+      tabGradeFg: view === 'grade' ? 'var(--color-bg)' : 'var(--color-text)',
+      setComposicao: () => this.set({ view: 'composicao' }),
+      setGrade: () => this.set({ view: 'grade' }),
+
+      stageLabel: s.stage ? 'Mostrar canais' : 'Modo palco',
+      toggleStage: () => this.set({ stage: !s.stage }),
+      micLabel: s.mic ? 'Microfone ligado' : 'Microfone mudo',
+      camLabel: s.cam ? 'Câmera ligada' : 'Câmera desligada',
+      toggleMic: () => this.set({ mic: !s.mic }),
+      toggleCam: () => this.set({ cam: !s.cam }),
+      recLabel: s.e2ee ? 'Gravar cena…' : 'Parar gravação',
+      statusLine: (s.e2ee ? 'E2EE ativa · o servidor não decodifica nada' : 'gravando via Egress do servidor')
+        + ' · ' + this.benchNames().length + ' no banco',
+      e2eeOff: !s.e2ee,
+      reenableE2ee: () => this.set({ e2ee: true }),
+
+      editorHint: model === 'canvas'
+        ? 'Modo posição livre: arraste e redimensione cada câmera no canvas.'
+        : model === 'templates'
+          ? 'Escolha a cena e depois quem ocupa cada posição.'
+          : 'Slots numerados: a geometria vem do layout, você decide quem ocupa cada posição.',
+      isCanvasModel: model === 'canvas',
+
+      editSlots: L.cells.map(([n, col, row]) => {
+        const name = s.assign[n] || null;
+        return {
+          num: String(n).padStart(2, '0'), col, row,
+          name: name || 'vago',
+          hint: name ? (n === 1 ? 'destaque' : 'câmera fixa') : 'solte alguém aqui',
+          bg: name ? 'repeating-linear-gradient(135deg, #35322f 0 10px, #2a2726 10px 20px)' : '#262423',
+          border: name ? '#4a4644' : 'var(--color-accent)',
+          borderStyle: name ? 'solid' : 'dashed',
+          numColor: name ? '#9b9797' : 'var(--color-accent-400)',
+          nameColor: name ? '#f3f2f2' : '#7d7979',
+          onDragOver: (e) => e.preventDefault(),
+          onDrop: (e) => { e.preventDefault(); this.assignTo(n); },
+          onClear: () => { if (name) this.clearSlot(n); }
+        };
+      }),
+
+      layoutOptions: Object.keys(LAYOUTS).map((k) => ({
+        label: LAYOUTS[k].label,
+        glyph: LAYOUTS[k].glyph,
+        slots: LAYOUTS[k].cells.length + ' slots',
+        border: s.layout === k ? 'var(--color-accent)' : 'var(--color-divider)',
+        onClick: () => this.set({ layout: k })
+      })),
+
+      bench: this.benchNames().map((n) => ({
+        name: n, initials: initials(n),
+        onDragStart: () => this.set({ drag: n })
+      })),
+
+      dialogServidor: s.dialog === 'servidor',
+      dialogCanal: s.dialog === 'canal',
+      dialogGravar: s.dialog === 'gravar',
+      closeDialog: () => this.set({ dialog: null, serverStep: 1, copied: false, keyCopied: false, keySaved: false }),
+      openServidor: () => this.set({ dialog: 'servidor', serverStep: 1 }),
+      openCanal: () => this.set({ dialog: 'canal', keySaved: false, chType: 'voz' }),
+      openGravar: () => (s.e2ee ? this.set({ dialog: 'gravar' }) : this.set({ e2ee: true })),
+
+      serverStep1: s.serverStep === 1,
+      serverStep2: s.serverStep === 2,
+      newServerName: s.newServerName,
+      onServerName: (e) => this.set({ newServerName: e.target.value }),
+      inviteUrl: 'https://' + (this.props.instanceName || 'porao.local') + '/i/' + (s.expire === '7d' ? 'k7f2-mesa' : 'perm-mesa'),
+      copyLabel: s.copied ? 'Copiado' : 'Copiar link',
+      copyInvite: () => this.set({ copied: true }),
+      setExpire7: () => this.set({ expire: '7d', copied: false }),
+      setExpireNever: () => this.set({ expire: 'never', copied: false }),
+      exp7Bg: s.expire === '7d' ? 'var(--color-text)' : 'transparent',
+      exp7Fg: s.expire === '7d' ? 'var(--color-bg)' : 'var(--color-text)',
+      expNBg: s.expire === 'never' ? 'var(--color-text)' : 'transparent',
+      expNFg: s.expire === 'never' ? 'var(--color-bg)' : 'var(--color-text)',
+      serverPrimaryLabel: s.serverStep === 1 ? 'Criar servidor' : 'Concluir',
+      serverCancelLabel: s.serverStep === 1 ? 'Cancelar' : 'Voltar',
+      serverPrimary: () => (s.serverStep === 1 ? this.set({ serverStep: 2 }) : this.set({ dialog: null, serverStep: 1 })),
+
+      newChannelName: s.newChannelName,
+      onChannelName: (e) => this.set({ newChannelName: e.target.value }),
+      typeIsTexto: s.chType === 'texto',
+      typeIsVoz: s.chType === 'voz',
+      setTypeTexto: () => this.set({ chType: 'texto' }),
+      setTypeVoz: () => this.set({ chType: 'voz' }),
+      typeTextoBorder: s.chType === 'texto' ? 'var(--color-accent)' : 'var(--color-divider)',
+      typeVozBorder: s.chType === 'voz' ? 'var(--color-accent)' : 'var(--color-divider)',
+      channelKey: 'mesa-7QF2-9KDA-31VB-XR6M',
+      keyCopyLabel: s.keyCopied ? 'Copiada' : 'Copiar chave',
+      copyKey: () => this.set({ keyCopied: true }),
+      keySaved: s.keySaved,
+      toggleKeySaved: () => this.set({ keySaved: !s.keySaved }),
+      createDisabled: s.chType === 'voz' && !s.keySaved,
+      createChannel: () => this.set({ dialog: null, keySaved: false }),
+      canalFootnote: s.chType === 'voz' && !s.keySaved ? 'Confirme que salvou a chave para continuar' : '',
+
+      recDialogTitle: 'Gravar exige desligar a E2EE deste canal',
+      recDialogBody: 'A gravação e a exportação da cena acontecem no servidor (Egress), e isso é incompatível com criptografia ponta-a-ponta: enquanto estiver gravando, o servidor decodifica áudio e vídeo. A troca é sua, e ela fica visível para todos no canal.',
+      recDialogLog: 'log de auditoria\n— Marina desligou a E2EE de #mesa-principal · hoje 20:41\n— faixa de aviso permanente ativa para os 6 membros\n— religar exige a chave de E2EE do canal',
+      recDialogConfirm: 'Desligar E2EE e gravar',
+      confirmRec: () => this.set({ e2ee: false, dialog: null })
+    };
+  }
+
+  sendMsg() {
+    const t = this.state.draft.trim();
+    if (!t) return;
+    this.setState((st) => ({
+      draft: '',
+      messages: st.messages.concat([{ author: 'Marina', time: 'agora', text: t }])
+    }));
+  }
+}
+
+</script>
+</body>
+</html>

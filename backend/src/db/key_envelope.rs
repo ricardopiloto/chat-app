@@ -56,6 +56,14 @@ pub async fn get_for_account(
     row.map(map_row).transpose()
 }
 
+pub async fn delete_for_account(pool: &SqlitePool, account_id: Uuid) -> Result<(), sqlx::Error> {
+    sqlx::query("DELETE FROM key_envelope WHERE account_id = ?")
+        .bind(account_id.to_string())
+        .execute(pool)
+        .await?;
+    Ok(())
+}
+
 pub async fn any_contains_bytes(pool: &SqlitePool, needle: &[u8]) -> Result<bool, sqlx::Error> {
     let (n,): (i64,) = sqlx::query_as(
         "SELECT COUNT(*) FROM key_envelope WHERE instr(sealed_key, ?) > 0",

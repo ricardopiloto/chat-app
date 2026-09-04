@@ -11,7 +11,7 @@ async fn servers_do_not_leak_across_membership() {
         .request(
             "POST",
             "/api/servers",
-            Some(json!({ "name": "Alpha" })),
+            Some(crate::common::create_server_body("Alpha")),
             Some(&a),
         )
         .await;
@@ -52,7 +52,7 @@ async fn servers_do_not_leak_across_membership() {
         .request(
             "POST",
             "/api/servers",
-            Some(json!({ "name": "Beta" })),
+            Some(crate::common::create_server_body("Beta")),
             Some(&b),
         )
         .await;

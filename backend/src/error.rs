@@ -9,6 +9,7 @@ use serde::Serialize;
 pub struct ApiError {
     pub status: StatusCode,
     pub message: String,
+    pub code: Option<String>,
 }
 
 impl ApiError {
@@ -16,6 +17,7 @@ impl ApiError {
         Self {
             status,
             message: message.into(),
+            code: None,
         }
     }
 
@@ -39,6 +41,22 @@ impl ApiError {
         Self::new(StatusCode::CONFLICT, message)
     }
 
+    pub fn conflict_code(code: impl Into<String>, message: impl Into<String>) -> Self {
+        Self {
+            status: StatusCode::CONFLICT,
+            message: message.into(),
+            code: Some(code.into()),
+        }
+    }
+
+    pub fn service_unavailable(code: impl Into<String>, message: impl Into<String>) -> Self {
+        Self {
+            status: StatusCode::SERVICE_UNAVAILABLE,
+            message: message.into(),
+            code: Some(code.into()),
+        }
+    }
+
     pub fn gone(message: impl Into<String>) -> Self {
         Self::new(StatusCode::GONE, message)
     }
@@ -52,12 +70,29 @@ impl ApiError {
 #[derive(Serialize)]
 struct ErrorBody {
     error: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    code: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    message: Option<String>,
 }
 
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
         tracing::warn!(status = %self.status, error = %self.message, "request error");
-        (self.status, Json(ErrorBody { error: self.message })).into_response()
+        let body = if let Some(code) = self.code.clone() {
+            ErrorBody {
+                error: code,
+                code: self.code,
+                message: Some(self.message),
+            }
+        } else {
+            ErrorBody {
+                error: self.message,
+                code: None,
+                message: None,
+            }
+        };
+        (self.status, Json(body)).into_response()
     }
 }
 

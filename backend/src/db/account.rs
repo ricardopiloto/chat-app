@@ -88,3 +88,18 @@ pub async fn set_identity_vault(
         .await?;
     Ok(())
 }
+
+pub async fn replace_identity(
+    pool: &SqlitePool,
+    account_id: Uuid,
+    identity_pubkey: &[u8],
+    vault: &[u8],
+) -> Result<(), sqlx::Error> {
+    sqlx::query("UPDATE account SET identity_pubkey = ?, identity_vault = ? WHERE id = ?")
+        .bind(identity_pubkey)
+        .bind(vault)
+        .bind(account_id.to_string())
+        .execute(pool)
+        .await?;
+    Ok(())
+}

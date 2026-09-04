@@ -30,7 +30,7 @@ async fn duplicate_handle_conflict() {
         .request(
             "POST",
             "/api/servers",
-            Some(serde_json::json!({ "name": "Mesa" })),
+            Some(crate::common::create_server_body("Mesa")),
             Some(&cookie),
         )
         .await;

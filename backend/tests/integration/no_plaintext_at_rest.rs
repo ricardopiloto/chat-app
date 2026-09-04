@@ -11,7 +11,7 @@ async fn plaintext_never_stored() {
         .request(
             "POST",
             "/api/servers",
-            Some(json!({ "name": "Mesa" })),
+            Some(crate::common::create_server_body("Mesa")),
             Some(&cookie),
         )
         .await;

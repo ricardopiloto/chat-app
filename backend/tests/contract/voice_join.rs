@@ -11,7 +11,7 @@ async fn voice_join_token_has_no_secret_and_uses_ids() {
         .request(
             "POST",
             "/api/servers",
-            Some(json!({ "name": "Mesa" })),
+            Some(crate::common::create_server_body("Mesa")),
             Some(&cookie),
         )
         .await;
@@ -20,7 +20,7 @@ async fn voice_join_token_has_no_secret_and_uses_ids() {
         .request(
             "POST",
             &format!("/api/servers/{server_id}/channels"),
-            Some(json!({ "name": "mesa", "type": "voice_video" })),
+            Some(json!({ "name": "mesa", "type": "voice_video", "custody_ack": true, "channel_key_sealed": "c2VhbGVkLWNoYW5uZWwta2V5LWJsb2I=" })),
             Some(&cookie),
         )
         .await;
@@ -65,7 +65,7 @@ async fn voice_join_requires_membership() {
         .request(
             "POST",
             "/api/servers",
-            Some(json!({ "name": "Mesa" })),
+            Some(crate::common::create_server_body("Mesa")),
             Some(&alice),
         )
         .await;
@@ -74,7 +74,7 @@ async fn voice_join_requires_membership() {
         .request(
             "POST",
             &format!("/api/servers/{server_id}/channels"),
-            Some(json!({ "name": "mesa", "type": "voice_video" })),
+            Some(json!({ "name": "mesa", "type": "voice_video", "custody_ack": true, "channel_key_sealed": "c2VhbGVkLWNoYW5uZWwta2V5LWJsb2I=" })),
             Some(&alice),
         )
         .await;

@@ -33,4 +33,7 @@ pub struct Channel {
     #[serde(rename = "type")]
     pub kind: ChannelType,
     pub grid_slot_count: Option<i64>,
+    pub created_by_account_id: Uuid,
+    pub e2ee_enabled: bool,
+    pub has_channel_key: bool,
 }

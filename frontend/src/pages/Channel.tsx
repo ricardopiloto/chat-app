@@ -1,31 +1,50 @@
-import { For, createEffect, createSignal, onCleanup } from "solid-js";
-import { api, type Channel, type Message } from "../api/client";
+import { For, Show, createEffect, createSignal, onCleanup } from "solid-js";
+import { api, type Account, type Channel, type Message } from "../api/client";
 import type { WsEnvelope } from "../api/ws";
 import type { Identity } from "../crypto/identity";
-import { loadServerKey } from "../crypto/keyHandoff";
+import { ensureServerKey } from "../crypto/keyHandoff";
 import { decryptMessage, encryptMessage, getServerKey } from "../crypto/serverKey";
 
 type Props = {
+  me: Account;
   channel: Channel;
   identity: Identity;
   onWs: (handler: (msg: WsEnvelope) => void) => () => void;
 };
 
+type Row = { id: string; text: string; sender: string; createdAt?: string };
+
+function initials(id: string): string {
+  return id.slice(0, 2).toUpperCase();
+}
+
+function groupMessages(rows: Row[]): { sender: string; items: Row[] }[] {
+  const groups: { sender: string; items: Row[] }[] = [];
+  for (const row of rows) {
+    const last = groups[groups.length - 1];
+    if (last && last.sender === row.sender) last.items.push(row);
+    else groups.push({ sender: row.sender, items: [row] });
+  }
+  return groups;
+}
+
 export default function ChannelPage(props: Props) {
-  const [messages, setMessages] = createSignal<{ id: string; text: string; sender: string }[]>([]);
+  const [messages, setMessages] = createSignal<Row[]>([]);
   const [draft, setDraft] = createSignal("");
   const [error, setError] = createSignal("");
   const [pending, setPending] = createSignal(true);
+  const [handles, setHandles] = createSignal<Record<string, string>>({});
 
   createEffect(() => {
     const channelId = props.channel.id;
     const serverId = props.channel.server_id;
     const identity = props.identity;
+    const accountId = props.me.id;
     let cancelled = false;
 
     async function load() {
       while (!cancelled) {
-        const key = await loadServerKey(serverId, identity);
+        const key = await ensureServerKey(serverId, identity, accountId);
         if (cancelled) return;
         if (!key) {
           setPending(true);
@@ -35,18 +54,34 @@ export default function ChannelPage(props: Props) {
         }
         setPending(false);
         setError("");
+        try {
+          const members = await api<{ account_id: string; handle: string }[]>(
+            `/api/servers/${serverId}/members`,
+          );
+          const map: Record<string, string> = { [props.me.id]: props.me.handle };
+          for (const m of members) map[m.account_id] = m.handle;
+          setHandles(map);
+        } catch {
+          setHandles({ [props.me.id]: props.me.handle });
+        }
         const rows = await api<Message[]>(`/api/channels/${channelId}/messages`);
         if (cancelled) return;
-        const decoded = [];
+        const decoded: Row[] = [];
         for (const row of rows) {
           try {
             decoded.push({
               id: row.id,
               sender: row.sender_account_id,
               text: await decryptMessage(key, row.content_ciphertext),
+              createdAt: row.created_at,
             });
           } catch {
-            decoded.push({ id: row.id, sender: row.sender_account_id, text: "[indeterminável]" });
+            decoded.push({
+              id: row.id,
+              sender: row.sender_account_id,
+              text: "[indeterminável]",
+              createdAt: row.created_at,
+            });
           }
         }
         setMessages(decoded);
@@ -86,7 +121,7 @@ export default function ChannelPage(props: Props) {
 
   async function send(e: Event) {
     e.preventDefault();
-    const key = await loadServerKey(props.channel.server_id, props.identity);
+    const key = await ensureServerKey(props.channel.server_id, props.identity, props.me.id);
     if (!key) {
       setError("Ainda sincronizando a chave.");
       return;
@@ -99,27 +134,55 @@ export default function ChannelPage(props: Props) {
     setDraft("");
   }
 
+  const groups = () => groupMessages(messages());
+
   return (
-    <main class="main">
-      <h1>Canal de texto</h1>
-      <For each={messages()}>
-        {(m) => (
-          <p class="msg">
-            <span class="muted">{m.sender.slice(0, 8)}</span> {m.text}
-          </p>
-        )}
-      </For>
+    <div class="pane">
+      <header class="pane-header">
+        <div>
+          <div class="pane-title"># {props.channel.name}</div>
+          <div class="pane-sub">Canal de texto · visível a todo o servidor</div>
+        </div>
+        <span class="e2ee-chip">E2EE activa</span>
+      </header>
+      <div class="text-scroll">
+        <div class="text-measure">
+          <For each={groups()}>
+            {(g) => (
+              <div class="msg-group">
+                <div class="msg-avatar">{initials(handles()[g.sender] ?? g.sender)}</div>
+                <div>
+                  <div class="msg-meta">
+                    {handles()[g.sender] ?? g.sender.slice(0, 8)}
+                    <Show when={g.items[0]?.createdAt}>
+                      {(t) => (
+                        <span class="msg-time">
+                          {new Date(t()).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      )}
+                    </Show>
+                  </div>
+                  <For each={g.items}>{(m) => <p class="msg-body">{m.text}</p>}</For>
+                </div>
+              </div>
+            )}
+          </For>
+        </div>
+      </div>
       <form class="composer" onSubmit={send}>
         <input
+          class="input"
           value={draft()}
           onInput={(e) => setDraft(e.currentTarget.value)}
-          placeholder="mensagem"
+          placeholder="Escrever mensagem…"
         />
-        <button type="submit" disabled={pending()}>
+        <button type="submit" class="btn btn-primary" disabled={pending()}>
           Enviar
         </button>
       </form>
-      <p class="error">{error()}</p>
-    </main>
+      <p class="error" style={{ padding: "0 24px 8px" }}>
+        {error()}
+      </p>
+    </div>
   );
 }

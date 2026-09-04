@@ -1,0 +1,186 @@
+openapi: "3.1.0"
+info:
+  title: Chat-app Fase 2 — cenas e co-diretor
+  version: "0.2.0"
+  description: >
+    Extensão da API da Fase 1. GET/PUT /channels/{channelId}/grid continua a valer
+    e opera sobre a cena ativa (research D2). Este documento cobre só os recursos novos.
+servers:
+  - url: /api
+paths:
+  /channels/{channelId}/scenes:
+    get:
+      summary: Lista cenas do canal (membros)
+      parameters: [{ $ref: "#/components/parameters/ChannelId" }]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [active_scene_id, scenes]
+                properties:
+                  active_scene_id: { type: string, format: uuid }
+                  scenes:
+                    type: array
+                    items: { $ref: "./scene.json" }
+        "403": { description: Sem membership }
+        "404": { description: Canal inexistente ou não é voice_video }
+    post:
+      summary: Cria cena como cópia da cena ativa (admin do canal)
+      parameters: [{ $ref: "#/components/parameters/ChannelId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 64 }
+      responses:
+        "201":
+          description: Criada; não altera a cena ativa
+          content: { application/json: { schema: { $ref: "./scene.json" } } }
+        "400": { description: Nome vazio, canal sem cena ativa, ou já existem 32 cenas neste canal }
+        "403": { description: Não é admin do canal }
+        "409": { description: Nome duplicado neste canal }
+  /channels/{channelId}/scenes/{sceneId}:
+    get:
+      summary: Uma cena (membros)
+      parameters:
+        - { $ref: "#/components/parameters/ChannelId" }
+        - { $ref: "#/components/parameters/SceneId" }
+      responses:
+        "200":
+          content: { application/json: { schema: { $ref: "./scene.json" } } }
+        "404": { description: Cena não pertence ao canal }
+    patch:
+      summary: Renomear e/ou substituir o layout desta cena (admin)
+      description: >
+        Se a cena for a ativa, o novo layout entra em vigor de imediato (grid.updated).
+        Se for inativa, só scene.changed.
+      parameters:
+        - { $ref: "#/components/parameters/ChannelId" }
+        - { $ref: "#/components/parameters/SceneId" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, minLength: 1, maxLength: 64 }
+                layout: { $ref: "../../002-fase-1-mvp/contracts/grid-layout.json" }
+      responses:
+        "200":
+          content: { application/json: { schema: { $ref: "./scene.json" } } }
+        "403": { description: Não é admin }
+        "409": { description: Nome duplicado }
+    delete:
+      summary: Apaga cena inativa (admin)
+      parameters:
+        - { $ref: "#/components/parameters/ChannelId" }
+        - { $ref: "#/components/parameters/SceneId" }
+      responses:
+        "204": { description: Removida }
+        "403": { description: Não é admin }
+        "409": { description: Cena ativa ou última cena do canal (FR-003) }
+  /channels/{channelId}/scenes/{sceneId}/duplicate:
+    post:
+      summary: Duplica qualquer cena da lista (admin); não ativa a cópia
+      parameters:
+        - { $ref: "#/components/parameters/ChannelId" }
+        - { $ref: "#/components/parameters/SceneId" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 64 }
+      responses:
+        "201":
+          content: { application/json: { schema: { $ref: "./scene.json" } } }
+        "403": { description: Não é admin }
+        "409": { description: Nome duplicado }
+  /channels/{channelId}/scenes/{sceneId}/activate:
+    post:
+      summary: Torna esta cena a activa (admin ou co-diretor)
+      parameters:
+        - { $ref: "#/components/parameters/ChannelId" }
+        - { $ref: "#/components/parameters/SceneId" }
+      responses:
+        "200":
+          description: Activa; emite grid.updated + scene.changed
+          content: { application/json: { schema: { $ref: "./scene.json" } } }
+        "403": { description: Sem permissão de ativar }
+        "404": { description: Cena não encontrada neste canal }
+  /channels/{channelId}/roles:
+    get:
+      summary: Lista co-diretores (membros do Servidor)
+      parameters: [{ $ref: "#/components/parameters/ChannelId" }]
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [roles]
+                properties:
+                  roles:
+                    type: array
+                    items: { $ref: "#/components/schemas/ChannelRole" }
+    put:
+      summary: Substitui o conjunto de co-diretores (admin do canal)
+      description: Body é a lista desejada de account_id com role co_director. Quem não administra recebe 403.
+      parameters: [{ $ref: "#/components/parameters/ChannelId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [account_ids]
+              properties:
+                account_ids:
+                  type: array
+                  items: { type: string, format: uuid }
+                  description: Membros do Servidor a manter como co-diretor; omitidos são revogados
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [roles]
+                properties:
+                  roles:
+                    type: array
+                    items: { $ref: "#/components/schemas/ChannelRole" }
+        "400": { description: account_id não é membro do Servidor }
+        "403": { description: Não é admin do canal }
+
+components:
+  parameters:
+    ChannelId:
+      name: channelId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    SceneId:
+      name: sceneId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+  schemas:
+    ChannelRole:
+      type: object
+      required: [channel_id, account_id, role]
+      properties:
+        channel_id: { type: string, format: uuid }
+        account_id: { type: string, format: uuid }
+        role: { type: string, enum: [co_director] }

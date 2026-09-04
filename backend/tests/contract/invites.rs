@@ -9,7 +9,7 @@ async fn owner_and_server(app: &TestApp) -> (String, String) {
         .request(
             "POST",
             "/api/servers",
-            Some(json!({ "name": "Mesa" })),
+            Some(crate::common::create_server_body("Mesa")),
             Some(&cookie),
         )
         .await;

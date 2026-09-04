@@ -1,10 +1,12 @@
 pub mod account;
 pub mod channel;
+pub mod channel_role;
 pub mod grid;
 pub mod invite;
 pub mod key_envelope;
 pub mod membership;
 pub mod message;
 pub mod permissions;
+pub mod scene;
 pub mod server;
 pub mod session;

@@ -1,13 +1,34 @@
-import { For, Show, createEffect, createResource, createSignal, onCleanup } from "solid-js";
+import { Show, createEffect, createResource, createSignal, onCleanup } from "solid-js";
+import CallBank, { deriveBank } from "../components/CallBank";
 import CameraGrid from "../components/CameraGrid";
-import GridAdmin from "../components/GridAdmin";
-import { api, type Account, type Channel, type GridLayout, type Message } from "../api/client";
+import SceneEditor from "../components/SceneEditor";
+import Dialog from "../components/Dialog";
+import {
+  ApiError,
+  api,
+  startEgress,
+  stopEgress,
+  setChannelE2ee,
+  type Account,
+  type Channel,
+  type GridLayout,
+  type Scene,
+  type SceneList as SceneListData,
+  type ServerMember,
+} from "../api/client";
 import type { WsEnvelope } from "../api/ws";
 import type { Identity } from "../crypto/identity";
-import { loadServerKey } from "../crypto/keyHandoff";
-import { decryptMessage, encryptMessage } from "../crypto/serverKey";
+import { ensureServerKey } from "../crypto/keyHandoff";
+import {
+  loadChannelKey,
+  parseChannelKeyInput,
+  rememberChannelKey,
+} from "../crypto/channelKey";
+import { readViewMode, writeViewMode, type ViewMode } from "../preferences/uiPrefs";
+import { requestStageMode, toggleStageMode } from "../shell/AppShell";
 import { attachRemote, createTestVideoTrack, joinLiveRoom, type LiveSession } from "../video/liveClient";
 import type { RemoteTrack, Participant } from "livekit-client";
+import { useNavigate } from "@solidjs/router";
 
 type Props = {
   me: Account;
@@ -16,18 +37,37 @@ type Props = {
   onWs: (handler: (msg: WsEnvelope) => void) => () => void;
 };
 
+const emptyGrid = (): GridLayout => ({
+  layout_key: "quad",
+  slot_count: 4,
+  assigned_by: "auto",
+  slots: [0, 1, 2, 3].map((index) => ({ index, account_id: null })),
+});
+
 export default function VoiceChannel(props: Props) {
-  const [grid, setGrid] = createSignal<GridLayout | null>({
-    slot_count: 4,
-    assigned_by: "auto",
-    slots: [0, 1, 2, 3].map((index) => ({ index, account_id: null })),
-  });
+  const navigate = useNavigate();
+  const [grid, setGrid] = createSignal<GridLayout | null>(emptyGrid());
   const [error, setError] = createSignal("");
-  const [draft, setDraft] = createSignal("");
-  const [texts, setTexts] = createSignal<{ id: string; text: string }[]>([]);
   const [live, setLive] = createSignal(false);
   const [needGesture, setNeedGesture] = createSignal(false);
+  const [scenes, setScenes] = createSignal<Scene[]>([]);
+  const [activeSceneId, setActiveSceneId] = createSignal("");
+  const [members, setMembers] = createSignal<ServerMember[]>([]);
+  const [viewMode, setViewMode] = createSignal<ViewMode>(readViewMode());
+  const [editing, setEditing] = createSignal(false);
+  const [micOn, setMicOn] = createSignal(true);
+  const [camOn, setCamOn] = createSignal(true);
+  const [inCallIds, setInCallIds] = createSignal<string[]>([]);
+  const [e2eeEnabled, setE2eeEnabled] = createSignal(props.channel.e2ee_enabled !== false);
+  const [hasChannelKey, setHasChannelKey] = createSignal(!!props.channel.has_channel_key);
+  const [recording, setRecording] = createSignal(false);
+  const [e2eeActor, setE2eeActor] = createSignal("");
+  const [e2eeAt, setE2eeAt] = createSignal("");
+  const [gravarOpen, setGravarOpen] = createSignal(false);
+  const [religarOpen, setReligarOpen] = createSignal(false);
+  const [religarInput, setReligarInput] = createSignal("");
   const slotEls = new Map<number, HTMLDivElement>();
+  const gradeEls = new Map<string, HTMLDivElement>();
   const remotes = new Map<string, RemoteTrack[]>();
   let localVideoEl: HTMLMediaElement | null = null;
   let session: LiveSession | null = null;
@@ -35,14 +75,68 @@ export default function VoiceChannel(props: Props) {
 
   const [servers] = createResource(() => api<{ id: string; owner_account_id: string }[]>("/api/servers"));
 
+  createEffect(() => {
+    setE2eeEnabled(props.channel.e2ee_enabled !== false);
+    setHasChannelKey(!!props.channel.has_channel_key);
+  });
+
+  async function loadScenes() {
+    const data = await api<SceneListData>(`/api/channels/${props.channel.id}/scenes`);
+    setScenes(data.scenes);
+    setActiveSceneId(data.active_scene_id);
+  }
+
+  async function loadMembers() {
+    const list = await api<ServerMember[]>(`/api/servers/${props.channel.server_id}/members`);
+    setMembers(list);
+  }
+
+  function refreshInCall() {
+    const ids = new Set<string>([props.me.id, ...remotes.keys()]);
+    if (session?.room) {
+      for (const p of session.room.remoteParticipants.values()) {
+        ids.add(p.identity);
+      }
+    }
+    setInCallIds([...ids]);
+  }
+
   function attachSlot(index: number, el: HTMLDivElement) {
     slotEls.set(index, el);
     queueMicrotask(layoutMedia);
   }
 
+  function attachGrade(identity: string, el: HTMLDivElement) {
+    gradeEls.set(identity, el);
+    queueMicrotask(layoutMedia);
+  }
+
+  function clearOrphanVideos(node: HTMLElement, keep: HTMLMediaElement | null) {
+    for (const child of [...node.children]) {
+      if (child instanceof HTMLVideoElement && child !== keep) {
+        child.remove();
+      }
+    }
+  }
+
   function layoutMedia() {
     const current = grid();
     if (!current) return;
+    if (viewMode() === "grid") {
+      for (const node of gradeEls.values()) clearOrphanVideos(node, localVideoEl);
+      for (const [identity, tracks] of remotes) {
+        const node = gradeEls.get(identity);
+        if (!node) continue;
+        for (const track of tracks) attachRemote(track, node);
+      }
+      if (localVideoEl) {
+        const node = gradeEls.get(props.me.id);
+        if (node && localVideoEl.parentElement !== node) node.appendChild(localVideoEl);
+        void localVideoEl.play?.().catch(() => undefined);
+      }
+      return;
+    }
+    for (const node of slotEls.values()) clearOrphanVideos(node, localVideoEl);
     for (const [identity, tracks] of remotes) {
       const idx = current.slots.find((s) => s.account_id === identity)?.index;
       if (idx === undefined) continue;
@@ -54,6 +148,7 @@ export default function VoiceChannel(props: Props) {
       const mine = current.slots.find((s) => s.account_id === props.me.id)?.index ?? 0;
       const node = slotEls.get(mine);
       if (node && localVideoEl.parentElement !== node) node.appendChild(localVideoEl);
+      void localVideoEl.play?.().catch(() => undefined);
     }
   }
 
@@ -61,20 +156,8 @@ export default function VoiceChannel(props: Props) {
     const list = remotes.get(participant.identity) ?? [];
     if (!list.includes(track)) list.push(track);
     remotes.set(participant.identity, list);
+    refreshInCall();
     layoutMedia();
-  }
-
-  async function loadTexts(key: Uint8Array) {
-    const rows = await api<Message[]>(`/api/channels/${props.channel.id}/messages`);
-    const decoded = [];
-    for (const row of rows) {
-      try {
-        decoded.push({ id: row.id, text: await decryptMessage(key, row.content_ciphertext) });
-      } catch {
-        decoded.push({ id: row.id, text: "[indeterminável]" });
-      }
-    }
-    setTexts(decoded);
   }
 
   async function captureLocal(
@@ -85,26 +168,31 @@ export default function VoiceChannel(props: Props) {
       try {
         audio = (await navigator.mediaDevices.getUserMedia({ audio: true, video: false })).getAudioTracks()[0];
       } catch {
-        /* vídeo de teste pode ir sem microfone */
+        /* ok */
       }
       return { video: createTestVideoTrack(props.me.handle), audio };
     }
     const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-    return {
-      video: stream.getVideoTracks()[0],
-      audio: stream.getAudioTracks()[0],
-    };
+    const video = stream.getVideoTracks()[0];
+    if (!video) throw new Error("sem faixa de vídeo");
+    return { video, audio: stream.getAudioTracks()[0] };
+  }
+
+  async function resolveMediaKey(): Promise<Uint8Array | null> {
+    const channelKey = loadChannelKey(props.channel.id);
+    if (channelKey) return channelKey;
+    const serverKey = await ensureServerKey(props.channel.server_id, props.identity, props.me.id);
+    return serverKey ?? null;
   }
 
   async function connect(mode: "camera" | "test") {
     if (starting || session) return;
     starting = true;
     const channelId = props.channel.id;
-    const serverId = props.channel.server_id;
     try {
-      const key = await loadServerKey(serverId, props.identity);
+      const key = await resolveMediaKey();
       if (!key) {
-        setError("Sincronizando chave do Servidor…");
+        setError("Sincronizando chave…");
         return;
       }
       setError(mode === "test" ? "A ligar com vídeo de teste…" : "A pedir câmara e microfone…");
@@ -135,7 +223,8 @@ export default function VoiceChannel(props: Props) {
       session = await joinLiveRoom({
         url: join.url,
         token: join.token,
-        serverKey: key,
+        mediaKey: key,
+        e2eeEnabled: e2eeEnabled(),
         localVideo: local.video,
         localAudio: local.audio,
         onTrack: placeTrack,
@@ -155,7 +244,9 @@ export default function VoiceChannel(props: Props) {
         },
       });
       setLive(true);
-      await loadTexts(key);
+      refreshInCall();
+      requestStageMode(true);
+      requestAnimationFrame(() => queueMicrotask(layoutMedia));
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -163,22 +254,63 @@ export default function VoiceChannel(props: Props) {
     }
   }
 
+  async function leave() {
+    await session?.disconnect();
+    session = null;
+    localVideoEl = null;
+    remotes.clear();
+    setLive(false);
+    setInCallIds([]);
+    setRecording(false);
+    requestStageMode(false);
+  }
+
+  async function toggleMic() {
+    const next = !micOn();
+    setMicOn(next);
+    await session?.room.localParticipant.setMicrophoneEnabled(next);
+  }
+
+  async function toggleCam() {
+    const next = !camOn();
+    setCamOn(next);
+    await session?.room.localParticipant.setCameraEnabled(next);
+  }
+
+  function setMode(mode: ViewMode) {
+    writeViewMode(mode);
+    setViewMode(mode);
+    queueMicrotask(layoutMedia);
+    requestAnimationFrame(() => queueMicrotask(layoutMedia));
+  }
+
   createEffect(() => {
     grid();
+    viewMode();
     queueMicrotask(layoutMedia);
+  });
+
+  createEffect(() => {
+    const onStage = () => {
+      queueMicrotask(layoutMedia);
+      requestAnimationFrame(() => queueMicrotask(layoutMedia));
+    };
+    window.addEventListener("mesa:stage-mode", onStage);
+    onCleanup(() => window.removeEventListener("mesa:stage-mode", onStage));
   });
 
   createEffect(() => {
     const channelId = props.channel.id;
     const serverId = props.channel.server_id;
     const identity = props.identity;
+    const accountId = props.me.id;
     let cancelled = false;
 
-    async function loadKeyAndTexts() {
+    async function boot() {
       while (!cancelled) {
-        const key = await loadServerKey(serverId, identity);
+        const key = await ensureServerKey(serverId, identity, accountId);
         if (cancelled) return;
-        if (!key) {
+        if (!key && !loadChannelKey(channelId)) {
           setError("Sincronizando chave do Servidor…");
           await new Promise((r) => setTimeout(r, 1500));
           continue;
@@ -187,19 +319,45 @@ export default function VoiceChannel(props: Props) {
         const layout = await api<GridLayout>(`/api/channels/${channelId}/grid`);
         if (cancelled) return;
         setGrid(layout);
-        await loadTexts(key);
+        await loadScenes();
+        await loadMembers();
         return;
       }
     }
-    void loadKeyAndTexts();
+    void boot();
 
     const off = props.onWs((msg) => {
       if (msg.event === "grid.updated" && String(msg.payload.channel_id) === channelId) {
         setGrid(msg.payload.grid as GridLayout);
         queueMicrotask(layoutMedia);
+        requestAnimationFrame(() => queueMicrotask(layoutMedia));
+      }
+      if (msg.event === "scene.changed" && String(msg.payload.channel_id) === channelId) {
+        void loadScenes();
+        queueMicrotask(layoutMedia);
       }
       if (msg.event === "key_handoff.completed" && msg.server_id === serverId) {
-        void loadKeyAndTexts();
+        void boot();
+      }
+      if (msg.event === "channel.e2ee_changed" && String(msg.payload.channel_id) === channelId) {
+        const enabled = Boolean(msg.payload.e2ee_enabled);
+        setE2eeEnabled(enabled);
+        if (!enabled) {
+          setE2eeActor(String(msg.payload.actor_account_id ?? ""));
+          setE2eeAt(String(msg.payload.at ?? ""));
+          setRecording(true);
+        } else {
+          setRecording(false);
+          setE2eeActor("");
+          setE2eeAt("");
+        }
+        void session?.setE2EEEnabled(enabled).catch(() => undefined);
+      }
+      if (msg.event === "channel.deleted" && String(msg.payload.channel_id) === channelId) {
+        void leave().then(() => navigate("/"));
+      }
+      if (msg.event === "server.deleted" && String(msg.payload.server_id) === serverId) {
+        void leave().then(() => navigate("/"));
       }
     });
     onCleanup(() => {
@@ -216,67 +374,321 @@ export default function VoiceChannel(props: Props) {
       localVideoEl = null;
       remotes.clear();
       setLive(false);
+      requestStageMode(false);
     });
   });
-
-  async function send(e: Event) {
-    e.preventDefault();
-    const key = await loadServerKey(props.channel.server_id, props.identity);
-    if (!key) return;
-    await api(`/api/channels/${props.channel.id}/messages`, {
-      method: "POST",
-      body: JSON.stringify({ content_ciphertext: await encryptMessage(key, draft()) }),
-    });
-    setDraft("");
-  }
 
   const admin = () =>
     (servers() ?? []).some(
       (s) => s.id === props.channel.server_id && s.owner_account_id === props.me.id,
     );
+  const activeScene = () =>
+    scenes().find((s) => s.id === activeSceneId()) ?? scenes().find((s) => s.is_active);
+  const handles = () => {
+    const map: Record<string, string> = { [props.me.id]: props.me.handle };
+    for (const m of members()) map[m.account_id] = m.handle;
+    return map;
+  };
+  const occupied = () => (grid()?.slots.filter((s) => s.account_id).length ?? 0);
+  const slotCount = () => grid()?.slot_count ?? 0;
+  const bankIds = () =>
+    deriveBank(
+      inCallIds().length ? inCallIds() : live() ? [props.me.id] : [],
+      (grid()?.slots ?? []).map((s) => s.account_id),
+    );
+  const actorHandle = () => {
+    const id = e2eeActor();
+    return handles()[id] ?? (id || "alguém");
+  };
+  const canRecord = () => admin() && hasChannelKey();
+
+  async function persistLayout(layout: GridLayout) {
+    const g = await api<GridLayout>(`/api/channels/${props.channel.id}/grid`, {
+      method: "PUT",
+      body: JSON.stringify(layout),
+    });
+    setGrid(g);
+    await loadScenes();
+    queueMicrotask(layoutMedia);
+    requestAnimationFrame(() => queueMicrotask(layoutMedia));
+  }
+
+  async function confirmGravar() {
+    setError("");
+    try {
+      await startEgress(props.channel.id);
+      setRecording(true);
+      setE2eeEnabled(false);
+      setGravarOpen(false);
+      await session?.setE2EEEnabled(false);
+    } catch (err) {
+      const msg =
+        err instanceof ApiError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : String(err);
+      setError(msg);
+      setGravarOpen(false);
+      // Refresh channel state in case compensate ran
+      try {
+        const ch = await api<Channel>(`/api/channels/${props.channel.id}`);
+        setE2eeEnabled(ch.e2ee_enabled);
+        setHasChannelKey(ch.has_channel_key);
+        if (ch.e2ee_enabled) setRecording(false);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  async function stopRecording() {
+    setError("");
+    try {
+      await stopEgress(props.channel.id);
+      setRecording(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  async function confirmReligar() {
+    setError("");
+    let key = loadChannelKey(props.channel.id);
+    if (!key) {
+      key = parseChannelKeyInput(religarInput());
+      if (!key) {
+        setError("Chave do canal inválida.");
+        return;
+      }
+      rememberChannelKey(props.channel.id, key);
+    }
+    try {
+      await session?.setChannelKey(key);
+      await setChannelE2ee(props.channel.id, true);
+      await session?.setE2EEEnabled(true);
+      setE2eeEnabled(true);
+      setRecording(false);
+      setReligarOpen(false);
+      setReligarInput("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  }
 
   return (
-    <main class="main">
-      <h1>Canal de vídeo</h1>
+    <div class="pane voice-pane">
+      <Show when={!e2eeEnabled()}>
+        <div class="e2ee-banner" role="status">
+          <span class="e2ee-pulse" aria-hidden="true" />
+          <div>
+            <strong>E2EE desligada</strong>
+            {recording() ? " — gravando via Egress do servidor" : ""}
+            <div class="muted">
+              Desligada por {actorHandle()}
+              {e2eeAt() ? ` · ${e2eeAt()}` : ""} · registado na auditoria
+            </div>
+          </div>
+          <Show when={admin() && hasChannelKey()}>
+            <button type="button" class="btn btn-secondary" onClick={() => setReligarOpen(true)}>
+              Religar E2EE
+            </button>
+          </Show>
+        </div>
+      </Show>
+
+      <header class="pane-header">
+        <div>
+          <div class="pane-title">{props.channel.name}</div>
+          <div class="pane-sub">
+            {occupied()} de {slotCount()} em cena
+          </div>
+        </div>
+        <div class="seg" style={{ "margin-left": "auto" }}>
+          <label class="seg-opt">
+            <input
+              type="radio"
+              name="view-mode"
+              checked={viewMode() === "composition"}
+              onChange={() => setMode("composition")}
+            />
+            Composição
+          </label>
+          <label class="seg-opt">
+            <input
+              type="radio"
+              name="view-mode"
+              checked={viewMode() === "grid"}
+              onChange={() => setMode("grid")}
+            />
+            Grade
+          </label>
+        </div>
+        <Show when={admin() && !editing()}>
+          <button type="button" class="btn btn-primary" onClick={() => setEditing(true)}>
+            Editar cena
+          </button>
+        </Show>
+        <button type="button" class="btn btn-ghost" onClick={() => toggleStageMode()}>
+          Modo palco
+        </button>
+        <span class={`e2ee-chip${e2eeEnabled() ? "" : " off"}`}>
+          {e2eeEnabled() ? "E2EE activa" : "E2EE off"}
+        </span>
+      </header>
+
       <Show when={!live()}>
-        <p class="row">
-          <button type="button" onClick={() => void connect("camera")}>
+        <div class="row" style={{ padding: "16px 24px" }}>
+          <button type="button" class="btn btn-primary" onClick={() => void connect("camera")}>
             {needGesture() ? "Permitir câmara e microfone" : "Ligar câmara e microfone"}
           </button>
-          <button type="button" class="secondary" onClick={() => void connect("test")}>
-            Vídeo de teste (sem webcam)
+          <button type="button" class="btn btn-secondary" onClick={() => void connect("test")}>
+            Vídeo de teste
           </button>
-        </p>
-        <p class="muted">
-          No telemóvel abra <code>https://&lt;IP-LAN&gt;:1420</code> (aceite o certificado) e
-          entre com <strong>outra conta</strong> (convite). A mídia UDP do LiveKit tem de
-          chegar à LAN — recrie o contentor depois da alteração de rede em <code>infra/</code>.
-        </p>
+        </div>
       </Show>
+
       <Show when={grid()}>
         {(g) => (
           <>
-            <CameraGrid grid={g()} handles={{ [props.me.id]: props.me.handle }} attachSlot={attachSlot} />
-            <Show when={admin()}>
-              <GridAdmin
-                channelId={props.channel.id}
-                grid={g()}
-                memberIds={g()
-                  .slots.map((s) => s.account_id)
-                  .filter((id): id is string => !!id)}
-                handles={{ [props.me.id]: props.me.handle }}
-                onSaved={setGrid}
-              />
+            <Show when={!editing()}>
+              <Show when={viewMode() === "composition"}>
+                <CameraGrid grid={g()} handles={handles()} attachSlot={attachSlot} />
+                <CallBank accountIds={bankIds()} handles={handles()} />
+              </Show>
+              <Show when={viewMode() === "grid"}>
+                <CameraGrid
+                  grid={g()}
+                  handles={handles()}
+                  attachSlot={attachSlot}
+                  gradeIdentities={inCallIds().length ? inCallIds() : [props.me.id]}
+                  attachGrade={attachGrade}
+                />
+              </Show>
+            </Show>
+
+            <Show when={live() && !editing()}>
+              <div class="call-controls">
+                <button type="button" class="btn btn-secondary" onClick={() => void toggleMic()}>
+                  {micOn() ? "Microfone" : "Mic off"}
+                </button>
+                <button type="button" class="btn btn-secondary" onClick={() => void toggleCam()}>
+                  {camOn() ? "Câmara" : "Cam off"}
+                </button>
+                <Show when={admin()}>
+                  <Show
+                    when={!recording()}
+                    fallback={
+                      <button type="button" class="btn btn-secondary" onClick={() => void stopRecording()}>
+                        Parar gravação
+                      </button>
+                    }
+                  >
+                    <button
+                      type="button"
+                      class="btn btn-secondary"
+                      disabled={!canRecord()}
+                      title={
+                        hasChannelKey()
+                          ? undefined
+                          : "Recrie o canal de voz para activar Gravar (chave de canal em falta)"
+                      }
+                      onClick={() => setGravarOpen(true)}
+                    >
+                      Gravar cena…
+                    </button>
+                  </Show>
+                </Show>
+                <button type="button" class="btn btn-primary" onClick={() => void leave()}>
+                  Sair
+                </button>
+              </div>
+              <p class="privacy-line">
+                {e2eeEnabled()
+                  ? "E2EE activa · o servidor não decodifica nada"
+                  : "gravando via Egress do servidor"}
+              </p>
+            </Show>
+
+            <Show when={editing() && admin() && activeScene()}>
+              {(scene) => (
+                <SceneEditor
+                  channelId={props.channel.id}
+                  sceneId={scene().id}
+                  sceneName={scene().name}
+                  sceneIsActive={true}
+                  layout={g()}
+                  handles={handles()}
+                  inCallIds={inCallIds()}
+                  onSave={persistLayout}
+                  onClose={() => {
+                    setEditing(false);
+                    queueMicrotask(layoutMedia);
+                    requestAnimationFrame(() => queueMicrotask(layoutMedia));
+                  }}
+                />
+              )}
             </Show>
           </>
         )}
       </Show>
-      <For each={texts()}>{(m) => <p class="msg">{m.text}</p>}</For>
-      <form class="composer" onSubmit={send}>
-        <input value={draft()} onInput={(e) => setDraft(e.currentTarget.value)} />
-        <button type="submit">Enviar</button>
-      </form>
-      <p class="error">{error()}</p>
-    </main>
+      <p class="error" style={{ padding: "0 16px 8px" }}>
+        {error()}
+      </p>
+
+      <Dialog
+        open={gravarOpen()}
+        title="Gravar cena"
+        onClose={() => setGravarOpen(false)}
+        actions={
+          <>
+            <button type="button" class="btn btn-secondary" onClick={() => setGravarOpen(false)}>
+              Cancelar
+            </button>
+            <button type="button" class="btn btn-primary" onClick={() => void confirmGravar()}>
+              Confirmar e gravar
+            </button>
+          </>
+        }
+      >
+        <p>
+          A gravação e a exportação da cena acontecem no servidor (Egress), e isso é incompatível com
+          criptografia ponta-a-ponta: enquanto estiver a gravar, o servidor decodifica áudio e vídeo.
+          A troca é sua, e fica visível para todos no canal.
+        </p>
+      </Dialog>
+
+      <Dialog
+        open={religarOpen()}
+        title="Religar E2EE"
+        onClose={() => setReligarOpen(false)}
+        actions={
+          <>
+            <button type="button" class="btn btn-secondary" onClick={() => setReligarOpen(false)}>
+              Cancelar
+            </button>
+            <button type="button" class="btn btn-primary" onClick={() => void confirmReligar()}>
+              Religar
+            </button>
+          </>
+        }
+      >
+        <Show
+          when={!loadChannelKey(props.channel.id)}
+          fallback={<p class="muted">A chave deste canal está guardada neste dispositivo.</p>}
+        >
+          <div class="field">
+            <label for="religar-key">Chave do canal (base64)</label>
+            <input
+              id="religar-key"
+              class="input"
+              value={religarInput()}
+              onInput={(e) => setReligarInput(e.currentTarget.value)}
+              placeholder="Cole a chave que guardou na criação"
+            />
+          </div>
+        </Show>
+      </Dialog>
+    </div>
   );
 }

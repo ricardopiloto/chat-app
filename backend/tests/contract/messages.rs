@@ -14,7 +14,7 @@ async fn two_members(app: &TestApp, include_history: bool) -> (String, String, S
         .request(
             "POST",
             "/api/servers",
-            Some(json!({ "name": "Mesa" })),
+            Some(crate::common::create_server_body("Mesa")),
             Some(&alice),
         )
         .await;

@@ -6,7 +6,10 @@ type Props = {
   grid: GridLayout;
   memberIds: string[];
   handles: Record<string, string>;
+  sceneId?: string;
+  sceneIsActive?: boolean;
   onSaved: (grid: GridLayout) => void;
+  onScenePatched?: () => void;
 };
 
 export default function GridAdmin(props: Props) {
@@ -20,12 +23,21 @@ export default function GridAdmin(props: Props) {
       const value = select?.value || "";
       return { index, account_id: value === "" ? null : value };
     });
+    const layout = { slot_count: count(), assigned_by: "owner" as const, slots };
     try {
-      const grid = await api<GridLayout>(`/api/channels/${props.channelId}/grid`, {
-        method: "PUT",
-        body: JSON.stringify({ slot_count: count(), assigned_by: "owner", slots }),
-      });
-      props.onSaved(grid);
+      if (props.sceneId && props.sceneIsActive === false) {
+        await api(`/api/channels/${props.channelId}/scenes/${props.sceneId}`, {
+          method: "PATCH",
+          body: JSON.stringify({ layout }),
+        });
+        props.onScenePatched?.();
+      } else {
+        const grid = await api<GridLayout>(`/api/channels/${props.channelId}/grid`, {
+          method: "PUT",
+          body: JSON.stringify(layout),
+        });
+        props.onSaved(grid);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     }

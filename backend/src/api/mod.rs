@@ -4,16 +4,19 @@ use crate::AppState;
 use axum::extract::ws::{Message, WebSocket};
 use axum::extract::{State, WebSocketUpgrade};
 use axum::response::IntoResponse;
-use axum::routing::{get, post};
+use axum::routing::{delete, get, post};
 use axum::Router;
 use futures_util::{SinkExt, StreamExt};
 
 pub mod auth;
+pub mod channel_provision;
+pub mod channel_roles;
 pub mod channels;
 pub mod grid;
 pub mod invites;
 pub mod key_envelopes;
 pub mod messages;
+pub mod scenes;
 pub mod servers;
 pub mod voice;
 
@@ -26,6 +29,10 @@ pub fn router(state: AppState) -> axum::Router {
             Router::new()
                 .merge(auth::router())
                 .route("/servers", post(servers::create_server).get(servers::list_servers))
+                .route(
+                    "/servers/{server_id}",
+                    delete(servers::delete_server),
+                )
                 .route(
                     "/servers/{server_id}/channels",
                     post(channels::create_channel).get(channels::list_channels),
@@ -41,11 +48,49 @@ pub fn router(state: AppState) -> axum::Router {
                     "/channels/{channel_id}/messages",
                     get(messages::list_messages).post(messages::post_message),
                 )
-                .route("/channels/{channel_id}", get(channels::get_channel))
+                .route(
+                    "/channels/{channel_id}",
+                    get(channels::get_channel).delete(channels::delete_channel),
+                )
                 .route("/channels/{channel_id}/voice/join", post(voice::join))
+                .route("/channels/{channel_id}/voice/e2ee", post(voice::set_e2ee))
+                .route(
+                    "/channels/{channel_id}/egress/start",
+                    post(voice::egress_start),
+                )
+                .route(
+                    "/channels/{channel_id}/egress/stop",
+                    post(voice::egress_stop),
+                )
                 .route(
                     "/channels/{channel_id}/grid",
                     get(grid::get_grid).put(grid::put_grid),
+                )
+                .route(
+                    "/channels/{channel_id}/scenes",
+                    get(scenes::list_scenes).post(scenes::create_scene),
+                )
+                .route(
+                    "/channels/{channel_id}/scenes/{scene_id}",
+                    get(scenes::get_scene)
+                        .patch(scenes::patch_scene)
+                        .delete(scenes::delete_scene),
+                )
+                .route(
+                    "/channels/{channel_id}/scenes/{scene_id}/duplicate",
+                    post(scenes::duplicate_scene),
+                )
+                .route(
+                    "/channels/{channel_id}/scenes/{scene_id}/activate",
+                    post(scenes::activate_scene),
+                )
+                .route(
+                    "/channels/{channel_id}/roles",
+                    get(channel_roles::list_roles).put(channel_roles::put_roles),
+                )
+                .route(
+                    "/servers/{server_id}/members",
+                    get(channel_roles::list_members),
                 )
                 .route(
                     "/servers/{server_id}/key-envelopes",

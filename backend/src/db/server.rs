@@ -58,3 +58,11 @@ pub async fn list_for_account(
     .await?;
     rows.into_iter().map(map_row).collect()
 }
+
+pub async fn delete(pool: &SqlitePool, id: Uuid) -> Result<(), sqlx::Error> {
+    sqlx::query("DELETE FROM server WHERE id = ?")
+        .bind(id.to_string())
+        .execute(pool)
+        .await?;
+    Ok(())
+}

@@ -7,6 +7,8 @@ pub struct Config {
     pub livekit_url: String,
     pub livekit_api_key: String,
     pub livekit_api_secret: String,
+    /// When set, Gravar attempts Room Composite file egress under this path prefix.
+    pub egress_file_prefix: Option<String>,
     pub session_ttl_secs: i64,
     pub cookie_secure: bool,
     pub default_invite_ttl_secs: i64,
@@ -23,6 +25,7 @@ impl Config {
             livekit_api_key: env::var("LIVEKIT_API_KEY").unwrap_or_else(|_| "instkey".into()),
             livekit_api_secret: env::var("LIVEKIT_API_SECRET")
                 .unwrap_or_else(|_| "instsecretinstsecretinstsecret12".into()),
+            egress_file_prefix: env::var("LIVEKIT_EGRESS_FILE_PREFIX").ok().filter(|s| !s.is_empty()),
             session_ttl_secs: env::var("SESSION_TTL_SECS")
                 .ok()
                 .and_then(|s| s.parse().ok())

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "scene.json",
+  "title": "Named camera scene (Fase 2)",
+  "description": "Composição nomeada. O campo layout reutiliza o schema da grade da Fase 1.",
+  "type": "object",
+  "required": ["id", "channel_id", "name", "is_active", "layout"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "channel_id": { "type": "string", "format": "uuid" },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "Único por canal, case-insensitive."
+    },
+    "is_active": {
+      "type": "boolean",
+      "description": "true se id == channel.active_scene_id"
+    },
+    "layout": { "$ref": "../../002-fase-1-mvp/contracts/grid-layout.json" }
+  }
+}

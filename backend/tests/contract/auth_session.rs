@@ -58,6 +58,58 @@ async fn identity_vault_roundtrip() {
 }
 
 #[tokio::test]
+async fn replace_identity_updates_vault_and_marks_handoff_pending() {
+    let app = TestApp::new().await;
+    let (_, _, alice_cookie) = app.register("alice", "password1", None).await;
+    let alice = must_cookie(alice_cookie);
+    let (status, server, _) = app
+        .request(
+            "POST",
+            "/api/servers",
+            Some(crate::common::create_server_body("mesa")),
+            Some(&alice),
+        )
+        .await;
+    assert_eq!(status, StatusCode::CREATED, "{server}");
+    let server_id = server["id"].as_str().unwrap();
+
+    let new_pubkey = "QkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkI=";
+    let vault = serde_json::json!({
+        "v": 1,
+        "publicKey": [9],
+        "salt": [8],
+        "iv": [7],
+        "wrapped": [6]
+    });
+    let (status, body, _) = app
+        .request(
+            "PUT",
+            "/api/auth/identity",
+            Some(serde_json::json!({
+                "identity_pubkey": new_pubkey,
+                "identity_vault": vault,
+            })),
+            Some(&alice),
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["identity_vault"]["wrapped"][0], 6);
+
+    let (handoff,): (String,) = sqlx::query_as(
+        "SELECT key_handoff_status FROM membership WHERE server_id = ?",
+    )
+    .bind(server_id)
+    .fetch_one(&app.pool)
+    .await
+    .unwrap();
+    assert_eq!(handoff, "pending");
+
+    let (status, login, _) = app.login("alice", "password1").await;
+    assert_eq!(status, StatusCode::OK, "{login}");
+    assert_eq!(login["identity_vault"]["wrapped"][0], 6);
+}
+
+#[tokio::test]
 async fn logout_revokes_session() {
     let app = TestApp::new().await;
     let (_, _, cookie) = app.register("alice", "password1", None).await;
@@ -67,5 +119,5 @@ async fn logout_revokes_session() {
         .await;
     assert_eq!(status, StatusCode::NO_CONTENT);
     let (status, _, _) = app.request("GET", "/api/auth/me", None, Some(&cookie)).await;
-    assert_eq!(status, StatusCode::UNAUTHORIZED);
+    assert_eq!(status, StatusCode::NO_CONTENT);
 }

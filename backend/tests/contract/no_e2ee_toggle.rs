@@ -10,6 +10,8 @@ async fn no_disable_e2ee_route() {
         "/api/e2ee/disable",
         "/api/servers/disable-e2ee",
         "/api/channels/disable-e2ee",
+        "/api/channels/egress/start",
+        "/api/e2ee/off",
     ] {
         let (status, _, _) = app.request("POST", path, None, Some(&cookie)).await;
         assert!(

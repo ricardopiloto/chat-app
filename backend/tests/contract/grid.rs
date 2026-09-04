@@ -13,7 +13,7 @@ async fn first_empty_slot_and_rejoin_keeps_index() {
         .request(
             "POST",
             "/api/servers",
-            Some(json!({ "name": "Mesa" })),
+            Some(crate::common::create_server_body("Mesa")),
             Some(&alice),
         )
         .await;
@@ -22,7 +22,7 @@ async fn first_empty_slot_and_rejoin_keeps_index() {
         .request(
             "POST",
             &format!("/api/servers/{server_id}/channels"),
-            Some(json!({ "name": "mesa", "type": "voice_video" })),
+            Some(json!({ "name": "mesa", "type": "voice_video", "custody_ack": true, "channel_key_sealed": "c2VhbGVkLWNoYW5uZWwta2V5LWJsb2I=" })),
             Some(&alice),
         )
         .await;

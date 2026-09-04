@@ -9,6 +9,15 @@ use tempfile::TempDir;
 use tower::ServiceExt;
 
 pub const PUBKEY: &str = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+pub const CHANNEL_KEY_SEALED: &str = "c2VhbGVkLWNoYW5uZWwta2V5LWJsb2I=";
+
+pub fn create_server_body(name: &str) -> Value {
+    json!({
+        "name": name,
+        "custody_ack": true,
+        "channel_key_sealed": CHANNEL_KEY_SEALED,
+    })
+}
 
 pub struct TestApp {
     pub router: Router,

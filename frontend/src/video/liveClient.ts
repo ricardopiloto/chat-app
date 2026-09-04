@@ -3,6 +3,9 @@ import { ExternalE2EEKeyProvider } from "livekit-client";
 
 export type LiveSession = {
   room: Room;
+  keyProvider: ExternalE2EEKeyProvider;
+  setE2EEEnabled: (enabled: boolean) => Promise<void>;
+  setChannelKey: (key: Uint8Array) => Promise<void>;
   disconnect: () => Promise<void>;
 };
 
@@ -35,14 +38,23 @@ export function createTestVideoTrack(label: string): MediaStreamTrack {
   }, 100);
   const stream = canvas.captureStream(10);
   const track = stream.getVideoTracks()[0];
+  if (!track) throw new Error("sem faixa de vídeo de teste");
   track.addEventListener("ended", () => window.clearInterval(timer));
   return track;
+}
+
+async function applyKey(keyProvider: ExternalE2EEKeyProvider, key: Uint8Array) {
+  await keyProvider.setKey(
+    key.buffer.slice(key.byteOffset, key.byteOffset + key.byteLength) as ArrayBuffer,
+  );
 }
 
 export async function joinLiveRoom(opts: {
   url: string;
   token: string;
-  serverKey: Uint8Array;
+  /** Media key: channel key when present, else server key (legacy). */
+  mediaKey: Uint8Array;
+  e2eeEnabled?: boolean;
   localVideo?: MediaStreamTrack;
   localAudio?: MediaStreamTrack;
   onTrack: (track: RemoteTrack, participant: Participant) => void;
@@ -50,12 +62,7 @@ export async function joinLiveRoom(opts: {
   onDisconnected?: (reason?: unknown) => void;
 }): Promise<LiveSession> {
   const keyProvider = new ExternalE2EEKeyProvider();
-  await keyProvider.setKey(
-    opts.serverKey.buffer.slice(
-      opts.serverKey.byteOffset,
-      opts.serverKey.byteOffset + opts.serverKey.byteLength,
-    ) as ArrayBuffer,
-  );
+  await applyKey(keyProvider, opts.mediaKey);
   const worker = new Worker(new URL("livekit-client/e2ee-worker", import.meta.url), {
     type: "module",
   });
@@ -70,7 +77,8 @@ export async function joinLiveRoom(opts: {
     room.on(RoomEvent.Disconnected, (reason) => opts.onDisconnected?.(reason));
   }
   await room.connect(browserLivekitUrl(opts.url), opts.token);
-  await room.setE2EEEnabled(true);
+  const e2eeOn = opts.e2eeEnabled !== false;
+  await room.setE2EEEnabled(e2eeOn);
   if (opts.localVideo) {
     await room.localParticipant.publishTrack(opts.localVideo, { source: Track.Source.Camera });
   } else {
@@ -89,6 +97,13 @@ export async function joinLiveRoom(opts: {
   });
   return {
     room,
+    keyProvider,
+    setE2EEEnabled: async (enabled: boolean) => {
+      await room.setE2EEEnabled(enabled);
+    },
+    setChannelKey: async (key: Uint8Array) => {
+      await applyKey(keyProvider, key);
+    },
     disconnect: async () => {
       await room.disconnect();
       worker.terminate();
@@ -115,4 +130,5 @@ export function attachRemote(track: RemoteTrack, node: HTMLElement) {
   } else if (el.parentElement !== node) {
     node.appendChild(el);
   }
+  void (el as HTMLMediaElement).play?.().catch(() => undefined);
 }

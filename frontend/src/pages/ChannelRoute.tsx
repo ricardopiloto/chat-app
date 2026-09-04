@@ -38,7 +38,7 @@ export default function ChannelRoute(props: Props) {
         {(ch) => (
           <Show
             when={ch().type === "voice_video"}
-            fallback={<ChannelPage channel={ch()} identity={props.identity} onWs={props.onWs} />}
+            fallback={<ChannelPage me={props.me} channel={ch()} identity={props.identity} onWs={props.onWs} />}
           >
             <VoiceChannel
               me={props.me}

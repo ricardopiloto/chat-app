@@ -124,6 +124,21 @@ pub async fn set_handoff_synced(
     Ok(())
 }
 
+pub async fn set_handoff_pending(
+    pool: &SqlitePool,
+    account_id: Uuid,
+    server_id: Uuid,
+) -> Result<(), sqlx::Error> {
+    sqlx::query(
+        "UPDATE membership SET key_handoff_status = 'pending' WHERE account_id = ? AND server_id = ?",
+    )
+    .bind(account_id.to_string())
+    .bind(server_id.to_string())
+    .execute(pool)
+    .await?;
+    Ok(())
+}
+
 pub async fn list_server_ids_for_account(
     pool: &SqlitePool,
     account_id: Uuid,

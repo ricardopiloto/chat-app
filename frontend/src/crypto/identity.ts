@@ -122,6 +122,20 @@ async function openVault(stored: IdentityVault, password: string): Promise<Ident
   return { publicKey: Uint8Array.from(stored.publicKey), secretKey: secret };
 }
 
+export class IdentityUnlockError extends Error {
+  readonly reason: "missing_vault" | "bad_password";
+
+  constructor(reason: "missing_vault" | "bad_password") {
+    super(
+      reason === "missing_vault"
+        ? "A senha foi aceite, mas não há cofre de chaves neste navegador nem no servidor. Use o mesmo endereço com que criou a conta (127.0.0.1 e o IP da LAN são origens diferentes). Se apagou os dados do site, pode gerar novas chaves — o histórico antigo deixa de ser legível."
+        : "senha incorrecta ou cofre de chaves ilegível.",
+    );
+    this.name = "IdentityUnlockError";
+    this.reason = reason;
+  }
+}
+
 export async function unlockIdentity(
   password: string,
   accountId: string,
@@ -131,14 +145,14 @@ export async function unlockIdentity(
   const legacy = keyed ? undefined : await idbGet<IdentityVault>("identity");
   const stored = keyed ?? remoteVault ?? legacy;
   if (!stored) {
-    throw new Error("não foi possível abrir as chaves desta conta. Verifique a senha.");
+    throw new IdentityUnlockError("missing_vault");
   }
   try {
     const identity = await openVault(stored, password);
     await idbPut(identityStoreKey(accountId), stored);
     return identity;
   } catch {
-    throw new Error("senha incorrecta ou cofre de chaves ilegível.");
+    throw new IdentityUnlockError("bad_password");
   }
 }
 
