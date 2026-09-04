@@ -1,9 +1,27 @@
 import { For, Show, createEffect, createSignal, onCleanup } from "solid-js";
-import { api, type Account, type Channel, type Message } from "../api/client";
+import {
+  ALLOWED_MEDIA_TYPES,
+  ApiError,
+  MAX_ATTACHMENT_BYTES,
+  MAX_ATTACHMENTS_PER_MESSAGE,
+  api,
+  uploadAttachment,
+  type Account,
+  type Channel,
+  type Message,
+} from "../api/client";
 import type { WsEnvelope } from "../api/ws";
 import type { Identity } from "../crypto/identity";
 import { ensureServerKey } from "../crypto/keyHandoff";
-import { decryptMessage, encryptMessage, getServerKey } from "../crypto/serverKey";
+import {
+  decryptMessage,
+  encryptBytes,
+  encryptMessage,
+  getServerKey,
+} from "../crypto/serverKey";
+import LinkPreviews from "../components/LinkPreviews";
+import MessageAttachments from "../components/MessageAttachments";
+import { toggleMembersPanel } from "../shell/AppShell";
 
 type Props = {
   me: Account;
@@ -12,7 +30,19 @@ type Props = {
   onWs: (handler: (msg: WsEnvelope) => void) => () => void;
 };
 
-type Row = { id: string; text: string; sender: string; createdAt?: string };
+type Row = {
+  id: string;
+  text: string;
+  sender: string;
+  createdAt?: string;
+  attachmentIds: string[];
+};
+
+type Pending = {
+  localId: string;
+  file: File;
+  previewUrl: string;
+};
 
 function initials(id: string): string {
   return id.slice(0, 2).toUpperCase();
@@ -33,7 +63,21 @@ export default function ChannelPage(props: Props) {
   const [draft, setDraft] = createSignal("");
   const [error, setError] = createSignal("");
   const [pending, setPending] = createSignal(true);
+  const [sending, setSending] = createSignal(false);
   const [handles, setHandles] = createSignal<Record<string, string>>({});
+  const [membersOpen, setMembersOpen] = createSignal(false);
+  const [pendingFiles, setPendingFiles] = createSignal<Pending[]>([]);
+  const [serverKey, setServerKey] = createSignal<Uint8Array | undefined>();
+  let fileInput: HTMLInputElement | undefined;
+
+  createEffect(() => {
+    const handler = (e: Event) => {
+      const open = (e as CustomEvent<{ open?: boolean }>).detail?.open;
+      if (typeof open === "boolean") setMembersOpen(open);
+    };
+    window.addEventListener("mesa:members-panel-state", handler);
+    onCleanup(() => window.removeEventListener("mesa:members-panel-state", handler));
+  });
 
   createEffect(() => {
     const channelId = props.channel.id;
@@ -48,10 +92,12 @@ export default function ChannelPage(props: Props) {
         if (cancelled) return;
         if (!key) {
           setPending(true);
+          setServerKey(undefined);
           setError("Sincronizando chave do Servidor…");
           await new Promise((r) => setTimeout(r, 1500));
           continue;
         }
+        setServerKey(key);
         setPending(false);
         setError("");
         try {
@@ -74,6 +120,7 @@ export default function ChannelPage(props: Props) {
               sender: row.sender_account_id,
               text: await decryptMessage(key, row.content_ciphertext),
               createdAt: row.created_at,
+              attachmentIds: row.attachment_ids ?? [],
             });
           } catch {
             decoded.push({
@@ -81,6 +128,7 @@ export default function ChannelPage(props: Props) {
               sender: row.sender_account_id,
               text: "[indeterminável]",
               createdAt: row.created_at,
+              attachmentIds: row.attachment_ids ?? [],
             });
           }
         }
@@ -101,12 +149,16 @@ export default function ChannelPage(props: Props) {
       if (!key) return;
       try {
         const text = await decryptMessage(key, String(msg.payload.content_ciphertext));
+        const attachmentIds = Array.isArray(msg.payload.attachment_ids)
+          ? (msg.payload.attachment_ids as unknown[]).map(String)
+          : [];
         setMessages((prev) => [
           ...prev,
           {
             id: String(msg.payload.id),
             sender: String(msg.payload.sender_account_id),
             text,
+            attachmentIds,
           },
         ]);
       } catch {
@@ -119,19 +171,80 @@ export default function ChannelPage(props: Props) {
     });
   });
 
+  onCleanup(() => {
+    for (const p of pendingFiles()) URL.revokeObjectURL(p.previewUrl);
+  });
+
+  function onPickFiles(list: FileList | null) {
+    if (!list?.length) return;
+    setError("");
+    const next = [...pendingFiles()];
+    for (const file of Array.from(list)) {
+      if (next.length >= MAX_ATTACHMENTS_PER_MESSAGE) {
+        setError(`Máximo de ${MAX_ATTACHMENTS_PER_MESSAGE} anexos por mensagem.`);
+        break;
+      }
+      if (!ALLOWED_MEDIA_TYPES.has(file.type)) {
+        setError("Só JPEG, PNG, WebP ou GIF.");
+        continue;
+      }
+      if (file.size > MAX_ATTACHMENT_BYTES) {
+        setError("Cada anexo pode ter no máximo 8 MiB.");
+        continue;
+      }
+      next.push({
+        localId: crypto.randomUUID(),
+        file,
+        previewUrl: URL.createObjectURL(file),
+      });
+    }
+    setPendingFiles(next);
+    if (fileInput) fileInput.value = "";
+  }
+
+  function removePending(localId: string) {
+    setPendingFiles((prev) => {
+      const victim = prev.find((p) => p.localId === localId);
+      if (victim) URL.revokeObjectURL(victim.previewUrl);
+      return prev.filter((p) => p.localId !== localId);
+    });
+  }
+
   async function send(e: Event) {
     e.preventDefault();
+    if (sending()) return;
     const key = await ensureServerKey(props.channel.server_id, props.identity, props.me.id);
     if (!key) {
       setError("Ainda sincronizando a chave.");
       return;
     }
-    const content_ciphertext = await encryptMessage(key, draft());
-    await api(`/api/channels/${props.channel.id}/messages`, {
-      method: "POST",
-      body: JSON.stringify({ content_ciphertext }),
-    });
-    setDraft("");
+    const text = draft().trim();
+    const files = pendingFiles();
+    if (!text && files.length === 0) return;
+
+    setSending(true);
+    setError("");
+    try {
+      const attachment_ids: string[] = [];
+      for (const p of files) {
+        const buf = new Uint8Array(await p.file.arrayBuffer());
+        const cipher = await encryptBytes(key, buf);
+        const meta = await uploadAttachment(props.channel.id, cipher, p.file.type);
+        attachment_ids.push(meta.id);
+      }
+      const content_ciphertext = await encryptMessage(key, text);
+      await api(`/api/channels/${props.channel.id}/messages`, {
+        method: "POST",
+        body: JSON.stringify({ content_ciphertext, attachment_ids }),
+      });
+      setDraft("");
+      for (const p of files) URL.revokeObjectURL(p.previewUrl);
+      setPendingFiles([]);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : String(err));
+    } finally {
+      setSending(false);
+    }
   }
 
   const groups = () => groupMessages(messages());
@@ -143,6 +256,17 @@ export default function ChannelPage(props: Props) {
           <div class="pane-title"># {props.channel.name}</div>
           <div class="pane-sub">Canal de texto · visível a todo o servidor</div>
         </div>
+        <button
+          type="button"
+          class="btn btn-ghost"
+          style={{ "margin-left": "auto" }}
+          disabled={!props.channel.server_id}
+          aria-expanded={membersOpen()}
+          aria-label="Membros"
+          onClick={() => toggleMembersPanel()}
+        >
+          Membros
+        </button>
         <span class="e2ee-chip">E2EE activa</span>
       </header>
       <div class="text-scroll">
@@ -151,7 +275,7 @@ export default function ChannelPage(props: Props) {
             {(g) => (
               <div class="msg-group">
                 <div class="msg-avatar">{initials(handles()[g.sender] ?? g.sender)}</div>
-                <div>
+                <div class="msg-content">
                   <div class="msg-meta">
                     {handles()[g.sender] ?? g.sender.slice(0, 8)}
                     <Show when={g.items[0]?.createdAt}>
@@ -162,21 +286,78 @@ export default function ChannelPage(props: Props) {
                       )}
                     </Show>
                   </div>
-                  <For each={g.items}>{(m) => <p class="msg-body">{m.text}</p>}</For>
+                  <For each={g.items}>
+                    {(m) => (
+                      <div class="msg-block">
+                        <Show when={m.text}>
+                          <p class="msg-body">{m.text}</p>
+                        </Show>
+                        <Show when={m.attachmentIds.length > 0}>
+                          <MessageAttachments
+                            attachmentIds={m.attachmentIds}
+                            serverKey={serverKey()}
+                          />
+                        </Show>
+                        <Show when={m.text}>
+                          <LinkPreviews text={m.text} />
+                        </Show>
+                      </div>
+                    )}
+                  </For>
                 </div>
               </div>
             )}
           </For>
         </div>
       </div>
-      <form class="composer" onSubmit={send}>
+      <Show when={pendingFiles().length > 0}>
+        <div class="composer-pending">
+          <For each={pendingFiles()}>
+            {(p) => (
+              <div class="composer-pending-item">
+                <img src={p.previewUrl} alt={p.file.name} />
+                <button
+                  type="button"
+                  class="btn btn-ghost"
+                  aria-label={`Remover ${p.file.name}`}
+                  onClick={() => removePending(p.localId)}
+                >
+                  ×
+                </button>
+              </div>
+            )}
+          </For>
+        </div>
+      </Show>
+      <form class="composer" onSubmit={(e) => void send(e)}>
+        <input
+          ref={(el) => (fileInput = el)}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          multiple
+          hidden
+          onChange={(e) => onPickFiles(e.currentTarget.files)}
+        />
+        <button
+          type="button"
+          class="btn btn-ghost"
+          disabled={pending() || pendingFiles().length >= MAX_ATTACHMENTS_PER_MESSAGE}
+          aria-label="Anexar imagem"
+          onClick={() => fileInput?.click()}
+        >
+          +
+        </button>
         <input
           class="input"
           value={draft()}
           onInput={(e) => setDraft(e.currentTarget.value)}
           placeholder="Escrever mensagem…"
         />
-        <button type="submit" class="btn btn-primary" disabled={pending()}>
+        <button
+          type="submit"
+          class="btn btn-primary"
+          disabled={pending() || sending() || (!draft().trim() && pendingFiles().length === 0)}
+        >
           Enviar
         </button>
       </form>

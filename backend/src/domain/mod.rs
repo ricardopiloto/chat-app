@@ -6,6 +6,7 @@ pub mod invite;
 pub mod key_envelope;
 pub mod membership;
 pub mod message;
+pub mod attachment;
 pub mod permissions;
 pub mod scene;
 pub mod server;

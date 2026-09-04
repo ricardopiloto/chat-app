@@ -1,6 +1,7 @@
 use crate::api::auth::session::AuthUser;
 use crate::api::channels::require_member;
 use crate::db;
+use crate::domain::attachment::MAX_ATTACHMENTS_PER_MESSAGE;
 use crate::domain::message::Message;
 use crate::error::ApiError;
 use crate::AppState;
@@ -21,6 +22,8 @@ pub struct MessageQuery {
 #[derive(Debug, Deserialize)]
 pub struct PostMessageBody {
     pub content_ciphertext: String,
+    #[serde(default)]
+    pub attachment_ids: Vec<Uuid>,
 }
 
 async fn membership_for_channel(
@@ -78,18 +81,58 @@ pub async fn post_message(
     let ciphertext = base64::engine::general_purpose::STANDARD
         .decode(body.content_ciphertext.trim())
         .map_err(|_| ApiError::bad_request("content_ciphertext must be base64"))?;
-    if ciphertext.is_empty() {
-        return Err(ApiError::bad_request("content_ciphertext required"));
+
+    if body.attachment_ids.len() > MAX_ATTACHMENTS_PER_MESSAGE {
+        return Err(ApiError::bad_request("at most 10 attachments per message"));
     }
+    if ciphertext.is_empty() && body.attachment_ids.is_empty() {
+        return Err(ApiError::bad_request(
+            "content_ciphertext or attachment_ids required",
+        ));
+    }
+
+    // Empty ciphertext allowed only with attachments — store a single zero byte marker
+    // so DB NOT NULL / consumers still have a blob; client encrypts empty string normally
+    // (non-empty AES-GCM pack). Reject truly empty decoded buffer without attachments above.
+    let stored = if ciphertext.is_empty() {
+        // Should not happen if client encrypts ""; keep guard for media-only mishaps
+        return Err(ApiError::bad_request(
+            "content_ciphertext must be non-empty base64 (encrypt empty string for media-only)",
+        ));
+    } else {
+        ciphertext
+    };
+
+    let message_id = Uuid::new_v4();
     let created = db::message::create(
         &state.pool,
-        Uuid::new_v4(),
+        message_id,
         channel_id,
         account.id,
-        &ciphertext,
+        &stored,
         Utc::now(),
     )
     .await?;
+
+    for attachment_id in &body.attachment_ids {
+        db::attachment::bind_to_message(
+            &state.pool,
+            *attachment_id,
+            message_id,
+            channel_id,
+            account.id,
+        )
+        .await
+        .map_err(|_| {
+            ApiError::bad_request(
+                "invalid attachment_id (missing, already bound, or not yours on this channel)",
+            )
+        })?;
+    }
+
+    let mut created = created;
+    created.attachment_ids = body.attachment_ids.clone();
+
     state
         .ws
         .send_to_server_members(

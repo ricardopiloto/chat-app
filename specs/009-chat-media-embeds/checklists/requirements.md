@@ -1,4 +1,4 @@
-# Specification Quality Checklist: Chrome Mesa — botões, composer, palco colapsado e membros
+# Specification Quality Checklist: Mídia e resolução de links no chat de texto
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-09-04
@@ -32,5 +32,5 @@
 
 ## Notes
 
-- Clarify 2026-09-04: palco = rail + faixa canais; membros = cabeçalho canal; troca servidor = painel aberto + refresh.
+- Clarify: E2EE anexos + unfurl server on client request; lazy on view; max 10 attachments; max 5 URLs unfurled (assumption).
 - Validation: PASS. Proceed to `/speckit-plan`.

@@ -1,4 +1,5 @@
 use std::env;
+use std::path::PathBuf;
 
 #[derive(Clone, Debug)]
 pub struct Config {
@@ -12,6 +13,8 @@ pub struct Config {
     pub session_ttl_secs: i64,
     pub cookie_secure: bool,
     pub default_invite_ttl_secs: i64,
+    /// Opaque ciphertext attachment blobs (client-encrypted).
+    pub attachments_dir: PathBuf,
 }
 
 impl Config {
@@ -37,6 +40,9 @@ impl Config {
                 .ok()
                 .and_then(|s| s.parse().ok())
                 .unwrap_or(604_800),
+            attachments_dir: env::var("ATTACHMENTS_DIR")
+                .map(PathBuf::from)
+                .unwrap_or_else(|_| PathBuf::from("./data/attachments")),
         }
     }
 }

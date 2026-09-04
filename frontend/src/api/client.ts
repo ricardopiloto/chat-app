@@ -42,7 +42,38 @@ export type Message = {
   sender_account_id: string;
   content_ciphertext: string;
   created_at: string;
+  attachment_ids?: string[];
 };
+
+export type AttachmentMeta = {
+  id: string;
+  channel_id: string;
+  message_id?: string | null;
+  uploader_account_id: string;
+  content_type: string;
+  size_bytes: number;
+  created_at: string;
+};
+
+export type UnfurlResult = {
+  url: string;
+  kind: "link" | "image" | "video" | string;
+  title?: string | null;
+  description?: string | null;
+  image_url?: string | null;
+  site_name?: string | null;
+  error?: string | null;
+};
+
+export const MAX_ATTACHMENTS_PER_MESSAGE = 10;
+export const MAX_ATTACHMENT_BYTES = 8 * 1024 * 1024;
+export const ALLOWED_MEDIA_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+]);
+
 
 export type Invite = {
   code: string;
@@ -155,7 +186,7 @@ export async function api<T>(
   init: RequestInit = {},
 ): Promise<T> {
   const headers = new Headers(init.headers);
-  if (init.body && !headers.has("content-type")) {
+  if (init.body && !headers.has("content-type") && !(init.body instanceof ArrayBuffer) && !(init.body instanceof Uint8Array) && !(init.body instanceof Blob)) {
     headers.set("content-type", "application/json");
   }
   const res = await fetch(path, { ...init, headers, credentials: "include" });
@@ -170,4 +201,52 @@ export async function api<T>(
     throw new ApiError(res.status, message, code);
   }
   return data as T;
+}
+
+export async function uploadAttachment(
+  channelId: string,
+  ciphertext: Uint8Array,
+  mediaType: string,
+): Promise<AttachmentMeta> {
+  const res = await fetch(`/api/channels/${channelId}/attachments`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/octet-stream",
+      "X-Mesa-Media-Type": mediaType,
+    },
+    body: ciphertext,
+    credentials: "include",
+  });
+  const text = await res.text();
+  const data = text ? JSON.parse(text) : null;
+  if (!res.ok) {
+    throw new ApiError(res.status, data?.message ?? data?.error ?? res.statusText, data?.code);
+  }
+  return data as AttachmentMeta;
+}
+
+export async function fetchAttachmentBlob(
+  attachmentId: string,
+): Promise<{ bytes: Uint8Array; contentType: string }> {
+  const res = await fetch(`/api/attachments/${attachmentId}`, { credentials: "include" });
+  if (!res.ok) {
+    const text = await res.text();
+    let message = res.statusText;
+    try {
+      message = JSON.parse(text)?.message ?? message;
+    } catch {
+      /* ignore */
+    }
+    throw new ApiError(res.status, message);
+  }
+  const contentType = res.headers.get("X-Mesa-Media-Type") ?? "application/octet-stream";
+  const buf = new Uint8Array(await res.arrayBuffer());
+  return { bytes: buf, contentType };
+}
+
+export async function unfurlUrl(url: string): Promise<UnfurlResult> {
+  return api<UnfurlResult>("/api/unfurl", {
+    method: "POST",
+    body: JSON.stringify({ url }),
+  });
 }

@@ -33,5 +33,9 @@ spike/token/.env
 *.sqlite3
 backend/chat.db-*
 
+# Client-encrypted message attachments
+data/attachments/
+backend/data/attachments/
+
 # OS
 .DS_Store

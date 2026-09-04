@@ -32,6 +32,7 @@ impl TestApp {
         let mut config = Config::from_env();
         config.database_url = format!("sqlite://{}?mode=rwc", db_path.display());
         config.cookie_secure = false;
+        config.attachments_dir = dir.path().join("attachments");
         let state = build_state(config).await.expect("state");
         let pool = state.pool.clone();
         Self {
@@ -60,6 +61,43 @@ impl TestApp {
         } else {
             builder.body(Body::empty()).unwrap()
         };
+        let response = self.router.clone().oneshot(req).await.unwrap();
+        let status = response.status();
+        let set_cookie = response
+            .headers()
+            .get_all("set-cookie")
+            .iter()
+            .filter_map(|v| v.to_str().ok())
+            .find(|s| s.starts_with("Session="))
+            .and_then(|s| s.split(';').next())
+            .map(str::to_string);
+        let bytes = response.into_body().collect().await.unwrap().to_bytes();
+        let json = if bytes.is_empty() {
+            Value::Null
+        } else {
+            serde_json::from_slice(&bytes).unwrap_or(Value::String(
+                String::from_utf8_lossy(&bytes).into_owned(),
+            ))
+        };
+        (status, json, set_cookie)
+    }
+
+    pub async fn request_bytes(
+        &self,
+        method: &str,
+        path: &str,
+        body: Vec<u8>,
+        extra_headers: &[(&str, &str)],
+        cookie: Option<&str>,
+    ) -> (StatusCode, Value, Option<String>) {
+        let mut builder = Request::builder().method(method).uri(path);
+        if let Some(c) = cookie {
+            builder = builder.header("cookie", c);
+        }
+        for (k, v) in extra_headers {
+            builder = builder.header(*k, *v);
+        }
+        let req = builder.body(Body::from(body)).unwrap();
         let response = self.router.clone().oneshot(req).await.unwrap();
         let status = response.status();
         let set_cookie = response

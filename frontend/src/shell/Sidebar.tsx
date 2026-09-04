@@ -31,6 +31,9 @@ type Props = {
   selectedServerId: string | null;
   onSelectServer: (server: Server | null) => void;
   onWs?: (handler: (msg: WsEnvelope) => void) => () => void;
+  stageMode?: boolean;
+  stageChannelsExpanded?: boolean;
+  onToggleStageChannels?: () => void;
 };
 
 export default function Sidebar(props: Props) {
@@ -311,6 +314,22 @@ export default function Sidebar(props: Props) {
         onContextMenu={(s, e) => openServerMenu(s, e)}
       />
       <aside class="sidebar">
+        <Show when={props.stageMode}>
+          <button
+            type="button"
+            class="sidebar-stage-expand"
+            aria-expanded={!!props.stageChannelsExpanded}
+            aria-label={
+              props.stageChannelsExpanded ? "Ocultar canais" : "Mostrar canais"
+            }
+            title={props.stageChannelsExpanded ? "Ocultar canais" : "Mostrar canais"}
+            onClick={() => props.onToggleStageChannels?.()}
+          >
+            <span class="sidebar-stage-expand-label">
+              {props.stageChannelsExpanded ? "ocultar canais" : "mostrar canais"}
+            </span>
+          </button>
+        </Show>
         <div class="sidebar-header sidebar-header-static">
           <span class="sidebar-server-name">{selected()?.name ?? "Sem servidor"}</span>
         </div>

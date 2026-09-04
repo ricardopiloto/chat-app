@@ -23,6 +23,7 @@ fn map_row(row: Row) -> Result<Message, sqlx::Error> {
         created_at: DateTime::parse_from_rfc3339(&row.created_at)
             .map_err(|e| sqlx::Error::Decode(Box::new(e)))?
             .with_timezone(&Utc),
+        attachment_ids: Vec::new(),
     })
 }
 
@@ -58,7 +59,12 @@ pub async fn find_by_id(pool: &SqlitePool, id: Uuid) -> Result<Option<Message>, 
     .bind(id.to_string())
     .fetch_optional(pool)
     .await?;
-    row.map(map_row).transpose()
+    let mut message = match row.map(map_row).transpose()? {
+        Some(m) => m,
+        None => return Ok(None),
+    };
+    message.attachment_ids = crate::db::attachment::list_ids_for_message(pool, message.id).await?;
+    Ok(Some(message))
 }
 
 pub async fn list_since(
@@ -85,7 +91,11 @@ pub async fn list_since(
     .bind(limit)
     .fetch_all(pool)
     .await?;
-    rows.into_iter().map(map_row).collect()
+    let mut messages: Vec<Message> = rows.into_iter().map(map_row).collect::<Result<_, _>>()?;
+    for message in &mut messages {
+        message.attachment_ids = crate::db::attachment::list_ids_for_message(pool, message.id).await?;
+    }
+    Ok(messages)
 }
 
 pub async fn any_contains_bytes(pool: &SqlitePool, needle: &[u8]) -> Result<bool, sqlx::Error> {

@@ -25,7 +25,7 @@ import {
   rememberChannelKey,
 } from "../crypto/channelKey";
 import { readViewMode, writeViewMode, type ViewMode } from "../preferences/uiPrefs";
-import { requestStageMode, toggleStageMode } from "../shell/AppShell";
+import { requestStageMode, toggleMembersPanel, toggleStageMode } from "../shell/AppShell";
 import { attachRemote, createTestVideoTrack, joinLiveRoom, type LiveSession } from "../video/liveClient";
 import type { RemoteTrack, Participant } from "livekit-client";
 import { useNavigate } from "@solidjs/router";
@@ -66,6 +66,7 @@ export default function VoiceChannel(props: Props) {
   const [gravarOpen, setGravarOpen] = createSignal(false);
   const [religarOpen, setReligarOpen] = createSignal(false);
   const [religarInput, setReligarInput] = createSignal("");
+  const [membersOpen, setMembersOpen] = createSignal(false);
   const slotEls = new Map<number, HTMLDivElement>();
   const gradeEls = new Map<string, HTMLDivElement>();
   const remotes = new Map<string, RemoteTrack[]>();
@@ -74,6 +75,15 @@ export default function VoiceChannel(props: Props) {
   let starting = false;
 
   const [servers] = createResource(() => api<{ id: string; owner_account_id: string }[]>("/api/servers"));
+
+  createEffect(() => {
+    const handler = (e: Event) => {
+      const open = (e as CustomEvent<{ open?: boolean }>).detail?.open;
+      if (typeof open === "boolean") setMembersOpen(open);
+    };
+    window.addEventListener("mesa:members-panel-state", handler);
+    onCleanup(() => window.removeEventListener("mesa:members-panel-state", handler));
+  });
 
   createEffect(() => {
     setE2eeEnabled(props.channel.e2ee_enabled !== false);
@@ -529,6 +539,16 @@ export default function VoiceChannel(props: Props) {
             Editar cena
           </button>
         </Show>
+        <button
+          type="button"
+          class="btn btn-ghost"
+          disabled={!props.channel.server_id}
+          aria-expanded={membersOpen()}
+          aria-label="Membros"
+          onClick={() => toggleMembersPanel()}
+        >
+          Membros
+        </button>
         <button type="button" class="btn btn-ghost" onClick={() => toggleStageMode()}>
           Modo palco
         </button>

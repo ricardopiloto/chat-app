@@ -41,10 +41,11 @@ export LIVEKIT_WS_URL=ws://127.0.0.1:7880
 export COOKIE_SECURE=false          # true atrás de HTTPS de produção
 export SESSION_TTL_SECS=604800      # 7 dias
 export DEFAULT_INVITE_TTL_SECS=604800
+export ATTACHMENTS_DIR=./data/attachments   # blobs cifrados no cliente (opaco no disco)
 cargo run
 ```
 
-`GET /health` → `{"ok":true}`. O SQLite (`chat.db`) é criado no primeiro boot. Sessão: cookie httpOnly `Session`, SameSite=Strict.
+`GET /health` → `{"ok":true}`. O SQLite (`chat.db`) é criado no primeiro boot. Sessão: cookie httpOnly `Session`, SameSite=Strict. Anexos de chat: ficheiros opacos sob `ATTACHMENTS_DIR` (não são imagens em claro).
 
 ## 3. Cliente web
 

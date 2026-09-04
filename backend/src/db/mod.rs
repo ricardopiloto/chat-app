@@ -7,6 +7,7 @@ use sqlx::{
 use std::str::FromStr;
 
 pub mod account;
+pub mod attachment;
 pub mod channel;
 pub mod channel_key;
 pub mod channel_role;

@@ -1,6 +1,7 @@
 #[path = "../common/mod.rs"]
 mod common;
 
+mod attachments;
 mod auth_register;
 mod auth_session;
 mod channels;

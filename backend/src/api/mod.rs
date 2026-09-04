@@ -2,13 +2,14 @@ use crate::api::auth::session::OptionalAuth;
 use crate::ws;
 use crate::AppState;
 use axum::extract::ws::{Message, WebSocket};
-use axum::extract::{State, WebSocketUpgrade};
+use axum::extract::{DefaultBodyLimit, State, WebSocketUpgrade};
 use axum::response::IntoResponse;
 use axum::routing::{delete, get, post};
 use axum::Router;
 use futures_util::{SinkExt, StreamExt};
 
 pub mod auth;
+pub mod attachments;
 pub mod channel_provision;
 pub mod channel_roles;
 pub mod channels;
@@ -18,6 +19,7 @@ pub mod key_envelopes;
 pub mod messages;
 pub mod scenes;
 pub mod servers;
+pub mod unfurl;
 pub mod voice;
 
 pub fn router(state: AppState) -> axum::Router {
@@ -48,6 +50,16 @@ pub fn router(state: AppState) -> axum::Router {
                     "/channels/{channel_id}/messages",
                     get(messages::list_messages).post(messages::post_message),
                 )
+                .route(
+                    "/channels/{channel_id}/attachments",
+                    post(attachments::upload_attachment)
+                        .layer(DefaultBodyLimit::max(8 * 1024 * 1024 + 64 * 1024)),
+                )
+                .route(
+                    "/attachments/{attachment_id}",
+                    get(attachments::get_attachment),
+                )
+                .route("/unfurl", post(unfurl::unfurl))
                 .route(
                     "/channels/{channel_id}",
                     get(channels::get_channel).delete(channels::delete_channel),

@@ -9,4 +9,6 @@ pub struct Message {
     pub sender_account_id: Uuid,
     pub content_ciphertext: String,
     pub created_at: DateTime<Utc>,
+    #[serde(default)]
+    pub attachment_ids: Vec<Uuid>,
 }
