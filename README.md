@@ -64,7 +64,6 @@ A **cunha de entrada** são mestres e grupos de RPG; o produto secundário é �
 
 Guia prático: [docs/operar-instancia.md](docs/operar-instancia.md) (LiveKit via Docker Compose, backend `cargo run`, SPA `npm run dev`).
 
-```textM
 
 ## Porquê E2EE?
 
