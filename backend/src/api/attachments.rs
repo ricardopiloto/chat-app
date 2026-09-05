@@ -53,7 +53,7 @@ pub async fn upload_attachment(
         return Err(ApiError::bad_request("empty attachment body"));
     }
     if body.len() > MAX_ATTACHMENT_BYTES {
-        return Err(ApiError::bad_request("attachment exceeds 8 MiB limit"));
+        return Err(ApiError::bad_request("attachment exceeds 5 MiB limit"));
     }
 
     let id = Uuid::new_v4();

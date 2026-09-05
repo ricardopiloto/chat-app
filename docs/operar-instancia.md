@@ -57,6 +57,10 @@ npm run dev
 
 Abra `https://127.0.0.1:1420` (certificado de desenvolvimento — aceite-o). No telemóvel na mesma Wi‑Fi use `https://<IP-LAN>:1420`. `http://IP` não é origem segura: `mediaDevices` fica indefinido.
 
+### Dev: proxy WebSocket `/rtc` (LiveKit)
+
+Ao **sair da sala** de voz/vídeo, o cliente faz disconnect ordenado (desliga tracks → `room.disconnect`). O proxy Vite pode ainda emitir um half-close TLS (`This socket has been ended by the other party`) inofensivo; o logger de desenvolvimento filtra **só** essa mensagem exacta em `ws proxy error`. Outros erros de proxy `/ws` ou `/rtc` continuam visíveis. Produção sem Vite não usa este proxy. Ver [025-ws-disconnect-proxy](../specs/025-ws-disconnect-proxy/).
+
 ## 4. Primeiro uso
 
 1. Instância vazia: cadastre a primeira conta (identificador + senha ≥ 8). Essa conta é o operador inicial.
@@ -80,7 +84,7 @@ Cenas de câmara (Fase 2) não abrem portas novas: são só composições da gra
 
 A SPA (Fase 3) segue o visual **Mesa / Nocturne** (tema claro/escuro, shell com sidebar). Não há portas nem processos novos — só o frontend em `1420` (dev) ou o estático servido com a API.
 
-Layouts de cena nomeados (**Mestre em destaque**, **Painel 2×2**, **Faixa 5-up**) podem usar até **5** slots; isso continua só dados SQLite + API, sem portas novas.
+Layouts de cena (**Mestre em destaque**, **Painel**, **Faixa N-up**) aceitam **2–8** câmeras/slots por cena; a família de layout e o número são independentes. Continuam só dados SQLite + API, sem portas novas.
 
 ## Gravar cena / E2EE (Fase 006)
 

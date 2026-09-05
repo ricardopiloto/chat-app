@@ -23,6 +23,8 @@ export function writeTheme(theme: Theme): void {
 }
 
 export function applyTheme(theme: Theme, root: HTMLElement | null = document.querySelector(".app")): void {
+  // Always mirror on <html> so Portal fallbacks (body) and any outside-.app UI inherit light tokens.
+  document.documentElement.setAttribute("data-theme", theme);
   if (!root) return;
   root.setAttribute("data-theme", theme);
 }

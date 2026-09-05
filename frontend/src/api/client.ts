@@ -66,7 +66,7 @@ export type UnfurlResult = {
 };
 
 export const MAX_ATTACHMENTS_PER_MESSAGE = 10;
-export const MAX_ATTACHMENT_BYTES = 8 * 1024 * 1024;
+export const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
 export const ALLOWED_MEDIA_TYPES = new Set([
   "image/jpeg",
   "image/png",
@@ -140,6 +140,20 @@ export type EgressStart = {
 
 export async function deleteChannel(channelId: string): Promise<void> {
   await api<void>(`/api/channels/${channelId}`, { method: "DELETE" });
+}
+
+export async function deleteMessage(channelId: string, messageId: string): Promise<void> {
+  await api<void>(`/api/channels/${channelId}/messages/${messageId}`, { method: "DELETE" });
+}
+
+/** Mirror of server ACL for showing the Apagar control. */
+export function canDeleteMessage(
+  meId: string,
+  senderId: string,
+  channelCreatedBy: string,
+  serverOwnerId: string,
+): boolean {
+  return meId === senderId || meId === channelCreatedBy || meId === serverOwnerId;
 }
 
 export async function deleteServer(serverId: string): Promise<void> {

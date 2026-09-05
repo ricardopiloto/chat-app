@@ -13,3 +13,15 @@ pub fn is_channel_admin(server_owner_id: Uuid, account_id: Uuid) -> bool {
 pub fn can_activate_scene(server_owner_id: Uuid, account_id: Uuid, _is_co_director: bool) -> bool {
     is_channel_admin(server_owner_id, account_id)
 }
+
+/// Text-message delete ACL: author, channel creator, or server owner.
+pub fn can_delete_text_message(
+    caller_id: Uuid,
+    sender_account_id: Uuid,
+    channel_created_by: Uuid,
+    server_owner_id: Uuid,
+) -> bool {
+    caller_id == sender_account_id
+        || caller_id == channel_created_by
+        || is_server_owner(server_owner_id, caller_id)
+}

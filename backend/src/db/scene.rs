@@ -259,8 +259,9 @@ pub async fn create_default(
     channel_id: Uuid,
     slot_count: i64,
 ) -> Result<Scene, sqlx::Error> {
+    use crate::domain::grid::{MAX_SCENE_SLOTS, MIN_SCENE_SLOTS};
+    let slot_count = slot_count.clamp(MIN_SCENE_SLOTS, MAX_SCENE_SLOTS);
     let layout_key = LayoutKey::from_slot_count(slot_count);
-    let slot_count = layout_key.slot_count();
     let now = Utc::now();
     let scene = Scene {
         id: Uuid::new_v4(),

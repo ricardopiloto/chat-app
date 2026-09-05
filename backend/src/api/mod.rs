@@ -51,9 +51,13 @@ pub fn router(state: AppState) -> axum::Router {
                     get(messages::list_messages).post(messages::post_message),
                 )
                 .route(
+                    "/channels/{channel_id}/messages/{message_id}",
+                    delete(messages::delete_message),
+                )
+                .route(
                     "/channels/{channel_id}/attachments",
                     post(attachments::upload_attachment)
-                        .layer(DefaultBodyLimit::max(8 * 1024 * 1024 + 64 * 1024)),
+                        .layer(DefaultBodyLimit::max(5 * 1024 * 1024 + 64 * 1024)),
                 )
                 .route(
                     "/attachments/{attachment_id}",

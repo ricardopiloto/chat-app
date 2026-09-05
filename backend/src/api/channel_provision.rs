@@ -23,8 +23,8 @@ pub async fn provision_channel(
     let grid_slot_count = match kind {
         ChannelType::VoiceVideo => {
             let n = grid_slot_count.unwrap_or(4);
-            if !(2..=4).contains(&n) {
-                return Err(ApiError::bad_request("grid_slot_count must be 2–4"));
+            if !(2..=8).contains(&n) {
+                return Err(ApiError::bad_request("grid_slot_count must be 2–8"));
             }
             Some(n)
         }

@@ -2,7 +2,9 @@ use crate::api::auth::session::AuthUser;
 use crate::api::channels::require_member;
 use crate::db;
 use crate::domain::attachment::MAX_ATTACHMENTS_PER_MESSAGE;
+use crate::domain::channel::ChannelType;
 use crate::domain::message::Message;
+use crate::domain::permissions;
 use crate::error::ApiError;
 use crate::AppState;
 use axum::extract::{Path, Query, State};
@@ -11,7 +13,7 @@ use axum::response::IntoResponse;
 use axum::Json;
 use base64::Engine;
 use chrono::{DateTime, Utc};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(Debug, Deserialize)]
@@ -143,4 +145,67 @@ pub async fn post_message(
         )
         .await;
     Ok((StatusCode::CREATED, Json(created)))
+}
+
+#[derive(Debug, Serialize)]
+struct MessageDeletedPayload {
+    id: Uuid,
+    channel_id: Uuid,
+}
+
+pub async fn delete_message(
+    State(state): State<AppState>,
+    AuthUser(account): AuthUser,
+    Path((channel_id, message_id)): Path<(Uuid, Uuid)>,
+) -> Result<StatusCode, ApiError> {
+    let (channel, _) = membership_for_channel(&state.pool, account.id, channel_id).await?;
+    if channel.kind != ChannelType::Text {
+        return Err(ApiError::not_found("message not found"));
+    }
+
+    let server = db::server::find_by_id(&state.pool, channel.server_id)
+        .await?
+        .ok_or_else(|| ApiError::not_found("server not found"))?;
+
+    let message = db::message::find_by_id(&state.pool, message_id)
+        .await?
+        .ok_or_else(|| ApiError::not_found("message not found"))?;
+    if message.channel_id != channel_id {
+        return Err(ApiError::not_found("message not found"));
+    }
+
+    if !permissions::can_delete_text_message(
+        account.id,
+        message.sender_account_id,
+        channel.created_by_account_id,
+        server.owner_account_id,
+    ) {
+        return Err(ApiError::forbidden("not allowed to delete this message"));
+    }
+
+    db::attachment::delete_files_for_message(
+        &state.pool,
+        &state.config.attachments_dir,
+        message_id,
+    )
+    .await
+    .map_err(|_| ApiError::internal("failed to remove attachment files"))?;
+
+    let deleted = db::message::delete_by_id(&state.pool, message_id, channel_id)
+        .await
+        .map_err(|_| ApiError::internal("failed to delete message"))?;
+    if !deleted {
+        return Err(ApiError::not_found("message not found"));
+    }
+
+    let payload = MessageDeletedPayload {
+        id: message_id,
+        channel_id,
+    };
+    state
+        .ws
+        .send_to_server_members(&state.pool, channel.server_id, "message.deleted", &payload)
+        .await;
+
+    Ok(StatusCode::NO_CONTENT)
 }

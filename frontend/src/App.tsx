@@ -11,6 +11,7 @@ import {
   type Identity,
 } from "./crypto/identity";
 import { handleHandoffEvent, loadAllServerKeys } from "./crypto/keyHandoff";
+import { markUnseen, removeChannel } from "./preferences/notifications";
 import AppShell from "./shell/AppShell";
 import { bootTheme } from "./theme/theme";
 import Auth from "./pages/Auth";
@@ -89,6 +90,14 @@ export default function App() {
     void loadAllServerKeys(id, account.id);
     const ws = connectWs((msg) => {
       void handleHandoffEvent(msg, id, account.id);
+      if (msg.event === "message.new") {
+        const channelId = String(msg.payload.channel_id ?? "");
+        const focused = window.location.pathname.startsWith(`/channels/${channelId}`);
+        if (channelId && !focused) markUnseen(channelId);
+      }
+      if (msg.event === "channel.deleted") {
+        removeChannel(String(msg.payload.id ?? msg.payload.channel_id ?? ""));
+      }
       listeners.forEach((h) => h(msg));
     });
     onCleanup(() => ws.close());

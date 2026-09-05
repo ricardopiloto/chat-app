@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "postinstall": "bash scripts/vendor-mediapipe.sh",
     "dev": "vite --host",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host",
@@ -11,6 +12,7 @@
     "format": "prettier --write src"
   },
   "dependencies": {
+    "@livekit/track-processors": "^0.7.2",
     "@noble/hashes": "^1.8.0",
     "@solidjs/router": "^0.15.3",
     "hash-wasm": "^4.12.0",

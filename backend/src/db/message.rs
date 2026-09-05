@@ -98,6 +98,19 @@ pub async fn list_since(
     Ok(messages)
 }
 
+pub async fn delete_by_id(
+    pool: &SqlitePool,
+    message_id: Uuid,
+    channel_id: Uuid,
+) -> Result<bool, sqlx::Error> {
+    let result = sqlx::query("DELETE FROM message WHERE id = ? AND channel_id = ?")
+        .bind(message_id.to_string())
+        .bind(channel_id.to_string())
+        .execute(pool)
+        .await?;
+    Ok(result.rows_affected() > 0)
+}
+
 pub async fn any_contains_bytes(pool: &SqlitePool, needle: &[u8]) -> Result<bool, sqlx::Error> {
     let (n,): (i64,) = sqlx::query_as(
         "SELECT COUNT(*) FROM message WHERE instr(content_ciphertext, ?) > 0",

@@ -121,3 +121,23 @@ pub async fn bind_to_message(
     }
     Ok(())
 }
+
+/// Remove ciphertext files for attachments bound to a message (DB rows cascade separately).
+pub async fn delete_files_for_message(
+    pool: &SqlitePool,
+    attachments_dir: &std::path::Path,
+    message_id: Uuid,
+) -> Result<(), sqlx::Error> {
+    let ids = list_ids_for_message(pool, message_id).await?;
+    for id in ids {
+        let path = attachments_dir.join(id.to_string());
+        match tokio::fs::remove_file(&path).await {
+            Ok(()) => {}
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+            Err(e) => {
+                tracing::warn!(%id, error = %e, "failed to remove attachment file");
+            }
+        }
+    }
+    Ok(())
+}

@@ -1,8 +1,10 @@
-import { Show, createResource } from "solid-js";
+import { Show, createEffect, createResource, onCleanup } from "solid-js";
 import { useParams, useSearchParams } from "@solidjs/router";
 import { api, type Account, type Channel } from "../api/client";
 import type { WsEnvelope } from "../api/ws";
 import type { Identity } from "../crypto/identity";
+import { setActiveChannel } from "../preferences/activeChannel";
+import { markSeen } from "../preferences/notifications";
 import ChannelPage from "./Channel";
 import VoiceChannel from "./VoiceChannel";
 
@@ -15,6 +17,12 @@ type Props = {
 export default function ChannelRoute(props: Props) {
   const params = useParams();
   const [search] = useSearchParams();
+
+  createEffect(() => {
+    const id = params.id;
+    if (id) markSeen(id);
+  });
+
   const [channel] = createResource(
     () => ({
       id: params.id,
@@ -31,6 +39,16 @@ export default function ChannelRoute(props: Props) {
       }
     },
   );
+
+  createEffect(() => {
+    const ch = channel();
+    if (ch) {
+      setActiveChannel({ id: ch.id, name: ch.name, type: ch.type });
+    } else if (!channel.loading) {
+      setActiveChannel(null);
+    }
+    onCleanup(() => setActiveChannel(null));
+  });
 
   return (
     <Show when={!channel.loading} fallback={<p class="main">A carregar canal…</p>}>
@@ -52,4 +70,3 @@ export default function ChannelRoute(props: Props) {
     </Show>
   );
 }
-

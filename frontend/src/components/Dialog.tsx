@@ -1,4 +1,4 @@
-import { For, Show, createSignal, type JSX } from "solid-js";
+import { For, Show, createEffect, createSignal, onCleanup, type JSX } from "solid-js";
 import { Portal } from "solid-js/web";
 
 type Props = {
@@ -9,10 +9,27 @@ type Props = {
   actions?: JSX.Element;
 };
 
+/** Prefer `.app` so dialog inherits `data-theme` tokens (light overrides live on `.app`). */
+function dialogMount(): Node {
+  return document.querySelector(".app") ?? document.body;
+}
+
 export default function Dialog(props: Props) {
+  createEffect(() => {
+    if (!props.open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        props.onClose();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    onCleanup(() => window.removeEventListener("keydown", onKey));
+  });
+
   return (
     <Show when={props.open}>
-      <Portal>
+      <Portal mount={dialogMount()}>
         <div
           class="dialog-backdrop"
           role="presentation"
@@ -78,7 +95,5 @@ export function OptionList<T>(props: {
   items: T[];
   render: (item: T) => JSX.Element;
 }) {
-  return (
-    <For each={props.items}>{(item) => props.render(item)}</For>
-  );
+  return <For each={props.items}>{(item) => props.render(item)}</For>;
 }

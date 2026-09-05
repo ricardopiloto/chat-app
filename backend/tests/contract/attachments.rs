@@ -62,7 +62,7 @@ async fn upload_rejects_bad_mime() {
 async fn upload_rejects_oversize() {
     let app = TestApp::new().await;
     let (alice, channel_id) = alice_text_channel(&app).await;
-    let big = vec![0u8; 8 * 1024 * 1024 + 1];
+    let big = vec![0u8; 5 * 1024 * 1024 + 1];
     let (status, body, _) = app
         .request_bytes(
             "POST",

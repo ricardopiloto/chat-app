@@ -12,6 +12,7 @@ import {
   writeStageMode,
 } from "../preferences/uiPrefs";
 import { bootTheme } from "../theme/theme";
+import ToastHost from "../components/ToastHost";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 
@@ -157,11 +158,14 @@ export default function AppShell(props: Props) {
   return (
     <div class="app" data-theme="dark" ref={(el) => (appRef = el)}>
       <TopBar
-        handle={props.me.handle}
+        me={props.me}
+        identity={props.identity}
         onLogout={props.onLogout}
         showMenuToggle={narrow()}
         onMenuToggle={toggleMenu}
+        onWs={props.onWs}
       />
+      <ToastHost />
       <div class={shellClass()}>
         <button
           type="button"

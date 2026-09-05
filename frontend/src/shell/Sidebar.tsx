@@ -22,6 +22,9 @@ import {
 import { publishOwnEnvelope } from "../crypto/keyHandoff";
 import type { Identity } from "../crypto/identity";
 import Dialog, { useCopiedFeedback } from "../components/Dialog";
+import IconPlus from "../components/icons/IconPlus";
+import IconUserPlus from "../components/icons/IconUserPlus";
+import IconVoiceChannel from "../components/icons/IconVoiceChannel";
 import ContextMenu, { bindLongPress, type MenuState } from "./ContextMenu";
 import ServerRail from "./ServerRail";
 
@@ -332,6 +335,17 @@ export default function Sidebar(props: Props) {
         </Show>
         <div class="sidebar-header sidebar-header-static">
           <span class="sidebar-server-name">{selected()?.name ?? "Sem servidor"}</span>
+          <Show when={selected() && isOwner()}>
+            <button
+              type="button"
+              class="pane-icon-btn sidebar-invite-btn"
+              aria-label="Convite"
+              title="Convite"
+              onClick={() => void createInvite(false)}
+            >
+              <IconUserPlus size={20} />
+            </button>
+          </Show>
         </div>
 
         <nav class="sidebar-nav">
@@ -346,7 +360,7 @@ export default function Sidebar(props: Props) {
                   title="Criar canal de texto"
                   onClick={() => openCreateChannel("text")}
                 >
-                  +
+                  <IconPlus title="Criar canal de texto" size={18} />
                 </button>
               </Show>
             </div>
@@ -384,7 +398,7 @@ export default function Sidebar(props: Props) {
                   title="Criar canal de voz e vídeo"
                   onClick={() => openCreateChannel("voice_video")}
                 >
-                  +
+                  <IconPlus title="Criar canal de voz e vídeo" size={18} />
                 </button>
               </Show>
             </div>
@@ -406,23 +420,15 @@ export default function Sidebar(props: Props) {
                     onCleanup(unbind);
                   }}
                 >
-                  <span class="prefix">▸</span>
+                  <span class="prefix channel-icon" aria-hidden="true">
+                    <IconVoiceChannel size={18} />
+                  </span>
                   <span>{c.name}</span>
                 </A>
               )}
             </For>
           </Show>
 
-          <div class="sidebar-actions">
-            <button
-              type="button"
-              class="btn btn-ghost"
-              disabled={!selected()}
-              onClick={() => void createInvite(false)}
-            >
-              Convite
-            </button>
-          </div>
           <p class="error" style={{ padding: "0 8px" }}>
             {error()}
           </p>
@@ -492,6 +498,11 @@ export default function Sidebar(props: Props) {
               </div>
             )}
           </Show>
+          <Show when={createServerOpen() && error()}>
+            <p class="error" role="alert">
+              {error()}
+            </p>
+          </Show>
         </form>
       </Dialog>
 
@@ -553,6 +564,11 @@ export default function Sidebar(props: Props) {
               </div>
             )}
           </Show>
+          <Show when={createChannelOpen() && error()}>
+            <p class="error" role="alert">
+              {error()}
+            </p>
+          </Show>
         </form>
       </Dialog>
 
@@ -572,7 +588,7 @@ export default function Sidebar(props: Props) {
         }
       >
         <p class="muted">Ligação copiada para a área de transferência quando possível.</p>
-        <input class="input" readonly value={inviteUrl()} />
+        <input class="input invite-code" readonly value={inviteUrl()} />
       </Dialog>
 
       <Dialog

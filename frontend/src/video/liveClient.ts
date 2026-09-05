@@ -1,4 +1,4 @@
-import { Room, RoomEvent, Track, type LocalTrack, type RemoteTrack, type Participant } from "livekit-client";
+import { Room, RoomEvent, Track, type LocalTrack, type LocalVideoTrack, type RemoteTrack, type Participant } from "livekit-client";
 import { ExternalE2EEKeyProvider } from "livekit-client";
 
 export type LiveSession = {
@@ -55,7 +55,7 @@ export async function joinLiveRoom(opts: {
   /** Media key: channel key when present, else server key (legacy). */
   mediaKey: Uint8Array;
   e2eeEnabled?: boolean;
-  localVideo?: MediaStreamTrack;
+  localVideo?: MediaStreamTrack | LocalVideoTrack;
   localAudio?: MediaStreamTrack;
   onTrack: (track: RemoteTrack, participant: Participant) => void;
   onLocalTrack: (el: HTMLMediaElement, kind: "video" | "audio") => void;
@@ -105,8 +105,17 @@ export async function joinLiveRoom(opts: {
       await applyKey(keyProvider, key);
     },
     disconnect: async () => {
-      await room.disconnect();
-      worker.terminate();
+      try {
+        const lp = room.localParticipant;
+        await Promise.allSettled([
+          lp.setCameraEnabled(false),
+          lp.setMicrophoneEnabled(false),
+        ]);
+        // stopTracks=true; await full signaling close before killing E2EE worker
+        await room.disconnect(true);
+      } finally {
+        worker.terminate();
+      }
     },
   };
 }

@@ -1,6 +1,6 @@
 import { Index, Show } from "solid-js";
 import type { GridLayout } from "../api/client";
-import { cellStyle, layoutOf, type LayoutKey } from "./sceneLayouts";
+import { cellStyle, layoutGeometry, type LayoutKey } from "./sceneLayouts";
 
 type Props = {
   grid: GridLayout;
@@ -12,7 +12,8 @@ type Props = {
 
 export default function CameraGrid(props: Props) {
   const isGrade = () => (props.gradeIdentities?.length ?? 0) > 0;
-  const named = () => layoutOf(props.grid.layout_key);
+  const named = () =>
+    layoutGeometry(props.grid.layout_key, props.grid.slot_count || props.grid.slots.length || 4);
   const gradeCount = () => props.gradeIdentities?.length ?? 0;
   const gradeCols = () => Math.min(3, Math.max(1, gradeCount()));
   const gradeRows = () => Math.ceil(Math.max(1, gradeCount()) / gradeCols());
@@ -32,7 +33,11 @@ export default function CameraGrid(props: Props) {
             {(slot) => (
               <div
                 class="slot"
-                style={cellStyle((props.grid.layout_key ?? "quad") as LayoutKey, slot().index)}
+                style={cellStyle(
+                  (props.grid.layout_key ?? "quad") as LayoutKey,
+                  slot().index,
+                  props.grid.slot_count || props.grid.slots.length || 4,
+                )}
               >
                 <div class="chip">
                   <Show when={slot().account_id} fallback={`Slot ${slot().index + 1}`}>

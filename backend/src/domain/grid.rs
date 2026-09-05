@@ -1,6 +1,10 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+/// Inclusive bounds for scene / voice grid slot counts (018).
+pub const MIN_SCENE_SLOTS: i64 = 2;
+pub const MAX_SCENE_SLOTS: i64 = 8;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum AssignedBy {
@@ -25,7 +29,7 @@ impl AssignedBy {
     }
 }
 
-/// Named composition layouts from Mesa Nocturne prototype.
+/// Named composition layout *families* — slot count is orthogonal (2–8).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum LayoutKey {
@@ -52,17 +56,19 @@ impl LayoutKey {
         }
     }
 
-    pub fn slot_count(self) -> i64 {
-        match self {
-            Self::Mestre | Self::Faixa => 5,
-            Self::Quad => 4,
-        }
-    }
-
+    /// Legacy default when only a slot count is known (e.g. missing layout_key in DB).
     pub fn from_slot_count(slot_count: i64) -> Self {
         match slot_count {
             5 => Self::Mestre,
             _ => Self::Quad,
+        }
+    }
+
+    /// Suggested default N when creating a scene of this family (not a hard catalog lock).
+    pub fn default_slot_count(self) -> i64 {
+        match self {
+            Self::Mestre | Self::Faixa => 5,
+            Self::Quad => 4,
         }
     }
 }
@@ -91,11 +97,8 @@ pub struct GridSlot {
 
 pub fn validate_layout(body: &GridLayout) -> Result<Vec<(i64, Option<Uuid>)>, &'static str> {
     use std::collections::HashSet;
-    if body.slot_count != body.layout_key.slot_count() {
-        return Err("slot_count must match layout_key catalog");
-    }
-    if !(2..=5).contains(&body.slot_count) {
-        return Err("slot_count must be 2–5");
+    if !(MIN_SCENE_SLOTS..=MAX_SCENE_SLOTS).contains(&body.slot_count) {
+        return Err("slot_count must be 2–8");
     }
     if i64::try_from(body.slots.len()).unwrap_or(0) != body.slot_count {
         return Err("slots length must equal slot_count");
