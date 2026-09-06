@@ -163,7 +163,7 @@ Como membro que usa os dois controlos no mesmo ecrã, quero que os dois ícones 
 ## Assumptions
 
 - O sistema de ícones da 012 (mesmo traço e peso) é o sítio certo para estes dois símbolos; não se introduzem pictogramas de outro estilo.
-- Ícone só + dica ao pairar é o padrão certo aqui (como pesquisa e sino), **não** ícone+texto como nos controlos de chamada (microfone/câmara), que são de alto risco ao vivo.
+- Ícone só + dica ao pairar é o padrão certo aqui (como pesquisa e sino), **não** ícone+texto como nos controlos de chamada (microfone/câmera), que são de alto risco ao vivo.
 - Só o dono do servidor pode gerar convites (regra já existente); o chrome passa a mostrar o ícone **apenas** a esse dono, em vez de o oferecer a todos e falhar ao clicar.
 - Em palco colapsado, perder temporariamente o cabeçalho do servidor (e o convite) é aceitável — é o mesmo chrome que já desaparece.
 - Distinguir as duas metáforas (grupo vs pessoa+) é suficiente; não é necessário texto visível para as separar.

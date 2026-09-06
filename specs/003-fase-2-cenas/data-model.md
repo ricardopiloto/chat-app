@@ -66,7 +66,7 @@ Mapa de uma cena. Mesmas regras de ocupação da Fase 1, no âmbito da cena.
 
 PK `(scene_id, slot_index)`.
 
-Reduzir `slot_count`: apagar índices `>= novo_count`; contas nesses slots ficam sem câmara nesta cena até remapear.
+Reduzir `slot_count`: apagar índices `>= novo_count`; contas nesses slots ficam sem câmera nesta cena até remapear.
 
 Conta que saiu do Servidor: `account_id` pode ficar stale; ao renderizar, tratar como vazio (edge spec) — opcionalmente NULL no próximo PUT.
 

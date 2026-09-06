@@ -22,7 +22,7 @@ Validação manual do sistema de ícones, tipografia e das novas funções da to
 1. Entrar num canal de voz.
 2. Alternar o microfone várias vezes.
 3. **Esperado**: o botão mantém a mesma largura e o mesmo rótulo de texto (num só idioma) em ambos os estados; só o ícone (`IconMicOn`/`IconMicOff`) muda de forma.
-4. Repetir para a câmara (`IconCameraOn`/`IconCameraOff`).
+4. Repetir para a câmera (`IconCameraOn`/`IconCameraOff`).
 5. Verificar o botão "Sair" — `IconPhoneHangup` visível junto ao rótulo.
 6. Com um leitor de ecrã (ou inspecionando `aria-label` no DevTools), confirmar que o nome acessível do botão muda entre "Microfone ligado"/"Microfone desligado" mesmo com o rótulo visível fixo.
 

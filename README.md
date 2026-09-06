@@ -136,7 +136,7 @@ O frontend (`frontend/src/api/client.ts`) fala JSON; erros tipicamente `{ "error
 |--------|---------|--------|
 | `POST` | `/api/channels/{id}/voice/join` | Token LiveKit (segredo de API **nunca** no browser); upsert ocupação; move se já noutra mesa |
 | `POST` | `/api/channels/{id}/voice/leave` | Sai da mesa; liberta slot da grade; 204 |
-| `PATCH` | `/api/channels/{id}/voice/media` | Mic/câmara (e heartbeat); 403 se não ocupante |
+| `PATCH` | `/api/channels/{id}/voice/media` | Mic/câmera (e heartbeat); 403 se não ocupante |
 | `GET` | `/api/servers/{id}/voice-occupancy` | Snapshot da ocupação de voz do servidor |
 | `POST` | `/api/channels/{id}/voice/e2ee` | Ligar/desligar E2EE + auditoria |
 | `POST` | `/api/channels/{id}/egress/start` \| `.../stop` | Gravar / parar (com compensação) |

@@ -19,9 +19,9 @@ Contratos: [voice-occupancy-avatars.md](./contracts/voice-occupancy-avatars.md).
 
 ## Manual — User Story 1 (lista de voz)
 
-1. A (com foto) junta-se à mesa com mic ou câmara ligados.
+1. A (com foto) junta-se à mesa com mic ou câmera ligados.
 2. B, num canal de **texto**, vê A aninhado sob o canal de voz **com a foto de A** à esquerda do handle (&lt;3 s).
-3. A desliga mic e câmara → a linha some; o cronómetro continua (028).
+3. A desliga mic e câmera → a linha some; o cronómetro continua (028).
 4. Conta sem foto a transmitir → iniciais no círculo, mesmo tamanho.
 
 ## Manual — User Story 4 (canal de texto)

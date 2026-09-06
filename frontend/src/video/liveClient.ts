@@ -79,14 +79,14 @@ export async function joinLiveRoom(opts: {
   await room.connect(browserLivekitUrl(opts.url), opts.token);
   const e2eeOn = opts.e2eeEnabled !== false;
   await room.setE2EEEnabled(e2eeOn);
+  // Only publish pre-captured tracks. Do not auto-enable camera when absent
+  // (audio-only join / cam soft-fail — 031). Mic falls back to enable if no track.
   if (opts.localVideo) {
     await room.localParticipant.publishTrack(opts.localVideo, { source: Track.Source.Camera });
-  } else {
-    await room.localParticipant.setCameraEnabled(true);
   }
   if (opts.localAudio) {
     await room.localParticipant.publishTrack(opts.localAudio, { source: Track.Source.Microphone });
-  } else if (!opts.localVideo) {
+  } else {
     await room.localParticipant.setMicrophoneEnabled(true);
   }
   room.localParticipant.videoTrackPublications.forEach((pub) => {
@@ -107,6 +107,8 @@ export async function joinLiveRoom(opts: {
     disconnect: async () => {
       try {
         const lp = room.localParticipant;
+        // 035: hangup may already have stopped tracks via releaseLocalCapture;
+        // disable + disconnect(true) remains idempotent.
         await Promise.allSettled([
           lp.setCameraEnabled(false),
           lp.setMicrophoneEnabled(false),

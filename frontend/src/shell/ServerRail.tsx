@@ -27,8 +27,20 @@ export default function ServerRail(props: Props) {
             <button
               type="button"
               class={`server-rail-btn${s.id === props.selectedId ? " active" : ""}`}
+              classList={{
+                "has-unread": !!s.has_unread,
+                "has-voice": !!s.has_voice,
+              }}
               title={s.name}
-              aria-label={s.name}
+              aria-label={
+                [
+                  s.name,
+                  s.has_unread ? "mensagens não lidas" : null,
+                  s.has_voice ? "voz activa" : null,
+                ]
+                  .filter(Boolean)
+                  .join(", ")
+              }
               aria-current={s.id === props.selectedId ? "true" : undefined}
               onClick={() => props.onSelect(s)}
               onContextMenu={(e) => {
@@ -36,6 +48,9 @@ export default function ServerRail(props: Props) {
                 props.onContextMenu?.(s, e);
               }}
             >
+              <Show when={s.has_unread}>
+                <span class="server-rail-unread" aria-hidden="true" />
+              </Show>
               <Show
                 when={s.has_image}
                 fallback={<span class="server-rail-glyph">{initials(s.name)}</span>}
@@ -46,6 +61,9 @@ export default function ServerRail(props: Props) {
                   alt=""
                   draggable={false}
                 />
+              </Show>
+              <Show when={s.has_voice}>
+                <span class="server-rail-voice" aria-hidden="true" />
               </Show>
             </button>
           )}

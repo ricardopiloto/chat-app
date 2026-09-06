@@ -35,7 +35,7 @@ Como programador (ou operador a correr a SPA em modo desenvolvimento), quero que
 
 ### User Story 2 - Entender se o erro afecta a experiência na chamada (Priority: P1)
 
-Como participante, quero que **sair da sala** continue a libertar microfone/câmara e a terminar a sessão de média de forma limpa, independentemente de o ruído ser só no proxy de desenvolvimento.
+Como participante, quero que **sair da sala** continue a libertar microfone/câmera e a terminar a sessão de média de forma limpa, independentemente de o ruído ser só no proxy de desenvolvimento.
 
 **Why this priority**: A investigação não deve «silenciar logs» e deixar um disconnect real a falhar.
 
@@ -43,7 +43,7 @@ Como participante, quero que **sair da sala** continue a libertar microfone/câm
 
 **Acceptance Scenarios**:
 
-1. **Given** estou em chamada com microfone e/ou câmara activos, **When** saio, **Then** deixo de estar na chamada na UI e os dispositivos deixam de estar publicados na sala.
+1. **Given** estou em chamada com microfone e/ou câmera activos, **When** saio, **Then** deixo de estar na chamada na UI e os dispositivos deixam de estar publicados na sala.
 2. **Given** acabei de sair, **When** outro participante (ou eu noutra sessão) observa a sala, **Then** já não apareço como participante activo após um intervalo curto razoável.
 
 ---

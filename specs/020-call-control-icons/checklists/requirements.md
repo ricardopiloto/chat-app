@@ -31,4 +31,4 @@
 
 ## Notes
 
-- Validation pass (2026-09-04): UI-only polish; Discord split reference documented. Clarifications: Sair = ícone + texto «Sair» em vermelho; Microfone/Câmara = tooltip ao pairar/foco. Ready for `/speckit-plan`.
+- Validation pass (2026-09-04): UI-only polish; Discord split reference documented. Clarifications: Sair = ícone + texto «Sair» em vermelho; Microfone/Câmera = tooltip ao pairar/foco. Ready for `/speckit-plan`.

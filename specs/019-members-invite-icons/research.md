@@ -48,4 +48,4 @@
 
 **Rationale**: FR-002/004/SC-004; padrão TopBar (pesquisa/sino).
 
-**Alternatives considered**: Ícone+texto no canal — rejeitado (spec: ícone só, como pesquisa, não como mic/câmara).
+**Alternatives considered**: Ícone+texto no canal — rejeitado (spec: ícone só, como pesquisa, não como mic/câmera).

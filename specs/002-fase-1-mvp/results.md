@@ -24,7 +24,7 @@ Corrido em 2026-09-04 no host Fedora (Zen) + telemóvel na mesma LAN. LiveKit co
 | Check | Result |
 |-------|--------|
 | US1 instância no ar, primeira conta, SPA HTTPS em `:1420` | pass (operador) |
-| US3 duas contas em dois dispositivos, câmara+microfone, A/V nos dois sentidos | pass |
+| US3 duas contas em dois dispositivos, câmera+microfone, A/V nos dois sentidos | pass |
 | US4 dono edita a composição da grade (slots / posições) | pass |
 | US3 rejoin no mesmo slot / mesma conta em dois aparelhos / retrato SC-005 | não exercitado à parte |
 | US2 convite com/sem histórico na UI (contratos já cobertos por `cargo test`) | não refeito à mão nesta sessão |

@@ -8,6 +8,7 @@ import {
   api,
   canDeleteMessage,
   deleteMessage,
+  markChannelRead,
   uploadAttachment,
   type Account,
   type Channel,
@@ -484,6 +485,11 @@ export default function ChannelPage(props: Props) {
         method: "POST",
         body: JSON.stringify({ content_ciphertext, attachment_ids }),
       });
+      void markChannelRead(props.channel.id)
+        .then(() => {
+          window.dispatchEvent(new CustomEvent("mesa:servers-refresh"));
+        })
+        .catch(() => {});
       setDraft("");
       for (const p of files) URL.revokeObjectURL(p.previewUrl);
       setPendingFiles([]);

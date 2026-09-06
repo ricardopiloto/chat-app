@@ -10,7 +10,7 @@ Pessoa **na chamada** (mesa activa) de um canal `voice_video`.
 | `channel_id` | Canal de voz/vídeo |
 | `server_id` | Denormalizado para fan-out WS / GET por servidor |
 | `mic_on` | Microfone publicado / ligado |
-| `cam_on` | Câmara publicada / ligada |
+| `cam_on` | Câmera publicada / ligada |
 | `joined_at` | Instante em que esta pessoa entrou nesta mesa (não é o início da sessão) |
 | `last_seen_at` | Heartbeat; expiry se stale |
 

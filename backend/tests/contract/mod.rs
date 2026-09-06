@@ -8,6 +8,7 @@ mod auth_register;
 mod auth_session;
 mod channels;
 mod channels_delete;
+mod channel_read_state;
 mod grid;
 mod grid_admin;
 mod invites;

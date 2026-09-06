@@ -244,94 +244,94 @@ export default function SceneEditor(props: Props) {
         </div>
 
         <div class="scene-editor-side">
-          <div class="sidebar-section" style={{ padding: "0 0 8px" }}>
-            Câmeras na cena
+          <div class="scene-editor-side-block scene-editor-side-block--slots">
+            <div class="scene-editor-side-heading">Câmeras na cena</div>
+            <label class="field" style={{ "margin-bottom": "0" }}>
+              <span class="muted" style={{ "font-size": "12px" }}>
+                Número de slots ({MIN_SCENE_SLOTS}–{MAX_SCENE_SLOTS})
+              </span>
+              <select
+                class="input"
+                value={String(n())}
+                disabled={!!reducePrompt()}
+                onChange={(e) => onChangeN(e.currentTarget.value)}
+              >
+                <For each={slotChoices}>{(v) => <option value={String(v)}>{v}</option>}</For>
+              </select>
+            </label>
           </div>
-          <label class="field" style={{ "margin-bottom": "12px" }}>
-            <span class="muted" style={{ "font-size": "12px" }}>
-              Número de slots ({MIN_SCENE_SLOTS}–{MAX_SCENE_SLOTS})
-            </span>
-            <select
-              class="input"
-              value={String(n())}
-              disabled={!!reducePrompt()}
-              onChange={(e) => onChangeN(e.currentTarget.value)}
-            >
-              <For each={slotChoices}>{(v) => <option value={String(v)}>{v}</option>}</For>
-            </select>
-          </label>
 
-          <div class="sidebar-section" style={{ padding: "0 0 8px" }}>
-            Layout da cena
+          <div class="scene-editor-side-block scene-editor-side-block--layout">
+            <div class="scene-editor-side-heading">Layout da cena</div>
+            <div class="layout-list">
+              <For each={LAYOUT_KEYS}>
+                {(key) => {
+                  const L = () => layoutGeometry(key, n());
+                  const active = () => draft().draftLayout.layout_key === key;
+                  return (
+                    <button
+                      type="button"
+                      class={`layout-option${active() ? " active" : ""}`}
+                      disabled={!!reducePrompt()}
+                      onClick={() => setDraft(setNamedLayout(draft(), key))}
+                    >
+                      <span
+                        class="layout-thumb"
+                        style={{
+                          "grid-template-columns": L().cols,
+                          "grid-template-rows": L().rows,
+                        }}
+                      >
+                        <For each={L().cells}>
+                          {(c) => (
+                            <span
+                              style={{
+                                "grid-column": c.col,
+                                "grid-row": c.row,
+                                background: "var(--tile)",
+                                "border-radius": "2px",
+                              }}
+                            />
+                          )}
+                        </For>
+                      </span>
+                      <span>{familyLabel(key, n())}</span>
+                      <span class="muted" style={{ "margin-left": "auto" }}>
+                        {n()}
+                      </span>
+                    </button>
+                  );
+                }}
+              </For>
+            </div>
           </div>
-          <div class="layout-list">
-            <For each={LAYOUT_KEYS}>
-              {(key) => {
-                const L = () => layoutGeometry(key, n());
-                const active = () => draft().draftLayout.layout_key === key;
-                return (
+
+          <div class="scene-editor-side-block scene-editor-side-block--bank">
+            <div class="scene-editor-side-heading">No banco</div>
+            <div class="editor-bank">
+              <For each={bank()}>
+                {(id) => (
                   <button
                     type="button"
-                    class={`layout-option${active() ? " active" : ""}`}
+                    class="bank-token"
+                    draggable
                     disabled={!!reducePrompt()}
-                    onClick={() => setDraft(setNamedLayout(draft(), key))}
+                    onDragStart={(e) => e.dataTransfer?.setData("text/account-id", id)}
+                    onClick={() => setSelectedBank(selectedBank() === id ? null : id)}
+                    style={
+                      selectedBank() === id
+                        ? { outline: "2px solid var(--color-accent)" }
+                        : undefined
+                    }
                   >
-                    <span
-                      class="layout-thumb"
-                      style={{
-                        "grid-template-columns": L().cols,
-                        "grid-template-rows": L().rows,
-                      }}
-                    >
-                      <For each={L().cells}>
-                        {(c) => (
-                          <span
-                            style={{
-                              "grid-column": c.col,
-                              "grid-row": c.row,
-                              background: "var(--tile)",
-                              "border-radius": "2px",
-                            }}
-                          />
-                        )}
-                      </For>
-                    </span>
-                    <span>{familyLabel(key, n())}</span>
-                    <span class="muted" style={{ "margin-left": "auto" }}>
-                      {n()}
-                    </span>
+                    {props.handles[id] ?? id.slice(0, 8)}
                   </button>
-                );
-              }}
-            </For>
-          </div>
-
-          <div class="sidebar-section" style={{ padding: "16px 0 8px" }}>
-            No banco
-          </div>
-          <div class="editor-bank">
-            <For each={bank()}>
-              {(id) => (
-                <button
-                  type="button"
-                  class="bank-token"
-                  draggable
-                  disabled={!!reducePrompt()}
-                  onDragStart={(e) => e.dataTransfer?.setData("text/account-id", id)}
-                  onClick={() => setSelectedBank(selectedBank() === id ? null : id)}
-                  style={
-                    selectedBank() === id
-                      ? { outline: "2px solid var(--color-accent)" }
-                      : undefined
-                  }
-                >
-                  {props.handles[id] ?? id.slice(0, 8)}
-                </button>
-              )}
-            </For>
-            <Show when={bank().length === 0}>
-              <span class="muted">Ninguém na chamada sem slot</span>
-            </Show>
+                )}
+              </For>
+              <Show when={bank().length === 0}>
+                <span class="muted">Ninguém na chamada sem slot</span>
+              </Show>
+            </div>
           </div>
         </div>
       </div>

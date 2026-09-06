@@ -30,9 +30,9 @@ O cliente **não** usa `has_avatar` para decidir se a linha aparece (continua `m
 
 ## Contract tests (mínimo)
 
-1. Conta **com** avatar, join com mic ou câmara on → no snapshot (e/ou WS) o ocupante tem `has_avatar: true`.
+1. Conta **com** avatar, join com mic ou câmera on → no snapshot (e/ou WS) o ocupante tem `has_avatar: true`.
 2. Conta **sem** avatar, mesmo join → `has_avatar: false`.
-3. Occupante com mic e câmara off: continua a **não** ser mostrado na lista aninhada (teste 028); `has_avatar` irrelevante para visibilidade.
+3. Occupante com mic e câmera off: continua a **não** ser mostrado na lista aninhada (teste 028); `has_avatar` irrelevante para visibilidade.
 4. GET occupancy exige membro (028); este campo não relaxa authz.
 
 Não exigir neste contrato: bytes da imagem, `Content-Type`, nem evento após PUT avatar.

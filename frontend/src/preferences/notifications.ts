@@ -1,6 +1,7 @@
 import { createSignal } from "solid-js";
 
-/** In-memory unseen channels for the current session (FR-016). */
+/** In-memory unseen channels for the topbar bell (session only).
+ *  Server-rail unread uses durable BE `has_unread` (037) — keep both until topbar migrates. */
 const unseenByChannel = new Set<string>();
 const [tick, setTick] = createSignal(0);
 

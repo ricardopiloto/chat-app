@@ -1,4 +1,4 @@
-# Specification Quality Checklist: Blur de fundo da câmara
+# Specification Quality Checklist: Blur de fundo da câmera
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-09-04
@@ -31,5 +31,5 @@
 
 ## Notes
 
-- Validation 2026-09-04: PASS. Sem marcadores [NEEDS CLARIFICATION]. Predefinições documentadas: blur no feed enviado (sala + gravação), três estados (sem / leve / forte), controlo junto da câmara, persistência local neste dispositivo, fora de âmbito fundos virtuais e blur de outros.
+- Validation 2026-09-04: PASS. Sem marcadores [NEEDS CLARIFICATION]. Predefinições documentadas: blur no feed enviado (sala + gravação), três estados (sem / leve / forte), controlo junto da câmera, persistência local neste dispositivo, fora de âmbito fundos virtuais e blur de outros.
 - Pronto para `/speckit-clarify` (opcional) ou `/speckit-plan`.

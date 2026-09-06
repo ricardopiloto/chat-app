@@ -5,7 +5,7 @@ use crate::AppState;
 use axum::extract::ws::{Message, WebSocket};
 use axum::extract::{DefaultBodyLimit, State, WebSocketUpgrade};
 use axum::response::IntoResponse;
-use axum::routing::{delete, get, patch, post};
+use axum::routing::{delete, get, patch, post, put};
 use axum::Router;
 use futures_util::{SinkExt, StreamExt};
 
@@ -63,6 +63,10 @@ pub fn router(state: AppState) -> axum::Router {
                 .route(
                     "/channels/{channel_id}/messages",
                     get(messages::list_messages).post(messages::post_message),
+                )
+                .route(
+                    "/channels/{channel_id}/read",
+                    put(messages::mark_channel_read),
                 )
                 .route(
                     "/channels/{channel_id}/messages/{message_id}",

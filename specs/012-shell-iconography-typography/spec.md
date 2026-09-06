@@ -13,20 +13,20 @@
 ### Session 2026-09-04
 
 - Q: Os ícones de pesquisa/notificações/definições na barra superior devem ser apenas afordance visual, ou entry points funcionais reais, dado que o âmbito exclui mudanças de backend? → A: Entry points funcionais reais, implementados inteiramente no cliente sobre dados/endpoints já existentes (sem novos endpoints de backend). A pesquisa restringe-se ao conteúdo dentro da visibilidade atual do utilizador — apenas servidores/canais dos quais é membro, conforme convites aceites — podendo obter mensagens via endpoints de listagem já existentes, não apenas o que já esteja em memória na sessão.
-- Q: Os controlos de chamada ativa (microfone/câmara/sair) devem manter rótulo de texto visível junto ao ícone, ou ser apenas ícone? → A: Ícone acompanhado de um rótulo de texto curto e fixo (mesmo padrão do protótipo de referência); o rótulo nunca muda entre os estados ligado/desligado — só o ícone muda de forma.
+- Q: Os controlos de chamada ativa (microfone/câmera/sair) devem manter rótulo de texto visível junto ao ícone, ou ser apenas ícone? → A: Ícone acompanhado de um rótulo de texto curto e fixo (mesmo padrão do protótipo de referência); o rótulo nunca muda entre os estados ligado/desligado — só o ícone muda de forma.
 
 ### User Story 1 - Reconhecer o estado da chamada e da encriptação sem ler texto (Priority: P1)
 
-Durante uma chamada de voz/vídeo ativa, um membro precisa de confirmar rapidamente se o seu microfone e câmara estão ligados, e se a conversa continua encriptada ponta-a-ponta, sem ter de parar para ler rótulos de texto que mudam de conteúdo e de idioma consoante o estado.
+Durante uma chamada de voz/vídeo ativa, um membro precisa de confirmar rapidamente se o seu microfone e câmera estão ligados, e se a conversa continua encriptada ponta-a-ponta, sem ter de parar para ler rótulos de texto que mudam de conteúdo e de idioma consoante o estado.
 
-**Why this priority**: É o momento de maior tensão de uso (ao vivo, muitas vezes enquanto se fala/joga) e o de maior valor de confiança do produto (a promessa central é "o servidor não lê o conteúdo"). É também onde o problema atual é mais grave: os rótulos de microfone/câmara alternam entre português e inglês consoante o estado, e o indicador de encriptação não tem nenhum símbolo de cadeado.
+**Why this priority**: É o momento de maior tensão de uso (ao vivo, muitas vezes enquanto se fala/joga) e o de maior valor de confiança do produto (a promessa central é "o servidor não lê o conteúdo"). É também onde o problema atual é mais grave: os rótulos de microfone/câmera alternam entre português e inglês consoante o estado, e o indicador de encriptação não tem nenhum símbolo de cadeado.
 
-**Independent Test**: Pode ser testado isoladamente entrando num canal de voz, alternando microfone e câmara várias vezes e observando se (a) o botão mantém a largura e o idioma do rótulo, (b) o estado ligado/desligado é reconhecível pela forma do ícone sem ler o texto, e (c) o indicador de E2EE mostra um cadeado fechado quando ativo e um símbolo de aviso/cadeado aberto quando desligado para gravação.
+**Independent Test**: Pode ser testado isoladamente entrando num canal de voz, alternando microfone e câmera várias vezes e observando se (a) o botão mantém a largura e o idioma do rótulo, (b) o estado ligado/desligado é reconhecível pela forma do ícone sem ler o texto, e (c) o indicador de E2EE mostra um cadeado fechado quando ativo e um símbolo de aviso/cadeado aberto quando desligado para gravação.
 
 **Acceptance Scenarios**:
 
 1. **Given** um utilizador com o microfone ligado numa chamada, **When** este observa o botão de microfone, **Then** o ícone mostra visualmente o estado "ligado" e o rótulo de texto associado permanece no mesmo idioma que no estado "desligado".
-2. **Given** um utilizador que desliga a câmara durante a chamada, **When** o estado muda, **Then** a largura do botão não varia e o ícone muda de forma para indicar "desligada", sem depender só da cor.
+2. **Given** um utilizador que desliga a câmera durante a chamada, **When** o estado muda, **Then** a largura do botão não varia e o ícone muda de forma para indicar "desligada", sem depender só da cor.
 3. **Given** um canal de voz com E2EE ativa, **When** o utilizador olha para o indicador de E2EE (chip ou banner), **Then** vê um ícone de cadeado fechado associado ao estado ativo.
 4. **Given** um canal de voz com E2EE temporariamente desligada para gravação, **When** o utilizador olha para o banner de aviso, **Then** vê um ícone de cadeado aberto/aviso distinto do estado ativo, além do texto explicativo existente.
 
@@ -70,7 +70,7 @@ Um utilizador que precisa de guardar manualmente a chave de mídia de um canal d
 ### Edge Cases
 
 - O que acontece se um ícone não carregar (falha de rede/asset bloqueado)? A ação continua a ser identificável (nome acessível para leitores de ecrã, e um estado visual de reserva não vazio).
-- Como é que o estado "ligado/desligado" (microfone, câmara, E2EE) é transmitido a utilizadores que não distinguem cor (daltonismo) ou que usam leitor de ecrã? O estado não pode depender só de cor — precisa de diferença de forma/ícone e de texto/rótulo acessível equivalente.
+- Como é que o estado "ligado/desligado" (microfone, câmera, E2EE) é transmitido a utilizadores que não distinguem cor (daltonismo) ou que usam leitor de ecrã? O estado não pode depender só de cor — precisa de diferença de forma/ícone e de texto/rótulo acessível equivalente.
 - O que acontece em janelas muito estreitas onde nem todos os ícones da barra superior cabem (pesquisa, notificações, definições, utilizador)? Deve haver uma prioridade clara de que ícones permanecem visíveis e quais colapsam num menu secundário.
 - Como se distingue visualmente um canal de voz "normal" de um canal de voz onde o próprio utilizador está atualmente em chamada? O ícone de canal de voz precisa de um estado adicional para "em chamada agora", sem se confundir com o ícone genérico de canal de voz.
 - O que acontece quando o rótulo textual de um controlo de chamada seria muito longo num ecrã estreito? O ícone deve continuar a comunicar o estado mesmo que o texto seja abreviado ou ocultado.
@@ -82,9 +82,9 @@ Um utilizador que precisa de guardar manualmente a chave de mídia de um canal d
 ### Functional Requirements
 
 - **FR-001**: O sistema DEVE apresentar cada canal de voz/vídeo na lista de canais com um ícone dedicado de voz, visualmente distinto do ícone/marcador usado para canais de texto.
-- **FR-002**: O sistema DEVE representar os controlos de chamada ativa (microfone, câmara, sair da chamada) através de um ícone acompanhado de um rótulo de texto curto e fixo; o estado ligado/desligado é transmitido pela forma do próprio ícone, e o rótulo permanece igual em ambos os estados (não é substituído por outro texto).
+- **FR-002**: O sistema DEVE representar os controlos de chamada ativa (microfone, câmera, sair da chamada) através de um ícone acompanhado de um rótulo de texto curto e fixo; o estado ligado/desligado é transmitido pela forma do próprio ícone, e o rótulo permanece igual em ambos os estados (não é substituído por outro texto).
 - **FR-003**: Os rótulos de texto dos controlos de chamada DEVEM permanecer no mesmo idioma independentemente do estado ligado/desligado (sem alternância entre português e inglês).
-- **FR-004**: A largura dos controlos de chamada (microfone, câmara) NÃO DEVE variar visivelmente entre os estados ligado e desligado.
+- **FR-004**: A largura dos controlos de chamada (microfone, câmera) NÃO DEVE variar visivelmente entre os estados ligado e desligado.
 - **FR-005**: O indicador de estado de E2EE (tanto o indicador persistente do canal como o aviso temporário durante gravação) DEVE incluir um ícone de cadeado, com uma forma distinta para "encriptação ativa" e outra para "encriptação desligada/aviso".
 - **FR-006**: A barra superior DEVE disponibilizar pesquisa, notificações e definições como funcionalidades reais (não apenas afordances visuais), implementadas inteiramente no cliente sobre dados e endpoints já existentes, sem exigir novos endpoints de backend.
 - **FR-007**: Todo o controlo cuja ação seja comunicada principal ou exclusivamente por ícone DEVE ter um nome acessível equivalente (perceptível por tecnologia de apoio) que descreva a mesma ação ou estado comunicado visualmente.
@@ -104,9 +104,9 @@ Um utilizador que precisa de guardar manualmente a chave de mídia de um canal d
 ### Measurable Outcomes
 
 - **SC-001**: Em teste de reconhecimento visual, participantes identificam corretamente quais itens de uma lista de canais mista são canais de voz, sem ler os nomes dos canais, em pelo menos 95% das tentativas.
-- **SC-002**: Em teste de uso ao vivo, participantes identificam corretamente se o microfone/câmara estão ligados ou desligados, olhando apenas para o ícone (sem ler texto), em menos de 1 segundo, em pelo menos 9 de cada 10 tentativas.
+- **SC-002**: Em teste de uso ao vivo, participantes identificam corretamente se o microfone/câmera estão ligados ou desligados, olhando apenas para o ícone (sem ler texto), em menos de 1 segundo, em pelo menos 9 de cada 10 tentativas.
 - **SC-003**: 100% dos participantes expostos ao indicador de E2EE conseguem afirmar corretamente se a encriptação está ativa ou desligada sem ler o texto circundante, apenas pelo ícone.
-- **SC-004**: Zero variações de largura observadas nos botões de microfone/câmara ao alternar entre os estados ligado e desligado, em verificação visual.
+- **SC-004**: Zero variações de largura observadas nos botões de microfone/câmera ao alternar entre os estados ligado e desligado, em verificação visual.
 - **SC-005**: Em teste de transcrição manual de uma chave de mídia apresentada na interface, a taxa de erros de ambiguidade de caracteres (0/O, 1/l/I) cai para próximo de zero, face à taxa observada com a tipografia anterior.
 - **SC-006**: 100% dos controlos que comunicam ação ou estado principalmente por ícone têm um nome acessível verificável (por exemplo, através de auditoria de acessibilidade).
 - **SC-007**: Em teste com um utilizador membro de múltiplos servidores, 0% dos resultados de pesquisa provêm de servidores/canais aos quais não tem acesso.

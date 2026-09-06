@@ -8,7 +8,7 @@ Contratos: [contracts/scenes-api.yaml](./contracts/scenes-api.yaml), [contracts/
 
 ## US1 — Guardar e trocar cenas ao vivo (P1)
 
-1. Conta A (dona do Servidor) e conta B, já membros, entram no canal de voz/vídeo e publicam câmara. Confirme A/V e a grade F1 (cena migrada **Cena padrão** visível na lista; é a activa).
+1. Conta A (dona do Servidor) e conta B, já membros, entram no canal de voz/vídeo e publicam câmera. Confirme A/V e a grade F1 (cena migrada **Cena padrão** visível na lista; é a activa).
 2. A cria uma cena nova **como cópia do quadro visível**, nome `Foco no mestre`. Confirme: a lista tem duas cenas; o quadro ao vivo **não** muda (ainda Cena padrão); B vê a mesma grade.
 3. A edita a cena `Foco no mestre` (ainda inactiva): um slot só com A, restantes vazios. Confirme: o quadro ao vivo continua Cena padrão.
 4. A **activa** `Foco no mestre` durante a chamada. Confirme: A e B mostram a mesma ocupação em poucos segundos, **sem** sair da sala; áudio não cai de forma permanente (SC-002, SC-007).

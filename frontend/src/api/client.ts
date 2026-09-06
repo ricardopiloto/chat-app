@@ -13,6 +13,8 @@ export type Server = {
   name: string;
   owner_account_id: string;
   has_image?: boolean;
+  has_unread?: boolean;
+  has_voice?: boolean;
 };
 
 /** Body for POST /api/servers (bootstrap text + voice with custody). */
@@ -210,6 +212,17 @@ export function canDeleteMessage(
 
 export async function deleteServer(serverId: string): Promise<void> {
   await api<void>(`/api/servers/${serverId}`, { method: "DELETE" });
+}
+
+/** Persist channel read cursor (037 unread rail). */
+export async function markChannelRead(
+  channelId: string,
+  lastReadAt?: string,
+): Promise<void> {
+  await api<void>(`/api/channels/${channelId}/read`, {
+    method: "PUT",
+    body: JSON.stringify(lastReadAt ? { last_read_at: lastReadAt } : {}),
+  });
 }
 
 export function accountAvatarUrl(accountId: string): string {

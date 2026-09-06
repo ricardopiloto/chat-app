@@ -1,4 +1,4 @@
-# Implementation Plan: Menu de blur da câmara não abre
+# Implementation Plan: Menu de blur da câmera não abre
 
 **Branch**: `023-fix-blur-menu` | **Date**: 2026-09-04 | **Spec**: [spec.md](./spec.md)
 
@@ -6,7 +6,7 @@
 
 ## Summary
 
-Restaurar a visibilidade do menu Sem blur / Blur leve / Blur forte ao clicar na seta do split da câmara (015), incluindo modo palco. Causa raiz provável: `overflow: hidden` em `.call-ctrl-split` (020) corta o painel absoluto acima do botão. Fix preferido: permitir overflow do menu sem perder o chrome Discord do split.
+Restaurar a visibilidade do menu Sem blur / Blur leve / Blur forte ao clicar na seta do split da câmera (015), incluindo modo palco. Causa raiz provável: `overflow: hidden` em `.call-ctrl-split` (020) corta o painel absoluto acima do botão. Fix preferido: permitir overflow do menu sem perder o chrome Discord do split.
 
 ## Technical Context
 
@@ -24,7 +24,7 @@ Restaurar a visibilidade do menu Sem blur / Blur leve / Blur forte ao clicar na 
 
 **Performance Goals**: Menu visível no mesmo frame do toggle (≤1 s SC).
 
-**Constraints**: Não mudar opções de blur nem media pipeline; manter toggle da seta / Escape / clique fora; ícone de câmara continua a só ligar/desligar.
+**Constraints**: Não mudar opções de blur nem media pipeline; manter toggle da seta / Escape / clique fora; ícone de câmera continua a só ligar/desligar.
 
 **Scale/Scope**: Tipicamente 1–2 ficheiros CSS (+ ajuste mínimo TSX só se Portal for necessário).
 

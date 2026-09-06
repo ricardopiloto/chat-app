@@ -1,5 +1,5 @@
 import { For, Show, createEffect, createResource, createSignal, onCleanup } from "solid-js";
-import { A, useNavigate, useParams } from "@solidjs/router";
+import { A, useLocation, useNavigate, useParams } from "@solidjs/router";
 import {
   ApiError,
   api,
@@ -33,8 +33,17 @@ import ImageUploadDialog from "../components/ImageUploadDialog";
 import IconPlus from "../components/icons/IconPlus";
 import IconUserPlus from "../components/icons/IconUserPlus";
 import IconVoiceChannel from "../components/icons/IconVoiceChannel";
+import IconHeadphones from "../components/icons/IconHeadphones";
+import { IconMicOff, IconMicOn } from "../components/icons/IconMic";
+import { useVoiceSession } from "../voice/VoiceSession";
 import ContextMenu, { bindLongPress, type MenuState } from "./ContextMenu";
 import ServerRail from "./ServerRail";
+import UserPanel from "./UserPanel";
+import {
+  channelHref,
+  resolveChannelForServer,
+  writeLastChannel,
+} from "../preferences/lastChannelByServer";
 
 type Props = {
   me: Account;
@@ -45,11 +54,15 @@ type Props = {
   stageMode?: boolean;
   stageChannelsExpanded?: boolean;
   onToggleStageChannels?: () => void;
+  onLogout: () => void;
+  onAccountPatch?: (account: Account) => void;
 };
 
 export default function Sidebar(props: Props) {
   const navigate = useNavigate();
-  const params = useParams();
+  const params = useParams<{ id?: string; serverId?: string }>();
+  const routeLoc = useLocation();
+  const voice = useVoiceSession();
   const [servers, { refetch }] = createResource(() => api<Server[]>("/api/servers"));
   const [createServerOpen, setCreateServerOpen] = createSignal(false);
   const [createChannelOpen, setCreateChannelOpen] = createSignal(false);
@@ -76,29 +89,68 @@ export default function Sidebar(props: Props) {
   const keyCopied = useCopiedFeedback();
   const serverKeyCopied = useCopiedFeedback();
 
+  /** Select server and navigate main pane to that server’s channel or empty view (041). No hangup. */
+  async function selectServerAndNavigate(server: Server) {
+    props.onSelectServer(server);
+    try {
+      const list = await api<Channel[]>(`/api/servers/${server.id}/channels`);
+      const target = resolveChannelForServer(server.id, list);
+      if (!target) {
+        navigate(`/servers/${server.id}`);
+        return;
+      }
+      navigate(channelHref(target, server.id));
+    } catch {
+      navigate(`/servers/${server.id}`);
+    }
+  }
+
+  /** Server for channel list / chrome — never fall back to servers[0] (041 US4 rail sync). */
   const selected = () =>
-    (servers() ?? []).find((s) => s.id === props.selectedServerId) ??
-    (servers() ?? [])[0] ??
-    null;
+    (servers() ?? []).find((s) => s.id === props.selectedServerId) ?? null;
 
   const isOwner = () => selected()?.owner_account_id === props.me.id;
+
+  /** Server id from URL when AppShell remounts before/without selectedServerId. */
+  function serverIdFromUrl(): string | null {
+    const emptyId = params.serverId;
+    if (typeof emptyId === "string" && emptyId.length > 0) return emptyId;
+    const q = new URLSearchParams(routeLoc.search).get("server");
+    return q && q.length > 0 ? q : null;
+  }
 
   createEffect(() => {
     const list = servers();
     if (!list?.length) return;
-    if (!props.selectedServerId || !list.some((s) => s.id === props.selectedServerId)) {
+    const fromUrl = serverIdFromUrl();
+    const wantId = props.selectedServerId ?? fromUrl;
+    if (wantId && list.some((s) => s.id === wantId)) {
+      if (props.selectedServerId !== wantId) {
+        props.onSelectServer(list.find((s) => s.id === wantId) ?? null);
+      }
+      return;
+    }
+    // No URL server context (e.g. home): pick first only if nothing selected / left membership.
+    if (!fromUrl && (!props.selectedServerId || !list.some((s) => s.id === props.selectedServerId))) {
       props.onSelectServer(list[0] ?? null);
     }
   });
 
   const [channels, { refetch: refetchChannels }] = createResource(
-    () => selected()?.id,
+    () => selected()?.id ?? props.selectedServerId,
     (id) => (id ? api<Channel[]>(`/api/servers/${id}/channels`) : Promise.resolve([] as Channel[])),
   );
 
   const textChannels = () => (channels() ?? []).filter((c) => c.type === "text");
   const voiceChannels = () => (channels() ?? []).filter((c) => c.type === "voice_video");
-  const activeChannelId = () => params.id;
+  /** Active channel highlight only when route has :id and it belongs to this server’s list. */
+  const activeChannelId = () => {
+    const id = params.id;
+    if (!id) return null;
+    const list = channels();
+    if (list && !list.some((c) => c.id === id)) return null;
+    return id;
+  };
 
   createEffect(() => {
     const id = selected()?.id;
@@ -132,26 +184,32 @@ export default function Sidebar(props: Props) {
   createEffect(() => {
     if (!props.onWs) return;
     const off = props.onWs((msg) => {
-      if (msg.event === "voice.occupancy" && msg.server_id === selected()?.id) {
-        const channelId = String(msg.payload.channel_id ?? "");
-        if (!channelId) return;
-        const occupants = (msg.payload.occupants as VoiceChannelOccupancy["occupants"]) ?? [];
-        const started = msg.payload.call_started_at;
-        const callStartedAt =
-          typeof started === "string" ? started : started == null ? null : String(started);
-        setOccupancy((prev) => {
-          const next = { ...prev };
-          if (!callStartedAt && occupants.length === 0) {
-            delete next[channelId];
-          } else {
-            next[channelId] = {
-              channel_id: channelId,
-              call_started_at: callStartedAt,
-              occupants,
-            };
-          }
-          return next;
-        });
+      if (msg.event === "voice.occupancy") {
+        void refetch(); // has_voice on rail (all servers)
+        if (msg.server_id === selected()?.id) {
+          const channelId = String(msg.payload.channel_id ?? "");
+          if (!channelId) return;
+          const occupants = (msg.payload.occupants as VoiceChannelOccupancy["occupants"]) ?? [];
+          const started = msg.payload.call_started_at;
+          const callStartedAt =
+            typeof started === "string" ? started : started == null ? null : String(started);
+          setOccupancy((prev) => {
+            const next = { ...prev };
+            if (!callStartedAt && occupants.length === 0) {
+              delete next[channelId];
+            } else {
+              next[channelId] = {
+                channel_id: channelId,
+                call_started_at: callStartedAt,
+                occupants,
+              };
+            }
+            return next;
+          });
+        }
+      }
+      if (msg.event === "message.new") {
+        void refetch(); // has_unread on rail
       }
       if (msg.event === "channel.deleted") {
         void refetchChannels();
@@ -168,6 +226,14 @@ export default function Sidebar(props: Props) {
       }
     });
     onCleanup(off);
+  });
+
+  createEffect(() => {
+    const onRefresh = () => {
+      void refetch();
+    };
+    window.addEventListener("mesa:servers-refresh", onRefresh);
+    onCleanup(() => window.removeEventListener("mesa:servers-refresh", onRefresh));
   });
 
   function openCreateServer() {
@@ -237,7 +303,7 @@ export default function Sidebar(props: Props) {
       setServerCustodyAck(false);
       setCreateServerOpen(false);
       await refetch();
-      props.onSelectServer(server);
+      await selectServerAndNavigate(server);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     }
@@ -272,6 +338,7 @@ export default function Sidebar(props: Props) {
       setPendingKey(null);
       setCustodyAck(false);
       await refetchChannels();
+      writeLastChannel(server.id, ch.id);
       navigate(`/channels/${ch.id}?server=${server.id}&type=${ch.type}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -377,8 +444,8 @@ export default function Sidebar(props: Props) {
     <div class="shell-nav">
       <ServerRail
         servers={servers() ?? []}
-        selectedId={selected()?.id ?? null}
-        onSelect={(s) => props.onSelectServer(s)}
+        selectedId={props.selectedServerId}
+        onSelect={(s) => void selectServerAndNavigate(s)}
         onCreate={() => openCreateServer()}
         onContextMenu={(s, e) => openServerMenu(s, e)}
       />
@@ -435,7 +502,11 @@ export default function Sidebar(props: Props) {
                 <A
                   href={`/channels/${c.id}?server=${selected()!.id}&type=${c.type}`}
                   class={`channel-item${activeChannelId() === c.id ? " active" : ""}`}
-                  onClick={() => window.dispatchEvent(new CustomEvent("mesa:close-drawer"))}
+                  onClick={() => {
+                    const sid = selected()?.id;
+                    if (sid) writeLastChannel(sid, c.id);
+                    window.dispatchEvent(new CustomEvent("mesa:close-drawer"));
+                  }}
                   onContextMenu={(e) => {
                     e.preventDefault();
                     openChannelMenu(c, e);
@@ -481,7 +552,11 @@ export default function Sidebar(props: Props) {
                 <A
                   href={`/channels/${c.id}?server=${selected()!.id}&type=${c.type}`}
                   class={`channel-item${activeChannelId() === c.id ? " active" : ""}`}
-                  onClick={() => window.dispatchEvent(new CustomEvent("mesa:close-drawer"))}
+                  onClick={() => {
+                    const sid = selected()?.id;
+                    if (sid) writeLastChannel(sid, c.id);
+                    window.dispatchEvent(new CustomEvent("mesa:close-drawer"));
+                  }}
                   onContextMenu={(e) => {
                     e.preventDefault();
                     openChannelMenu(c, e);
@@ -509,17 +584,52 @@ export default function Sidebar(props: Props) {
                 <Show when={names().length > 0}>
                   <ul class="voice-roster" aria-label={`Na chamada ${c.name}`}>
                     <For each={names()}>
-                      {(o) => (
-                        <li class="voice-roster-item" title={o.handle} aria-label={o.handle}>
-                          <IdentityAvatar
-                            class="voice-roster-avatar"
-                            accountId={o.account_id}
-                            handle={o.handle}
-                            hasAvatar={!!o.has_avatar}
-                          />
-                          <span class="voice-roster-handle">{o.handle}</span>
-                        </li>
-                      )}
+                      {(o) => {
+                        const speaking = () => {
+                          if (!voice.live() || voice.channelId() !== c.id) return false;
+                          if (!o.mic_on) return false;
+                          if (o.account_id === props.me.id && !voice.micOn()) return false;
+                          return voice.speakingAccountIds().has(o.account_id);
+                        };
+                        const rowLabel = () =>
+                          speaking() ? `${o.handle}, a falar` : o.handle;
+                        return (
+                          <li
+                            class="voice-roster-item"
+                            title={o.handle}
+                            aria-label={rowLabel()}
+                          >
+                            <IdentityAvatar
+                              class="voice-roster-avatar"
+                              accountId={o.account_id}
+                              handle={o.handle}
+                              hasAvatar={!!o.has_avatar}
+                            />
+                            <span class="voice-roster-handle">{o.handle}</span>
+                            <span class="voice-roster-media" aria-hidden={false}>
+                              <span
+                                class="voice-roster-media-icon"
+                                classList={{ "is-speaking": speaking() }}
+                              >
+                                <Show
+                                  when={o.mic_on}
+                                  fallback={
+                                    <IconMicOff size={14} title="Microfone desligado" />
+                                  }
+                                >
+                                  <IconMicOn size={14} title="Microfone ligado" />
+                                </Show>
+                              </span>
+                              <span
+                                class="voice-roster-media-icon"
+                                classList={{ "is-speaking": speaking() }}
+                              >
+                                <IconHeadphones size={14} title="A ouvir" />
+                              </span>
+                            </span>
+                          </li>
+                        );
+                      }}
                     </For>
                   </ul>
                 </Show>
@@ -534,7 +644,11 @@ export default function Sidebar(props: Props) {
           </p>
         </nav>
 
-        <div class="sidebar-footer">self-hosted · sem federação</div>
+        <UserPanel
+          me={props.me}
+          onLogout={props.onLogout}
+          onAccountPatch={props.onAccountPatch}
+        />
       </aside>
 
       <ContextMenu menu={menu()} onClose={() => setMenu(null)} />

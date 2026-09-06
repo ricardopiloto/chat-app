@@ -52,7 +52,7 @@ Contrato de **estrutura e tokens** da SPA face ao protótipo v2. Não é OpenAPI
 - Toggle **Composição | Grade**
 - Palco escuro (`--stage`); tiles com dica de slot + chip
 - Banco (Composição): contas na chamada sem slot
-- Controlos: microfone, câmara, sair; linha “E2EE activa · …”
+- Controlos: microfone, câmera, sair; linha “E2EE activa · …”
 - **Proibido**: Gravar cena, faixa E2EE desligada
 
 ## Editor de cena

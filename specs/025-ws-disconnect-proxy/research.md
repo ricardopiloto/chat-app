@@ -45,7 +45,7 @@
 ## R6 — Fix aplicado (implement)
 
 **Decision**:
-1. **Cliente**: `liveClient.disconnect` desliga câmara/mic, `await room.disconnect(true)`, só depois `worker.terminate()`.
+1. **Cliente**: `liveClient.disconnect` desliga câmera/mic, `await room.disconnect(true)`, só depois `worker.terminate()`.
 2. **Leave**: `session = null` antes do `await disconnect`; flag `leaving` / `intentionalLeave` evita double-disconnect e erro UI no leave.
 3. **Vite**: após close ordenado, o half-close TLS no proxy `/rtc` ainda pode emitir o erro exacto do reporte (Vite liga o logger *depois* de `configure` — não dá para o remover). Filtro **estreito** em `customLogger` só para `ws proxy error` + `This socket has been ended by the other party`. Outros erros de proxy continuam.
 4. Nota operacional em `docs/operar-instancia.md`.

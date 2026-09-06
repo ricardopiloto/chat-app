@@ -4,7 +4,7 @@ Validar [spec.md](./spec.md) após implementar. Pré-requisitos: LiveKit + backe
 
 ## US1 — Modo palco no telemóvel
 
-1. No telemóvel (ou DevTools estreito &lt;900px), entrar no canal de voz e ligar câmara/teste.
+1. No telemóvel (ou DevTools estreito &lt;900px), entrar no canal de voz e ligar câmera/teste.
 2. Activar **Modo palco**.
 3. **Esperado**: tiles/vídeo visíveis (próprio feed no mínimo); não ecrã em branco.
 4. Alternar Composição/Grade; sair do modo palco — chamada continua; gaveta reabre.

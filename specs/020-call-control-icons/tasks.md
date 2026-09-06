@@ -10,7 +10,7 @@ description: "Task list for Ícones e split da barra de chamada"
 
 **Tests**: Sem TDD na spec. Validação: `npx tsc --noEmit` + manual [quickstart.md](./quickstart.md) §1–§4.
 
-**Organization**: Setup → Foundational (CSS danger + icon sizing) → US1 Mic → US2 Câmara split → US3 Sair vermelho → Polish.
+**Organization**: Setup → Foundational (CSS danger + icon sizing) → US1 Mic → US2 Câmera split → US3 Sair vermelho → Polish.
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -62,16 +62,16 @@ description: "Task list for Ícones e split da barra de chamada"
 
 ---
 
-## Phase 4: User Story 2 - Câmara icon-only + split Discord (Priority: P1)
+## Phase 4: User Story 2 - Câmera icon-only + split Discord (Priority: P1)
 
-**Goal**: Câmara sem texto; contentor unificado Discord (divider + chevron); tooltip no toggle; blur inalterado.
+**Goal**: Câmera sem texto; contentor unificado Discord (divider + chevron); tooltip no toggle; blur inalterado.
 
 **Independent Test**: [quickstart.md](./quickstart.md) §2.
 
 ### Implementation for User Story 2
 
 - [X] T006 [US2] Restyle `.call-ctrl-split` / children in `frontend/src/styles/mesa-theme.css` as one rounded container with subtle vertical divider between toggle and chevron (Discord model) per [contracts/call-control-chrome.md](./contracts/call-control-chrome.md) and [research.md](./research.md) R2
-- [X] T007 [US2] In `frontend/src/pages/VoiceChannel.tsx` remove «Câmara» `<span>`; icon-only toggle; `title` ≡ `aria-label` on camera toggle; keep chevron + `CameraBlurMenu` behaviour (015) unchanged
+- [X] T007 [US2] In `frontend/src/pages/VoiceChannel.tsx` remove «Câmera» `<span>`; icon-only toggle; `title` ≡ `aria-label` on camera toggle; keep chevron + `CameraBlurMenu` behaviour (015) unchanged
 - [X] T008 [US2] Verify blur menu open/select and blur-on chevron indicator still work with new chrome in `frontend/src/pages/VoiceChannel.tsx` / `frontend/src/components/CameraBlurMenu.tsx` (no logic change unless CSS break)
 
 **Checkpoint**: §2 passa; menu blur intacto.

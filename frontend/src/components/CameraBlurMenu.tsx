@@ -44,7 +44,7 @@ export default function CameraBlurMenu(props: Props) {
   return (
     <Show when={props.open}>
       <div class="camera-blur-menu" ref={(el) => (panelRef = el)}>
-        <div class="camera-blur-menu-panel" role="menu" aria-label="Fundo da câmara">
+        <div class="camera-blur-menu-panel" role="menu" aria-label="Fundo da câmera">
           <For each={OPTIONS}>
             {(opt) => (
               <button

@@ -57,14 +57,14 @@ description: "Task list for Iconografia e Tipografia do Shell"
 
 ## Phase 3: User Story 1 - Reconhecer estado da chamada e da encriptação sem ler texto (Priority: P1) 🎯 MVP
 
-**Goal**: Controlos de chamada (microfone/câmara/sair) e indicador de E2EE (chip + banner) comunicam estado por ícone, com rótulo fixo num só idioma e largura de botão estável.
+**Goal**: Controlos de chamada (microfone/câmera/sair) e indicador de E2EE (chip + banner) comunicam estado por ícone, com rótulo fixo num só idioma e largura de botão estável.
 
-**Independent Test**: [quickstart.md](./quickstart.md) §2–3 — alternar mic/câmara várias vezes; observar chip/banner E2EE.
+**Independent Test**: [quickstart.md](./quickstart.md) §2–3 — alternar mic/câmera várias vezes; observar chip/banner E2EE.
 
 ### Implementation for User Story 1
 
 - [X] T014 [US1] Replace microphone button markup in `frontend/src/pages/VoiceChannel.tsx`: usar `IconMicOn`/`IconMicOff` (T004) + rótulo fixo "Microfone" (remover o texto "Mic off"); `aria-label` do botão muda com o estado
-- [X] T015 [US1] Replace camera button markup in `frontend/src/pages/VoiceChannel.tsx`: usar `IconCameraOn`/`IconCameraOff` (T005) + rótulo fixo "Câmara" (remover o texto "Cam off"); `aria-label` do botão muda com o estado
+- [X] T015 [US1] Replace camera button markup in `frontend/src/pages/VoiceChannel.tsx`: usar `IconCameraOn`/`IconCameraOff` (T005) + rótulo fixo "Câmera" (remover o texto "Cam off"); `aria-label` do botão muda com o estado
 - [X] T016 [US1] Add `IconPhoneHangup` (T006) ao botão "Sair" em `frontend/src/pages/VoiceChannel.tsx`
 - [X] T017 [US1] Fix `.call-controls .btn` min-width in `frontend/src/styles/mesa-theme.css` para que a largura não varie entre estados ligado/desligado (FR-004)
 - [X] T018 [P] [US1] Add `IconLockClosed` (T007) ao `.e2ee-chip` (canal de texto) in `frontend/src/pages/Channel.tsx`

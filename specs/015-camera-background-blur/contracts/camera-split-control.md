@@ -1,19 +1,19 @@
-# Contrato: Controlo partido da Câmara e menu de blur
+# Contrato: Controlo partido da Câmera e menu de blur
 
 Âmbito: `VoiceChannel.tsx` call controls + `CameraBlurMenu.tsx` + `mesa-theme.css`. Padrão de ícones: [012 icon-system](../../012-shell-iconography-typography/contracts/icon-system.md).
 
 ## Split
 
 ```
-[ IconCameraOn/Off | Câmara ] [ seta ]
+[ IconCameraOn/Off | Câmera ] [ seta ]
  \____ área principal ____/   \ extra /
-        toggle câmara          só menu
+        toggle câmera          só menu
 ```
 
-1. Área principal: mesmo `aria-label` de hoje («Câmara ligada» / «Câmara desligada»); rótulo visível fixo **Câmara**; ícone só on/off da câmara.
-2. Seta: `type="button"`, `aria-haspopup="menu"`, `aria-expanded`, `aria-label` conforme blur off/on (não reutiliza o label da câmara).
+1. Área principal: mesmo `aria-label` de hoje («Câmera ligada» / «Câmera desligada»); rótulo visível fixo **Câmera**; ícone só on/off da câmera.
+2. Seta: `type="button"`, `aria-haspopup="menu"`, `aria-expanded`, `aria-label` conforme blur off/on (não reutiliza o label da câmera).
 3. Um clique na seta **não** chama `toggleCam`. Um clique na área principal **não** abre o menu.
-4. Seta utilizável com câmara ligada **e** desligada (FR-009).
+4. Seta utilizável com câmera ligada **e** desligada (FR-009).
 5. Alvos ≥44 px (já o `.call-controls .btn`); a seta tem min-width próprio (não <40 px) para o dedo no Modo palco.
 6. Largura da área principal não deve «saltar» entre cam on/off (012 FR-004); a seta é coluna extra estável.
 

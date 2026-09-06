@@ -1,8 +1,8 @@
 ---
-description: "Task list for Menu de blur da câmara não abre"
+description: "Task list for Menu de blur da câmera não abre"
 ---
 
-# Tasks: Menu de blur da câmara não abre
+# Tasks: Menu de blur da câmera não abre
 
 **Input**: Design documents from `/specs/023-fix-blur-menu/`
 
@@ -61,7 +61,7 @@ description: "Task list for Menu de blur da câmara não abre"
 
 ## Phase 4: User Story 2 - Fechar e escolher (Priority: P1)
 
-**Goal**: Opção / Escape / fora / toggle intactos; ícone câmara só toggle.
+**Goal**: Opção / Escape / fora / toggle intactos; ícone câmera só toggle.
 
 **Independent Test**: [quickstart.md](./quickstart.md) §2.
 

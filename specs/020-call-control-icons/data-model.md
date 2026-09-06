@@ -9,7 +9,7 @@ Sem entidades de persistência. Modelo de **apresentação** da barra de chamada
 | Mic visible label | none | Só ícone on/off |
 | Mic accessible + tooltip | `Microfone ligado` \| `Microfone desligado` | `aria-label` ≡ `title` |
 | Cam visible label | none | Só ícone on/off |
-| Cam accessible + tooltip | `Câmara ligada` \| `Câmara desligada` | `aria-label` ≡ `title` |
+| Cam accessible + tooltip | `Câmera ligada` \| `Câmera desligada` | `aria-label` ≡ `title` |
 | Cam split chrome | unified Discord-like | Contentor + divider + chevron |
 | Leave visible | hangup icon + «Sair» | Clarificação A |
 | Leave style | danger / red fill | Não `btn-primary` |
@@ -26,6 +26,6 @@ Sem entidades de persistência. Modelo de **apresentação** da barra de chamada
 
 ## Validation rules (UI)
 
-- Mic/cam MUST NOT render the strings «Microfone» / «Câmara» as visible text.
+- Mic/cam MUST NOT render the strings «Microfone» / «Câmera» as visible text.
 - Leave MUST render «Sair» and hangup icon.
 - Split MUST remain two focusable buttons (toggle ≠ menu).

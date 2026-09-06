@@ -502,6 +502,203 @@ async fn stale_occupant_is_removed_on_snapshot() {
 }
 
 #[tokio::test]
+async fn join_cam_off_stays_off_grid_bank() {
+    let app = TestApp::new().await;
+    let (_, _, alice) = app.register("alice", "password1", None).await;
+    let alice = must_cookie(alice);
+    let (_, me, _) = app.request("GET", "/api/auth/me", None, Some(&alice)).await;
+    let alice_id = me["id"].as_str().unwrap().to_string();
+    let (server_id, channel_id) = voice_channel(&app, &alice).await;
+
+    let (status, _, _) = app
+        .request(
+            "POST",
+            &format!("/api/channels/{channel_id}/voice/join"),
+            Some(json!({ "mic_on": true, "cam_on": false })),
+            Some(&alice),
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK);
+
+    let (_, snap, _) = app
+        .request(
+            "GET",
+            &format!("/api/servers/{server_id}/voice-occupancy"),
+            None,
+            Some(&alice),
+        )
+        .await;
+    assert_eq!(snap["channels"][0]["occupants"][0]["cam_on"], false);
+
+    let (_, grid, _) = app
+        .request(
+            "GET",
+            &format!("/api/channels/{channel_id}/grid"),
+            None,
+            Some(&alice),
+        )
+        .await;
+    let slots = grid["slots"].as_array().unwrap();
+    assert!(
+        slots.iter().all(|s| s["account_id"].as_str() != Some(alice_id.as_str())),
+        "cam_on false must not auto-assign a slot: {grid}"
+    );
+}
+
+#[tokio::test]
+async fn join_cam_on_still_auto_assigns_slot() {
+    let app = TestApp::new().await;
+    let (_, _, alice) = app.register("alice", "password1", None).await;
+    let alice = must_cookie(alice);
+    let (_, me, _) = app.request("GET", "/api/auth/me", None, Some(&alice)).await;
+    let alice_id = me["id"].as_str().unwrap().to_string();
+    let (_, channel_id) = voice_channel(&app, &alice).await;
+
+    app.request(
+        "POST",
+        &format!("/api/channels/{channel_id}/voice/join"),
+        Some(json!({ "mic_on": true, "cam_on": true })),
+        Some(&alice),
+    )
+    .await;
+
+    let (_, grid, _) = app
+        .request(
+            "GET",
+            &format!("/api/channels/{channel_id}/grid"),
+            None,
+            Some(&alice),
+        )
+        .await;
+    let slots = grid["slots"].as_array().unwrap();
+    assert_eq!(slots[0]["account_id"], alice_id);
+}
+
+#[tokio::test]
+async fn patch_cam_on_auto_assigns_when_auto_scene() {
+    let app = TestApp::new().await;
+    let (_, _, alice) = app.register("alice", "password1", None).await;
+    let alice = must_cookie(alice);
+    let (_, me, _) = app.request("GET", "/api/auth/me", None, Some(&alice)).await;
+    let alice_id = me["id"].as_str().unwrap().to_string();
+    let (_, channel_id) = voice_channel(&app, &alice).await;
+
+    app.request(
+        "POST",
+        &format!("/api/channels/{channel_id}/voice/join"),
+        Some(json!({ "cam_on": false })),
+        Some(&alice),
+    )
+    .await;
+
+    let (status, _, _) = app
+        .request(
+            "PATCH",
+            &format!("/api/channels/{channel_id}/voice/media"),
+            Some(json!({ "cam_on": true })),
+            Some(&alice),
+        )
+        .await;
+    assert_eq!(status, StatusCode::NO_CONTENT);
+
+    let (_, grid, _) = app
+        .request(
+            "GET",
+            &format!("/api/channels/{channel_id}/grid"),
+            None,
+            Some(&alice),
+        )
+        .await;
+    let slots = grid["slots"].as_array().unwrap();
+    assert!(
+        slots.iter().any(|s| s["account_id"].as_str() == Some(alice_id.as_str())),
+        "turning cam on with auto scene must assign a slot: {grid}"
+    );
+}
+
+#[tokio::test]
+async fn patch_cam_on_stays_bank_when_owner_locked() {
+    let app = TestApp::new().await;
+    let (_, _, alice) = app.register("alice", "password1", None).await;
+    let alice = must_cookie(alice);
+    let (_, me, _) = app.request("GET", "/api/auth/me", None, Some(&alice)).await;
+    let alice_id = me["id"].as_str().unwrap().to_string();
+    let (server_id, channel_id) = voice_channel(&app, &alice).await;
+
+    let (_, scenes, _) = app
+        .request(
+            "GET",
+            &format!("/api/channels/{channel_id}/scenes"),
+            None,
+            Some(&alice),
+        )
+        .await;
+    let scene_id = scenes["active_scene_id"].as_str().unwrap();
+
+    let layout = json!({
+        "layout_key": "quad",
+        "slot_count": 4,
+        "assigned_by": "owner",
+        "slots": [
+            { "index": 0, "account_id": null },
+            { "index": 1, "account_id": null },
+            { "index": 2, "account_id": null },
+            { "index": 3, "account_id": null }
+        ]
+    });
+    let (status, patched, _) = app
+        .request(
+            "PATCH",
+            &format!("/api/channels/{channel_id}/scenes/{scene_id}"),
+            Some(json!({ "layout": layout })),
+            Some(&alice),
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK, "owner lock scene: {patched}");
+
+    let (_, grid0, _) = app
+        .request(
+            "GET",
+            &format!("/api/channels/{channel_id}/grid"),
+            None,
+            Some(&alice),
+        )
+        .await;
+    assert_eq!(grid0["assigned_by"], "owner", "{grid0}");
+
+    app.request(
+        "POST",
+        &format!("/api/channels/{channel_id}/voice/join"),
+        Some(json!({ "cam_on": false })),
+        Some(&alice),
+    )
+    .await;
+
+    app.request(
+        "PATCH",
+        &format!("/api/channels/{channel_id}/voice/media"),
+        Some(json!({ "cam_on": true })),
+        Some(&alice),
+    )
+    .await;
+
+    let (_, grid, _) = app
+        .request(
+            "GET",
+            &format!("/api/channels/{channel_id}/grid"),
+            None,
+            Some(&alice),
+        )
+        .await;
+    let slots = grid["slots"].as_array().unwrap();
+    assert!(
+        slots.iter().all(|s| s["account_id"].as_str() != Some(alice_id.as_str())),
+        "owner-locked scene must keep bank on cam on: {grid}"
+    );
+    let _ = server_id;
+}
+
+#[tokio::test]
 async fn occupancy_has_avatar_follows_account_photo() {
     const JPEG: &[u8] = b"\xff\xd8\xff\xdb fake-jpeg";
     let app = TestApp::new().await;

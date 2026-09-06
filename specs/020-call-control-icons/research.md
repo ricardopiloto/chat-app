@@ -2,7 +2,7 @@
 
 ## R1 — Tooltips (pairar / foco)
 
-**Decision**: Usar atributo HTML `title` nos botões de microfone e toggle de câmara, com o **mesmo** texto que o `aria-label` de estado (`Microfone ligado` / `… desligado`, `Câmara ligada` / `… desligada`).
+**Decision**: Usar atributo HTML `title` nos botões de microfone e toggle de câmera, com o **mesmo** texto que o `aria-label` de estado (`Microfone ligado` / `… desligado`, `Câmera ligada` / `… desligada`).
 
 **Rationale**: Cumpre FR-007 / SC-006 sem componente de tooltip novo; browsers mostram tip ao pairar (e em muitos casos após foco prolongado). Solid já liga `aria-label` dinamicamente — espelhar em `title={…}` evita divergência.
 
@@ -11,7 +11,7 @@
 - Só `aria-label` sem tip visual — rejeitado na clarificação (opção B).
 - `title` estático — rejeitado; tem de reflectir on/off.
 
-## R2 — Split Discord (câmara)
+## R2 — Split Discord (câmera)
 
 **Decision**: Tratar `.call-ctrl-split` como **um** contentor visual: fundo/borda partilhados no wrapper; filhos sem bordas laterais «duplas»; **pseudo-elemento ou `border-inline` subtil** entre toggle e chevron; `border-radius` só nas extremidades do grupo (esquerda no toggle, direita no chevron). Remover aspecto de dois `.btn` secundários colados.
 
@@ -35,7 +35,7 @@
 
 ## R4 — Icon-only sizing
 
-**Decision**: Remover `<span>Microfone</span>` / `<span>Câmara</span>`; reduzir `min-width` dos `.call-ctrl` icon-only (~44–48 px quadrados) mantendo min-height 44 px. Sair mantém gap ícone+texto e largura natural.
+**Decision**: Remover `<span>Microfone</span>` / `<span>Câmera</span>`; reduzir `min-width` dos `.call-ctrl` icon-only (~44–48 px quadrados) mantendo min-height 44 px. Sair mantém gap ícone+texto e largura natural.
 
 **Rationale**: FR-001/002 + alvos de toque da spec.
 

@@ -178,7 +178,7 @@ T008 after IdentityAvatar is used in at least one surface
 ### Notes
 
 - Sem migração; sem `avatar.updated`  
-- Não alterar filtro mic/câmara da lista  
+- Não alterar filtro mic/câmera da lista  
 - Texto: completar/verificar 029 em `Channel.tsx`, não duplicar upload  
 
 ---

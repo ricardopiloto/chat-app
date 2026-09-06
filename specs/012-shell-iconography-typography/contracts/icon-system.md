@@ -24,7 +24,7 @@ Regras de construção (garantem consistência visual — Assumptions do spec: "
 |----------|-------|
 | Ícone + texto visível ao lado (ex.: controlos de chamada, "Convite") | `aria-hidden="true"` no ícone; o texto já fornece o nome acessível |
 | Ícone sozinho (ex.: `IconSearch`, `IconBell`, `IconSettings`, `IconMenu`, `IconPlus` na topbar/sidebar) | `title` obrigatório no ícone **e** `aria-label` no `<button>` que o envolve, com o mesmo texto |
-| Estado ligado/desligado (mic, câmara, cadeado) | O `aria-label` do botão/contentor muda com o estado (ex. "Microfone ligado" / "Microfone desligado"), mesmo que o rótulo de texto visível não mude (FR-002/FR-003) |
+| Estado ligado/desligado (mic, câmera, cadeado) | O `aria-label` do botão/contentor muda com o estado (ex. "Microfone ligado" / "Microfone desligado"), mesmo que o rótulo de texto visível não mude (FR-002/FR-003) |
 
 ## Catálogo obrigatório
 

@@ -14,7 +14,7 @@
 
 **Rationale**: Mockup 02; FR-001/004/005. Reutilizar o componente evita dois fallbacks de iniciais.
 
-**Alternatives considered**: Só iniciais na lista de voz (rejeitado pelo pedido). Ícones de mic/câmara por linha (FR-008).
+**Alternatives considered**: Só iniciais na lista de voz (rejeitado pelo pedido). Ícones de mic/câmera por linha (FR-008).
 
 ## R3 — Canal de texto
 

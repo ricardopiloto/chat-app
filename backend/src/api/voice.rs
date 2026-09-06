@@ -231,17 +231,22 @@ pub async fn join(
     crate::api::authz::require_member(&state.pool, account.id, channel.server_id).await?;
     let media: VoiceMediaBody = parse_json_or_default(&body)?;
     expire_stale(&state).await?;
+    let cam_on = media.cam_on.unwrap_or(true);
     upsert_occupant(
         &state,
         account.id,
         &channel,
         media.mic_on.unwrap_or(true),
-        media.cam_on.unwrap_or(true),
+        cam_on,
     )
     .await?;
     let slot_count = channel.grid_slot_count.unwrap_or(4);
-    let slots =
-        db::grid::auto_assign_first_empty(&state.pool, channel_id, account.id, slot_count).await?;
+    // 032: bank by default when joining without camera — skip auto-assign.
+    let slots = if cam_on {
+        db::grid::auto_assign_first_empty(&state.pool, channel_id, account.id, slot_count).await?
+    } else {
+        db::grid::list(&state.pool, channel_id).await?
+    };
     let layout_key = if let Some(sid) = db::grid::active_scene_id(&state.pool, channel_id).await? {
         db::scene::find_by_id(&state.pool, sid)
             .await?
@@ -300,6 +305,13 @@ pub async fn patch_media(
     crate::api::authz::require_member(&state.pool, account.id, channel.server_id).await?;
     expire_stale(&state).await?;
     let media: VoiceMediaBody = parse_json_or_default(&body)?;
+    let existing = db::voice_occupancy::find_by_account(&state.pool, account.id)
+        .await?
+        .filter(|o| o.channel_id == channel.id);
+    let Some(existing) = existing else {
+        return Err(ApiError::forbidden("not in this voice call"));
+    };
+    let prev_cam = existing.cam_on;
     let updated = db::voice_occupancy::update_media(
         &state.pool,
         account.id,
@@ -311,6 +323,37 @@ pub async fn patch_media(
     .await?;
     if !updated {
         return Err(ApiError::forbidden("not in this voice call"));
+    }
+    let effective_cam = media.cam_on.unwrap_or(prev_cam);
+    // 032 FR-010: turning camera on may auto-assign a free slot (auto scene only).
+    if effective_cam && !prev_cam {
+        let slot_count = channel.grid_slot_count.unwrap_or(4);
+        let slots = db::grid::auto_assign_first_empty(
+            &state.pool,
+            channel_id,
+            account.id,
+            slot_count,
+        )
+        .await?;
+        let layout_key =
+            if let Some(sid) = db::grid::active_scene_id(&state.pool, channel_id).await? {
+                db::scene::find_by_id(&state.pool, sid)
+                    .await?
+                    .map(|s| s.layout_key)
+                    .unwrap_or(crate::domain::grid::LayoutKey::Quad)
+            } else {
+                crate::domain::grid::LayoutKey::Quad
+            };
+        let layout = db::grid::to_layout(&slots, layout_key, slot_count);
+        state
+            .ws
+            .send_to_server_members(
+                &state.pool,
+                channel.server_id,
+                "grid.updated",
+                &serde_json::json!({ "channel_id": channel_id, "grid": layout }),
+            )
+            .await;
     }
     broadcast_occupancy(&state, channel.server_id, channel.id).await;
     Ok(StatusCode::NO_CONTENT)

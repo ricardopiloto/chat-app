@@ -5,7 +5,7 @@ Validação manual da barra de chamada. Ver [contracts/call-control-chrome.md](.
 ## Pré-requisitos
 
 - App a correr (`npm run dev` + backend).
-- Conta com canal de voz; entrar na chamada (câmara/microfone disponíveis se possível).
+- Conta com canal de voz; entrar na chamada (câmera/microfone disponíveis se possível).
 - Alternar tema claro/escuro no topbar.
 
 ## §1 Microfone icon-only + tooltip
@@ -14,11 +14,11 @@ Validação manual da barra de chamada. Ver [contracts/call-control-chrome.md](.
 2. Pairar ~1 s: tooltip «Microfone ligado» ou «… desligado».
 3. Clicar: ícone e tooltip actualizam; áudio liga/desliga como antes.
 
-## §2 Câmara icon-only + split Discord
+## §2 Câmera icon-only + split Discord
 
-1. Bloco câmara: **um** contentor arredondado, ícone | linha | seta; **sem** «Câmara».
+1. Bloco câmera: **um** contentor arredondado, ícone | linha | seta; **sem** «Câmera».
 2. Pairar no ícone: tooltip ligada/desligada.
-3. Clique no ícone: toggle câmara; clique na seta: menu blur (Sem / Leve / Forte) sem toggle.
+3. Clique no ícone: toggle câmera; clique na seta: menu blur (Sem / Leve / Forte) sem toggle.
 4. Com blur activo, indicador na seta (forma) permanece.
 
 ## §3 Sair vermelho

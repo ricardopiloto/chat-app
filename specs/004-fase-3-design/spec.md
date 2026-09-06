@@ -52,7 +52,7 @@ Uma pessoa autenticada vê a barra superior com marca **Mesa**, procedência da 
 
 ### User Story 2 - Canal de texto e canal de voz com chrome do protótipo (Priority: P1)
 
-No canal de texto, mensagens agrupadas por autor (avatar, nome, hora), largura de leitura confortável (~74ch), composer com Enter para enviar, e etiqueta discreta de **E2EE activa** no cabeçalho. No canal de voz/vídeo: cabeçalho com nome, cena activa e contagem “N de M em cena”; **palco** com tiles da composição (dica de slot + chip com nome/estado); controlos de microfone, câmara e sair; linha de estado de privacidade; **banco** para quem está na chamada sem slot. Alternador **Composição / Grade**: Composição mostra a cena activa (o quadro intencional); Grade mostra todos os participantes numa grelha automática (incluindo quem está no banco). Cada pessoa escolhe a vista localmente.
+No canal de texto, mensagens agrupadas por autor (avatar, nome, hora), largura de leitura confortável (~74ch), composer com Enter para enviar, e etiqueta discreta de **E2EE activa** no cabeçalho. No canal de voz/vídeo: cabeçalho com nome, cena activa e contagem “N de M em cena”; **palco** com tiles da composição (dica de slot + chip com nome/estado); controlos de microfone, câmera e sair; linha de estado de privacidade; **banco** para quem está na chamada sem slot. Alternador **Composição / Grade**: Composição mostra a cena activa (o quadro intencional); Grade mostra todos os participantes numa grelha automática (incluindo quem está no banco). Cada pessoa escolhe a vista localmente.
 
 **Why this priority**: É onde o produto “acontece” para mestres e jogadores; o PRD trata o palco como o produto.
 
@@ -112,7 +112,7 @@ Login, registo, aceitar convite e desbloquear chaves usam o visual Nocturne (tip
 - Mais pessoas na chamada do que slots da cena: excedente no banco; layout **não** muda sozinho.
 - Tema claro na primeira visita: respeitar preferência do sistema do dispositivo, com override manual persistente.
 - Queda de rede / reconexão: estados mínimos legíveis (mensagem ou faixa) sem partir o chrome Nocturne — polish aceite se o essencial (reconectar à chamada) já existir.
-- Participante sem câmara num slot: tile continua a mostrar identidade; não colapsa a grade.
+- Participante sem câmera num slot: tile continua a mostrar identidade; não colapsa a grade.
 - Comparação lado a lado com o protótipo: diferenças aceites só onde o produto já restringiu âmbito (sem gravação, sem desligar E2EE, sem diretório público, sem canal privado se ainda não existir na Fase 1).
 
 ## Requirements *(mandatory)*

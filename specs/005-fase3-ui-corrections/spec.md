@@ -32,11 +32,11 @@ A Fase 3 (004) entregou a shell Nocturne e fluxos básicos, mas o operador repor
 
 ### User Story 1 - Modo palco no telemóvel mostra o vídeo (Priority: P1)
 
-Num telemóvel (ou viewport estreita), uma pessoa em chamada activa **Modo palco**. A sidebar/gaveta fecha e o **palco continua a ocupar a área principal** com os tiles da composição (ou grade), vídeo e chips visíveis — não um ecrã em branco. Áudio e câmara já ligados continuam ligados.
+Num telemóvel (ou viewport estreita), uma pessoa em chamada activa **Modo palco**. A sidebar/gaveta fecha e o **palco continua a ocupar a área principal** com os tiles da composição (ou grade), vídeo e chips visíveis — não um ecrã em branco. Áudio e câmera já ligados continuam ligados.
 
 **Why this priority**: Sem ver a composição no telemóvel, o produto falha no cenário de jogo real (mesa híbrida).
 
-**Independent Test**: Duas contas; uma no telemóvel; ligar câmara; activar Modo palco; confirmar tiles/vídeo visíveis; desactivar modo palco e confirmar que a gaveta pode voltar sem perder a chamada.
+**Independent Test**: Duas contas; uma no telemóvel; ligar câmera; activar Modo palco; confirmar tiles/vídeo visíveis; desactivar modo palco e confirmar que a gaveta pode voltar sem perder a chamada.
 
 **Acceptance Scenarios**:
 
@@ -76,7 +76,7 @@ Em toda a SPA autenticada (e auth se necessário para consistência), o texto co
 **Acceptance Scenarios**:
 
 1. **Given** a app e o protótipo v2 lado a lado no mesmo dispositivo, **When** um revisor compara chrome e controlos principais, **Then** tamanhos de tipo e botões não parecem “uma geração mais pequenos” (diferença grosseira de escala corrigida).
-2. **Given** viewport estreita, **When** usa controlos de microfone/câmara/sair e acções Criar canal / Editar cena, **Then** os alvos são utilizáveis com o dedo sem precisar de zoom do browser.
+2. **Given** viewport estreita, **When** usa controlos de microfone/câmera/sair e acções Criar canal / Editar cena, **Then** os alvos são utilizáveis com o dedo sem precisar de zoom do browser.
 
 ---
 

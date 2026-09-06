@@ -76,7 +76,7 @@ O **dono do Servidor** ou o **criador do canal** pode abrir um menu de contexto 
 
 ### User Story 2 - Canal de texto e canal de voz/vídeo fiéis (Priority: P1)
 
-No canal de texto: cabeçalho com nome, subtítulo, chip E2EE; mensagens em grelha avatar+corpo (~74ch); composer com altura e raio do protótipo. No canal de voz/vídeo: cabeçalho (nome, cena, “N de M em cena”), alternador **Composição / Grade**, Modo palco, Editar cena (só quem pode); **palco** com tiles (dica de slot + chip nome/estado); controlos em pílula (**microfone**, **câmara**, **Gravar cena…**, sair); linha de estado de privacidade; **banco** quando aplicável. **Sem** lista/composer de texto neste ecrã (o protótipo v2 também não os tem). A composição usa a geometria dos layouts nomeados já no produto.
+No canal de texto: cabeçalho com nome, subtítulo, chip E2EE; mensagens em grelha avatar+corpo (~74ch); composer com altura e raio do protótipo. No canal de voz/vídeo: cabeçalho (nome, cena, “N de M em cena”), alternador **Composição / Grade**, Modo palco, Editar cena (só quem pode); **palco** com tiles (dica de slot + chip nome/estado); controlos em pílula (**microfone**, **câmera**, **Gravar cena…**, sair); linha de estado de privacidade; **banco** quando aplicável. **Sem** lista/composer de texto neste ecrã (o protótipo v2 também não os tem). A composição usa a geometria dos layouts nomeados já no produto.
 
 **Why this priority**: É o produto no dia-a-dia; o PRD trata o palco como o produto.
 
@@ -112,7 +112,7 @@ Ao **criar** canal de voz/vídeo, o diálogo inclui o bloco de **custódia da ch
 
 ### User Story 3 - Vídeo continua após o diretor guardar a cena (Priority: P1)
 
-Hoje, quando o **diretor** (dono que edita a cena) guarda alterações, a grade/composição actualiza-se mas as **câmaras ficam travadas** — participantes são forçados a sair da chamada e voltar. Nesta feature, após Salvar (ou qualquer actualização de mapa/layout da cena activa que todos recebem), **áudio e vídeo continuam a fluir** nos slots correctos **sem** sair e reentrar.
+Hoje, quando o **diretor** (dono que edita a cena) guarda alterações, a grade/composição actualiza-se mas as **câmeras ficam travadas** — participantes são forçados a sair da chamada e voltar. Nesta feature, após Salvar (ou qualquer actualização de mapa/layout da cena activa que todos recebem), **áudio e vídeo continuam a fluir** nos slots correctos **sem** sair e reentrar.
 
 **Why this priority**: Quebra a sessão no momento em que o mestre ajusta a mesa — pior do que chrome desalinhado.
 
@@ -123,13 +123,13 @@ Hoje, quando o **diretor** (dono que edita a cena) guarda alterações, a grade/
 1. **Given** pelo menos duas pessoas em chamada com vídeo activo, **When** o diretor Salva uma cena activa com novo layout ou novas atribuições, **Then** todos vêem a composição actualizada **e** as imagens/áudio continuam sem interrupção que obrigue a sair e voltar.
 2. **Given** uma pessoa mudou de slot no mapa guardado, **When** a actualização chega, **Then** o vídeo dessa pessoa aparece no novo slot (e deixa o antigo) sem reentrar na chamada.
 3. **Given** alguém ficou só no banco após o Salvar, **When** está em Composição, **Then** deixa de ocupar tile no palco mas **permanece** na chamada com áudio; **MUST NOT** ser desligado da sala.
-4. **Given** o diretor Descartar (não Salvar), **When** volta ao canal, **Then** o quadro ao vivo não muda e as câmaras dos outros **não** travam por causa do abandono do rascunho.
+4. **Given** o diretor Descartar (não Salvar), **When** volta ao canal, **Then** o quadro ao vivo não muda e as câmeras dos outros **não** travam por causa do abandono do rascunho.
 
 ---
 
-### User Story 4 - Enquadramento: câmara preenche o slot (Priority: P1)
+### User Story 4 - Enquadramento: câmera preenche o slot (Priority: P1)
 
-Cada feed de câmara (próprio e remoto) **preenche todo o espaço útil do slot/tile**: a imagem escala para cobrir a área (mesmo que isso corte bordas — “zoom” de enquadramento), **centradas** no slot para privilegiar a zona onde as pessoas aparecem na câmara. Não deixar barras vazias nem imagem “letterbox” dentro do tile quando a proporção do vídeo difere da do slot. Aplica-se a Composição e a Grade.
+Cada feed de câmera (próprio e remoto) **preenche todo o espaço útil do slot/tile**: a imagem escala para cobrir a área (mesmo que isso corte bordas — “zoom” de enquadramento), **centradas** no slot para privilegiar a zona onde as pessoas aparecem na câmera. Não deixar barras vazias nem imagem “letterbox” dentro do tile quando a proporção do vídeo difere da do slot. Aplica-se a Composição e a Grade.
 
 **Why this priority**: O palco é o produto; tiles com vídeo pequeno ou desalinhado destroem a leitura da cena mesmo com chrome correcto.
 
@@ -137,7 +137,7 @@ Cada feed de câmara (próprio e remoto) **preenche todo o espaço útil do slot
 
 **Acceptance Scenarios**:
 
-1. **Given** um slot com proporção diferente do sensor da câmara, **When** o vídeo é mostrado, **Then** o feed cobre a área do slot (recorte nas bordas se necessário) e fica **centrado** no tile.
+1. **Given** um slot com proporção diferente do sensor da câmera, **When** o vídeo é mostrado, **Then** o feed cobre a área do slot (recorte nas bordas se necessário) e fica **centrado** no tile.
 2. **Given** Composição e Grade, **When** o utilizador alterna entre elas, **Then** a mesma regra de preenchimento/centragem aplica-se em ambos os modos.
 3. **Given** slot vazio (sem pessoa atribuída / sem vídeo), **When** se vê o tile, **Then** o placeholder do protótipo (borda/dica) mantém-se — a regra de preenchimento aplica-se só a feeds de vídeo activos.
 
@@ -154,7 +154,7 @@ O editor do dono replica o protótipo: cabeçalho Descartar / Salvar cena; palco
 **Acceptance Scenarios**:
 
 1. **Given** dono no editor, **When** escolhe layout e atribui pessoas, **Then** a geometria e o painel coincidem com o protótipo (empilhado em viewport estreita se já definido nas fases anteriores).
-2. **Given** rascunho sujo, **When** Descartar ou Salvar, **Then** o comportamento de produto actual (rascunho local → persistir só ao Salvar) mantém-se; só a apresentação muda se necessário — e o Salvar cumpre a US3 (sem travar câmaras).
+2. **Given** rascunho sujo, **When** Descartar ou Salvar, **Then** o comportamento de produto actual (rascunho local → persistir só ao Salvar) mantém-se; só a apresentação muda se necessário — e o Salvar cumpre a US3 (sem travar câmeras).
 3. **Given** criar servidor, **When** o diálogo abre, **Then** o chrome segue o protótipo; campos diferidos (ex. diretório público) omitidos.
 4. **Given** criar canal de voz/vídeo, **When** o diálogo abre, **Then** inclui o bloco de custódia da chave (G5) como no protótipo; criar canal de texto não exige esse bloco.
 
@@ -188,9 +188,9 @@ A equipa mantém uma lista explícita do que no protótipo **não** pode ser pix
 - Apagar canal enquanto outros estão nele: membros perdem acesso de imediato e a UI redirecciona / mostra indisponível.
 - Viewport estreita: editor empilhado e alvos tocáveis ≥40px prevalecem sobre largura fixa de painel do desktop do protótipo.
 - Interacções de arrastar do protótipo: no telemóvel, caminho de toque em dois passos já adoptado permanece se o drag não for fiável.
-- Actualização de cena enquanto alguém está a ligar/desligar câmara: o mapa actualiza-se; feeds que existam reinserem-se nos slots sem exigir reentrada na sala.
+- Actualização de cena enquanto alguém está a ligar/desligar câmera: o mapa actualiza-se; feeds que existam reinserem-se nos slots sem exigir reentrada na sala.
 - Proporções extremas de slot (muito alto ou muito largo): o recorte centrado pode cortar mais topo/fundo ou laterais — aceitável; o centro do frame permanece visível.
-- Pessoa sem câmara (só áudio): o tile pode mostrar placeholder/avatar; a regra de preenchimento aplica-se quando há faixa de vídeo.
+- Pessoa sem câmera (só áudio): o tile pode mostrar placeholder/avatar; a regra de preenchimento aplica-se quando há faixa de vídeo.
 
 ## Requirements *(mandatory)*
 
@@ -237,7 +237,7 @@ O protótipo v2 **não** define co-diretor nem chat no ecrã de voz; não há �
 - **Chave de E2EE do canal**: gerada na criação do canal de voz; custódia do criador; necessária para religar E2EE.
 - **Estado E2EE do canal**: activa vs desligada (gravação); visível a todos.
 - **Mapa da cena activa**: layout + atribuições de pessoas a slots; ao guardar, propaga-se a todos sem derrubar a chamada.
-- **Feed de câmara no tile**: vídeo que deve cobrir e centrar-se no slot.
+- **Feed de câmera no tile**: vídeo que deve cobrir e centrar-se no slot.
 
 ## Success Criteria *(mandatory)*
 

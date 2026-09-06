@@ -31,14 +31,14 @@ Como membro a olhar a coluna de canais, quero ver o **ícone de cada pessoa** (f
 
 **Why this priority**: Pedido original; a lista de 028 já mostra nomes; o mockup pede o ícone junto a cada linha.
 
-**Independent Test**: Duas contas no mesmo servidor; A **já tem** foto de perfil e entra na chamada com microfone ou câmara ligados; B, a olhar a coluna, vê A aninhada sob esse canal **com a foto de A** (não só iniciais) à esquerda do handle, no mesmo instante em que o nome aparece. Sem foto, B vê o fallback de iniciais.
+**Independent Test**: Duas contas no mesmo servidor; A **já tem** foto de perfil e entra na chamada com microfone ou câmera ligados; B, a olhar a coluna, vê A aninhada sob esse canal **com a foto de A** (não só iniciais) à esquerda do handle, no mesmo instante em que o nome aparece. Sem foto, B vê o fallback de iniciais.
 
 **Acceptance Scenarios**:
 
-1. **Given** pelo menos uma pessoa na lista aninhada (microfone ou câmara ligados), **When** olho a coluna de canais, **Then** cada linha mostra um ícone circular à esquerda do identificador, no mesmo sítio que [02-canal-voz.jpg](../../docs/screenshots/02-canal-voz.jpg).
+1. **Given** pelo menos uma pessoa na lista aninhada (microfone ou câmera ligados), **When** olho a coluna de canais, **Then** cada linha mostra um ícone circular à esquerda do identificador, no mesmo sítio que [02-canal-voz.jpg](../../docs/screenshots/02-canal-voz.jpg).
 2. **Given** essa pessoa **já tem** foto de perfil, **When** a linha dela aparece na lista aninhada, **Then** o ícone **já é** essa foto (preenchendo o círculo), não um intervalo só com iniciais.
 3. **Given** estou num canal de **texto** do mesmo servidor, **When** alguém transmite noutro canal de voz, **Then** continuo a ver o ícone dessa pessoa na lista aninhada (não preciso de abrir a mesa).
-4. **Given** eu próprio estou na lista (mic ou câmara ligados), **When** olho a coluna, **Then** o meu ícone aparece na minha linha, igual ao critério de 028 para o meu nome.
+4. **Given** eu próprio estou na lista (mic ou câmera ligados), **When** olho a coluna, **Then** o meu ícone aparece na minha linha, igual ao critério de 028 para o meu nome.
 
 ---
 
@@ -60,7 +60,7 @@ Como membro, quero que quem **ainda não tem** foto de perfil continue identific
 
 ### User Story 3 - A lista de voz continua a ser a de 028 (Priority: P2)
 
-Como membro, quero que **quem entra e sai** da lista aninhada continue a seguir as regras de 028 (só mic ou câmara ligados; cronómetro e painel Membros inalterados), para o ícone ser um acrescento visual e não uma lista diferente.
+Como membro, quero que **quem entra e sai** da lista aninhada continue a seguir as regras de 028 (só mic ou câmera ligados; cronómetro e painel Membros inalterados), para o ícone ser um acrescento visual e não uma lista diferente.
 
 **Why this priority**: Evita regressão no pedido original.
 
@@ -68,8 +68,8 @@ Como membro, quero que **quem entra e sai** da lista aninhada continue a seguir 
 
 **Acceptance Scenarios**:
 
-1. **Given** três membros e só um com microfone ou câmara ligados, **When** olho a coluna e o painel Membros, **Then** a lista aninhada tem **uma** linha (ícone + identificador) e Membros continua com **três**.
-2. **Given** alguém na chamada com mic **e** câmara desligados, **When** olho a lista aninhada, **Then** essa pessoa **não** aparece (com ou sem foto de perfil).
+1. **Given** três membros e só um com microfone ou câmera ligados, **When** olho a coluna e o painel Membros, **Then** a lista aninhada tem **uma** linha (ícone + identificador) e Membros continua com **três**.
+2. **Given** alguém na chamada com mic **e** câmera desligados, **When** olho a lista aninhada, **Then** essa pessoa **não** aparece (com ou sem foto de perfil).
 3. **Given** modo Palco com coluna de canais colapsada, **When** a faixa está estreita, **Then** a lista (ícones incluídos) pode ocultar-se como em 028; ao **mostrar canais**, ícones e nomes voltam a estar visíveis.
 
 ---
@@ -102,20 +102,20 @@ Como membro num canal de texto, quero ver o **ícone de identidade** (foto ou in
 - Pessoa **já visível** (lista ou mensagens) que define, substitui ou remove a foto: os outros MUST NOT precisar de um aviso instantâneo; o ícone actualiza depois de actualizarem ou reabrirem a vista (mesmo critério de 029).
 - Sem foto: nunca um círculo vazio ou ícone genérico diferente do fallback de iniciais já usado na app.
 - Autor desconhecido / handle ainda não resolvido no canal de texto: o grupo MUST mesmo assim ter um círculo estável (iniciais a partir do identificador visível), sem buraco de layout.
-- Fora de âmbito: distintivo de anfitrião, indicadores de a falar, estado «Disponível», ícones de microfone/câmara por linha, distintivos de papel junto ao nome no chat, lista de «quem está no canal de texto», imagem do servidor no rail (já 029), alterar quem entra na lista de voz, cronómetro, barra «ainda na chamada».
+- Fora de âmbito: distintivo de anfitrião, indicadores de a falar, estado «Disponível», ícones de microfone/câmera por linha, distintivos de papel junto ao nome no chat, lista de «quem está no canal de texto», imagem do servidor no rail (já 029), alterar quem entra na lista de voz, cronómetro, barra «ainda na chamada».
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
-- **FR-001**: Cada linha da lista aninhada de jogadores (pessoas no canal de voz/vídeo com microfone ou câmara ligados, per [028](../028-voice-call-roster/)) MUST mostrar um **ícone de identidade circular à esquerda** do identificador.
+- **FR-001**: Cada linha da lista aninhada de jogadores (pessoas no canal de voz/vídeo com microfone ou câmera ligados, per [028](../028-voice-call-roster/)) MUST mostrar um **ícone de identidade circular à esquerda** do identificador.
 - **FR-002**: Se a pessoa **já tiver** foto de perfil no momento em que a linha da lista **ou** o grupo de mensagens aparece, o ícone MUST ser essa foto desde esse instante (preenchendo o círculo; recorte visual; a foto pode não ser quadrada). MUST NOT mostrar só iniciais como estado intermédio obrigatório.
 - **FR-003**: Se a pessoa **não** tiver foto de perfil, o ícone MUST usar o **fallback de iniciais** já usado noutros sítios de identidade da app ([029](../029-user-server-avatars/)).
 - **FR-004**: Todas as linhas da mesma lista de voz MUST usar um círculo do **mesmo tamanho**; foto e iniciais MUST alinhar-se de forma estável. Os grupos de mensagens de texto MUST usar um círculo estável entre si (pode ser maior que o da lista de voz, adequado ao bloco de mensagem).
 - **FR-005**: Esta feature MUST NOT alterar quem aparece ou desaparece da lista aninhada, nem o cronómetro da sessão, nem o painel Membros.
 - **FR-006**: O ícone da lista de voz MUST ser visível nas mesmas condições em que a lista aninhada já é visível (coluna expandida; membro do servidor; incluindo quando o canal seleccionado é de texto).
 - **FR-007**: Textos visíveis MUST permanecer em português; o ícone é decorativo relativamente ao nome — o identificador (handle) continua a ser o texto da linha/grupo e o nome acessível MUST continuar completo.
-- **FR-008**: Esta feature MUST NOT acrescentar distintivos de anfitrião, indicadores de a falar, ícones de estado de microfone/câmara por linha, nem distintivos de papel no chat.
+- **FR-008**: Esta feature MUST NOT acrescentar distintivos de anfitrião, indicadores de a falar, ícones de estado de microfone/câmera por linha, nem distintivos de papel no chat.
 - **FR-009**: Definir, substituir ou remover a foto de perfil **enquanto a pessoa já está visível** (lista de voz ou mensagens já no ecrã) MUST NOT exigir que os outros observadores vejam o ícone novo sem actualizar ou reabrir a vista. (A primeira aparição continua a FR-002.)
 - **FR-010**: Cada grupo de mensagens num canal de texto MUST mostrar o **ícone de identidade do autor** à esquerda do identificador, no sítio de [01-canal-texto.jpg](../../docs/screenshots/01-canal-texto.jpg).
 - **FR-011**: Esta feature MUST NOT criar uma lista de ocupação para canais de texto (não há «jogadores» aninhados sob canais `#`).
@@ -131,7 +131,7 @@ Como membro num canal de texto, quero ver o **ícone de identidade** (foto ou in
 ### Measurable Outcomes
 
 - **SC-001**: Um membro a olhar a coluna de canais identifica quem está na lista aninhada (ícone + nome) em menos de **5 segundos**, sem abrir a mesa.
-- **SC-001b**: Depois de alguém **já com foto de perfil** ligar microfone ou câmara (já na chamada), outro membro vê a linha **com essa foto** (não só iniciais) em menos de **3 segundos**, no mesmo prazo em que 028 exige o nome.
+- **SC-001b**: Depois de alguém **já com foto de perfil** ligar microfone ou câmera (já na chamada), outro membro vê a linha **com essa foto** (não só iniciais) em menos de **3 segundos**, no mesmo prazo em que 028 exige o nome.
 - **SC-002**: Em **100%** das linhas visíveis da lista aninhada há um ícone circular (foto ou iniciais) à esquerda do identificador; nenhuma linha fica só com texto.
 - **SC-003**: Numa lista ou histórico mistos (com e sem foto de perfil), **100%** das linhas/grupos sem foto mostram iniciais no círculo, nunca um círculo vazio.
 - **SC-004**: Com N membros no servidor e M a transmitir (M ≤ N), a lista aninhada continua a ter **M** linhas (ícone não muda a contagem de 028); o painel Membros continua a mostrar **N**.
@@ -144,7 +144,7 @@ Como membro num canal de texto, quero ver o **ícone de identidade** (foto ou in
 - «Lista de jogadores» = a lista **aninhada sob o canal de voz** de [028](../028-voice-call-roster/), não o painel Membros, não a grade/palco, não a barra de chamada persistente.
 - «Exibição do avatar nos canais de texto» = ícone de identidade em cada **grupo de mensagens** do canal `#`, no sítio do mockup [01-canal-texto.jpg](../../docs/screenshots/01-canal-texto.jpg) — **não** uma lista de quem está a ver o canal de texto.
 - «Ícone dos usuários» = a **identidade visual da conta** já definida em [029](../029-user-server-avatars/) (foto de perfil ou iniciais). 029 já previa mensagens como superfície mínima; esta spec torna lista de voz **e** grupos de texto histórias de primeira linha da mesma feature.
-- A regra de quem entra na lista de voz **não muda**: só microfone ou câmara ligados.
+- A regra de quem entra na lista de voz **não muda**: só microfone ou câmera ligados.
 - Distintivo «Anfitriã», onda de a falar, rodapé de estado e distintivos de papel do mockup de texto **continuam fora de âmbito**.
 - Quem **já tinha** foto quando a linha ou o grupo aparece: os observadores vêem foto + nome juntos (prazo de 028 para a lista de voz; imediato no grupo de texto que acaba de surgir).
 - Quem **já está** visível e muda a foto: os outros actualizam o ícone como em 029 (depois de actualizarem ou reabrirem a vista). Esta feature MUST NOT exigir um canal ao vivo só para fotos.

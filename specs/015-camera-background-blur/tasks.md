@@ -1,14 +1,14 @@
 ---
-description: "Task list for Blur de fundo da câmara"
+description: "Task list for Blur de fundo da câmera"
 ---
 
-# Tasks: Blur de fundo da câmara
+# Tasks: Blur de fundo da câmera
 
 **Input**: Design documents from `/specs/015-camera-background-blur/`
 
 **Prerequisites**: [plan.md](./plan.md), [spec.md](./spec.md), [research.md](./research.md), [data-model.md](./data-model.md), [contracts/](./contracts/), [quickstart.md](./quickstart.md)
 
-**Tests**: Sem TDD pedido na spec. Validação: `cd frontend && npx tsc --noEmit` + manual [quickstart.md](./quickstart.md) (duas contas + câmara real). Backend intocado.
+**Tests**: Sem TDD pedido na spec. Validação: `cd frontend && npx tsc --noEmit` + manual [quickstart.md](./quickstart.md) (duas contas + câmera real). Backend intocado.
 
 **Organization**: Setup (npm + assets) → Foundational (preferência + processor + publish LocalVideoTrack) → US1 blur no feed enviado (P1, MVP) → US2 split/menu/seta (P1) → US3 primeiro frame + falha fechada + indisponível (P2) → Polish.
 
@@ -41,17 +41,17 @@ description: "Task list for Blur de fundo da câmara"
 
 - [X] T003 Implement `CameraBlurMode` plus `readBlurMode` / `writeBlurMode` (`mesa.cameraBlur`, default `off`) in `frontend/src/blur/blurPreference.ts` per [data-model.md](./data-model.md)
 - [X] T004 Implement `supportsCameraBlur`, `BLUR_RADIUS` (`light: 12`, `strong: 32`), `createBlurProcessor` (`assetPaths` → `/mediapipe/`) and `applyBlurMode` (`switchTo` blur vs `disabled`) in `frontend/src/video/backgroundBlur.ts` per [contracts/background-blur-processor.md](./contracts/background-blur-processor.md)
-- [X] T005 Extend `joinLiveRoom` in `frontend/src/video/liveClient.ts` to publish `LocalVideoTrack` (câmara) or keep `MediaStreamTrack` (vídeo de teste) without breaking E2EE attach/preview
+- [X] T005 Extend `joinLiveRoom` in `frontend/src/video/liveClient.ts` to publish `LocalVideoTrack` (câmera) or keep `MediaStreamTrack` (vídeo de teste) without breaking E2EE attach/preview
 
-**Checkpoint**: `tsc` no módulo de blur; join de teste ainda funciona; câmara pode publicar `LocalVideoTrack` sem processor.
+**Checkpoint**: `tsc` no módulo de blur; join de teste ainda funciona; câmera pode publicar `LocalVideoTrack` sem processor.
 
 ---
 
-## Phase 3: User Story 1 - Aplicar blur de fundo na própria câmara (Priority: P1) 🎯 MVP
+## Phase 3: User Story 1 - Aplicar blur de fundo na própria câmera (Priority: P1) 🎯 MVP
 
-**Goal**: Com modo `light`/`strong` (preferência persistida), a câmara **real** publica o feed já desfocada — o outro participante e o preview local vêem o fundo desfocada, pessoa nítida. Vídeo de teste intacto.
+**Goal**: Com modo `light`/`strong` (preferência persistida), a câmera **real** publica o feed já desfocada — o outro participante e o preview local vêem o fundo desfocada, pessoa nítida. Vídeo de teste intacto.
 
-**Independent Test**: `localStorage.setItem('mesa.cameraBlur','strong')`, duas contas, A liga câmara (não teste) → B vê fundo desfocada; A põe `off` e recarrega/reaplica → nítido. [quickstart.md](./quickstart.md) §2 (efeito; o menu da seta pode ainda não existir).
+**Independent Test**: `localStorage.setItem('mesa.cameraBlur','strong')`, duas contas, A liga câmera (não teste) → B vê fundo desfocada; A põe `off` e recarrega/reaplica → nítido. [quickstart.md](./quickstart.md) §2 (efeito; o menu da seta pode ainda não existir).
 
 ### Implementation for User Story 1
 
@@ -63,9 +63,9 @@ description: "Task list for Blur de fundo da câmara"
 
 ---
 
-## Phase 4: User Story 2 - Escolher sem / leve / forte no botão Câmara (Priority: P1)
+## Phase 4: User Story 2 - Escolher sem / leve / forte no botão Câmera (Priority: P1)
 
-**Goal**: Controlo **partido**: área principal toggle da câmara; **seta** abre menu Sem blur / Blur leve / Blur forte; persistência; seta com **forma** distinta quando blur ligado; mudar de modo sem sair da chamada.
+**Goal**: Controlo **partido**: área principal toggle da câmera; **seta** abre menu Sem blur / Blur leve / Blur forte; persistência; seta com **forma** distinta quando blur ligado; mudar de modo sem sair da chamada.
 
 **Independent Test**: [quickstart.md](./quickstart.md) §1.
 
@@ -74,15 +74,15 @@ description: "Task list for Blur de fundo da câmara"
 - [X] T009 [P] [US2] Implement `IconChevronDown` and `IconChevronDownBlur` (forma extra pip/losango, `currentColor`, viewBox 24) in `frontend/src/components/icons/IconChevron.tsx` per [012 icon-system](../012-shell-iconography-typography/contracts/icon-system.md) and [data-model.md](./data-model.md)
 - [X] T010 [P] [US2] Add `.call-ctrl-split`, `.call-ctrl-chevron` (min target ≥40px), `.camera-blur-menu` in `frontend/src/styles/mesa-theme.css` per [contracts/camera-split-control.md](./contracts/camera-split-control.md)
 - [X] T011 [US2] Implement `CameraBlurMenu` (role=menu, three `menuitemradio`, Escape / clique fora como `AccountMenu`) in `frontend/src/components/CameraBlurMenu.tsx` with copy «Sem blur» / «Blur leve» / «Blur forte»
-- [X] T012 [US2] Split the Câmara control in `frontend/src/pages/VoiceChannel.tsx`: main click → `toggleCam` only; chevron → menu only; selecting a mode writes preference, calls `applyBlurMode` if live camera, updates chevron icon + `aria-label` («Fundo: sem blur» / «Fundo: blur ligado»); label visível continua «Câmara»
+- [X] T012 [US2] Split the Câmera control in `frontend/src/pages/VoiceChannel.tsx`: main click → `toggleCam` only; chevron → menu only; selecting a mode writes preference, calls `applyBlurMode` if live camera, updates chevron icon + `aria-label` («Fundo: sem blur» / «Fundo: blur ligado»); label visível continua «Câmera»
 
-**Checkpoint**: quickstart §1; leve↔forte visível ≤2 s sem desligar câmara (SC-003).
+**Checkpoint**: quickstart §1; leve↔forte visível ≤2 s sem desligar câmera (SC-003).
 
 ---
 
 ## Phase 5: User Story 3 - Primeiro frame, falha fechada, indisponível (Priority: P2)
 
-**Goal**: Ligar a câmara com leve/forte já escolhido **sem** flash do quarto nítido; falha do efeito **pára o vídeo** (não abre o quarto); sem suporte → mensagem e modo não fica ligado.
+**Goal**: Ligar a câmera com leve/forte já escolhido **sem** flash do quarto nítido; falha do efeito **pára o vídeo** (não abre o quarto); sem suporte → mensagem e modo não fica ligado.
 
 **Independent Test**: [quickstart.md](./quickstart.md) §3–§5.
 
@@ -149,8 +149,8 @@ Foundational (preference + processor + LocalVideoTrack publish)
 
 1. npm + assets locais MediaPipe.
 2. Preferência + `BackgroundProcessor` + publish `LocalVideoTrack`.
-3. Aplicar blur na câmara real (MVP demonstrável a duas contas).
-4. Split Câmara + menu + seta.
+3. Aplicar blur na câmera real (MVP demonstrável a duas contas).
+4. Split Câmera + menu + seta.
 5. Gate do 1.º frame, mute em falha, FR-010.
 6. `tsc` + quickstart.
 

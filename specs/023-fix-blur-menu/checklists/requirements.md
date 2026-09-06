@@ -1,4 +1,4 @@
-# Specification Quality Checklist: Menu de blur da câmara não abre
+# Specification Quality Checklist: Menu de blur da câmera não abre
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-09-04

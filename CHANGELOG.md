@@ -9,6 +9,34 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-06
+
+### Added
+
+- Floating user panel at the sidebar bottom (avatar, online, handle, account menu); mic / deafen / camera+blur / leave share `VoiceSession` state and appear on exactly one active site (stage vs panel); TopBar account chip removed ([039-floating-user-bar](specs/039-floating-user-bar/)).
+- Discord-like visual polish: self-hosted Inter typography; filled call-control glyphs; server-rail unread pill + voice indicator with durable `channel_read_state`; theme-aware `--shadow-float` and menu enter motion with `prefers-reduced-motion` ([037-discord-visual-alignment](specs/037-discord-visual-alignment/)).
+- Floating voice call miniature (PiP) when leaving the stage for text: video preview or status fallback, drag-snap to four corners, coexists with the connected bar ([038-floating-voice-pip](specs/038-floating-voice-pip/)).
+- Pre-join choice to enter a voice channel with camera or without (bank); joining without camera skips auto-slot; turning camera on later auto-assigns only in auto scene with a free slot ([032-voice-join-camera-choice](specs/032-voice-join-camera-choice/)).
+- Nested voice roster shows mic + headphones icons with a shared speaking aura driven by LiveKit active speakers (in-call viewers only) ([033-voice-speaking-indicator](specs/033-voice-speaking-indicator/)).
+- Speaking aura on the whole call-controls microphone button (same visual language as the roster; mute still blocks aura; labels unchanged) ([036-mic-ctrl-speaking-aura](specs/036-mic-ctrl-speaking-aura/)).
+
+### Changed
+
+- System-wide moderate–strong corner radius: `--radius-sm|md|lg` → 8/14/22px; Mesa theme box hardcodes mapped to tokens; pills (`999px`) and circles (`50%`) unchanged ([044-rounded-borders](specs/044-rounded-borders/)).
+- Confirmed user-panel call controls (including leave) mount only while in a live voice/video call off-stage — no idle `is-disabled` chrome ([043-panel-calls-in-call-only](specs/043-panel-calls-in-call-only/); builds on [042](specs/042-panel-call-stage-ui/)).
+- User panel call controls only show while in a voice call (off-stage); panel icons share the mic size; voice stage reclaims ~40–80px height via tighter margins/header/privacy chrome ([042-panel-call-stage-ui](specs/042-panel-call-stage-ui/)).
+- Selecting a server navigates the main pane to that server’s last/first channel (or a blank joke screen when it has zero channels); last channel remembered per server in localStorage ([041-server-scoped-pane](specs/041-server-scoped-pane/)).
+- Removed the shell «ainda na chamada» connected bar; off-stage chrome is the floating PiP only, with footer «Voltar à mesa» + red hangup icon (stay on current view; no mic/cam on PiP) ([040-remove-connected-bar](specs/040-remove-connected-bar/)).
+- Scene editor side panel stacks slots / layout / bank by content (compact slots at top) instead of stretching section labels with equal `flex: 1` ([034-scene-editor-side-layout](specs/034-scene-editor-side-layout/)).
+- Join/connect errors surface categorized Portuguese messages (permission / device / connection / generic) instead of raw browser text ([031](specs/031-voice-join-errors/)).
+- Moving to another voice channel leaves the previous call and shows the dual pre-join actions again instead of auto-reconnecting with the previous camera mode ([032](specs/032-voice-join-camera-choice/)).
+
+### Fixed
+
+- Server rail / channel-list selection stays aligned with the main pane after switching servers (including empty-server joke view): no stale highlight on the previous server or channel ([041-server-scoped-pane](specs/041-server-scoped-pane/) US4).
+- Voice join failures after occupancy upsert no longer leave a ghost occupant or orphan mic/camera capture: `abortFailedJoin` leaves the channel and stops local tracks; camera-only GUM failure joins audio-only with a PT warning ([031-voice-join-errors](specs/031-voice-join-errors/)).
+- Leaving a voice call (stage, persistent bar, drop, unload, failed join) releases mic/camera via shared `releaseLocalCapture` before best-effort `leaveVoice` ([035-voice-leave-release-media](specs/035-voice-leave-release-media/)).
+
 ## [0.3.0] - 2026-09-05
 
 ### Added
@@ -62,10 +90,10 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 - Scene editor layout fills the voice pane: wide preview + ~296px side column (Protótipo v2) ([013](specs/013-topbar-scene-ux/)).
 - Search without `#` covers all accessible text channels; placeholder documents `#canal termo` ([014](specs/014-search-channel-scope/)).
 - Shared Dialog + form controls (`.input` / `.field`) restyled to Mesa tokens; create-channel/server «+» modals inherit look and live theme ([016-plus-create-modals](specs/016-plus-create-modals/)).
-- Voice call **Câmara** control is split: main area toggles camera; a chevron opens Sem blur / Blur leve / Blur forte (shape on the chevron shows blur on) ([015](specs/015-camera-background-blur/)).
+- Voice call **Câmera** control is split: main area toggles camera; a chevron opens Sem blur / Blur leve / Blur forte (shape on the chevron shows blur on) ([015](specs/015-camera-background-blur/)).
 - Scene `layout_key` and `slot_count` are independent: API accepts e.g. mestre+6 / faixa+3; voice `grid_slot_count` provision range is **2–8** ([018-scene-camera-count](specs/018-scene-camera-count/)).
 - Channel header **Membros** is an icon-only people-group control (selected while the list is open); server **Convite** is a person-plus icon to the right of the server name, **owner-only** ([019-members-invite-icons](specs/019-members-invite-icons/)).
-- Call bar: Microfone and Câmara are icon-only with state tooltips; camera+blur chevron is a Discord-style unified split; **Sair** keeps hangup + label on a red danger button ([020-call-control-icons](specs/020-call-control-icons/)).
+- Call bar: Microfone and Câmera are icon-only with state tooltips; camera+blur chevron is a Discord-style unified split; **Sair** keeps hangup + label on a red danger button ([020-call-control-icons](specs/020-call-control-icons/)).
 - Search-jump highlight (~3 s) covers the full message **group** (avatar + meta + bubbles), not only the hit bubble; scroll still centres the message ([022-search-group-highlight](specs/022-search-group-highlight/)).
 - Text-channel message delete control is icon-only trash in soft light red (matching fill + border); tooltip «Apagar»; `aria-label` unchanged; confirm flow unchanged ([026-message-delete-icon](specs/026-message-delete-icon/)).
 
@@ -118,7 +146,8 @@ Initial tracked release baseline (features delivered through 006).
 
 - Earlier spikes and phases: see `specs/001-fase-0-spike/` … `specs/005-fase3-ui-corrections/` and `docs/`.
 
-[Unreleased]: https://github.com/ricardosobral/chat-app/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/ricardosobral/chat-app/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/ricardosobral/chat-app/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/ricardosobral/chat-app/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/ricardosobral/chat-app/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/ricardosobral/chat-app/compare/v0.1.0...v0.1.1

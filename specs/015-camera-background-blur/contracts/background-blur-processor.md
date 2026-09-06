@@ -25,12 +25,12 @@ async function waitUntilBlurred(track: LocalVideoTrack): Promise<void>;
 
 `BackgroundProcessor` é criado com `assetPaths` apontando a `/mediapipe/` (mesma origem). Sem `imagePath`.
 
-## Publicação (câmara real)
+## Publicação (câmera real)
 
 | Situação | Comportamento |
 |----------|----------------|
-| Ligar câmara, modo `off` | Publicar como hoje (processor `disabled` opcional para switches futuros) |
-| Ligar câmara, `light`/`strong` | `setProcessor(blur)` → `waitUntilBlurred` → só então publish/unmute |
+| Ligar câmera, modo `off` | Publicar como hoje (processor `disabled` opcional para switches futuros) |
+| Ligar câmera, `light`/`strong` | `setProcessor(blur)` → `waitUntilBlurred` → só então publish/unmute |
 | Já publicado nítido → `light`/`strong` | Mute vídeo → `switchTo` blur → `waitUntilBlurred` → unmute |
 | `light` ↔ `strong` | `switchTo({ mode: 'background-blur', blurRadius })` sem mute se já blurred |
 | → `off` | `switchTo({ mode: 'disabled' })` ou `stopProcessor`; nítido OK |
@@ -49,4 +49,4 @@ O payload cifrado / o Egress consomem o **mesmo** track publicado. Não há segu
 |--------|-----------------|--------|
 | Sem suporte / assets | «Blur de fundo não disponível» | nítido permitido; modo não fica leve/forte |
 | Falha a meio | «Blur de fundo falhou — vídeo em pausa» (ou equivalente) | vídeo paused/muted; áudio on |
-| getUserMedia negado | erros de câmara já existentes | — |
+| getUserMedia negado | erros de câmera já existentes | — |

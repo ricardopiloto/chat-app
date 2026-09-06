@@ -2,7 +2,7 @@
 
 ## 1. Onde processar (local vs CSS vs servidor)
 
-**Decision**: Desfocar no **cliente de quem envia**, no `MediaStreamTrack` de câmara, **antes** de `publishTrack`. O tile local, os remotos e o Egress vêem o mesmo frame.
+**Decision**: Desfocar no **cliente de quem envia**, no `MediaStreamTrack` de câmera, **antes** de `publishTrack`. O tile local, os remotos e o Egress vêem o mesmo frame.
 
 **Rationale**: FR-005/FR-006. CSS/`backdrop-filter` no `<video>` local não altera o que os outros recebem. Processar no servidor quebraria E2EE e o modelo «o servidor não decodifica».
 
@@ -25,7 +25,7 @@
 
 **Decision**: **Não publicar** (ou manter a publicação de vídeo **muted**) até existir pelo menos um frame **já processado** com blur. O `BackgroundProcessor` oficial **passa o primeiro frame sem efeito** de propósito (evitar “flash” cinzento) — isso **viola** a spec de privacidade; o wrapper Mesa **descarta** esse frame e só então publica/unmuta.
 
-Fluxo ao ligar câmara com leve/forte já escolhido:
+Fluxo ao ligar câmera com leve/forte já escolhido:
 
 1. `createLocalVideoTrack()` (getUserMedia).
 2. `setProcessor(BackgroundProcessor({ mode: 'background-blur', blurRadius }))` com `assetPaths` locais.
@@ -33,7 +33,7 @@ Fluxo ao ligar câmara com leve/forte já escolhido:
 4. `publishTrack` / `setCameraEnabled(true)` / unmute.
 5. Preview local anexa o track **processado** (nunca o raw).
 
-Ao activar blur com a câmara **já** a publicar nítido: **mutar vídeo** → `switchTo` blur → esperar frame processado → unmutar. Não enviar o passthrough.
+Ao activar blur com a câmera **já** a publicar nítido: **mutar vídeo** → `switchTo` blur → esperar frame processado → unmutar. Não enviar o passthrough.
 
 **Rationale**: Clarificação A da sessão; SC-007. O pacote LiveKit optimiza UX de loading, não privacidade do quarto.
 
@@ -44,7 +44,7 @@ Ao activar blur com a câmara **já** a publicar nítido: **mutar vídeo** → `
 **Decision**: Enquanto o modo for leve/forte, se o processor lançar erro, WASM falhar, ou deixar de produzir frames:
 
 - **Não** fazer `switchTo('disabled')` nem publicar raw.
-- **Parar o vídeo enviado**: `setCameraEnabled(false)` / mute da publicação de câmara (o spec permite «congela ou pára»). Áudio **não** se toca.
+- **Parar o vídeo enviado**: `setCameraEnabled(false)` / mute da publicação de câmera (o spec permite «congela ou pára»). Áudio **não** se toca.
 - Mensagem visível para quem envia (ex. «Blur de fundo falhou — o vídeo está em pausa»).
 - O modo em memória/`localStorage` **mantém-se** leve/forte.
 - «Sem blur» → unmutar/raw (utilizador optou por abrir o quarto).
@@ -89,22 +89,22 @@ Valores ajustáveis só se o quickstart mostrar que não distinguem (SC-002); n�
 
 ## 8. Integração LiveKit vs «Vídeo de teste»
 
-**Decision**: Processor **só** na câmara real. `createTestVideoTrack` (canvas) publica-se como hoje, sem `setProcessor`. Probe de suporte corre na UI mesmo em teste (a seta pode mostrar «não disponível» só quando se tenta aplicar à câmara real).
+**Decision**: Processor **só** na câmera real. `createTestVideoTrack` (canvas) publica-se como hoje, sem `setProcessor`. Probe de suporte corre na UI mesmo em teste (a seta pode mostrar «não disponível» só quando se tenta aplicar à câmera real).
 
-`joinLiveRoom` passa a aceitar `LocalTrack` (câmara) ou `MediaStreamTrack` (teste). `toggleCam` deixa de ser só `setCameraEnabled` ingénuo: ao **ligar**, se modo ≠ off, aplicar gate §3.
+`joinLiveRoom` passa a aceitar `LocalTrack` (câmera) ou `MediaStreamTrack` (teste). `toggleCam` deixa de ser só `setCameraEnabled` ingénuo: ao **ligar**, se modo ≠ off, aplicar gate §3.
 
 **Rationale**: FR-012. Teste é diagnóstico da sala, não webcam.
 
 ## 9. UI: split + seta (forma, não só cor)
 
-**Decision**: Grupo `.call-ctrl-split`: botão principal (ícone câmara + rótulo fixo «Câmara») e botão seta (`aria-haspopup="menu"`). Menu tipo `AccountMenu` (Escape / clique fora). Três `menuitemradio`. Seta **off**: chevron outline. Seta **on** (leve ou forte): o **mesmo** chevron **com uma marca geométrica extra** (ex. pequeno losango/pip preenchido a `currentColor`) — diferença de **forma**. `aria-label` da seta muda («Fundo: sem blur» vs «Fundo: blur ligado»). Ícone da câmara inalterado quanto ao blur.
+**Decision**: Grupo `.call-ctrl-split`: botão principal (ícone câmera + rótulo fixo «Câmera») e botão seta (`aria-haspopup="menu"`). Menu tipo `AccountMenu` (Escape / clique fora). Três `menuitemradio`. Seta **off**: chevron outline. Seta **on** (leve ou forte): o **mesmo** chevron **com uma marca geométrica extra** (ex. pequeno losango/pip preenchido a `currentColor`) — diferença de **forma**. `aria-label` da seta muda («Fundo: sem blur» vs «Fundo: blur ligado»). Ícone da câmera inalterado quanto ao blur.
 
-**Rationale**: Clarificações D + split + indicador à vista. 012: estado não depende só de cor; rótulo «Câmara» não muda.
+**Rationale**: Clarificações D + split + indicador à vista. 012: estado não depende só de cor; rótulo «Câmera» não muda.
 
-**Alternatives considered**: Botão Fundo próprio — rejeitado. Clique longo — rejeitado. Mudar o ícone da câmara — rejeitado (FR-017).
+**Alternatives considered**: Botão Fundo próprio — rejeitado. Clique longo — rejeitado. Mudar o ícone da câmera — rejeitado (FR-017).
 
 ## 10. Indisponibilidade (FR-010)
 
-**Decision**: `supportsBackgroundProcessors() === false` (ou falha a carregar WASM/modelo **antes** de o utilizador ficar com leve/forte seleccionado): menu mostra as opções mas escolher leve/forte **não** persiste como ligado; toast/linha de erro «Blur de fundo não disponível»; câmara pode ficar nítida. Se o suporte existir e só falhar **depois** de ligado → §4, não FR-010.
+**Decision**: `supportsBackgroundProcessors() === false` (ou falha a carregar WASM/modelo **antes** de o utilizador ficar com leve/forte seleccionado): menu mostra as opções mas escolher leve/forte **não** persiste como ligado; toast/linha de erro «Blur de fundo não disponível»; câmera pode ficar nítida. Se o suporte existir e só falhar **depois** de ligado → §4, não FR-010.
 
 **Rationale**: Distinguir «nunca pôde ligar» de «estava ligado e partiu».

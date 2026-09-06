@@ -6,7 +6,7 @@
 
 ## Summary
 
-Polimento visual da barra de chamada: **Microfone** e **Câmara** passam a **só ícone** (com tooltip/`title` espelhando o `aria-label` de estado); o split da câmara (015) passa a um **contentor Discord-like** (fundo contínuo + separador vertical + chevron); **Sair** mantém hangup + texto «Sair» mas fica **vermelho** (acção destrutiva). Sem mudanças de API, media ou blur logic.
+Polimento visual da barra de chamada: **Microfone** e **Câmera** passam a **só ícone** (com tooltip/`title` espelhando o `aria-label` de estado); o split da câmera (015) passa a um **contentor Discord-like** (fundo contínuo + separador vertical + chevron); **Sair** mantém hangup + texto «Sair» mas fica **vermelho** (acção destrutiva). Sem mudanças de API, media ou blur logic.
 
 ## Technical Context
 
@@ -67,7 +67,7 @@ specs/020-call-control-icons/
 frontend/
 └── src/
     ├── pages/
-    │   └── VoiceChannel.tsx          # ALTERAR — remover spans Microfone/Câmara; title=aria; Sair danger
+    │   └── VoiceChannel.tsx          # ALTERAR — remover spans Microfone/Câmera; title=aria; Sair danger
     └── styles/
         ├── mesa-theme.css            # ALTERAR — split Discord (contentor + divider); leave red; icon-only sizing
         └── nocturne.css              # ALTERAR se necessário — .btn-danger token/base

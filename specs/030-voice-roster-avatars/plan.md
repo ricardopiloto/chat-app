@@ -24,7 +24,7 @@ Mostrar o **ícone de identidade** (foto de perfil 029 ou iniciais) à esquerda 
 
 **Performance Goals**: Foto na linha de voz no mesmo prazo de 028 (&lt;3 s); grupo de texto com foto no instante em que aparece (SC-007).
 
-**Constraints**: FR-001–011; sem `avatar.updated`; sem badges/a falar; sem lista de ocupação em canais `#`; não alterar quem entra na lista (mic **ou** câmara).
+**Constraints**: FR-001–011; sem `avatar.updated`; sem badges/a falar; sem lista de ocupação em canais `#`; não alterar quem entra na lista (mic **ou** câmera).
 
 **Scale/Scope**: Ícone por linha de roster (poucas pessoas) + um ícone por grupo de mensagens visível.
 

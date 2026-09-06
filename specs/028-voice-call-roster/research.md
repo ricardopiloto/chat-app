@@ -6,7 +6,7 @@
 
 **Rationale**: A grade persiste o slot depois de Sair (hoje não há leave no servidor). Observadores em canal de texto **não** estão na sala LiveKit, logo não vêem tracks remotas. O spec 002 descreve `presence.update` (online + canal) mas **não está implementado** e mistura «online na instância» com mesa — a lista desta feature é só mesa + mídia.
 
-**Alternatives considered**: Só `grid.updated` — slots órfãos e sem mic/câmara. Poll LiveKit RoomService — dep de admin API e chaves extra. Só estado no cliente — a coluna dos outros mente.
+**Alternatives considered**: Só `grid.updated` — slots órfãos e sem mic/câmera. Poll LiveKit RoomService — dep de admin API e chaves extra. Só estado no cliente — a coluna dos outros mente.
 
 ## R2 — Início/fim da sessão de chamada
 
@@ -24,7 +24,7 @@
 
 **Alternatives considered**: Renderizar `VoiceChannel` oculto (DOM pesado, palco falso). Segunda ligação LiveKit (proibido pelo spec — uma mesa).
 
-## R4 — Mic / câmara na lista
+## R4 — Mic / câmera na lista
 
 **Decision**: O cliente reporta `PATCH /api/channels/{id}/voice/media` `{ mic_on, cam_on }` após join e em cada toggle. A lista aninhada mostra ocupantes com `mic_on OR cam_on`. Default no join: o que o cliente realmente publicou (hoje o join captura A/V ligados).
 

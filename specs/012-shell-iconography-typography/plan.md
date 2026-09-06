@@ -22,7 +22,7 @@ Substituir os glifos de texto/Unicode soltos do shell (`▸`, `+`, `☰`, rótul
 
 **Project Type**: Web app — mudanças confinadas a `frontend/`; `backend/` fica intocado (FR-013).
 
-**Performance Goals**: Pesquisa não deve bloquear a UI — resultados progressivos por canal à medida que chegam, alvo de resposta perceptível <1s para o canal atualmente aberto e sem "jank" visível ao alternar estados de ícone (mic/câmara) em <100ms.
+**Performance Goals**: Pesquisa não deve bloquear a UI — resultados progressivos por canal à medida que chegam, alvo de resposta perceptível <1s para o canal atualmente aberto e sem "jank" visível ao alternar estados de ícone (mic/câmera) em <100ms.
 
 **Constraints**: Zero endpoints/schema novos no backend (FR-013); todo ícone com nome acessível (FR-007); largura de botão de chamada estável entre estados (FR-004); rótulos de chamada num único idioma (FR-003); ícones legíveis em ambos os temas (FR-012); pesquisa nunca devolve conteúdo fora dos servidores/canais em que o utilizador é membro (FR-014).
 

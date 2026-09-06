@@ -1,5 +1,5 @@
 import { Show, createEffect, createSignal, onCleanup, type JSX } from "solid-js";
-import { useNavigate, useParams } from "@solidjs/router";
+import { useLocation, useParams } from "@solidjs/router";
 import type { Account, Server } from "../api/client";
 import type { WsEnvelope } from "../api/ws";
 import type { Identity } from "../crypto/identity";
@@ -16,7 +16,8 @@ import { bootTheme } from "../theme/theme";
 import ToastHost from "../components/ToastHost";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
-import { useVoiceSession, voiceDurationLabel } from "../voice/VoiceSession";
+import FloatingVoicePip from "./FloatingVoicePip";
+import { useVoiceSession } from "../voice/VoiceSession";
 
 type Props = {
   me: Account;
@@ -32,6 +33,17 @@ type Props = {
 
 const NARROW = 900;
 
+/** Server id implied by the current route (empty pane or ?server=). */
+function serverIdFromRoute(
+  params: { serverId?: string },
+  search: string,
+): string | null {
+  const emptyId = params.serverId;
+  if (typeof emptyId === "string" && emptyId.length > 0) return emptyId;
+  const q = new URLSearchParams(search).get("server");
+  return q && q.length > 0 ? q : null;
+}
+
 function broadcastMembersState(open: boolean) {
   window.dispatchEvent(new CustomEvent("mesa:members-panel-state", { detail: { open } }));
 }
@@ -43,10 +55,13 @@ function broadcastStageChannelsState(expanded: boolean) {
 }
 
 export default function AppShell(props: Props) {
-  const navigate = useNavigate();
-  const params = useParams();
+  const params = useParams<{ id?: string; serverId?: string }>();
+  const location = useLocation();
   const voice = useVoiceSession();
-  const [selectedServerId, setSelectedServerId] = createSignal<string | null>(null);
+  // Init from URL so remount on /servers/:id or /channels/:id?server= keeps rail in sync (041 US4).
+  const [selectedServerId, setSelectedServerId] = createSignal<string | null>(
+    serverIdFromRoute(params, location.search),
+  );
   const [stageMode, setStageMode] = createSignal(readStageMode());
   const [stageChannelsExpanded, setStageChannelsExpanded] = createSignal(
     readStageChannelsExpanded(),
@@ -60,6 +75,12 @@ export default function AppShell(props: Props) {
 
   createEffect(() => {
     bootTheme(appRef ?? null);
+  });
+
+  // Keep rail selection aligned with URL (channel ?server= or /servers/:id).
+  createEffect(() => {
+    const id = serverIdFromRoute(params, location.search);
+    if (id) setSelectedServerId(id);
   });
 
   createEffect(() => {
@@ -161,20 +182,16 @@ export default function AppShell(props: Props) {
     return parts.join(" ");
   };
 
-  const showConnectedBar = () => {
+  const showVoicePip = () => {
     if (!voice.live() || !voice.channelId()) return false;
     return params.id !== voice.channelId();
   };
-
-  const barTimer = () => voiceDurationLabel(voice.callStartedAt(), voice.now());
 
   return (
     <div class="app" data-theme="dark" ref={(el) => (appRef = el)}>
       <TopBar
         me={props.me}
         identity={props.identity}
-        onLogout={props.onLogout}
-        onAccountPatch={props.onAccountPatch}
         showMenuToggle={narrow()}
         onMenuToggle={toggleMenu}
         onWs={props.onWs}
@@ -196,48 +213,13 @@ export default function AppShell(props: Props) {
           stageMode={stageMode()}
           stageChannelsExpanded={stageChannelsExpanded()}
           onToggleStageChannels={() => setStageChannels(!stageChannelsExpanded())}
+          onLogout={props.onLogout}
+          onAccountPatch={props.onAccountPatch}
         />
         <div class="shell-main">
           {props.children}
-          <Show when={showConnectedBar()}>
-            <div
-              class="voice-connected-bar"
-              role="status"
-              aria-label={`Ainda na chamada ${voice.channelName() ?? ""}`}
-            >
-              <div class="voice-connected-bar-info">
-                <span class="voice-connected-bar-name">{voice.channelName()}</span>
-                <Show when={barTimer()}>
-                  {(t) => (
-                    <span class="voice-connected-bar-timer" aria-live="off">
-                      {t()}
-                    </span>
-                  )}
-                </Show>
-              </div>
-              <div class="voice-connected-bar-actions">
-                <button
-                  type="button"
-                  class="btn btn-secondary"
-                  onClick={() => {
-                    const id = voice.channelId();
-                    const server = voice.serverId();
-                    if (!id) return;
-                    navigate(`/channels/${id}${server ? `?server=${server}&type=voice_video` : ""}`);
-                  }}
-                >
-                  Voltar à mesa
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-danger"
-                  aria-label="Sair da chamada"
-                  onClick={() => void voice.hangup()}
-                >
-                  Sair
-                </button>
-              </div>
-            </div>
+          <Show when={showVoicePip()}>
+            <FloatingVoicePip />
           </Show>
         </div>
         <Show when={membersPanelOpen()}>

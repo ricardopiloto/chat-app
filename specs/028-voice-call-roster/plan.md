@@ -6,7 +6,7 @@
 
 ## Summary
 
-Mostrar, na coluna de canais, quem está **a transmitir** (mic **ou** câmara ligados) em cada canal de voz/vídeo, e um **cronómetro da sessão de chamada** (enquanto houver alguém na mesa, mesmo com a lista vazia). A ocupação vive no **servidor** (SQLite + WS), não na grade nem só no LiveKit do cliente. A sessão LiveKit **sobe para o shell** para sobreviver à navegação para texto; clicar noutro canal de voz **move** a mesa.
+Mostrar, na coluna de canais, quem está **a transmitir** (mic **ou** câmera ligados) em cada canal de voz/vídeo, e um **cronómetro da sessão de chamada** (enquanto houver alguém na mesa, mesmo com a lista vazia). A ocupação vive no **servidor** (SQLite + WS), não na grade nem só no LiveKit do cliente. A sessão LiveKit **sobe para o shell** para sobreviver à navegação para texto; clicar noutro canal de voz **move** a mesa.
 
 ## Technical Context
 

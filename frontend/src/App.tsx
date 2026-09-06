@@ -17,6 +17,7 @@ import { bootTheme } from "./theme/theme";
 import Auth from "./pages/Auth";
 import Servers from "./pages/Servers";
 import ChannelRoute from "./pages/ChannelRoute";
+import EmptyServerPane from "./pages/EmptyServerPane";
 import Invite from "./pages/Invite";
 import { VoiceSessionProvider } from "./voice/VoiceSession";
 
@@ -149,6 +150,14 @@ export default function App() {
               component={() => (
                 <AppShell me={me()!} identity={identity()!} onLogout={() => void logout()} onAccountPatch={setMe} onWs={onWs}>
                   <ChannelRoute onWs={onWs} me={me()!} identity={identity()!} />
+                </AppShell>
+              )}
+            />
+            <Route
+              path="/servers/:serverId"
+              component={() => (
+                <AppShell me={me()!} identity={identity()!} onLogout={() => void logout()} onAccountPatch={setMe} onWs={onWs}>
+                  <EmptyServerPane />
                 </AppShell>
               )}
             />

@@ -4,9 +4,9 @@ Pré-requisitos: instância a correr (backend + frontend + LiveKit) como no READ
 
 ## 1. Lista só com mídia ligada
 
-1. A junta-se à mesa com mic ou câmara ligados.
+1. A junta-se à mesa com mic ou câmera ligados.
 2. B, num canal de **texto**, vê A aninhado sob o canal de voz e um cronómetro a andar.
-3. A desliga **mic e câmara**. Em &lt;3 s a linha de A some; o cronómetro **continua**.
+3. A desliga **mic e câmera**. Em &lt;3 s a linha de A some; o cronómetro **continua**.
 4. A liga o mic de novo → a linha volta.
 
 ## 2. Sessão da mesa (não pessoal)

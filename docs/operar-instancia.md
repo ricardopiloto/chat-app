@@ -96,7 +96,7 @@ Não copie `spike/` — é descartável. Este binário é o produto.
 | TURN | 3478 | UDP |
 | Mídia | 50000–50100 | UDP |
 
-Cenas de câmara (Fase 2) não abrem portas novas: são só composições da grade no canal de vídeo. Trocar de cena não reinicia a chamada.
+Cenas de câmera (Fase 2) não abrem portas novas: são só composições da grade no canal de vídeo. Trocar de cena não reinicia a chamada.
 
 A SPA (Fase 3) segue o visual **Mesa / Nocturne** (tema claro/escuro, shell com sidebar). Não há portas nem processos novos — só o frontend em `1420` (dev) ou o estático servido com a API.
 

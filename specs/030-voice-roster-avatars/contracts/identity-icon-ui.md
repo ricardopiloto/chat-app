@@ -24,6 +24,6 @@ Se a imagem não carregar, o círculo mostra iniciais (nunca vazio).
 
 ## Fora
 
-- Ícones de mic/câmara/a falar/anfitrião por linha.
+- Ícones de mic/câmera/a falar/anfitrião por linha.
 - Barra «ainda na chamada» (pode ficar só texto).
 - Actualização instantânea da foto sem refetch (FR-009).

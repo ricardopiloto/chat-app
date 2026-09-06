@@ -111,6 +111,15 @@ pub async fn post_message(
     let mut created = created;
     created.attachment_ids = body.attachment_ids.clone();
 
+    // Sender is caught up on this channel (avoid self-unread).
+    let _ = db::read_state::upsert_last_read(
+        &state.pool,
+        account.id,
+        channel_id,
+        created.created_at,
+    )
+    .await;
+
     state
         .ws
         .send_to_server_members(
@@ -121,6 +130,26 @@ pub async fn post_message(
         )
         .await;
     Ok((StatusCode::CREATED, Json(created)))
+}
+
+#[derive(Debug, Deserialize, Default)]
+pub struct MarkReadBody {
+    pub last_read_at: Option<DateTime<Utc>>,
+}
+
+pub async fn mark_channel_read(
+    State(state): State<AppState>,
+    AuthUser(account): AuthUser,
+    Path(channel_id): Path<Uuid>,
+    Json(body): Json<MarkReadBody>,
+) -> Result<StatusCode, ApiError> {
+    let (channel, _) = membership_for_channel(&state.pool, account.id, channel_id).await?;
+    if channel.kind != ChannelType::Text {
+        return Err(ApiError::bad_request("read state applies to text channels"));
+    }
+    let ts = body.last_read_at.unwrap_or_else(Utc::now);
+    db::read_state::upsert_last_read(&state.pool, account.id, channel_id, ts).await?;
+    Ok(StatusCode::NO_CONTENT)
 }
 
 #[derive(Debug, Serialize)]

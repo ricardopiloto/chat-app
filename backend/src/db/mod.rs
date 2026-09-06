@@ -17,6 +17,7 @@ pub mod invite;
 pub mod key_envelope;
 pub mod membership;
 pub mod message;
+pub mod read_state;
 pub mod recording;
 pub mod scene;
 pub mod server;

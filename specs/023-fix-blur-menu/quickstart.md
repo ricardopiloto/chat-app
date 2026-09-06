@@ -9,7 +9,7 @@ Validação manual. Ver [contracts/blur-menu-visibility.md](./contracts/blur-men
 
 ## §1 Abrir o menu (layout normal)
 
-1. Clicar na **seta** junto ao ícone de câmara.
+1. Clicar na **seta** junto ao ícone de câmera.
 2. Ver menu com **Sem blur**, **Blur leve**, **Blur forte** — legível, não cortado.
 3. Confirmar `aria-expanded` / aspecto de aberto na seta.
 
@@ -17,7 +17,7 @@ Validação manual. Ver [contracts/blur-menu-visibility.md](./contracts/blur-men
 
 1. Escolher uma opção → menu fecha; seta reflecte blur on/off.
 2. Reabrir → Escape fecha; reabrir → clique fora fecha.
-3. Clique no **ícone** de câmara (não a seta) → só toggle câmara, sem abrir menu.
+3. Clique no **ícone** de câmera (não a seta) → só toggle câmera, sem abrir menu.
 
 ## §3 Modo palco (reporte)
 

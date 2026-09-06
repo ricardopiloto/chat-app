@@ -7,6 +7,10 @@ pub struct Server {
     pub name: String,
     pub owner_account_id: Uuid,
     pub has_image: bool,
+    #[serde(default)]
+    pub has_unread: bool,
+    #[serde(default)]
+    pub has_voice: bool,
     #[serde(skip)]
     pub image_filename: Option<String>,
     #[serde(skip)]

@@ -47,6 +47,8 @@ pub async fn create_server(
         name,
         owner_account_id: account.id,
         has_image: false,
+        has_unread: false,
+        has_voice: false,
         image_filename: None,
         image_content_type: None,
     };

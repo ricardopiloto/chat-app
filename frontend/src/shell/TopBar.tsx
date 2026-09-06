@@ -2,8 +2,6 @@ import { For, Show, createSignal, onCleanup, onMount } from "solid-js";
 import type { Account } from "../api/client";
 import type { WsEnvelope } from "../api/ws";
 import type { Identity } from "../crypto/identity";
-import AccountMenu from "../components/AccountMenu";
-import IdentityAvatar from "../components/IdentityAvatar";
 import IconBell from "../components/icons/IconBell";
 import IconMenu from "../components/icons/IconMenu";
 import IconMoon from "../components/icons/IconMoon";
@@ -19,8 +17,6 @@ import { A } from "@solidjs/router";
 type Props = {
   me: Account;
   identity: Identity;
-  onLogout: () => void;
-  onAccountPatch?: (account: Account) => void;
   onMenuToggle?: () => void;
   showMenuToggle?: boolean;
   onWs?: (handler: (msg: WsEnvelope) => void) => () => void;
@@ -30,7 +26,6 @@ export default function TopBar(props: Props) {
   const [searchExpanded, setSearchExpanded] = createSignal(false);
   const [searchSeed, setSearchSeed] = createSignal<string | null>(null);
   const [searchSeedNonce, setSearchSeedNonce] = createSignal(0);
-  const [accountOpen, setAccountOpen] = createSignal(false);
   const [notifOpen, setNotifOpen] = createSignal(false);
   const [theme, setTheme] = createSignal<Theme>(resolveTheme());
 
@@ -157,31 +152,6 @@ export default function TopBar(props: Props) {
             <IconMoon title="Tema escuro" size={20} />
           </Show>
         </button>
-        <div class="account-menu-anchor">
-          <button
-            type="button"
-            class="user-chip"
-            onClick={() => setAccountOpen((v) => !v)}
-            aria-expanded={accountOpen()}
-            aria-haspopup="menu"
-            aria-label="Menu da conta"
-          >
-            <IdentityAvatar
-              class="user-avatar"
-              accountId={props.me.id}
-              handle={props.me.handle}
-              hasAvatar={!!props.me.has_avatar}
-            />
-            <span style={{ "font-size": "13px", "font-weight": "500" }}>{props.me.handle}</span>
-          </button>
-          <AccountMenu
-            open={accountOpen()}
-            onClose={() => setAccountOpen(false)}
-            me={props.me}
-            onLogout={props.onLogout}
-            onAccountPatch={props.onAccountPatch}
-          />
-        </div>
       </div>
     </header>
   );

@@ -21,7 +21,7 @@ Três estados mutuamente exclusivos. Default: `off`.
 ### Transições
 
 ```
-off --escolher leve--> light   (persiste; se câmara on: mute → processor → unmute)
+off --escolher leve--> light   (persiste; se câmera on: mute → processor → unmute)
 off --escolher forte--> strong
 light --escolher forte--> strong  (switchTo radius; sem mute se já processado)
 strong --escolher leve--> light
@@ -29,7 +29,7 @@ light|strong --Sem blur--> off    (switchTo disabled / stop efeito; vídeo níti
 light|strong --falha processor--> light|strong + videoPausedByBlurFailure
 videoPausedByBlurFailure --Sem blur--> off + retoma nítido
 videoPausedByBlurFailure --processor recupera--> light|strong + gate 1.º frame + unmute
-câmara off --escolher modo--> só persiste; aplica no próximo ligar (gate 1.º frame)
+câmera off --escolher modo--> só persiste; aplica no próximo ligar (gate 1.º frame)
 ```
 
 ## `CameraBlurRuntime` (sessão de chamada)
@@ -40,7 +40,7 @@ câmara off --escolher modo--> só persiste; aplica no próximo ligar (gate 1.º
 | `supported` | `boolean` | sessão | `supportsBackgroundProcessors()` + assets OK |
 | `menuOpen` | `boolean` | sinal | popover da seta |
 | `videoPausedByBlurFailure` | `boolean` | sinal | FR-015; mensagem visível |
-| `applying` | `boolean` | sinal | gate 1.º frame; câmara pode estar muted |
+| `applying` | `boolean` | sinal | gate 1.º frame; câmera pode estar muted |
 
 Não há entidade de domínio no servidor. O director **não** vê nem força o modo dos outros.
 
@@ -48,14 +48,14 @@ Não há entidade de domínio no servidor. O director **não** vê nem força o 
 
 | Ícone | Uso | Estado |
 |-------|-----|--------|
-| `IconCameraOn` / `IconCameraOff` | área principal | só câmara ligada/desligada (inalterado) |
+| `IconCameraOn` / `IconCameraOff` | área principal | só câmera ligada/desligada (inalterado) |
 | `IconChevronDown` | seta, modo `off` | forma por omissão |
 | `IconChevronDownBlur` | seta, modo `light` \| `strong` | **forma distinta** (chevron + pip/losango); não só cor |
 
-`title` / `aria-label` na seta: «Fundo: sem blur» vs «Fundo: blur ligado». O rótulo visível «Câmara» não muda.
+`title` / `aria-label` na seta: «Fundo: sem blur» vs «Fundo: blur ligado». O rótulo visível «Câmera» não muda.
 
 ## Validação
 
 - `mode ∈ {off,light,strong}` na leitura de storage.
 - `light`/`strong` só ficam persistidos se `supported` (FR-010); falha a meio **não** reescreve para `off`.
-- Test video: `runtime` ignora processor; modo pode estar guardado para a próxima câmara real.
+- Test video: `runtime` ignora processor; modo pode estar guardado para a próxima câmera real.

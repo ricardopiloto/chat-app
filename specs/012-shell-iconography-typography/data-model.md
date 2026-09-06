@@ -8,7 +8,7 @@ Sem alterações de schema SQLite nem de contratos REST/WS. Entidades de UI / se
 |-------|-----------|----------|---------|----|
 | `IconVoiceChannel` | prefixo `▸` | `Sidebar.tsx` (lista de canais de voz) | único | FR-001 |
 | `IconMicOn` / `IconMicOff` | texto `Microfone`/`Mic off` | `VoiceChannel.tsx` (controlo de microfone) | ligado / desligado | FR-002, FR-003, FR-004 |
-| `IconCameraOn` / `IconCameraOff` | texto `Câmara`/`Cam off` | `VoiceChannel.tsx` (controlo de câmara) | ligado / desligado | FR-002, FR-003, FR-004 |
+| `IconCameraOn` / `IconCameraOff` | texto `Câmera`/`Cam off` | `VoiceChannel.tsx` (controlo de câmera) | ligado / desligado | FR-002, FR-003, FR-004 |
 | `IconPhoneHangup` | texto `Sair` | `VoiceChannel.tsx` (sair da chamada) | único | FR-002 |
 | `IconLockClosed` | (nenhum, chip só tinha texto) | `.e2ee-chip` ativo (`Channel.tsx`, `VoiceChannel.tsx`) | único | FR-005 |
 | `IconLockWarning` | (nenhum) | `.e2ee-chip.off` e `.e2ee-banner` | único | FR-005 |
