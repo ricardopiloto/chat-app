@@ -19,8 +19,11 @@
   --color-danger-hover: #e04848;
   --color-danger-active: #b83232;
   height: 100vh;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  gap: var(--shell-gutter, 8px);
+  padding: var(--shell-gutter, 8px);
   font-family: var(--font-body);
   font-size: 16px;
   background: var(--color-bg);
@@ -99,7 +102,8 @@ a:hover {
   gap: 14px;
   padding: 0 16px;
   background: var(--panel);
-  border-bottom: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
 }
 .topbar-brand {
   display: flex;
@@ -187,6 +191,7 @@ img.user-avatar {
   min-height: 0;
   display: grid;
   grid-template-columns: 68px 238px 1fr;
+  gap: var(--shell-gutter, 8px);
   position: relative;
 }
 .shell.members-open {
@@ -230,7 +235,7 @@ img.user-avatar {
   gap: 8px;
   padding: 12px 0 10px;
   background: color-mix(in srgb, var(--panel) 92%, #000);
-  border-right: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg);
 }
 .server-rail-list {
   flex: 1;
@@ -332,11 +337,12 @@ img.server-rail-glyph {
 
 .sidebar {
   min-width: 0;
+  min-height: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  background: var(--panel);
-  border-right: 1px solid var(--color-divider);
+  gap: var(--shell-gutter, 8px);
+  background: transparent;
 }
 .sidebar-stage-expand {
   display: none;
@@ -350,8 +356,8 @@ img.server-rail-glyph {
   margin: 0;
   padding: 8px 4px;
   border: 0;
-  border-bottom: 1px solid var(--color-divider);
-  background: transparent;
+  border-radius: var(--radius-lg);
+  background: var(--panel);
   color: var(--muted);
   font: inherit;
   font-size: 10px;
@@ -390,8 +396,8 @@ img.server-rail-glyph {
   flex: none;
   height: 52px;
   border: 0;
-  background: transparent;
-  border-bottom: 1px solid var(--color-divider);
+  background: var(--panel);
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -401,15 +407,16 @@ img.server-rail-glyph {
   text-align: left;
   font: inherit;
   width: 100%;
+  box-sizing: border-box;
 }
 .sidebar-header-static {
   cursor: default;
 }
 .sidebar-header-static:hover {
-  background: transparent;
+  background: var(--panel);
 }
 .sidebar-header:hover {
-  background: var(--hover);
+  background: color-mix(in srgb, var(--panel) 88%, var(--hover));
 }
 .sidebar-server-name {
   flex: 1;
@@ -425,11 +432,14 @@ img.server-rail-glyph {
 }
 .sidebar-nav {
   flex: 1;
+  min-height: 0;
   overflow: auto;
   padding: 14px 10px;
   display: flex;
   flex-direction: column;
   gap: 3px;
+  background: var(--panel);
+  border-radius: var(--radius-lg);
 }
 .sidebar-section-row {
   display: flex;
@@ -784,8 +794,8 @@ img.voice-roster-avatar {
 .user-panel {
   flex: none;
   margin-top: auto;
-  border-top: 1px solid var(--color-divider);
   background: color-mix(in srgb, var(--panel) 92%, #000 8%);
+  border-radius: var(--radius-lg);
   padding: 8px;
   display: flex;
   flex-direction: column;
@@ -923,9 +933,11 @@ img.voice-roster-avatar {
 
 .shell-main {
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  background: var(--color-bg);
+  background: var(--elev);
+  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 .shell-main > * {
@@ -939,8 +951,9 @@ img.voice-roster-avatar {
   align-items: center;
   justify-content: center;
   padding: 32px 24px;
-  background: var(--color-bg);
+  background: transparent;
   min-height: 0;
+  border-radius: inherit;
 }
 .empty-server-pane-joke {
   margin: 0;
@@ -958,7 +971,7 @@ img.voice-roster-avatar {
   display: flex;
   flex-direction: column;
   background: var(--panel);
-  border-left: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 .members-panel-header {
@@ -1052,6 +1065,7 @@ img.members-avatar {
   .shell-nav {
     display: flex;
     flex-direction: row;
+    gap: var(--shell-gutter, 8px);
     position: absolute;
     inset: 0 auto 0 0;
     width: min(348px, 92vw);
@@ -1059,7 +1073,9 @@ img.members-avatar {
     transform: translateX(-105%);
     transition: transform 0.2s ease;
     box-shadow: var(--shadow-lg);
-    background: var(--panel);
+    background: transparent;
+    padding: var(--shell-gutter, 8px);
+    box-sizing: border-box;
   }
   .shell.drawer-open .shell-nav {
     transform: translateX(0);
@@ -1074,7 +1090,6 @@ img.members-avatar {
     width: auto;
     transform: none;
     box-shadow: none;
-    border-right: 0;
   }
   .shell.stage-mode {
     grid-template-columns: 68px 52px 1fr;
@@ -1115,9 +1130,9 @@ img.members-avatar {
   }
   .shell.members-open .members-panel {
     position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
+    right: var(--shell-gutter, 8px);
+    top: var(--shell-gutter, 8px);
+    bottom: var(--shell-gutter, 8px);
     width: min(280px, 85vw);
     z-index: 25;
     box-shadow: var(--shadow-lg);
@@ -1143,6 +1158,8 @@ img.members-avatar {
   min-height: 0;
   display: flex;
   flex-direction: column;
+  border-radius: inherit;
+  background: transparent;
 }
 .pane-header {
   flex: none;
@@ -2539,6 +2556,8 @@ img.msg-avatar {
   padding: 48px 24px;
   color: var(--muted);
   text-align: center;
+  border-radius: inherit;
+  background: transparent;
 }
 
 .app-toast {

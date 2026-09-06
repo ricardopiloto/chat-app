@@ -31,6 +31,5 @@
 
 ## Notes
 
-- Follow-up a [044-rounded-borders](../../044-rounded-borders/): contentores topbar / rail / sidebar / user-panel / pane.
-- Assumption: gutters/inset para cantos visíveis; sidebar como coluna una se fizer sentido.
-- Pronta para `/speckit-clarify` (opcional) ou `/speckit-plan`.
+- Clarificações 2026-09-06: sidebar em 3 cartões; gutters subtis; topbar inset alinhada às colunas.
+- Pronta para `/speckit-plan`.

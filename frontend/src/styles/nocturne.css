@@ -76,6 +76,8 @@
   --radius-md: 14px;
   --radius-lg: 22px;
   --radius-pill: 999px; /* action buttons — Mesa / Protótipo v2 */
+  /* 045: subtle uniform gap between shell chrome cards */
+  --shell-gutter: 8px;
 
   /* Elevation — derived from the ground: soft ink-tinted shadows on a
      light theme, a hairline edge + ambient darkness on a dark one. */

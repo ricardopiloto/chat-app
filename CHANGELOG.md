@@ -9,6 +9,12 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-09-06
+
+### Changed
+
+- Shell chrome uses inset rounded cards (topbar, server rail, sidebar header/nav/user-panel, main pane) with subtle uniform `--shell-gutter` gaps so corners stay visible ([045-shell-chrome-radius](specs/045-shell-chrome-radius/)).
+
 ## [0.4.0] - 2026-09-06
 
 ### Added
@@ -146,7 +152,8 @@ Initial tracked release baseline (features delivered through 006).
 
 - Earlier spikes and phases: see `specs/001-fase-0-spike/` … `specs/005-fase3-ui-corrections/` and `docs/`.
 
-[Unreleased]: https://github.com/ricardosobral/chat-app/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/ricardosobral/chat-app/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/ricardosobral/chat-app/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/ricardosobral/chat-app/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/ricardosobral/chat-app/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/ricardosobral/chat-app/compare/v0.1.1...v0.2.0
