@@ -17,25 +17,14 @@ Pensado para mesas de RPG que gravam ou transmitem sessões — e para qualquer 
 
 ## Screenshots
 
-> Ilustrações alinhadas ao visual **Mesa / Nocturne** (protótipo e SPA). Substituir por capturas reais da instância quando conveniente — ficheiros em [`docs/screenshots/`](docs/screenshots/).
+> Ilustrações alinhadas ao visual **Mesa / Nocturne** (protótipo e SPA). Substituir por capturas reais da instância quando conveniente — ficheiros em [`docs/screenshots/`](screenshots/).
 
-### Autenticação
 
-![Ecrã de entrada Mesa](docs/screenshots/03-auth.jpg)
+![ss1](screenshots/Screenshot_20260904_183835.png)
 
-Conta local por **instância de hospedagem** (sem SSO externo no MVP).
 
-### Canal de texto
+![ss2](screenshots/Screenshot_20260904_183910.png)
 
-![Shell Mesa — canal de texto](docs/screenshots/01-canal-texto.jpg)
-
-Rail de servidores, secções **Texto** / **Voz e vídeo**, mensagens e composer.
-
-### Canal de voz / composição
-
-![Shell Mesa — composição de voz](docs/screenshots/02-canal-voz.jpg)
-
-Grade de câmeras, controlos de chamada, chips de E2EE e fluxo **Gravar** / **Religar**.
 
 Referência de design: [`docs/design-ref/Mesa - Protótipo v2.dc.html`](docs/design-ref/Mesa%20-%20Protótipo%20v2.dc.html).
 
