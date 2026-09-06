@@ -5,11 +5,17 @@ import {
   api,
   deleteChannel,
   deleteServer,
+  deleteServerImage,
+  fetchVoiceOccupancy,
+  formatCallDuration,
+  putServerImage,
+  serverImageUrl,
   type Account,
   type Channel,
   type CreateServerResult,
   type Invite,
   type Server,
+  type VoiceChannelOccupancy,
 } from "../api/client";
 import type { WsEnvelope } from "../api/ws";
 import { generateServerKey } from "../crypto/serverKey";
@@ -22,6 +28,8 @@ import {
 import { publishOwnEnvelope } from "../crypto/keyHandoff";
 import type { Identity } from "../crypto/identity";
 import Dialog, { useCopiedFeedback } from "../components/Dialog";
+import IdentityAvatar from "../components/IdentityAvatar";
+import ImageUploadDialog from "../components/ImageUploadDialog";
 import IconPlus from "../components/icons/IconPlus";
 import IconUserPlus from "../components/icons/IconUserPlus";
 import IconVoiceChannel from "../components/icons/IconVoiceChannel";
@@ -46,6 +54,7 @@ export default function Sidebar(props: Props) {
   const [createServerOpen, setCreateServerOpen] = createSignal(false);
   const [createChannelOpen, setCreateChannelOpen] = createSignal(false);
   const [inviteOpen, setInviteOpen] = createSignal(false);
+  const [serverImageOpen, setServerImageOpen] = createSignal(false);
   const [confirmDelete, setConfirmDelete] = createSignal<
     | { kind: "channel"; channel: Channel }
     | { kind: "server"; server: Server }
@@ -61,6 +70,8 @@ export default function Sidebar(props: Props) {
   const [error, setError] = createSignal("");
   const [inviteUrl, setInviteUrl] = createSignal("");
   const [menu, setMenu] = createSignal<MenuState | null>(null);
+  const [occupancy, setOccupancy] = createSignal<Record<string, VoiceChannelOccupancy>>({});
+  const [clock, setClock] = createSignal(Date.now());
   const copied = useCopiedFeedback();
   const keyCopied = useCopiedFeedback();
   const serverKeyCopied = useCopiedFeedback();
@@ -90,8 +101,58 @@ export default function Sidebar(props: Props) {
   const activeChannelId = () => params.id;
 
   createEffect(() => {
+    const id = selected()?.id;
+    if (!id) {
+      setOccupancy({});
+      return;
+    }
+    void fetchVoiceOccupancy(id)
+      .then((snap) => {
+        const map: Record<string, VoiceChannelOccupancy> = {};
+        for (const ch of snap.channels) map[ch.channel_id] = ch;
+        setOccupancy(map);
+      })
+      .catch(() => setOccupancy({}));
+  });
+
+  createEffect(() => {
+    const t = window.setInterval(() => setClock(Date.now()), 1000);
+    onCleanup(() => window.clearInterval(t));
+  });
+
+  /** Nested roster: only occupants with mic or camera on (028). Avatar is decorative. */
+  function transmitting(channelId: string) {
+    return (occupancy()[channelId]?.occupants ?? []).filter((o) => o.mic_on || o.cam_on);
+  }
+
+  function callStartedAt(channelId: string): string | null {
+    return occupancy()[channelId]?.call_started_at ?? null;
+  }
+
+  createEffect(() => {
     if (!props.onWs) return;
     const off = props.onWs((msg) => {
+      if (msg.event === "voice.occupancy" && msg.server_id === selected()?.id) {
+        const channelId = String(msg.payload.channel_id ?? "");
+        if (!channelId) return;
+        const occupants = (msg.payload.occupants as VoiceChannelOccupancy["occupants"]) ?? [];
+        const started = msg.payload.call_started_at;
+        const callStartedAt =
+          typeof started === "string" ? started : started == null ? null : String(started);
+        setOccupancy((prev) => {
+          const next = { ...prev };
+          if (!callStartedAt && occupants.length === 0) {
+            delete next[channelId];
+          } else {
+            next[channelId] = {
+              channel_id: channelId,
+              call_started_at: callStartedAt,
+              occupants,
+            };
+          }
+          return next;
+        });
+      }
       if (msg.event === "channel.deleted") {
         void refetchChannels();
         if (String(msg.payload.channel_id) === activeChannelId()) {
@@ -159,6 +220,7 @@ export default function Sidebar(props: Props) {
         id: result.id,
         name: result.name,
         owner_account_id: result.owner_account_id,
+        has_image: result.has_image ?? false,
       };
       const serverKey = generateServerKey();
       await publishOwnEnvelope(server.id, props.me.id, props.identity, serverKey);
@@ -261,6 +323,10 @@ export default function Sidebar(props: Props) {
       x: e.clientX,
       y: e.clientY,
       items: [
+        {
+          label: "Imagem do servidor",
+          onSelect: () => setServerImageOpen(true),
+        },
         {
           label: "Apagar servidor",
           danger: true,
@@ -403,7 +469,15 @@ export default function Sidebar(props: Props) {
               </Show>
             </div>
             <For each={voiceChannels()}>
-              {(c) => (
+              {(c) => {
+                const started = () => callStartedAt(c.id);
+                const names = () => transmitting(c.id);
+                const timer = () => {
+                  const at = started();
+                  return at ? formatCallDuration(at, clock()) : null;
+                };
+                return (
+                <div class="voice-channel-block">
                 <A
                   href={`/channels/${c.id}?server=${selected()!.id}&type=${c.type}`}
                   class={`channel-item${activeChannelId() === c.id ? " active" : ""}`}
@@ -423,9 +497,35 @@ export default function Sidebar(props: Props) {
                   <span class="prefix channel-icon" aria-hidden="true">
                     <IconVoiceChannel size={18} />
                   </span>
-                  <span>{c.name}</span>
+                  <span class="voice-channel-name">{c.name}</span>
+                  <Show when={timer()}>
+                    {(t) => (
+                      <span class="voice-call-timer" aria-label={`Duração da chamada ${t()}`}>
+                        {t()}
+                      </span>
+                    )}
+                  </Show>
                 </A>
-              )}
+                <Show when={names().length > 0}>
+                  <ul class="voice-roster" aria-label={`Na chamada ${c.name}`}>
+                    <For each={names()}>
+                      {(o) => (
+                        <li class="voice-roster-item" title={o.handle} aria-label={o.handle}>
+                          <IdentityAvatar
+                            class="voice-roster-avatar"
+                            accountId={o.account_id}
+                            handle={o.handle}
+                            hasAvatar={!!o.has_avatar}
+                          />
+                          <span class="voice-roster-handle">{o.handle}</span>
+                        </li>
+                      )}
+                    </For>
+                  </ul>
+                </Show>
+                </div>
+                );
+              }}
             </For>
           </Show>
 
@@ -612,6 +712,26 @@ export default function Sidebar(props: Props) {
             : "Isto remove o canal e o histórico. Quem estiver em chamada será desligado."}
         </p>
       </Dialog>
+
+      <ImageUploadDialog
+        open={serverImageOpen()}
+        title="Imagem do servidor"
+        hasImage={!!selected()?.has_image}
+        currentUrl={selected() ? serverImageUrl(selected()!.id) : undefined}
+        onClose={() => setServerImageOpen(false)}
+        onSave={async (file) => {
+          const server = selected();
+          if (!server) return;
+          await putServerImage(server.id, file, file.type);
+          await refetch();
+        }}
+        onRemove={async () => {
+          const server = selected();
+          if (!server) return;
+          await deleteServerImage(server.id);
+          await refetch();
+        }}
+      />
     </div>
   );
 }

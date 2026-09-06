@@ -1,4 +1,5 @@
 use crate::api::auth::session::AuthUser;
+use crate::api::authz::require_member;
 use crate::api::channel_provision;
 use crate::db;
 use crate::domain::channel::ChannelType;
@@ -20,18 +21,6 @@ pub struct CreateChannelBody {
     pub grid_slot_count: Option<i64>,
     pub custody_ack: Option<bool>,
     pub channel_key_sealed: Option<String>,
-}
-
-pub async fn require_member(
-    pool: &sqlx::SqlitePool,
-    account_id: Uuid,
-    server_id: Uuid,
-) -> Result<(), ApiError> {
-    if db::membership::exists(pool, account_id, server_id).await? {
-        Ok(())
-    } else {
-        Err(ApiError::forbidden("not a member of this server"))
-    }
 }
 
 pub async fn create_channel(

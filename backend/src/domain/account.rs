@@ -19,6 +19,8 @@ pub struct AccountRecord {
     pub identity_vault: Option<Vec<u8>>,
     pub is_initial_operator: bool,
     pub created_at: DateTime<Utc>,
+    pub avatar_filename: Option<String>,
+    pub avatar_content_type: Option<String>,
 }
 
 impl AccountRecord {
@@ -39,6 +41,7 @@ impl AccountRecord {
                 .identity_vault
                 .as_ref()
                 .and_then(|bytes| serde_json::from_slice(bytes).ok()),
+            has_avatar: self.avatar_filename.is_some(),
         }
     }
 }
@@ -49,4 +52,5 @@ pub struct AuthAccount {
     pub handle: String,
     pub is_initial_operator: bool,
     pub identity_vault: Option<serde_json::Value>,
+    pub has_avatar: bool,
 }

@@ -30,7 +30,7 @@ pub async fn get_grid(
     let channel = db::channel::find_by_id(&state.pool, channel_id)
         .await?
         .ok_or_else(|| ApiError::not_found("channel not found"))?;
-    crate::api::channels::require_member(&state.pool, account.id, channel.server_id).await?;
+    crate::api::authz::require_member(&state.pool, account.id, channel.server_id).await?;
     Ok(Json(active_layout(&state.pool, channel_id).await?))
 }
 
@@ -43,7 +43,7 @@ pub async fn put_grid(
     let channel = db::channel::find_by_id(&state.pool, channel_id)
         .await?
         .ok_or_else(|| ApiError::not_found("channel not found"))?;
-    crate::api::channels::require_member(&state.pool, account.id, channel.server_id).await?;
+    crate::api::authz::require_member(&state.pool, account.id, channel.server_id).await?;
     let server = db::server::find_by_id(&state.pool, channel.server_id)
         .await?
         .ok_or_else(|| ApiError::not_found("server not found"))?;

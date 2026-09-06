@@ -1,4 +1,4 @@
-import { Show, createEffect, createResource, createSignal, onCleanup } from "solid-js";
+import { Show, createEffect, createResource, createSignal, onCleanup, untrack } from "solid-js";
 import CallBank, { deriveBank } from "../components/CallBank";
 import CameraGrid from "../components/CameraGrid";
 import SceneEditor from "../components/SceneEditor";
@@ -13,6 +13,7 @@ import IconUsers from "../components/icons/IconUsers";
 import {
   ApiError,
   api,
+  fetchVoiceOccupancy,
   startEgress,
   stopEgress,
   setChannelE2ee,
@@ -35,6 +36,7 @@ import { readViewMode, writeViewMode, type ViewMode } from "../preferences/uiPre
 import { readBlurMode, writeBlurMode, type CameraBlurMode } from "../blur/blurPreference";
 import { requestStageMode, toggleMembersPanel, toggleStageMode } from "../shell/AppShell";
 import { attachRemote, createTestVideoTrack, joinLiveRoom, type LiveSession } from "../video/liveClient";
+import { useVoiceSession, voiceDurationLabel } from "../voice/VoiceSession";
 import {
   applyBlurMode,
   waitUntilBlurred,
@@ -62,6 +64,7 @@ const emptyGrid = (): GridLayout => ({
 
 export default function VoiceChannel(props: Props) {
   const navigate = useNavigate();
+  const voice = useVoiceSession();
   const [grid, setGrid] = createSignal<GridLayout | null>(emptyGrid());
   const [error, setError] = createSignal("");
   const [live, setLive] = createSignal(false);
@@ -86,6 +89,7 @@ export default function VoiceChannel(props: Props) {
   const [blurMode, setBlurMode] = createSignal<CameraBlurMode>(readBlurMode());
   const [blurMenuOpen, setBlurMenuOpen] = createSignal(false);
   const [videoPausedByBlurFailure, setVideoPausedByBlurFailure] = createSignal(false);
+  const [callStartedAt, setCallStartedAt] = createSignal<string | null>(null);
   const slotEls = new Map<number, HTMLDivElement>();
   const gradeEls = new Map<string, HTMLDivElement>();
   const remotes = new Map<string, RemoteTrack[]>();
@@ -93,10 +97,8 @@ export default function VoiceChannel(props: Props) {
   let session: LiveSession | null = null;
   let localCamTrack: LocalVideoTrack | null = null;
   let starting = false;
-  /** Guards against leave() + onCleanup both calling disconnect. */
+  /** Guards against leave() + hangup both running. */
   let leaving = false;
-  /** Suppresses onDisconnected error UI during intentional leave / unmount. */
-  let intentionalLeave = false;
 
   const [servers] = createResource(() => api<{ id: string; owner_account_id: string }[]>("/api/servers"));
 
@@ -127,8 +129,9 @@ export default function VoiceChannel(props: Props) {
 
   function refreshInCall() {
     const ids = new Set<string>([props.me.id, ...remotes.keys()]);
-    if (session?.room) {
-      for (const p of session.room.remoteParticipants.values()) {
+    const room = voice.session()?.room;
+    if (room) {
+      for (const p of room.remoteParticipants.values()) {
         ids.add(p.identity);
       }
     }
@@ -213,7 +216,7 @@ export default function VoiceChannel(props: Props) {
   }
 
   function cameraPublication() {
-    return session?.room.localParticipant.getTrackPublication(Track.Source.Camera);
+    return voice.session()?.room.localParticipant.getTrackPublication(Track.Source.Camera);
   }
 
   async function gateBlurBeforeSend(track: LocalVideoTrack, mode: CameraBlurMode) {
@@ -231,7 +234,8 @@ export default function VoiceChannel(props: Props) {
   }
 
   async function connect(mode: "camera" | "test") {
-    if (starting || session) return;
+    if (starting) return;
+    if (voice.live() && voice.channelId() === props.channel.id) return;
     starting = true;
     const channelId = props.channel.id;
     try {
@@ -259,6 +263,7 @@ export default function VoiceChannel(props: Props) {
         throw err;
       }
       localCamTrack = local.video instanceof LocalVideoTrack ? local.video : null;
+      voice.setLocalCamTrack(localCamTrack);
       const wantBlur = blurMode();
       if (localCamTrack && wantBlur !== "off") {
         if (!supportsCameraBlur()) {
@@ -278,7 +283,10 @@ export default function VoiceChannel(props: Props) {
       setError((e) => (e === BLUR_FAILED || e === BLUR_UNAVAILABLE ? e : ""));
       const join = await api<{ token: string; url: string; room: string }>(
         `/api/channels/${channelId}/voice/join`,
-        { method: "POST" },
+        {
+          method: "POST",
+          body: JSON.stringify({ mic_on: micOn(), cam_on: camOn() }),
+        },
       );
       const layout = await api<GridLayout>(`/api/channels/${channelId}/grid`);
       setGrid(layout);
@@ -289,15 +297,18 @@ export default function VoiceChannel(props: Props) {
         e2eeEnabled: e2eeEnabled(),
         localVideo: local.video,
         localAudio: local.audio,
-        onTrack: placeTrack,
+        onTrack: (track, participant) => voice.dispatchTrack(track, participant),
         onDisconnected: (reason) => {
           session = null;
           setLive(false);
-          if (intentionalLeave) return;
+          if (voice.consumeIntentionalLeave()) return;
+          void voice.dropped();
+          requestStageMode(false);
           setError(`Ligação encerrada${reason != null ? ` (${String(reason)})` : ""}.`);
         },
         onLocalTrack: (el) => {
           localVideoEl = el;
+          voice.setLocalVideoEl(el);
           if (el instanceof HTMLVideoElement) {
             el.muted = true;
             el.autoplay = true;
@@ -305,6 +316,15 @@ export default function VoiceChannel(props: Props) {
           }
           layoutMedia();
         },
+      });
+      await voice.bindLive({
+        session,
+        channel: props.channel,
+        mode,
+        micOn: micOn(),
+        camOn: camOn(),
+        localCamTrack,
+        localVideoEl,
       });
       setLive(true);
       refreshInCall();
@@ -320,17 +340,16 @@ export default function VoiceChannel(props: Props) {
   async function leave() {
     if (leaving) return;
     leaving = true;
-    intentionalLeave = true;
     try {
-      if (localCamTrack) {
-        await stopBlurProcessor(localCamTrack);
-        localCamTrack.stop();
+      const track = localCamTrack ?? voice.localCamTrack();
+      if (track) {
+        await stopBlurProcessor(track);
+        track.stop();
         localCamTrack = null;
+        voice.setLocalCamTrack(null);
       }
-      // Clear session before await so onCleanup cannot double-disconnect.
-      const s = session;
+      await voice.hangup();
       session = null;
-      await s?.disconnect();
       localVideoEl = null;
       remotes.clear();
       setLive(false);
@@ -341,16 +360,14 @@ export default function VoiceChannel(props: Props) {
       requestStageMode(false);
     } finally {
       leaving = false;
-      queueMicrotask(() => {
-        intentionalLeave = false;
-      });
     }
   }
 
   async function toggleMic() {
     const next = !micOn();
     setMicOn(next);
-    await session?.room.localParticipant.setMicrophoneEnabled(next);
+    await voice.session()?.room.localParticipant.setMicrophoneEnabled(next);
+    await voice.reportMedia(next, camOn());
   }
 
   async function toggleCam() {
@@ -358,6 +375,7 @@ export default function VoiceChannel(props: Props) {
     if (!next) {
       setCamOn(false);
       await cameraPublication()?.mute();
+      await voice.reportMedia(micOn(), false);
       return;
     }
     if (videoPausedByBlurFailure()) {
@@ -377,6 +395,7 @@ export default function VoiceChannel(props: Props) {
     }
     setCamOn(true);
     await cameraPublication()?.unmute();
+    await voice.reportMedia(micOn(), true);
   }
 
   async function selectBlurMode(next: CameraBlurMode) {
@@ -452,10 +471,17 @@ export default function VoiceChannel(props: Props) {
           await new Promise((r) => setTimeout(r, 1500));
           continue;
         }
-        if (!session) setError("");
+        if (!voice.session()) setError("");
         const layout = await api<GridLayout>(`/api/channels/${channelId}/grid`);
         if (cancelled) return;
         setGrid(layout);
+        try {
+          const snap = await fetchVoiceOccupancy(serverId);
+          const row = snap.channels.find((c) => c.channel_id === channelId);
+          setCallStartedAt(row?.call_started_at ?? null);
+        } catch {
+          setCallStartedAt(null);
+        }
         await loadScenes();
         await loadMembers();
         return;
@@ -464,6 +490,12 @@ export default function VoiceChannel(props: Props) {
     void boot();
 
     const off = props.onWs((msg) => {
+      if (msg.event === "voice.occupancy" && String(msg.payload.channel_id) === channelId) {
+        const started = msg.payload.call_started_at;
+        setCallStartedAt(
+          typeof started === "string" ? started : started == null ? null : String(started),
+        );
+      }
       if (msg.event === "grid.updated" && String(msg.payload.channel_id) === channelId) {
         setGrid(msg.payload.grid as GridLayout);
         queueMicrotask(layoutMedia);
@@ -488,7 +520,7 @@ export default function VoiceChannel(props: Props) {
           setE2eeActor("");
           setE2eeAt("");
         }
-        void session?.setE2EEEnabled(enabled).catch(() => undefined);
+        void voice.session()?.setE2EEEnabled(enabled).catch(() => undefined);
       }
       if (msg.event === "channel.deleted" && String(msg.payload.channel_id) === channelId) {
         void leave().then(() => navigate("/"));
@@ -504,22 +536,69 @@ export default function VoiceChannel(props: Props) {
   });
 
   createEffect(() => {
-    void props.channel.id;
-    onCleanup(() => {
-      intentionalLeave = true;
-      const s = session;
-      session = null;
-      void s?.disconnect();
-      if (localCamTrack) {
-        void stopBlurProcessor(localCamTrack);
-        localCamTrack.stop();
-        localCamTrack = null;
-      }
-      localVideoEl = null;
-      remotes.clear();
-      setLive(false);
-      requestStageMode(false);
+    voice.setHandlers({
+      onTrack: placeTrack,
+      onLocalTrack: (el) => {
+        localVideoEl = el;
+        voice.setLocalVideoEl(el);
+        if (el instanceof HTMLVideoElement) {
+          el.muted = true;
+          el.autoplay = true;
+          el.playsInline = true;
+        }
+        layoutMedia();
+      },
+      onDisconnected: (reason) => {
+        session = null;
+        setLive(false);
+        if (voice.consumeIntentionalLeave()) return;
+        void voice.dropped();
+        requestStageMode(false);
+        setError(`Ligação encerrada${reason != null ? ` (${String(reason)})` : ""}.`);
+      },
     });
+    onCleanup(() => voice.setHandlers(null));
+  });
+
+  let moving = false;
+  createEffect(() => {
+    const chId = props.channel.id;
+    const inCall = voice.live();
+    const current = voice.channelId();
+    if (inCall && current === chId) {
+      untrack(() => {
+        setLive(true);
+        session = voice.session();
+        localCamTrack = voice.localCamTrack();
+        localVideoEl = voice.localVideoEl();
+        setMicOn(voice.micOn());
+        setCamOn(voice.camOn());
+        const room = voice.session()?.room;
+        if (room) {
+          for (const p of room.remoteParticipants.values()) {
+            for (const pub of p.trackPublications.values()) {
+              const track = pub.track;
+              if (track) placeTrack(track as RemoteTrack, p);
+            }
+          }
+        }
+        requestStageMode(true);
+        queueMicrotask(layoutMedia);
+      });
+      return;
+    }
+    if (inCall && current && current !== chId && !moving) {
+      moving = true;
+      const mode = voice.lastMode();
+      void (async () => {
+        try {
+          await voice.disconnectLivekitOnly();
+          await connect(mode);
+        } finally {
+          moving = false;
+        }
+      })();
+    }
   });
 
   const admin = () =>
@@ -564,7 +643,7 @@ export default function VoiceChannel(props: Props) {
       setRecording(true);
       setE2eeEnabled(false);
       setGravarOpen(false);
-      await session?.setE2EEEnabled(false);
+      await voice.session()?.setE2EEEnabled(false);
     } catch (err) {
       const msg =
         err instanceof ApiError
@@ -608,9 +687,9 @@ export default function VoiceChannel(props: Props) {
       rememberChannelKey(props.channel.id, key);
     }
     try {
-      await session?.setChannelKey(key);
+      await voice.session()?.setChannelKey(key);
       await setChannelE2ee(props.channel.id, true);
-      await session?.setE2EEEnabled(true);
+      await voice.session()?.setE2EEEnabled(true);
       setE2eeEnabled(true);
       setRecording(false);
       setReligarOpen(false);
@@ -646,6 +725,16 @@ export default function VoiceChannel(props: Props) {
           <div class="pane-title">{props.channel.name}</div>
           <div class="pane-sub">
             {occupied()} de {slotCount()} em cena
+            <Show when={voiceDurationLabel(callStartedAt(), voice.now())}>
+              {(t) => (
+                <>
+                  {" · "}
+                  <span class="voice-call-timer" aria-label={`Duração da chamada ${t()}`}>
+                    {t()}
+                  </span>
+                </>
+              )}
+            </Show>
           </div>
         </div>
         <div class="seg" style={{ "margin-left": "auto" }}>

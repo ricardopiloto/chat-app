@@ -1,5 +1,5 @@
 use crate::api::auth::session::AuthUser;
-use crate::api::channels::require_member;
+use crate::api::authz::{history_visible_since, require_member};
 use crate::db;
 use crate::domain::attachment::{
     is_allowed_media_type, MessageAttachment, MAX_ATTACHMENT_BYTES,
@@ -95,7 +95,7 @@ pub async fn get_attachment(
         let membership = db::membership::find(&state.pool, account.id, channel.server_id)
             .await?
             .ok_or_else(|| ApiError::forbidden("not a member of this server"))?;
-        if let Some(since) = history_since(&state.pool, &membership).await? {
+        if let Some(since) = history_visible_since(&state.pool, &membership).await? {
             let message = db::message::find_by_id(&state.pool, message_id)
                 .await?
                 .ok_or_else(|| ApiError::not_found("attachment not found"))?;
@@ -122,21 +122,4 @@ pub async fn get_attachment(
         response.headers_mut().insert("x-mesa-media-type", v);
     }
     Ok(response)
-}
-
-async fn history_since(
-    pool: &sqlx::SqlitePool,
-    membership: &crate::domain::membership::Membership,
-) -> Result<Option<chrono::DateTime<Utc>>, ApiError> {
-    let Some(invite_id) = membership.joined_via_invite_id else {
-        return Ok(None);
-    };
-    let Some(invite) = db::invite::find_by_id(pool, invite_id).await? else {
-        return Ok(Some(membership.joined_at));
-    };
-    if invite.include_history {
-        Ok(None)
-    } else {
-        Ok(Some(membership.joined_at))
-    }
 }

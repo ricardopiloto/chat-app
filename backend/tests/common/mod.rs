@@ -27,12 +27,20 @@ pub struct TestApp {
 
 impl TestApp {
     pub async fn new() -> Self {
+        Self::with_config(|_| {}).await
+    }
+
+    pub async fn with_config(customize: impl FnOnce(&mut Config)) -> Self {
         let dir = TempDir::new().expect("tempdir");
         let db_path = dir.path().join("test.db");
         let mut config = Config::from_env();
         config.database_url = format!("sqlite://{}?mode=rwc", db_path.display());
         config.cookie_secure = false;
+        config.production = false;
+        config.rate_limit_disabled = true;
         config.attachments_dir = dir.path().join("attachments");
+        config.avatars_dir = dir.path().join("avatars");
+        customize(&mut config);
         let state = build_state(config).await.expect("state");
         let pool = state.pool.clone();
         Self {
@@ -49,9 +57,37 @@ impl TestApp {
         body: Option<Value>,
         cookie: Option<&str>,
     ) -> (StatusCode, Value, Option<String>) {
+        self.request_with(method, path, body, cookie, &[]).await
+    }
+
+    pub async fn request_with(
+        &self,
+        method: &str,
+        path: &str,
+        body: Option<Value>,
+        cookie: Option<&str>,
+        extra_headers: &[(&str, &str)],
+    ) -> (StatusCode, Value, Option<String>) {
+        let (status, json, set_cookie, _) = self
+            .request_full(method, path, body, cookie, extra_headers)
+            .await;
+        (status, json, set_cookie)
+    }
+
+    pub async fn request_full(
+        &self,
+        method: &str,
+        path: &str,
+        body: Option<Value>,
+        cookie: Option<&str>,
+        extra_headers: &[(&str, &str)],
+    ) -> (StatusCode, Value, Option<String>, axum::http::HeaderMap) {
         let mut builder = Request::builder().method(method).uri(path);
         if let Some(c) = cookie {
             builder = builder.header("cookie", c);
+        }
+        for (k, v) in extra_headers {
+            builder = builder.header(*k, *v);
         }
         let req = if let Some(json) = body {
             builder
@@ -63,6 +99,7 @@ impl TestApp {
         };
         let response = self.router.clone().oneshot(req).await.unwrap();
         let status = response.status();
+        let headers = response.headers().clone();
         let set_cookie = response
             .headers()
             .get_all("set-cookie")
@@ -79,7 +116,7 @@ impl TestApp {
                 String::from_utf8_lossy(&bytes).into_owned(),
             ))
         };
-        (status, json, set_cookie)
+        (status, json, set_cookie, headers)
     }
 
     pub async fn request_bytes(
@@ -117,6 +154,29 @@ impl TestApp {
             ))
         };
         (status, json, set_cookie)
+    }
+
+    pub async fn request_raw(
+        &self,
+        method: &str,
+        path: &str,
+        body: Option<Vec<u8>>,
+        extra_headers: &[(&str, &str)],
+        cookie: Option<&str>,
+    ) -> (StatusCode, Vec<u8>, axum::http::HeaderMap) {
+        let mut builder = Request::builder().method(method).uri(path);
+        if let Some(c) = cookie {
+            builder = builder.header("cookie", c);
+        }
+        for (k, v) in extra_headers {
+            builder = builder.header(*k, *v);
+        }
+        let req = builder.body(Body::from(body.unwrap_or_default())).unwrap();
+        let response = self.router.clone().oneshot(req).await.unwrap();
+        let status = response.status();
+        let headers = response.headers().clone();
+        let bytes = response.into_body().collect().await.unwrap().to_bytes();
+        (status, bytes.to_vec(), headers)
     }
 
     pub async fn register(

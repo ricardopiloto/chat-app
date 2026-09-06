@@ -145,7 +145,10 @@ O frontend (`frontend/src/api/client.ts`) fala JSON; erros tipicamente `{ "error
 
 | Método | Caminho | Notas |
 |--------|---------|--------|
-| `POST` | `/api/channels/{id}/voice/join` | Token LiveKit (segredo de API **nunca** no browser) |
+| `POST` | `/api/channels/{id}/voice/join` | Token LiveKit (segredo de API **nunca** no browser); upsert ocupação; move se já noutra mesa |
+| `POST` | `/api/channels/{id}/voice/leave` | Sai da mesa; liberta slot da grade; 204 |
+| `PATCH` | `/api/channels/{id}/voice/media` | Mic/câmara (e heartbeat); 403 se não ocupante |
+| `GET` | `/api/servers/{id}/voice-occupancy` | Snapshot da ocupação de voz do servidor |
 | `POST` | `/api/channels/{id}/voice/e2ee` | Ligar/desligar E2EE + auditoria |
 | `POST` | `/api/channels/{id}/egress/start` \| `.../stop` | Gravar / parar (com compensação) |
 | `GET`/`PUT` | `/api/channels/{id}/grid` | Layout activo da grade |
@@ -167,6 +170,7 @@ Envelope: `{ "event", "server_id"?, "payload" }`.
 | Evento | Uso no frontend |
 |--------|-----------------|
 | `message.new` | Nova mensagem (ciphertext) |
+| `voice.occupancy` | Snapshot por canal de voz (`call_started_at`, ocupantes, mic/cam) |
 | `presence.update` | Online / canal de voz |
 | `channel.e2ee_changed` | Actualizar chip E2EE / LiveKit |
 | `channel.deleted` / `server.deleted` | Sair do canal / limpar selecção |
@@ -188,15 +192,17 @@ Detalhe: [`specs/002-fase-1-mvp/contracts/ws-events.md`](specs/002-fase-1-mvp/co
 cd infra && cp .env.example .env   # se necessário
 docker compose up -d
 
-# 2) Backend
+# 2) Backend (LAN / dev — sem MESA_PRODUCTION)
 cd backend
 export DATABASE_URL=sqlite://chat.db?mode=rwc
-export BIND=0.0.0.0:8080
+export BIND=0.0.0.0:8080   # explícito na LAN; omissão = 127.0.0.1:8080
 export LIVEKIT_API_KEY=instkey
 export LIVEKIT_API_SECRET=instsecretinstsecretinstsecret12
 export LIVEKIT_WS_URL=ws://127.0.0.1:7880
 export COOKIE_SECURE=false
 cargo run
+# Produção: MESA_PRODUCTION=1, COOKIE_SECURE=true, chaves LiveKit únicas
+# (não o par de exemplo). Ver docs/operar-instancia.md § Produção.
 
 # 3) Frontend
 cd frontend

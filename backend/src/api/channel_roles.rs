@@ -25,6 +25,7 @@ pub struct MemberView {
     pub account_id: Uuid,
     pub handle: String,
     pub identity_pubkey: String,
+    pub has_avatar: bool,
 }
 
 pub async fn list_roles(
@@ -35,7 +36,7 @@ pub async fn list_roles(
     let channel = db::channel::find_by_id(&state.pool, channel_id)
         .await?
         .ok_or_else(|| ApiError::not_found("channel not found"))?;
-    crate::api::channels::require_member(&state.pool, account.id, channel.server_id).await?;
+    crate::api::authz::require_member(&state.pool, account.id, channel.server_id).await?;
     if channel.kind != ChannelType::VoiceVideo {
         return Err(ApiError::bad_request("not a voice/video channel"));
     }
@@ -52,7 +53,7 @@ pub async fn put_roles(
     let channel = db::channel::find_by_id(&state.pool, channel_id)
         .await?
         .ok_or_else(|| ApiError::not_found("channel not found"))?;
-    crate::api::channels::require_member(&state.pool, account.id, channel.server_id).await?;
+    crate::api::authz::require_member(&state.pool, account.id, channel.server_id).await?;
     if channel.kind != ChannelType::VoiceVideo {
         return Err(ApiError::bad_request("not a voice/video channel"));
     }
@@ -93,7 +94,7 @@ pub async fn list_members(
     db::server::find_by_id(&state.pool, server_id)
         .await?
         .ok_or_else(|| ApiError::not_found("server not found"))?;
-    crate::api::channels::require_member(&state.pool, account.id, server_id).await?;
+    crate::api::authz::require_member(&state.pool, account.id, server_id).await?;
     let memberships = db::membership::list_by_server(&state.pool, server_id).await?;
     let mut out = Vec::new();
     for m in memberships {
@@ -103,6 +104,7 @@ pub async fn list_members(
                 handle: acc.handle,
                 identity_pubkey: base64::engine::general_purpose::STANDARD
                     .encode(&acc.identity_pubkey),
+                has_avatar: acc.avatar_filename.is_some(),
             });
         }
     }

@@ -13,6 +13,7 @@ import {
   type Channel,
   type Message,
   type Server,
+  type ServerMember,
 } from "../api/client";
 import type { WsEnvelope } from "../api/ws";
 import type { Identity } from "../crypto/identity";
@@ -34,6 +35,7 @@ import {
 } from "../media/pasteWebp";
 import { toggleMembersPanel } from "../shell/AppShell";
 import { showToast } from "../ui/toast";
+import IdentityAvatar from "../components/IdentityAvatar";
 
 const HIGHLIGHT_MS = 3000;
 const SEEK_MAX_PAGES = 5;
@@ -58,10 +60,6 @@ type Pending = {
   file: File;
   previewUrl: string;
 };
-
-function initials(id: string): string {
-  return id.slice(0, 2).toUpperCase();
-}
 
 function groupMessages(rows: Row[]): { sender: string; items: Row[] }[] {
   const groups: { sender: string; items: Row[] }[] = [];
@@ -138,7 +136,18 @@ export default function ChannelPage(props: Props) {
   const [error, setError] = createSignal("");
   const [pending, setPending] = createSignal(true);
   const [sending, setSending] = createSignal(false);
-  const [handles, setHandles] = createSignal<Record<string, string>>({});
+  const [handles, setHandles] = createSignal<Record<string, { handle: string; hasAvatar: boolean }>>({});
+
+  function identityOf(accountId: string): { handle: string; hasAvatar: boolean } {
+    const known = handles()[accountId];
+    if (known) return known;
+    // WS message.new / unknown sender: stable initials from the visible id, never an empty circle.
+    return { handle: accountId, hasAvatar: false };
+  }
+
+  function displayHandle(accountId: string): string {
+    return handles()[accountId]?.handle ?? accountId.slice(0, 8);
+  }
   const [membersOpen, setMembersOpen] = createSignal(false);
   const [pendingFiles, setPendingFiles] = createSignal<Pending[]>([]);
   const [serverKey, setServerKey] = createSignal<Uint8Array | undefined>();
@@ -295,14 +304,18 @@ export default function ChannelPage(props: Props) {
         setPending(false);
         setError("");
         try {
-          const members = await api<{ account_id: string; handle: string }[]>(
-            `/api/servers/${serverId}/members`,
-          );
-          const map: Record<string, string> = { [props.me.id]: props.me.handle };
-          for (const m of members) map[m.account_id] = m.handle;
+          const members = await api<ServerMember[]>(`/api/servers/${serverId}/members`);
+          const map: Record<string, { handle: string; hasAvatar: boolean }> = {
+            [props.me.id]: { handle: props.me.handle, hasAvatar: !!props.me.has_avatar },
+          };
+          for (const m of members) {
+            map[m.account_id] = { handle: m.handle, hasAvatar: !!m.has_avatar };
+          }
           setHandles(map);
         } catch {
-          setHandles({ [props.me.id]: props.me.handle });
+          setHandles({
+            [props.me.id]: { handle: props.me.handle, hasAvatar: !!props.me.has_avatar },
+          });
         }
         const rows = await api<Message[]>(`/api/channels/${channelId}/messages`);
         if (cancelled) return;
@@ -529,10 +542,15 @@ export default function ChannelPage(props: Props) {
           <For each={groups()}>
             {(g) => (
               <div class="msg-group">
-                <div class="msg-avatar">{initials(handles()[g.sender] ?? g.sender)}</div>
+                <IdentityAvatar
+                  class="msg-avatar"
+                  accountId={g.sender}
+                  handle={identityOf(g.sender).handle}
+                  hasAvatar={identityOf(g.sender).hasAvatar}
+                />
                 <div class="msg-content">
                   <div class="msg-meta">
-                    {handles()[g.sender] ?? g.sender.slice(0, 8)}
+                    {displayHandle(g.sender)}
                     <Show when={g.items[0]?.createdAt}>
                       {(t) => (
                         <span class="msg-time">

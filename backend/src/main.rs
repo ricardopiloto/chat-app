@@ -12,6 +12,10 @@ async fn main() {
         .init();
 
     let config = Config::from_env();
+    if let Err(msg) = config.validate() {
+        tracing::error!("{msg}");
+        std::process::exit(1);
+    }
     let bind = config.bind.clone();
     let state = build_state(config).await.expect("database");
     let app = router(state).layer(tower_http::trace::TraceLayer::new_for_http());

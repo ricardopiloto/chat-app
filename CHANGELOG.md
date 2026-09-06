@@ -9,13 +9,31 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-05
+
 ### Added
+
+- Production profile (`MESA_PRODUCTION=1` or `MESA_ENV=production`) refuses example LiveKit keys and requires `COOKIE_SECURE=true`; default `BIND` is `127.0.0.1:8080` ([024-security-hardening](specs/024-security-hardening/)).
+- In-process login/register rate limit (10 requests / 60s / TCP IP) returning `429` `{ "error": "too many requests" }` ([024](specs/024-security-hardening/)).
+- Security headers on all responses: `X-Frame-Options: DENY`, nosniff, `Referrer-Policy: no-referrer`, CSP with `frame-ancestors 'none'`; HSTS when cookie Secure or production ([024](specs/024-security-hardening/)).
+- Auth / invite screens redesigned to the two-pane Mesa prototype layout (brand + form, dark chrome, tabs, field adornments, password visibility) ([027-auth-login-screen](specs/027-auth-login-screen/)).
+- Nested roster of transmitting members (mic or camera on) under each voice channel, plus a shared call-session timer; occupancy lives on the Axum server (`voice_occupant` + `voice.occupancy`) ([028-voice-call-roster](specs/028-voice-call-roster/)).
+- Persistent voice session in the shell: stay in the call while reading text, connected bar with Voltar à mesa / Sair, and moving to another voice channel ([028](specs/028-voice-call-roster/)).
+- User profile photos and server images (JPEG/PNG/WebP, ≤1 MiB) with initials fallback on the topbar chip, member list, messages, and server rail; owner-only server image ([029-user-server-avatars](specs/029-user-server-avatars/)).
+- Identity icon (photo or initials) to the left of the handle on the nested voice roster and text message groups; occupancy snapshot includes `has_avatar` ([030-voice-roster-avatars](specs/030-voice-roster-avatars/)).
 
 ### Changed
 
+- Unfurl resolves DNS, blocks private/loopback/link-local IPs (including after redirects), and caps the body at 256 KiB; OG `image_url` is re-validated; the client only uses `http(s)` for preview images ([024](specs/024-security-hardening/)).
+- Voice join `url` is always `LIVEKIT_WS_URL` (Host / `X-Forwarded-Host` ignored) ([024](specs/024-security-hardening/)).
+- Server key envelopes: self-upsert allowed; another member only while `pending` and the caller is owner or `synced`; overwrite of a `synced` envelope is `403` ([024](specs/024-security-hardening/)).
+- Nocturne fonts use `system-ui, sans-serif` (no Google Fonts CDN) ([024](specs/024-security-hardening/)).
+- LAN/prod docs: `BIND=0.0.0.0:8080` must be explicit on the LAN; production section does not present example LiveKit keys as the recipe ([024](specs/024-security-hardening/)).
+
 ### Fixed
 
-### Removed
+- First-operator flag is assigned inside a SQLite `BEGIN IMMEDIATE` transaction so two parallel empty-instance registers cannot both become initial operator ([024](specs/024-security-hardening/)).
+- Voice leave (and move) frees the grid slot so the stage no longer shows people who already hung up ([028-voice-call-roster](specs/028-voice-call-roster/)).
 
 ## [0.2.0] - 2026-09-05
 
@@ -100,7 +118,8 @@ Initial tracked release baseline (features delivered through 006).
 
 - Earlier spikes and phases: see `specs/001-fase-0-spike/` … `specs/005-fase3-ui-corrections/` and `docs/`.
 
-[Unreleased]: https://github.com/ricardosobral/chat-app/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/ricardosobral/chat-app/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/ricardosobral/chat-app/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/ricardosobral/chat-app/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/ricardosobral/chat-app/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/ricardosobral/chat-app/releases/tag/v0.1.0

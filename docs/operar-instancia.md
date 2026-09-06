@@ -31,21 +31,37 @@ Para participantes **fora da LAN do operador**, abra as mesmas portas no router/
 
 ## 2. Backend
 
+Por omissão o processo escuta só em **127.0.0.1:8080**. Na LAN tem de exportar `BIND=0.0.0.0:8080` **explicitamente**. Sem `MESA_PRODUCTION`, as chaves LiveKit de exemplo (`instkey` / o secret em `infra/livekit.yaml`) ainda arrancam — só para este caminho de 30 minutos.
+
 ```bash
 cd backend
 export DATABASE_URL=sqlite://chat.db?mode=rwc
-export BIND=0.0.0.0:8080
-export LIVEKIT_API_KEY=instkey
+export BIND=0.0.0.0:8080            # obrigatório para a LAN; omissão = 127.0.0.1:8080
+export LIVEKIT_API_KEY=instkey      # LAN; coincidir com infra/livekit.yaml
 export LIVEKIT_API_SECRET=instsecretinstsecretinstsecret12
 export LIVEKIT_WS_URL=ws://127.0.0.1:7880
-export COOKIE_SECURE=false          # true atrás de HTTPS de produção
+# telemóvel na mesma Wi‑Fi: LIVEKIT_WS_URL=ws://<IP-LAN>:7880
+export COOKIE_SECURE=false          # true atrás de HTTPS
 export SESSION_TTL_SECS=604800      # 7 dias
 export DEFAULT_INVITE_TTL_SECS=604800
 export ATTACHMENTS_DIR=./data/attachments   # blobs cifrados no cliente (opaco no disco)
+export AVATARS_DIR=./data/avatars           # avatares de conta e imagens de servidor (JPEG/PNG/WebP em claro, ≤1 MiB)
 cargo run
 ```
 
-`GET /health` → `{"ok":true}`. O SQLite (`chat.db`) é criado no primeiro boot. Sessão: cookie httpOnly `Session`, SameSite=Strict. Anexos de chat: ficheiros opacos sob `ATTACHMENTS_DIR` (não são imagens em claro).
+`GET /health` → `{"ok":true}`. O SQLite (`chat.db`) é criado no primeiro boot. Sessão: cookie httpOnly `Session`, SameSite=Strict. Anexos de chat: ficheiros opacos sob `ATTACHMENTS_DIR` (não são imagens em claro). Avatares de utilizador e imagens de servidor: ficheiros em claro sob `AVATARS_DIR` (default `./data/avatars`; não reutiliza `ATTACHMENTS_DIR`).
+
+## Produção
+
+Não use o par de exemplo LiveKit como receita de produção. Perfil explícito:
+
+- `MESA_PRODUCTION=1` (ou `true`) **ou** `MESA_ENV=production`
+- `LIVEKIT_API_KEY` e `LIVEKIT_API_SECRET` **únicos** (distintos de `instkey` / `instsecretinstsecretinstsecret12`); alinhar `infra/livekit.yaml`
+- `COOKIE_SECURE=true` (HTTPS no reverse proxy TLS à frente do único processo Axum)
+- `BIND=127.0.0.1:8080` (recomendado) e o proxy termina TLS; LAN pública na máquina sem proxy continua a precisar de `BIND=0.0.0.0:8080` explícito
+- `LIVEKIT_WS_URL` = URL que os **clientes** alcançam (`wss://…` em produção; na LAN `ws://<IP-LAN>:7880`)
+
+Com o perfil de produção, o processo **não arranca** se as chaves forem as de exemplo ou se o cookie não for Secure. Não há processo BFF: o browser fala com este Axum (opcionalmente via proxy TLS).
 
 ## 3. Cliente web
 

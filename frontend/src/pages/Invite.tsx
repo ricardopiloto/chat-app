@@ -2,7 +2,10 @@ import { Show, createResource, createSignal } from "solid-js";
 import { useNavigate, useParams } from "@solidjs/router";
 import { api, type Account, type InvitePreview } from "../api/client";
 import { b64, generateIdentity, persistIdentity, wrapIdentity, type Identity } from "../crypto/identity";
-import { applyTheme, resolveTheme } from "../theme/theme";
+import AuthShell from "../components/AuthShell";
+import IconAt from "../components/icons/IconAt";
+import { IconEyeOff, IconEyeOpen } from "../components/icons/IconEye";
+import { IconLockClosed } from "../components/icons/IconLock";
 
 type Props = {
   me: Account | null;
@@ -16,7 +19,7 @@ export default function Invite(props: Props) {
   const [handle, setHandle] = createSignal("");
   const [password, setPassword] = createSignal("");
   const [error, setError] = createSignal("");
-  const theme = resolveTheme();
+  const [showPassword, setShowPassword] = createSignal(false);
 
   async function accept(e: Event) {
     e.preventDefault();
@@ -50,54 +53,73 @@ export default function Invite(props: Props) {
   }
 
   return (
-    <div class="app auth-screen" data-theme={theme} ref={(el) => applyTheme(theme, el)}>
-      <div class="auth-card">
-        <div class="auth-brand">
-          <span class="topbar-mark" aria-hidden="true" />
-          <span class="topbar-name">Mesa</span>
-        </div>
-        <Show when={preview()} fallback={<p class="muted">A carregar convite…</p>}>
-          {(p) => (
-            <>
-              <h1>Convite</h1>
-              <p>
-                Entrar em <strong>{p().server_name}</strong>
-              </p>
-              <p class="muted">{p().include_history ? "Inclui histórico" : "Sem histórico anterior"}</p>
-              <form onSubmit={accept} class="auth-actions">
-                <Show when={!props.me}>
-                  <div class="field">
-                    <label for="inv-handle">Identificador</label>
+    <AuthShell>
+      <Show when={preview()} fallback={<p class="muted">A carregar convite…</p>}>
+        {(p) => (
+          <>
+            <h1>Convite</h1>
+            <p>
+              Entrar em <strong>{p().server_name}</strong>
+            </p>
+            <p class="muted">{p().include_history ? "Inclui histórico" : "Sem histórico anterior"}</p>
+            <form onSubmit={accept} class="auth-actions">
+              <Show when={!props.me}>
+                <div class="field">
+                  <label for="inv-handle">Seu identificador</label>
+                  <div class="input-affix">
+                    <span class="input-affix-icon" aria-hidden="true">
+                      <IconAt />
+                    </span>
                     <input
                       id="inv-handle"
                       class="input"
                       required
+                      autocomplete="username"
+                      placeholder="@ seu_handle"
                       value={handle()}
                       onInput={(e) => setHandle(e.currentTarget.value)}
                     />
                   </div>
-                  <div class="field">
-                    <label for="inv-password">Senha</label>
+                  <p class="auth-field-hint">Este será o seu @handle nesta instância.</p>
+                </div>
+                <div class="field">
+                  <label for="inv-password">Senha</label>
+                  <div class="input-affix">
+                    <span class="input-affix-icon" aria-hidden="true">
+                      <IconLockClosed size={18} />
+                    </span>
                     <input
                       id="inv-password"
                       class="input"
                       required
                       minLength={8}
-                      type="password"
+                      autocomplete="new-password"
+                      type={showPassword() ? "text" : "password"}
+                      placeholder="Sua senha"
                       value={password()}
                       onInput={(e) => setPassword(e.currentTarget.value)}
                     />
+                    <button
+                      type="button"
+                      class="input-affix-toggle"
+                      aria-label={showPassword() ? "Ocultar senha" : "Mostrar senha"}
+                      onClick={() => setShowPassword(!showPassword())}
+                    >
+                      <Show when={showPassword()} fallback={<IconEyeOpen />}>
+                        <IconEyeOff />
+                      </Show>
+                    </button>
                   </div>
-                </Show>
-                <button type="submit" class="btn btn-primary btn-block">
-                  Aceitar convite
-                </button>
-              </form>
-            </>
-          )}
-        </Show>
-        <p class="error">{error()}</p>
-      </div>
-    </div>
+                </div>
+              </Show>
+              <button type="submit" class="btn auth-btn-primary btn-block">
+                Aceitar convite
+              </button>
+            </form>
+          </>
+        )}
+      </Show>
+      <p class="error">{error()}</p>
+    </AuthShell>
   );
 }

@@ -3,6 +3,7 @@ import type { Account } from "../api/client";
 import type { WsEnvelope } from "../api/ws";
 import type { Identity } from "../crypto/identity";
 import AccountMenu from "../components/AccountMenu";
+import IdentityAvatar from "../components/IdentityAvatar";
 import IconBell from "../components/icons/IconBell";
 import IconMenu from "../components/icons/IconMenu";
 import IconMoon from "../components/icons/IconMoon";
@@ -19,18 +20,11 @@ type Props = {
   me: Account;
   identity: Identity;
   onLogout: () => void;
+  onAccountPatch?: (account: Account) => void;
   onMenuToggle?: () => void;
   showMenuToggle?: boolean;
   onWs?: (handler: (msg: WsEnvelope) => void) => () => void;
 };
-
-function initials(handle: string): string {
-  const parts = handle.trim().split(/[\s._-]+/).filter(Boolean);
-  const a = parts[0]?.[0];
-  const b = parts[1]?.[0];
-  if (a && b) return (a + b).toUpperCase();
-  return handle.slice(0, 2).toUpperCase() || "?";
-}
 
 export default function TopBar(props: Props) {
   const [searchExpanded, setSearchExpanded] = createSignal(false);
@@ -172,7 +166,12 @@ export default function TopBar(props: Props) {
             aria-haspopup="menu"
             aria-label="Menu da conta"
           >
-            <span class="user-avatar">{initials(props.me.handle)}</span>
+            <IdentityAvatar
+              class="user-avatar"
+              accountId={props.me.id}
+              handle={props.me.handle}
+              hasAvatar={!!props.me.has_avatar}
+            />
             <span style={{ "font-size": "13px", "font-weight": "500" }}>{props.me.handle}</span>
           </button>
           <AccountMenu
@@ -180,6 +179,7 @@ export default function TopBar(props: Props) {
             onClose={() => setAccountOpen(false)}
             me={props.me}
             onLogout={props.onLogout}
+            onAccountPatch={props.onAccountPatch}
           />
         </div>
       </div>

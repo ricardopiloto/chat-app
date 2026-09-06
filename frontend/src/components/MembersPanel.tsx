@@ -1,5 +1,6 @@
 import { For, Show, createResource } from "solid-js";
 import { api, type ServerMember } from "../api/client";
+import IdentityAvatar from "./IdentityAvatar";
 
 type Props = {
   serverId: string | null;
@@ -10,6 +11,7 @@ function closeMembersPanel() {
 }
 
 export default function MembersPanel(props: Props) {
+  // FR-009: no WS for avatars — remount/refetch when the panel opens or serverId changes.
   const [members] = createResource(
     () => props.serverId,
     (id) =>
@@ -58,9 +60,12 @@ export default function MembersPanel(props: Props) {
         <For each={members() ?? []}>
           {(m) => (
             <li class="members-list-item">
-              <span class="members-avatar" aria-hidden="true">
-                {m.handle.slice(0, 2).toUpperCase()}
-              </span>
+              <IdentityAvatar
+                class="members-avatar"
+                accountId={m.account_id}
+                handle={m.handle}
+                hasAvatar={!!m.has_avatar}
+              />
               <span class="members-handle">{m.handle}</span>
             </li>
           )}

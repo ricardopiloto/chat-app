@@ -18,6 +18,7 @@ import Auth from "./pages/Auth";
 import Servers from "./pages/Servers";
 import ChannelRoute from "./pages/ChannelRoute";
 import Invite from "./pages/Invite";
+import { VoiceSessionProvider } from "./voice/VoiceSession";
 
 export default function App() {
   const [me, setMe] = createSignal<Account | null>(null);
@@ -111,47 +112,49 @@ export default function App() {
 
   return (
     <Show when={ready()} fallback={<p class="auth-screen muted">A carregar…</p>}>
-      <Router>
-        <Route
-          path="/auth"
-          component={() => (
-            <Show
-              when={me() && identity()}
-              fallback={
+      <Show
+        when={me() && identity()}
+        fallback={
+          <Router>
+            <Route
+              path="/auth"
+              component={() => (
                 <Auth
                   session={me()}
                   onAuthed={authed}
                   onRecoverIdentity={recoverIdentity}
                   onClearSession={logout}
                 />
-              }
-            >
-              <Navigate href="/" />
-            </Show>
-          )}
-        />
-        <Route path="/invite/:code" component={() => <Invite me={me()} onAuthed={authed} />} />
-        <Route
-          path="/"
-          component={() => (
-            <Show when={me() && identity()} fallback={<Navigate href="/auth" />}>
-              <AppShell me={me()!} identity={identity()!} onLogout={() => void logout()} onWs={onWs}>
-                <Servers me={me()!} identity={identity()!} />
-              </AppShell>
-            </Show>
-          )}
-        />
-        <Route
-          path="/channels/:id"
-          component={() => (
-            <Show when={me() && identity()} fallback={<Navigate href="/auth" />}>
-              <AppShell me={me()!} identity={identity()!} onLogout={() => void logout()} onWs={onWs}>
-                <ChannelRoute onWs={onWs} me={me()!} identity={identity()!} />
-              </AppShell>
-            </Show>
-          )}
-        />
-      </Router>
+              )}
+            />
+            <Route path="/invite/:code" component={() => <Invite me={me()} onAuthed={authed} />} />
+            <Route path="*" component={() => <Navigate href="/auth" />} />
+          </Router>
+        }
+      >
+        <VoiceSessionProvider onWs={onWs}>
+          <Router>
+            <Route path="/auth" component={() => <Navigate href="/" />} />
+            <Route path="/invite/:code" component={() => <Invite me={me()} onAuthed={authed} />} />
+            <Route
+              path="/"
+              component={() => (
+                <AppShell me={me()!} identity={identity()!} onLogout={() => void logout()} onAccountPatch={setMe} onWs={onWs}>
+                  <Servers me={me()!} identity={identity()!} />
+                </AppShell>
+              )}
+            />
+            <Route
+              path="/channels/:id"
+              component={() => (
+                <AppShell me={me()!} identity={identity()!} onLogout={() => void logout()} onAccountPatch={setMe} onWs={onWs}>
+                  <ChannelRoute onWs={onWs} me={me()!} identity={identity()!} />
+                </AppShell>
+              )}
+            />
+          </Router>
+        </VoiceSessionProvider>
+      </Show>
     </Show>
   );
 }

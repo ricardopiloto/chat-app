@@ -1,9 +1,11 @@
 use crate::api::auth::session::{current_session_id, AuthUser, OptionalAuth, SESSION_COOKIE};
+use crate::api::avatars;
 use crate::db;
+use crate::domain::avatar::MAX_AVATAR_BYTES;
 use crate::error::ApiError;
 use crate::AppState;
 use axum::Json;
-use axum::extract::State;
+use axum::extract::{DefaultBodyLimit, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::routing::{get, post, put};
@@ -22,6 +24,12 @@ pub fn router() -> Router<AppState> {
         .route("/auth/login", post(login::login))
         .route("/auth/logout", post(logout))
         .route("/auth/me", get(me))
+        .route(
+            "/auth/avatar",
+            put(avatars::put_own_avatar)
+                .delete(avatars::delete_own_avatar)
+                .layer(DefaultBodyLimit::max(MAX_AVATAR_BYTES + 64 * 1024)),
+        )
         .route("/auth/identity-vault", put(put_identity_vault))
         .route("/auth/identity", put(put_identity))
 }

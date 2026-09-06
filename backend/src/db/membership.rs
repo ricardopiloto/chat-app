@@ -27,7 +27,10 @@ fn map_row(row: Row) -> Result<Membership, sqlx::Error> {
     })
 }
 
-pub async fn create(pool: &SqlitePool, membership: &Membership) -> Result<(), sqlx::Error> {
+pub async fn create<'e, E>(executor: E, membership: &Membership) -> Result<(), sqlx::Error>
+where
+    E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
+{
     sqlx::query(
         "INSERT INTO membership (account_id, server_id, joined_at, joined_via_invite_id, key_handoff_status)
          VALUES (?, ?, ?, ?, ?)",
@@ -37,33 +40,39 @@ pub async fn create(pool: &SqlitePool, membership: &Membership) -> Result<(), sq
     .bind(membership.joined_at.to_rfc3339())
     .bind(membership.joined_via_invite_id.map(|id| id.to_string()))
     .bind(membership.key_handoff_status.as_str())
-    .execute(pool)
+    .execute(executor)
     .await?;
     Ok(())
 }
 
-pub async fn find(
-    pool: &SqlitePool,
+pub async fn find<'e, E>(
+    executor: E,
     account_id: Uuid,
     server_id: Uuid,
-) -> Result<Option<Membership>, sqlx::Error> {
+) -> Result<Option<Membership>, sqlx::Error>
+where
+    E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
+{
     let row = sqlx::query_as::<_, Row>(
         "SELECT account_id, server_id, joined_at, joined_via_invite_id, key_handoff_status
          FROM membership WHERE account_id = ? AND server_id = ?",
     )
     .bind(account_id.to_string())
     .bind(server_id.to_string())
-    .fetch_optional(pool)
+    .fetch_optional(executor)
     .await?;
     row.map(map_row).transpose()
 }
 
-pub async fn exists(
-    pool: &SqlitePool,
+pub async fn exists<'e, E>(
+    executor: E,
     account_id: Uuid,
     server_id: Uuid,
-) -> Result<bool, sqlx::Error> {
-    Ok(find(pool, account_id, server_id).await?.is_some())
+) -> Result<bool, sqlx::Error>
+where
+    E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
+{
+    Ok(find(executor, account_id, server_id).await?.is_some())
 }
 
 pub async fn list_by_server(

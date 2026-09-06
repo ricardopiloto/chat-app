@@ -4,6 +4,7 @@ use crate::domain::account::AccountRecord;
 use crate::domain::membership::{KeyHandoffStatus, Membership};
 use crate::domain::session::Session;
 use crate::error::ApiError;
+use crate::rate_limit::ClientIp;
 use crate::AppState;
 use argon2::{
     password_hash::{rand_core::OsRng, SaltString},
@@ -18,6 +19,7 @@ use base64::Engine;
 use chrono::{Duration, Utc};
 use rand::RngCore;
 use serde::Deserialize;
+use sqlx::Connection;
 use uuid::Uuid;
 
 #[derive(Debug, Deserialize)]
@@ -93,9 +95,13 @@ pub fn decode_pubkey(value: &str) -> Result<Vec<u8>, ApiError> {
 
 pub async fn register(
     State(state): State<AppState>,
+    ClientIp(ip): ClientIp,
     jar: CookieJar,
     Json(body): Json<RegisterBody>,
 ) -> Result<impl IntoResponse, ApiError> {
+    if !state.config.rate_limit_disabled && !state.rate_limiter.allow_auth(ip) {
+        return Err(ApiError::too_many_requests());
+    }
     let (account, jar) = register_inner(&state, jar, body).await?;
     Ok((StatusCode::CREATED, jar, Json(account.auth_view())))
 }
@@ -113,66 +119,98 @@ pub async fn register_inner(
         return Err(ApiError::bad_request("password must be at least 8 characters"));
     }
     let pubkey = decode_pubkey(&body.identity_pubkey)?;
-    let count = db::account::count(&state.pool).await?;
-    let mut invite = None;
-    if count == 0 {
-        if body.invite_code.is_some() {
-            // first account ignores invite; still allowed
-        }
-    } else {
-        let code = body
-            .invite_code
-            .as_deref()
-            .filter(|s| !s.is_empty())
-            .ok_or_else(|| {
-                ApiError::forbidden("invite required after the first account exists")
-            })?;
-        let record = db::invite::find_by_code(&state.pool, code)
-            .await?
-            .ok_or_else(|| ApiError::forbidden("invite required after the first account exists"))?;
-        if !record.is_usable(Utc::now()) {
-            return Err(ApiError::forbidden("invite required after the first account exists"));
-        }
-        invite = Some(record);
-    }
+    let identity_vault = encode_identity_vault(body.identity_vault.as_ref())?;
+    let password_hash = hash_password(&body.password)?;
 
-    if db::account::find_by_handle(&state.pool, &handle)
-        .await?
-        .is_some()
-    {
-        return Err(ApiError::conflict("handle already exists"));
-    }
+    let mut conn = state.pool.acquire().await?;
+    let mut tx = conn
+        .begin_with("BEGIN IMMEDIATE")
+        .await
+        .map_err(|e| ApiError::internal(e.to_string()))?;
 
-    let record = AccountRecord {
-        id: Uuid::new_v4(),
-        handle,
-        password_hash: hash_password(&body.password)?,
-        identity_pubkey: pubkey,
-        identity_vault: encode_identity_vault(body.identity_vault.as_ref())?,
-        is_initial_operator: count == 0,
-        created_at: Utc::now(),
-    };
-    db::account::create(&state.pool, &record).await?;
+    let outcome: Result<(AccountRecord, Option<crate::domain::invite::InviteRecord>), ApiError> =
+        async {
+            let count = db::account::count(&mut *tx).await?;
+            let mut invite = None;
+            if count == 0 {
+                if body.invite_code.is_some() {
+                    // first account ignores invite; still allowed
+                }
+            } else {
+                let code = body
+                    .invite_code
+                    .as_deref()
+                    .filter(|s| !s.is_empty())
+                    .ok_or_else(|| {
+                        ApiError::forbidden("invite required after the first account exists")
+                    })?;
+                let record = db::invite::find_by_code(&mut *tx, code)
+                    .await?
+                    .ok_or_else(|| {
+                        ApiError::forbidden("invite required after the first account exists")
+                    })?;
+                if !record.is_usable(Utc::now()) {
+                    return Err(ApiError::forbidden(
+                        "invite required after the first account exists",
+                    ));
+                }
+                invite = Some(record);
+            }
 
-    if let Some(inv) = invite {
-        if db::membership::exists(&state.pool, record.id, inv.server_id).await? {
-            // already member — ignore
-        } else {
-            let membership = Membership {
-                account_id: record.id,
-                server_id: inv.server_id,
-                joined_at: Utc::now(),
-                joined_via_invite_id: Some(inv.id),
-                key_handoff_status: KeyHandoffStatus::Pending,
+            if db::account::find_by_handle(&mut *tx, &handle)
+                .await?
+                .is_some()
+            {
+                return Err(ApiError::conflict("handle already exists"));
+            }
+
+            let record = AccountRecord {
+                id: Uuid::new_v4(),
+                handle,
+                password_hash,
+                identity_pubkey: pubkey,
+                identity_vault,
+                is_initial_operator: count == 0,
+                created_at: Utc::now(),
+                avatar_filename: None,
+                avatar_content_type: None,
             };
-            db::membership::create(&state.pool, &membership).await?;
-            emit_invite_consumed(state, &inv, record.id).await;
+            db::account::create(&mut *tx, &record).await?;
+
+            if let Some(inv) = &invite {
+                if !db::membership::exists(&mut *tx, record.id, inv.server_id).await? {
+                    let membership = Membership {
+                        account_id: record.id,
+                        server_id: inv.server_id,
+                        joined_at: Utc::now(),
+                        joined_via_invite_id: Some(inv.id),
+                        key_handoff_status: KeyHandoffStatus::Pending,
+                    };
+                    db::membership::create(&mut *tx, &membership).await?;
+                }
+            }
+
+            Ok((record, invite))
+        }
+        .await;
+
+    match outcome {
+        Ok((record, invite)) => {
+            tx.commit()
+                .await
+                .map_err(|e| ApiError::internal(e.to_string()))?;
+            if let Some(inv) = invite {
+                emit_invite_consumed(state, &inv, record.id).await;
+            }
+            let token = persist_session(&state.pool, record.id, state.config.session_ttl_secs).await?;
+            let jar = with_session_cookie(jar, token, state.config.cookie_secure);
+            Ok((record, jar))
+        }
+        Err(e) => {
+            let _ = tx.rollback().await;
+            Err(e)
         }
     }
-
-    let token = persist_session(&state.pool, record.id, state.config.session_ttl_secs).await?;
-    let jar = with_session_cookie(jar, token, state.config.cookie_secure);
-    Ok((record, jar))
 }
 
 pub async fn emit_invite_consumed(

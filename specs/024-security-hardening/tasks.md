@@ -28,7 +28,7 @@ description: "Task list for Endurecimento de segurança e higiene de código"
 
 **Purpose**: `TestApp` e constantes de chaves de exemplo alinhadas ao contrato.
 
-- [ ] T001 Add `rate_limit_disabled` (default true in tests) and production flags pass-through on `Config` usage in `backend/tests/common/mod.rs` so later stories can toggle `MESA_PRODUCTION` / ritmo without breaking existing contract tests
+- [X] T001 Add `rate_limit_disabled` (default true in tests) and production flags pass-through on `Config` usage in `backend/tests/common/mod.rs` so later stories can toggle `MESA_PRODUCTION` / ritmo without breaking existing contract tests
 
 **Checkpoint**: `cargo test --test contract` still green on current code after TestApp fields exist (wire no-ops until Phase 2–3).
 
@@ -40,12 +40,12 @@ description: "Task list for Endurecimento de segurança e higiene de código"
 
 **⚠️ CRITICAL**: US1–US6 assumem `Config::validate`, `authz`, `rate_limit`, headers, política de envelopes.
 
-- [ ] T002 Set `BIND` default to `127.0.0.1:8080`, parse `MESA_PRODUCTION` / `MESA_ENV=production`, example LiveKit key constants, and `rate_limit_disabled` from env in `backend/src/config.rs` per [contracts/production-boot.md](./contracts/production-boot.md)
-- [ ] T003 Create `backend/src/api/authz.rs` with `require_member`; move implementation from `backend/src/api/channels.rs` and update callers in `backend/src/api/*.rs` so they compile
-- [ ] T004 [P] Implement in-memory 10/60s IP limiter in `backend/src/rate_limit.rs` (not wired to routes yet) per [research.md](./research.md) R4
-- [ ] T005 [P] Implement CSP / `X-Frame-Options` / nosniff / Referrer-Policy middleware in `backend/src/security_headers.rs` per [contracts/browser-headers.md](./contracts/browser-headers.md) (not wired yet)
-- [ ] T006 Restrict `POST` in `backend/src/api/key_envelopes.rs` to self-upsert or pending-target + owner/synced caller per [contracts/key-envelopes.md](./contracts/key-envelopes.md)
-- [ ] T007 Add contract tests for envelope 403 overwrite in `backend/tests/contract/key_envelopes.rs` and register the module in `backend/tests/contract/mod.rs`
+- [X] T002 Set `BIND` default to `127.0.0.1:8080`, parse `MESA_PRODUCTION` / `MESA_ENV=production`, example LiveKit key constants, and `rate_limit_disabled` from env in `backend/src/config.rs` per [contracts/production-boot.md](./contracts/production-boot.md)
+- [X] T003 Create `backend/src/api/authz.rs` with `require_member`; move implementation from `backend/src/api/channels.rs` and update callers in `backend/src/api/*.rs` so they compile
+- [X] T004 [P] Implement in-memory 10/60s IP limiter in `backend/src/rate_limit.rs` (not wired to routes yet) per [research.md](./research.md) R4
+- [X] T005 [P] Implement CSP / `X-Frame-Options` / nosniff / Referrer-Policy middleware in `backend/src/security_headers.rs` per [contracts/browser-headers.md](./contracts/browser-headers.md) (not wired yet)
+- [X] T006 Restrict `POST` in `backend/src/api/key_envelopes.rs` to self-upsert or pending-target + owner/synced caller per [contracts/key-envelopes.md](./contracts/key-envelopes.md)
+- [X] T007 Add contract tests for envelope 403 overwrite in `backend/tests/contract/key_envelopes.rs` and register the module in `backend/tests/contract/mod.rs`
 
 **Checkpoint**: Helpers existem; boot/unfurl/auth/voz ainda não endurecidos.
 
@@ -59,12 +59,12 @@ description: "Task list for Endurecimento de segurança e higiene de código"
 
 ### Tests for User Story 1
 
-- [ ] T008 [P] [US1] Add `Config::validate` unit/contract coverage in `backend/tests/contract/production_boot.rs` (example keys fail only when production; cookie_secure required) per [contracts/production-boot.md](./contracts/production-boot.md)
+- [X] T008 [P] [US1] Add `Config::validate` unit/contract coverage in `backend/tests/contract/production_boot.rs` (example keys fail only when production; cookie_secure required) per [contracts/production-boot.md](./contracts/production-boot.md)
 
 ### Implementation for User Story 1
 
-- [ ] T009 [US1] Implement `Config::validate` in `backend/src/config.rs` and call it from `backend/src/main.rs` before bind
-- [ ] T010 [US1] Document LAN `BIND=0.0.0.0:8080` explicit, production profile, unique LiveKit keys, and `LIVEKIT_WS_URL` in `docs/operar-instancia.md` (and `README.md` bind/examples so they do not present example keys as production)
+- [X] T009 [US1] Implement `Config::validate` in `backend/src/config.rs` and call it from `backend/src/main.rs` before bind
+- [X] T010 [US1] Document LAN `BIND=0.0.0.0:8080` explicit, production profile, unique LiveKit keys, and `LIVEKIT_WS_URL` in `docs/operar-instancia.md` (and `README.md` bind/examples so they do not present example keys as production)
 
 **Checkpoint**: `MESA_PRODUCTION=1` + `instkey` não arranca; default bind loopback.
 
@@ -78,12 +78,12 @@ description: "Task list for Endurecimento de segurança e higiene de código"
 
 ### Tests for User Story 2
 
-- [ ] T011 [P] [US2] Extend unfurl cases in `backend/tests/contract/attachments.rs` (or new `backend/tests/contract/unfurl.rs`) for loopback, link-local, and oversize `Content-Length` per [contracts/unfurl.md](./contracts/unfurl.md)
+- [X] T011 [P] [US2] Extend unfurl cases in `backend/tests/contract/attachments.rs` (or new `backend/tests/contract/unfurl.rs`) for loopback, link-local, and oversize `Content-Length` per [contracts/unfurl.md](./contracts/unfurl.md)
 
 ### Implementation for User Story 2
 
-- [ ] T012 [US2] Harden `validate_public_url` (resolve DNS, block private IPs after redirect) and cap body at 256 KiB in `backend/src/api/unfurl.rs`; validate OG `image_url` the same way
-- [ ] T013 [US2] Skip non-http(s) `image_url` in `frontend/src/components/LinkPreviews.tsx`
+- [X] T012 [US2] Harden `validate_public_url` (resolve DNS, block private IPs after redirect) and cap body at 256 KiB in `backend/src/api/unfurl.rs`; validate OG `image_url` the same way
+- [X] T013 [US2] Skip non-http(s) `image_url` in `frontend/src/components/LinkPreviews.tsx`
 
 **Checkpoint**: `POST /api/unfurl` a `127.0.0.1` / `169.254.169.254` → 400.
 
@@ -97,13 +97,13 @@ description: "Task list for Endurecimento de segurança e higiene de código"
 
 ### Tests for User Story 3
 
-- [ ] T014 [P] [US3] Add rate-limit 429 tests in `backend/tests/contract/auth_rate_limit.rs` (enable limit on that TestApp) and first-operator serialisation if practical; keep default TestApp unlimited
+- [X] T014 [P] [US3] Add rate-limit 429 tests in `backend/tests/contract/auth_rate_limit.rs` (enable limit on that TestApp) and first-operator serialisation if practical; keep default TestApp unlimited
 
 ### Implementation for User Story 3
 
-- [ ] T015 [US3] Wire `rate_limit` into `backend/src/api/auth/login.rs` and `backend/src/api/auth/register.rs`; default `rate_limit_disabled=true` in `backend/tests/common/mod.rs`
-- [ ] T016 [US3] Use SQLite immediate transaction around account count + insert in `backend/src/api/auth/register.rs` so at most one initial operator per [research.md](./research.md) R5
-- [ ] T017 [US3] Confirm login unknown-handle vs bad-password stay `{ "error": "invalid credentials" }` in `backend/src/api/auth/login.rs`
+- [X] T015 [US3] Wire `rate_limit` into `backend/src/api/auth/login.rs` and `backend/src/api/auth/register.rs`; default `rate_limit_disabled=true` in `backend/tests/common/mod.rs`
+- [X] T016 [US3] Use SQLite immediate transaction around account count + insert in `backend/src/api/auth/register.rs` so at most one initial operator per [research.md](./research.md) R5
+- [X] T017 [US3] Confirm login unknown-handle vs bad-password stay `{ "error": "invalid credentials" }` in `backend/src/api/auth/login.rs`
 
 **Checkpoint**: martelo de login → 429; corrida de registo → ≤1 operador inicial.
 
@@ -117,11 +117,11 @@ description: "Task list for Endurecimento de segurança e higiene de código"
 
 ### Tests for User Story 4
 
-- [ ] T018 [P] [US4] Assert `url` ignores `Host: evil.example` in `backend/tests/contract/voice_join.rs` per [contracts/voice-signaling.md](./contracts/voice-signaling.md)
+- [X] T018 [P] [US4] Assert `url` ignores `Host: evil.example` in `backend/tests/contract/voice_join.rs` per [contracts/voice-signaling.md](./contracts/voice-signaling.md)
 
 ### Implementation for User Story 4
 
-- [ ] T019 [US4] Remove Host/`X-Forwarded-Host` rewrite in `backend/src/token/mod.rs`; set join `url` from `config.livekit_url` in `backend/src/api/voice.rs`
+- [X] T019 [US4] Remove Host/`X-Forwarded-Host` rewrite in `backend/src/token/mod.rs`; set join `url` from `config.livekit_url` in `backend/src/api/voice.rs`
 
 **Checkpoint**: `url` === config em 100% dos joins de teste.
 
@@ -135,8 +135,8 @@ description: "Task list for Endurecimento de segurança e higiene de código"
 
 ### Implementation for User Story 5
 
-- [ ] T020 [US5] Attach `security_headers` layer in `backend/src/main.rs` and `backend/src/lib.rs` `router()` (tests see headers); HSTS only when `cookie_secure` or production per [research.md](./research.md) R8
-- [ ] T021 [US5] Remove Google Fonts `@import` and set `--font-body` / `--font-heading` to `system-ui, sans-serif` in `frontend/src/styles/nocturne.css`
+- [X] T020 [US5] Attach `security_headers` layer in `backend/src/main.rs` and `backend/src/lib.rs` `router()` (tests see headers); HSTS only when `cookie_secure` or production per [research.md](./research.md) R8
+- [X] T021 [US5] Remove Google Fonts `@import` and set `--font-body` / `--font-heading` to `system-ui, sans-serif` in `frontend/src/styles/nocturne.css`
 
 **Checkpoint**: DevTools sem `fonts.googleapis.com`; API com `X-Frame-Options: DENY`.
 
@@ -150,7 +150,7 @@ description: "Task list for Endurecimento de segurança e higiene de código"
 
 ### Implementation for User Story 6
 
-- [ ] T022 [US6] Move `history_visible_since` (invite include_history / joined_at) into `backend/src/api/authz.rs` and use it from `backend/src/api/messages.rs` and `backend/src/api/attachments.rs` (delete duplicate `history_since` functions)
+- [X] T022 [US6] Move `history_visible_since` (invite include_history / joined_at) into `backend/src/api/authz.rs` and use it from `backend/src/api/messages.rs` and `backend/src/api/attachments.rs` (delete duplicate `history_since` functions)
 
 **Checkpoint**: Contract tests de histórico/anexos existentes continuam a passar.
 
@@ -158,10 +158,10 @@ description: "Task list for Endurecimento de segurança e higiene de código"
 
 ## Phase 9: Polish & Cross-Cutting Concerns
 
-- [ ] T023 Run `cargo test --test contract --test integration` in `backend/` and fix failures
-- [ ] T024 [P] Run `npx tsc --noEmit` in `frontend/`
-- [ ] T025 Execute [quickstart.md](./quickstart.md) §1–§6 (LAN bind note; production env)
-- [ ] T026 Update `docs/daily/yyyy-mm-dd.md` and `CHANGELOG.md` `[Unreleased]` after successful `/speckit-implement` (skip during tasks-only)
+- [X] T023 Run `cargo test --test contract --test integration` in `backend/` and fix failures
+- [X] T024 [P] Run `npx tsc --noEmit` in `frontend/`
+- [X] T025 Execute [quickstart.md](./quickstart.md) §1–§6 (LAN bind note; production env)
+- [X] T026 Update `docs/daily/yyyy-mm-dd.md` and `CHANGELOG.md` `[Unreleased]` after successful `/speckit-implement` (skip during tasks-only)
 
 ---
 

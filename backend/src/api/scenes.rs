@@ -41,7 +41,7 @@ async fn require_voice_channel(
     let channel = db::channel::find_by_id(pool, channel_id)
         .await?
         .ok_or_else(|| ApiError::not_found("channel not found"))?;
-    crate::api::channels::require_member(pool, account_id, channel.server_id).await?;
+    crate::api::authz::require_member(pool, account_id, channel.server_id).await?;
     if channel.kind != ChannelType::VoiceVideo {
         return Err(ApiError::bad_request("not a voice/video channel"));
     }

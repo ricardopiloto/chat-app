@@ -57,6 +57,43 @@ async fn voice_join_token_has_no_secret_and_uses_ids() {
 }
 
 #[tokio::test]
+async fn voice_join_url_ignores_host_header() {
+    let app = TestApp::new().await;
+    let (_, _, cookie) = app.register("alice_host", "password1", None).await;
+    let cookie = must_cookie(cookie);
+    let (_, server, _) = app
+        .request(
+            "POST",
+            "/api/servers",
+            Some(crate::common::create_server_body("Mesa")),
+            Some(&cookie),
+        )
+        .await;
+    let server_id = server["id"].as_str().unwrap();
+    let (_, ch, _) = app
+        .request(
+            "POST",
+            &format!("/api/servers/{server_id}/channels"),
+            Some(json!({ "name": "mesa", "type": "voice_video", "custody_ack": true, "channel_key_sealed": "c2VhbGVkLWNoYW5uZWwta2V5LWJsb2I=" })),
+            Some(&cookie),
+        )
+        .await;
+    let channel_id = ch["id"].as_str().unwrap();
+    let (status, body, _) = app
+        .request_with(
+            "POST",
+            &format!("/api/channels/{channel_id}/voice/join"),
+            None,
+            Some(&cookie),
+            &[("host", "evil.example"), ("x-forwarded-host", "evil.example")],
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["url"], "ws://127.0.0.1:7880");
+    assert!(!body["url"].as_str().unwrap().contains("evil.example"));
+}
+
+#[tokio::test]
 async fn voice_join_requires_membership() {
     let app = TestApp::new().await;
     let (_, _, alice) = app.register("alice", "password1", None).await;

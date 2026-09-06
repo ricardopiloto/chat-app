@@ -40,5 +40,9 @@ backend/chat.db-*
 data/attachments/
 backend/data/attachments/
 
+# User and server avatars (plaintext images)
+data/avatars/
+backend/data/avatars/
+
 # OS
 .DS_Store

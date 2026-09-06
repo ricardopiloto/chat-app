@@ -1,28 +1,36 @@
 import { Show, createEffect, createSignal, onCleanup } from "solid-js";
-import type { Account } from "../api/client";
+import {
+  accountAvatarUrl,
+  deleteOwnAvatar,
+  putOwnAvatar,
+  type Account,
+} from "../api/client";
 import Dialog from "./Dialog";
+import ImageUploadDialog from "./ImageUploadDialog";
 
 type Props = {
   open: boolean;
   onClose: () => void;
   me: Account;
   onLogout: () => void;
+  onAccountPatch?: (account: Account) => void;
 };
 
 export default function AccountMenu(props: Props) {
   const [confirmOpen, setConfirmOpen] = createSignal(false);
+  const [avatarOpen, setAvatarOpen] = createSignal(false);
   let panelRef: HTMLDivElement | undefined;
 
   createEffect(() => {
     if (!props.open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !confirmOpen()) {
+      if (e.key === "Escape" && !confirmOpen() && !avatarOpen()) {
         e.preventDefault();
         props.onClose();
       }
     };
     const onPointer = (e: PointerEvent) => {
-      if (confirmOpen()) return;
+      if (confirmOpen() || avatarOpen()) return;
       const t = e.target;
       if (t instanceof Element && t.closest(".account-menu-anchor")) return;
       if (panelRef && t instanceof Node && !panelRef.contains(t)) props.onClose();
@@ -68,6 +76,17 @@ export default function AccountMenu(props: Props) {
               type="button"
               class="account-menu-item"
               role="menuitem"
+              onClick={() => {
+                setAvatarOpen(true);
+                props.onClose();
+              }}
+            >
+              Foto de perfil
+            </button>
+            <button
+              type="button"
+              class="account-menu-item"
+              role="menuitem"
               onClick={requestLogout}
             >
               Terminar sessão
@@ -92,6 +111,21 @@ export default function AccountMenu(props: Props) {
       >
         <p>Tens a certeza de que queres terminar a sessão nesta instância?</p>
       </Dialog>
+      <ImageUploadDialog
+        open={avatarOpen()}
+        title="Foto de perfil"
+        hasImage={!!props.me.has_avatar}
+        currentUrl={accountAvatarUrl(props.me.id)}
+        onClose={() => setAvatarOpen(false)}
+        onSave={async (file) => {
+          const updated = await putOwnAvatar(file, file.type);
+          props.onAccountPatch?.({ ...props.me, ...updated, has_avatar: true });
+        }}
+        onRemove={async () => {
+          await deleteOwnAvatar();
+          props.onAccountPatch?.({ ...props.me, has_avatar: false });
+        }}
+      />
     </>
   );
 }

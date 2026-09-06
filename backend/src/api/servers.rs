@@ -46,6 +46,9 @@ pub async fn create_server(
         id: Uuid::new_v4(),
         name,
         owner_account_id: account.id,
+        has_image: false,
+        image_filename: None,
+        image_content_type: None,
     };
     db::server::create(&state.pool, &server).await?;
     db::membership::create(

@@ -1,5 +1,5 @@
-import { For } from "solid-js";
-import type { Server } from "../api/client";
+import { For, Show } from "solid-js";
+import { serverImageUrl, type Server } from "../api/client";
 
 type Props = {
   servers: Server[];
@@ -36,7 +36,17 @@ export default function ServerRail(props: Props) {
                 props.onContextMenu?.(s, e);
               }}
             >
-              <span class="server-rail-glyph">{initials(s.name)}</span>
+              <Show
+                when={s.has_image}
+                fallback={<span class="server-rail-glyph">{initials(s.name)}</span>}
+              >
+                <img
+                  class="server-rail-glyph"
+                  src={serverImageUrl(s.id)}
+                  alt=""
+                  draggable={false}
+                />
+              </Show>
             </button>
           )}
         </For>

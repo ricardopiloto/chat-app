@@ -32,14 +32,3 @@ pub fn mint(
         room: room.to_string(),
     })
 }
-
-pub fn signaling_url(config: &Config, host_header: Option<&str>) -> String {
-    let host = host_header.unwrap_or("");
-    let hostname = host.split(':').next().unwrap_or("");
-    if hostname.is_empty() || hostname == "127.0.0.1" || hostname == "localhost" {
-        return config.livekit_url.clone();
-    }
-    let secure = config.livekit_url.starts_with("wss://");
-    let scheme = if secure { "wss" } else { "ws" };
-    format!("{scheme}://{hostname}:7880")
-}

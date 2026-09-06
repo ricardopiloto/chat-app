@@ -50,16 +50,19 @@ pub async fn create(pool: &SqlitePool, invite: &InviteRecord) -> Result<(), sqlx
     Ok(())
 }
 
-pub async fn find_by_code(
-    pool: &SqlitePool,
+pub async fn find_by_code<'e, E>(
+    executor: E,
     code: &str,
-) -> Result<Option<InviteRecord>, sqlx::Error> {
+) -> Result<Option<InviteRecord>, sqlx::Error>
+where
+    E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
+{
     let row = sqlx::query_as::<_, Row>(
         "SELECT id, code, server_id, created_by_account_id, expires_at, include_history, revoked_at
          FROM invite WHERE code = ?",
     )
     .bind(code)
-    .fetch_optional(pool)
+    .fetch_optional(executor)
     .await?;
     row.map(map_row).transpose()
 }

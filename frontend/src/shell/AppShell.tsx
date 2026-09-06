@@ -1,4 +1,5 @@
 import { Show, createEffect, createSignal, onCleanup, type JSX } from "solid-js";
+import { useNavigate, useParams } from "@solidjs/router";
 import type { Account, Server } from "../api/client";
 import type { WsEnvelope } from "../api/ws";
 import type { Identity } from "../crypto/identity";
@@ -15,11 +16,13 @@ import { bootTheme } from "../theme/theme";
 import ToastHost from "../components/ToastHost";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
+import { useVoiceSession, voiceDurationLabel } from "../voice/VoiceSession";
 
 type Props = {
   me: Account;
   identity: Identity;
   onLogout: () => void;
+  onAccountPatch?: (account: Account) => void;
   children: JSX.Element;
   onWs?: (handler: (msg: WsEnvelope) => void) => () => void;
   /** Optional external control of stage mode (voice chrome). */
@@ -40,6 +43,9 @@ function broadcastStageChannelsState(expanded: boolean) {
 }
 
 export default function AppShell(props: Props) {
+  const navigate = useNavigate();
+  const params = useParams();
+  const voice = useVoiceSession();
   const [selectedServerId, setSelectedServerId] = createSignal<string | null>(null);
   const [stageMode, setStageMode] = createSignal(readStageMode());
   const [stageChannelsExpanded, setStageChannelsExpanded] = createSignal(
@@ -155,12 +161,20 @@ export default function AppShell(props: Props) {
     return parts.join(" ");
   };
 
+  const showConnectedBar = () => {
+    if (!voice.live() || !voice.channelId()) return false;
+    return params.id !== voice.channelId();
+  };
+
+  const barTimer = () => voiceDurationLabel(voice.callStartedAt(), voice.now());
+
   return (
     <div class="app" data-theme="dark" ref={(el) => (appRef = el)}>
       <TopBar
         me={props.me}
         identity={props.identity}
         onLogout={props.onLogout}
+        onAccountPatch={props.onAccountPatch}
         showMenuToggle={narrow()}
         onMenuToggle={toggleMenu}
         onWs={props.onWs}
@@ -183,7 +197,49 @@ export default function AppShell(props: Props) {
           stageChannelsExpanded={stageChannelsExpanded()}
           onToggleStageChannels={() => setStageChannels(!stageChannelsExpanded())}
         />
-        <div class="shell-main">{props.children}</div>
+        <div class="shell-main">
+          {props.children}
+          <Show when={showConnectedBar()}>
+            <div
+              class="voice-connected-bar"
+              role="status"
+              aria-label={`Ainda na chamada ${voice.channelName() ?? ""}`}
+            >
+              <div class="voice-connected-bar-info">
+                <span class="voice-connected-bar-name">{voice.channelName()}</span>
+                <Show when={barTimer()}>
+                  {(t) => (
+                    <span class="voice-connected-bar-timer" aria-live="off">
+                      {t()}
+                    </span>
+                  )}
+                </Show>
+              </div>
+              <div class="voice-connected-bar-actions">
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  onClick={() => {
+                    const id = voice.channelId();
+                    const server = voice.serverId();
+                    if (!id) return;
+                    navigate(`/channels/${id}${server ? `?server=${server}&type=voice_video` : ""}`);
+                  }}
+                >
+                  Voltar à mesa
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-danger"
+                  aria-label="Sair da chamada"
+                  onClick={() => void voice.hangup()}
+                >
+                  Sair
+                </button>
+              </div>
+            </div>
+          </Show>
+        </div>
         <Show when={membersPanelOpen()}>
           <MembersPanel serverId={selectedServerId()} />
         </Show>

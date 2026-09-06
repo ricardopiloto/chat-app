@@ -1,6 +1,6 @@
 use crate::api::auth::register::{emit_invite_consumed, register_inner, RegisterBody};
 use crate::api::auth::session::{AuthUser, OptionalAuth};
-use crate::api::channels::require_member;
+use crate::api::authz::require_member;
 use crate::db;
 use crate::domain::invite::InviteRecord;
 use crate::domain::membership::{KeyHandoffStatus, Membership};

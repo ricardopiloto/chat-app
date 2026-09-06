@@ -1,15 +1,18 @@
 use crate::api::auth::session::OptionalAuth;
+use crate::domain::avatar::MAX_AVATAR_BYTES;
 use crate::ws;
 use crate::AppState;
 use axum::extract::ws::{Message, WebSocket};
 use axum::extract::{DefaultBodyLimit, State, WebSocketUpgrade};
 use axum::response::IntoResponse;
-use axum::routing::{delete, get, post};
+use axum::routing::{delete, get, patch, post};
 use axum::Router;
 use futures_util::{SinkExt, StreamExt};
 
 pub mod auth;
 pub mod attachments;
+pub mod avatars;
+pub mod authz;
 pub mod channel_provision;
 pub mod channel_roles;
 pub mod channels;
@@ -30,6 +33,17 @@ pub fn router(state: AppState) -> axum::Router {
             "/api",
             Router::new()
                 .merge(auth::router())
+                .route(
+                    "/accounts/{account_id}/avatar",
+                    get(avatars::get_account_avatar),
+                )
+                .route(
+                    "/servers/{server_id}/image",
+                    get(avatars::get_server_image)
+                        .put(avatars::put_server_image)
+                        .delete(avatars::delete_server_image)
+                        .layer(DefaultBodyLimit::max(MAX_AVATAR_BYTES + 64 * 1024)),
+                )
                 .route("/servers", post(servers::create_server).get(servers::list_servers))
                 .route(
                     "/servers/{server_id}",
@@ -69,6 +83,15 @@ pub fn router(state: AppState) -> axum::Router {
                     get(channels::get_channel).delete(channels::delete_channel),
                 )
                 .route("/channels/{channel_id}/voice/join", post(voice::join))
+                .route("/channels/{channel_id}/voice/leave", post(voice::leave))
+                .route(
+                    "/channels/{channel_id}/voice/media",
+                    patch(voice::patch_media),
+                )
+                .route(
+                    "/servers/{server_id}/voice-occupancy",
+                    get(voice::occupancy),
+                )
                 .route("/channels/{channel_id}/voice/e2ee", post(voice::set_e2ee))
                 .route(
                     "/channels/{channel_id}/egress/start",

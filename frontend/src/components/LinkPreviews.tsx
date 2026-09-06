@@ -18,6 +18,12 @@ type Props = {
   text: string;
 };
 
+function httpImageUrl(url: string | null | undefined): string | undefined {
+  if (!url) return undefined;
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  return undefined;
+}
+
 export default function LinkPreviews(props: Props) {
   const [cards, setCards] = createSignal<UnfurlResult[]>([]);
 
@@ -50,7 +56,7 @@ export default function LinkPreviews(props: Props) {
         <For each={cards()}>
           {(c) => (
             <a class={`link-card link-card-${c.kind}`} href={c.url} target="_blank" rel="noopener noreferrer">
-              <Show when={c.image_url}>
+              <Show when={httpImageUrl(c.image_url)}>
                 {(src) => <img class="link-card-thumb" src={src()} alt="" loading="lazy" />}
               </Show>
               <div class="link-card-body">

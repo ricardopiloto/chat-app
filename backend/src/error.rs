@@ -61,6 +61,10 @@ impl ApiError {
         Self::new(StatusCode::GONE, message)
     }
 
+    pub fn too_many_requests() -> Self {
+        Self::new(StatusCode::TOO_MANY_REQUESTS, "too many requests")
+    }
+
     pub fn internal(message: impl Into<String>) -> Self {
         tracing::error!("internal error: {}", message.into());
         Self::new(StatusCode::INTERNAL_SERVER_ERROR, "internal error")

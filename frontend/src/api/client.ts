@@ -5,12 +5,14 @@ export type Account = {
   handle: string;
   is_initial_operator: boolean;
   identity_vault?: IdentityVault | null;
+  has_avatar?: boolean;
 };
 
 export type Server = {
   id: string;
   name: string;
   owner_account_id: string;
+  has_image?: boolean;
 };
 
 /** Body for POST /api/servers (bootstrap text + voice with custody). */
@@ -67,12 +69,14 @@ export type UnfurlResult = {
 
 export const MAX_ATTACHMENTS_PER_MESSAGE = 10;
 export const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
+export const MAX_AVATAR_BYTES = 1 * 1024 * 1024;
 export const ALLOWED_MEDIA_TYPES = new Set([
   "image/jpeg",
   "image/png",
   "image/webp",
   "image/gif",
 ]);
+export const ALLOWED_AVATAR_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 
 export type Invite = {
@@ -124,6 +128,7 @@ export type ServerMember = {
   account_id: string;
   handle: string;
   identity_pubkey: string;
+  has_avatar?: boolean;
 };
 
 export type VoiceJoin = {
@@ -131,6 +136,53 @@ export type VoiceJoin = {
   url: string;
   room: string;
 };
+
+export type VoiceOccupantView = {
+  account_id: string;
+  handle: string;
+  mic_on: boolean;
+  cam_on: boolean;
+  has_avatar?: boolean;
+};
+
+export type VoiceChannelOccupancy = {
+  channel_id: string;
+  call_started_at: string | null;
+  occupants: VoiceOccupantView[];
+};
+
+export type VoiceOccupancySnapshot = {
+  channels: VoiceChannelOccupancy[];
+};
+
+export function formatCallDuration(startedAt: string, nowMs = Date.now()): string {
+  const start = Date.parse(startedAt);
+  if (Number.isNaN(start)) return "00:00";
+  const secs = Math.max(0, Math.floor((nowMs - start) / 1000));
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  const s = secs % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+export async function fetchVoiceOccupancy(serverId: string): Promise<VoiceOccupancySnapshot> {
+  return api<VoiceOccupancySnapshot>(`/api/servers/${serverId}/voice-occupancy`);
+}
+
+export async function leaveVoice(channelId: string): Promise<void> {
+  await api<void>(`/api/channels/${channelId}/voice/leave`, { method: "POST" });
+}
+
+export async function patchVoiceMedia(
+  channelId: string,
+  body: { mic_on?: boolean; cam_on?: boolean } = {},
+): Promise<void> {
+  await api<void>(`/api/channels/${channelId}/voice/media`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
 
 export type EgressStart = {
   recording_id: string;
@@ -158,6 +210,52 @@ export function canDeleteMessage(
 
 export async function deleteServer(serverId: string): Promise<void> {
   await api<void>(`/api/servers/${serverId}`, { method: "DELETE" });
+}
+
+export function accountAvatarUrl(accountId: string): string {
+  return `/api/accounts/${accountId}/avatar`;
+}
+
+export function serverImageUrl(serverId: string): string {
+  return `/api/servers/${serverId}/image`;
+}
+
+async function putImageBytes<T>(path: string, bytes: Blob | Uint8Array, mediaType: string): Promise<T> {
+  const res = await fetch(path, {
+    method: "PUT",
+    headers: {
+      "content-type": mediaType,
+      "X-Mesa-Media-Type": mediaType,
+    },
+    body: bytes,
+    credentials: "include",
+  });
+  const text = await res.text();
+  const data = text ? JSON.parse(text) : null;
+  if (!res.ok) {
+    throw new ApiError(res.status, data?.message ?? data?.error ?? res.statusText, data?.code);
+  }
+  return data as T;
+}
+
+export async function putOwnAvatar(bytes: Blob | Uint8Array, mediaType: string): Promise<Account> {
+  return putImageBytes<Account>("/api/auth/avatar", bytes, mediaType);
+}
+
+export async function deleteOwnAvatar(): Promise<void> {
+  await api<void>("/api/auth/avatar", { method: "DELETE" });
+}
+
+export async function putServerImage(
+  serverId: string,
+  bytes: Blob | Uint8Array,
+  mediaType: string,
+): Promise<Server> {
+  return putImageBytes<Server>(`/api/servers/${serverId}/image`, bytes, mediaType);
+}
+
+export async function deleteServerImage(serverId: string): Promise<void> {
+  await api<void>(`/api/servers/${serverId}/image`, { method: "DELETE" });
 }
 
 export async function setChannelE2ee(

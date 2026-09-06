@@ -1,6 +1,7 @@
 use crate::api::auth::register::{persist_session, with_session_cookie};
 use crate::db;
 use crate::error::ApiError;
+use crate::rate_limit::ClientIp;
 use crate::AppState;
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
 use axum::extract::State;
@@ -16,9 +17,13 @@ pub struct LoginBody {
 
 pub async fn login(
     State(state): State<AppState>,
+    ClientIp(ip): ClientIp,
     jar: CookieJar,
     Json(body): Json<LoginBody>,
 ) -> Result<(CookieJar, Json<crate::domain::account::AuthAccount>), ApiError> {
+    if !state.config.rate_limit_disabled && !state.rate_limiter.allow_auth(ip) {
+        return Err(ApiError::too_many_requests());
+    }
     let account = db::account::find_by_handle(&state.pool, body.handle.trim())
         .await?
         .ok_or_else(|| ApiError::new(axum::http::StatusCode::UNAUTHORIZED, "invalid credentials"))?;

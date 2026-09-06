@@ -103,3 +103,24 @@ pub async fn auto_assign_first_empty(
     }
     list(pool, channel_id).await
 }
+
+pub async fn unassign_account(
+    pool: &SqlitePool,
+    channel_id: Uuid,
+    account_id: Uuid,
+) -> Result<Vec<GridSlot>, sqlx::Error> {
+    let Some(scene_id) = active_scene_id(pool, channel_id).await? else {
+        return Ok(Vec::new());
+    };
+    if let Some(slot) = find_account_slot(pool, channel_id, account_id).await? {
+        crate::db::scene::assign_slot(
+            pool,
+            scene_id,
+            slot.slot_index,
+            None,
+            slot.assigned_by,
+        )
+        .await?;
+    }
+    list(pool, channel_id).await
+}

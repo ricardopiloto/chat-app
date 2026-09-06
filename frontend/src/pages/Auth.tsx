@@ -9,7 +9,10 @@ import {
   wrapIdentity,
   type Identity,
 } from "../crypto/identity";
-import { applyTheme, resolveTheme } from "../theme/theme";
+import AuthShell from "../components/AuthShell";
+import IconAt from "../components/icons/IconAt";
+import { IconEyeOff, IconEyeOpen } from "../components/icons/IconEye";
+import { IconLockClosed } from "../components/icons/IconLock";
 
 type Props = {
   session?: Account | null;
@@ -23,16 +26,14 @@ export default function Auth(props: Props) {
   const navigate = useNavigate();
   const [handle, setHandle] = createSignal("");
   const [password, setPassword] = createSignal("");
-  const [mode, setMode] = createSignal<"register" | "login">(props.session ? "login" : "register");
+  const [mode, setMode] = createSignal<"register" | "login">("login");
   const [error, setError] = createSignal("");
   const [missingVault, setMissingVault] = createSignal(false);
   const [busy, setBusy] = createSignal(false);
   const [loggedIn, setLoggedIn] = createSignal<Account | null>(null);
+  const [showPassword, setShowPassword] = createSignal(false);
 
   const session = () => props.session ?? loggedIn();
-
-  // Auth sits outside AppShell — still apply theme tokens on a root .app wrapper
-  const theme = resolveTheme();
 
   function describeError(err: unknown): string {
     if (err instanceof IdentityUnlockError) return err.message;
@@ -111,91 +112,136 @@ export default function Auth(props: Props) {
   }
 
   return (
-    <div
-      class="app auth-screen"
-      data-theme={theme}
-      ref={(el) => applyTheme(theme, el)}
-    >
-      <div class="auth-card">
-        <div class="auth-brand">
-          <span class="topbar-mark" aria-hidden="true" />
-          <span class="topbar-name">Mesa</span>
+    <AuthShell>
+      <Show when={!session()}>
+        <div class="auth-tabs" role="tablist" aria-label="Autenticação">
+          <button
+            type="button"
+            role="tab"
+            class="auth-tab"
+            aria-selected={mode() === "login"}
+            onClick={() => setMode("login")}
+          >
+            Entrar
+          </button>
+          <button
+            type="button"
+            role="tab"
+            class="auth-tab"
+            aria-selected={mode() === "register"}
+            onClick={() => setMode("register")}
+          >
+            Criar conta
+          </button>
         </div>
-        <Show
-          when={!session()}
-          fallback={
-            <>
-              <h1>Desbloquear chaves</h1>
-              <p class="muted">
-                Autenticado como <strong>{session()?.handle}</strong>. A senha abre as chaves E2EE
-                neste navegador — o servidor só guarda o cofre cifrado.
-              </p>
-            </>
-          }
-        >
-          <h1>{mode() === "register" ? "Criar conta" : "Entrar"}</h1>
+      </Show>
+
+      <Show
+        when={!session()}
+        fallback={
+          <>
+            <h1>Desbloquear chaves</h1>
+            <p class="muted">
+              Autenticado como <strong>{session()?.handle}</strong>. A senha abre as chaves E2EE
+              neste navegador — o servidor só guarda o cofre cifrado.
+            </p>
+          </>
+        }
+      >
+        <Show when={mode() === "register"}>
           <p class="muted">A primeira conta da instância é livre. Depois disso é preciso um convite.</p>
         </Show>
-        <form onSubmit={submit} class="auth-actions">
-          <Show when={!session()}>
-            <div class="field">
-              <label for="auth-handle">Identificador</label>
+      </Show>
+
+      <form onSubmit={submit} class="auth-actions">
+        <Show when={!session()}>
+          <div class="field">
+            <label for="auth-handle">Seu identificador</label>
+            <div class="input-affix">
+              <span class="input-affix-icon" aria-hidden="true">
+                <IconAt />
+              </span>
               <input
                 id="auth-handle"
                 class="input"
                 required
+                autocomplete="username"
+                placeholder="@ seu_handle"
                 value={handle()}
                 onInput={(e) => setHandle(e.currentTarget.value)}
               />
             </div>
-          </Show>
-          <div class="field">
-            <label for="auth-password">Senha</label>
+            <p class="auth-field-hint">Este será o seu @handle nesta instância.</p>
+          </div>
+        </Show>
+        <div class="field">
+          <label for="auth-password">Senha</label>
+          <div class="input-affix">
+            <span class="input-affix-icon" aria-hidden="true">
+              <IconLockClosed size={18} />
+            </span>
             <input
               id="auth-password"
               class="input"
               required
               minLength={8}
-              type="password"
-              placeholder="mín. 8 caracteres"
+              autocomplete={session() || mode() === "login" ? "current-password" : "new-password"}
+              type={showPassword() ? "text" : "password"}
+              placeholder="Sua senha"
               value={password()}
               onInput={(e) => setPassword(e.currentTarget.value)}
             />
+            <button
+              type="button"
+              class="input-affix-toggle"
+              aria-label={showPassword() ? "Ocultar senha" : "Mostrar senha"}
+              onClick={() => setShowPassword(!showPassword())}
+            >
+              <Show when={showPassword()} fallback={<IconEyeOpen />}>
+                <IconEyeOff />
+              </Show>
+            </button>
           </div>
-          <button type="submit" class="btn btn-primary btn-block" disabled={busy()}>
-            {session() ? "Desbloquear" : mode() === "register" ? "Cadastrar" : "Entrar"}
-          </button>
-        </form>
-        <Show when={!session()}>
-          <button
-            type="button"
-            class="btn btn-ghost"
-            onClick={() => setMode(mode() === "register" ? "login" : "register")}
-          >
-            {mode() === "register" ? "Já tenho conta" : "Quero cadastrar"}
-          </button>
-        </Show>
-        <Show when={!!session() && props.onClearSession}>
-          <button
-            type="button"
-            class="btn btn-secondary"
-            onClick={() => {
-              setLoggedIn(null);
-              setMissingVault(false);
-              setError("");
-              void props.onClearSession?.();
-            }}
-          >
-            Entrar com outra conta
-          </button>
-        </Show>
-        <Show when={missingVault() && !!session() && !!props.onRecoverIdentity}>
-          <button type="button" class="btn btn-secondary" disabled={busy()} onClick={(e) => void recover(e)}>
-            Gerar novas chaves neste aparelho
-          </button>
-        </Show>
-        <p class="error">{error()}</p>
-      </div>
-    </div>
+        </div>
+        <button type="submit" class="btn auth-btn-primary btn-block" disabled={busy()}>
+          {session() ? "Desbloquear" : mode() === "register" ? "Criar conta" : "Entrar"}
+        </button>
+      </form>
+
+      <Show when={!session() && mode() === "login"}>
+        <div class="auth-divider" aria-hidden="true">
+          ou
+        </div>
+        <button type="button" class="btn auth-btn-outline btn-block" onClick={() => setMode("register")}>
+          Criar conta
+        </button>
+      </Show>
+
+      <Show when={!!session() && props.onClearSession}>
+        <button
+          type="button"
+          class="btn btn-secondary btn-block"
+          onClick={() => {
+            setLoggedIn(null);
+            setMissingVault(false);
+            setError("");
+            void props.onClearSession?.();
+          }}
+        >
+          Entrar com outra conta
+        </button>
+      </Show>
+      <Show when={missingVault() && !!session() && !!props.onRecoverIdentity}>
+        <button
+          type="button"
+          class="btn btn-secondary btn-block"
+          disabled={busy()}
+          onClick={(e) => void recover(e)}
+        >
+          Gerar novas chaves neste aparelho
+        </button>
+      </Show>
+      <p class="error">{error()}</p>
+    </AuthShell>
   );
 }

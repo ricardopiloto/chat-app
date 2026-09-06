@@ -1,7 +1,9 @@
 use crate::api::auth::session::AuthUser;
-use crate::api::channels::require_member;
+use crate::api::authz::require_member;
 use crate::db;
 use crate::domain::key_envelope::KeyEnvelope;
+use crate::domain::membership::KeyHandoffStatus;
+use crate::domain::permissions;
 use crate::error::ApiError;
 use crate::AppState;
 use axum::extract::{Path, State};
@@ -37,6 +39,29 @@ pub async fn post_envelope(
         .map_err(|_| ApiError::bad_request("sealed_key must be base64"))?;
     if !db::membership::exists(&state.pool, body.account_id, server_id).await? {
         return Err(ApiError::bad_request("target is not a member"));
+    }
+    if body.account_id != account.id {
+        let target = db::membership::find(&state.pool, body.account_id, server_id)
+            .await?
+            .ok_or_else(|| ApiError::bad_request("target is not a member"))?;
+        if target.key_handoff_status != KeyHandoffStatus::Pending {
+            return Err(ApiError::forbidden(
+                "cannot overwrite a synced key envelope",
+            ));
+        }
+        let server = db::server::find_by_id(&state.pool, server_id)
+            .await?
+            .ok_or_else(|| ApiError::not_found("server not found"))?;
+        let caller = db::membership::find(&state.pool, account.id, server_id)
+            .await?
+            .ok_or_else(|| ApiError::forbidden("not a member of this server"))?;
+        let owner = permissions::is_server_owner(server.owner_account_id, account.id);
+        let synced = caller.key_handoff_status == KeyHandoffStatus::Synced;
+        if !owner && !synced {
+            return Err(ApiError::forbidden(
+                "only the owner or a synced member can complete handoff",
+            ));
+        }
     }
     db::key_envelope::upsert(
         &state.pool,
