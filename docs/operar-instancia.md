@@ -43,7 +43,7 @@ export LIVEKIT_WS_URL=ws://127.0.0.1:7880
 # telemóvel na mesma Wi‑Fi: LIVEKIT_WS_URL=ws://<IP-LAN>:7880
 export COOKIE_SECURE=false          # true atrás de HTTPS
 export SESSION_TTL_SECS=604800      # 7 dias
-export DEFAULT_INVITE_TTL_SECS=604800
+export DEFAULT_INVITE_TTL_SECS=300  # 5 minutos (produto); labs podem sobrescrever
 export ATTACHMENTS_DIR=./data/attachments   # blobs cifrados no cliente (opaco no disco)
 export AVATARS_DIR=./data/avatars           # avatares de conta e imagens de servidor (JPEG/PNG/WebP em claro, ≤1 MiB)
 cargo run

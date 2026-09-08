@@ -1,23 +1,29 @@
-import { Show, createEffect, createSignal, onCleanup, type JSX } from "solid-js";
-import { useLocation, useParams } from "@solidjs/router";
-import type { Account, Server } from "../api/client";
+import { Show, Suspense, createEffect, createSignal, lazy, onCleanup, type JSX } from "solid-js";
+import { useLocation, useNavigate, useParams } from "@solidjs/router";
+import { api, type Account, type Channel, type Server } from "../api/client";
 import type { WsEnvelope } from "../api/ws";
 import type { Identity } from "../crypto/identity";
 import MembersPanel from "../components/MembersPanel";
 import {
+  readChannelsListExpanded,
   readMembersPanelOpen,
-  readStageChannelsExpanded,
   readStageMode,
+  writeChannelsListExpanded,
   writeMembersPanelOpen,
-  writeStageChannelsExpanded,
   writeStageMode,
 } from "../preferences/uiPrefs";
+import {
+  channelHref,
+  resolveChannelForServer,
+} from "../preferences/lastChannelByServer";
+import { isSettingsPath } from "../lib/settingsAccess";
 import { bootTheme } from "../theme/theme";
 import ToastHost from "../components/ToastHost";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
-import FloatingVoicePip from "./FloatingVoicePip";
 import { useVoiceSession } from "../voice/VoiceSession";
+
+const FloatingVoicePip = lazy(() => import("./FloatingVoicePip"));
 
 type Props = {
   me: Account;
@@ -48,7 +54,7 @@ function broadcastMembersState(open: boolean) {
   window.dispatchEvent(new CustomEvent("mesa:members-panel-state", { detail: { open } }));
 }
 
-function broadcastStageChannelsState(expanded: boolean) {
+function broadcastChannelsListState(expanded: boolean) {
   window.dispatchEvent(
     new CustomEvent("mesa:stage-channels-state", { detail: { expanded } }),
   );
@@ -57,16 +63,18 @@ function broadcastStageChannelsState(expanded: boolean) {
 export default function AppShell(props: Props) {
   const params = useParams<{ id?: string; serverId?: string }>();
   const location = useLocation();
+  const navigate = useNavigate();
   const voice = useVoiceSession();
   // Init from URL so remount on /servers/:id or /channels/:id?server= keeps rail in sync (041 US4).
   const [selectedServerId, setSelectedServerId] = createSignal<string | null>(
     serverIdFromRoute(params, location.search),
   );
   const [stageMode, setStageMode] = createSignal(readStageMode());
-  const [stageChannelsExpanded, setStageChannelsExpanded] = createSignal(
-    readStageChannelsExpanded(),
+  const [channelsListExpanded, setChannelsListExpanded] = createSignal(
+    readChannelsListExpanded(),
   );
   const [membersPanelOpen, setMembersPanelOpen] = createSignal(readMembersPanelOpen());
+  const [focusMemberId, setFocusMemberId] = createSignal<string | null>(null);
   const [drawerOpen, setDrawerOpen] = createSignal(false);
   const [narrow, setNarrow] = createSignal(
     typeof window !== "undefined" ? window.innerWidth < NARROW : false,
@@ -104,16 +112,15 @@ export default function AppShell(props: Props) {
     props.onStageModeChange?.(on);
     if (on) {
       setDrawerOpen(false);
-      // Entering stage defaults to collapsed channel strip unless already expanded in prefs
-    } else {
-      // Leaving stage — chrome fully restored; keep expand preference for next stage entry
+      // Same effect as «Ocultar canais»: peek behind Server Rail
+      setChannelsExpanded(false);
     }
   }
 
-  function setStageChannels(expanded: boolean) {
-    setStageChannelsExpanded(expanded);
-    writeStageChannelsExpanded(expanded);
-    broadcastStageChannelsState(expanded);
+  function setChannelsExpanded(expanded: boolean) {
+    setChannelsListExpanded(expanded);
+    writeChannelsListExpanded(expanded);
+    broadcastChannelsListState(expanded);
   }
 
   function setMembersOpen(open: boolean) {
@@ -140,8 +147,8 @@ export default function AppShell(props: Props) {
   createEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent<{ expanded?: boolean; toggle?: boolean }>).detail;
-      if (detail?.toggle) setStageChannels(!stageChannelsExpanded());
-      else if (typeof detail?.expanded === "boolean") setStageChannels(detail.expanded);
+      if (detail?.toggle) setChannelsExpanded(!channelsListExpanded());
+      else if (typeof detail?.expanded === "boolean") setChannelsExpanded(detail.expanded);
     };
     window.addEventListener("mesa:stage-channels", handler);
     onCleanup(() => window.removeEventListener("mesa:stage-channels", handler));
@@ -149,7 +156,12 @@ export default function AppShell(props: Props) {
 
   createEffect(() => {
     const handler = (e: Event) => {
-      const detail = (e as CustomEvent<{ open?: boolean; toggle?: boolean }>).detail;
+      const detail = (
+        e as CustomEvent<{ open?: boolean; toggle?: boolean; focusAccountId?: string }>
+      ).detail;
+      if (typeof detail?.focusAccountId === "string" && detail.focusAccountId.length > 0) {
+        setFocusMemberId(detail.focusAccountId);
+      }
       if (detail?.toggle) setMembersOpen(!membersPanelOpen());
       else if (typeof detail?.open === "boolean") setMembersOpen(detail.open);
     };
@@ -168,15 +180,13 @@ export default function AppShell(props: Props) {
     broadcastMembersState(membersPanelOpen());
   });
   createEffect(() => {
-    broadcastStageChannelsState(stageChannelsExpanded());
+    broadcastChannelsListState(channelsListExpanded());
   });
 
   const shellClass = () => {
     const parts = ["shell"];
-    if (stageMode()) {
-      parts.push("stage-mode");
-      if (stageChannelsExpanded()) parts.push("stage-channels-expanded");
-    }
+    if (stageMode()) parts.push("stage-mode");
+    if (!channelsListExpanded()) parts.push("channels-collapsed");
     if (membersPanelOpen()) parts.push("members-open");
     if (narrow() && drawerOpen() && !stageMode()) parts.push("drawer-open");
     return parts.join(" ");
@@ -187,14 +197,37 @@ export default function AppShell(props: Props) {
     return params.id !== voice.channelId();
   };
 
+  const settingsMode = () => isSettingsPath(location.pathname);
+
+  async function exitSettings() {
+    const sid = selectedServerId() ?? params.serverId;
+    if (!sid) {
+      navigate("/");
+      return;
+    }
+    try {
+      const list = await api<Channel[]>(`/api/servers/${sid}/channels`);
+      const target = resolveChannelForServer(sid, list);
+      if (target) {
+        navigate(channelHref(target, sid));
+        return;
+      }
+    } catch {
+      /* fall through */
+    }
+    navigate(`/servers/${sid}`);
+  }
+
   return (
-    <div class="app" data-theme="dark" ref={(el) => (appRef = el)}>
+    <div class="app" ref={(el) => (appRef = el)}>
       <TopBar
         me={props.me}
         identity={props.identity}
         showMenuToggle={narrow()}
         onMenuToggle={toggleMenu}
         onWs={props.onWs}
+        settingsMode={settingsMode()}
+        onExitSettings={() => void exitSettings()}
       />
       <ToastHost />
       <div class={shellClass()}>
@@ -210,20 +243,30 @@ export default function AppShell(props: Props) {
           selectedServerId={selectedServerId()}
           onSelectServer={(s: Server | null) => setSelectedServerId(s?.id ?? null)}
           onWs={props.onWs}
-          stageMode={stageMode()}
-          stageChannelsExpanded={stageChannelsExpanded()}
-          onToggleStageChannels={() => setStageChannels(!stageChannelsExpanded())}
+          channelsListExpanded={channelsListExpanded()}
+          onToggleChannels={() => setChannelsExpanded(!channelsListExpanded())}
+          onExpandChannels={() => setChannelsExpanded(true)}
           onLogout={props.onLogout}
           onAccountPatch={props.onAccountPatch}
+          settingsMode={settingsMode()}
         />
         <div class="shell-main">
           {props.children}
           <Show when={showVoicePip()}>
-            <FloatingVoicePip />
+            <Suspense fallback={null}>
+              <FloatingVoicePip />
+            </Suspense>
           </Show>
         </div>
-        <Show when={membersPanelOpen()}>
-          <MembersPanel serverId={selectedServerId()} />
+        <Show when={membersPanelOpen() && !settingsMode()}>
+          <MembersPanel
+            serverId={selectedServerId()}
+            channelId={typeof params.id === "string" && params.id.length > 0 ? params.id : null}
+            meId={props.me.id}
+            onWs={props.onWs}
+            focusAccountId={focusMemberId()}
+            onFocusConsumed={() => setFocusMemberId(null)}
+          />
         </Show>
       </div>
     </div>
@@ -240,6 +283,17 @@ export function toggleStageMode() {
 
 export function requestMembersPanel(open: boolean) {
   window.dispatchEvent(new CustomEvent("mesa:members-panel", { detail: { open } }));
+}
+
+export function openMembersPanel(opts?: { accountId?: string }) {
+  window.dispatchEvent(
+    new CustomEvent("mesa:members-panel", {
+      detail: {
+        open: true,
+        focusAccountId: opts?.accountId,
+      },
+    }),
+  );
 }
 
 export function toggleMembersPanel() {

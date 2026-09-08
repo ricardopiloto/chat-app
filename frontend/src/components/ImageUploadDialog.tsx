@@ -1,5 +1,6 @@
 import { Show, createEffect, createSignal, onCleanup } from "solid-js";
 import { ALLOWED_AVATAR_TYPES, MAX_AVATAR_BYTES } from "../api/client";
+import { errorMessage } from "../lib/apiError";
 import Dialog from "./Dialog";
 
 type Props = {
@@ -64,7 +65,7 @@ export default function ImageUploadDialog(props: Props) {
       await props.onSave(next);
       props.onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(errorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -77,7 +78,7 @@ export default function ImageUploadDialog(props: Props) {
       await props.onRemove();
       props.onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(errorMessage(err));
     } finally {
       setBusy(false);
     }

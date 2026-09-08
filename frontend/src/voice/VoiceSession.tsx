@@ -18,20 +18,19 @@ import {
 import type { WsEnvelope } from "../api/ws";
 import { readBlurMode } from "../blur/blurPreference";
 import type { LiveSession } from "../video/liveClient";
-import { applyBlurMode, supportsCameraBlur } from "../video/backgroundBlur";
-import { releaseLocalCapture } from "./releaseLocalCapture";
-import { DEFAULT_CORNER, type Corner } from "./pipCorner";
-import {
+import type {
   LocalVideoTrack,
-  RoomEvent,
-  Track,
-  type Participant,
-  type RemoteParticipant,
-  type RemoteTrack,
+  Participant,
+  RemoteParticipant,
+  RemoteTrack,
 } from "livekit-client";
+import { loadVoiceRuntime } from "./loadRuntime";
+import { DEFAULT_CORNER, type Corner } from "./pipCorner";
 
 export { formatCallDuration };
 export type { Corner };
+export { loadVoiceRuntime } from "./loadRuntime";
+export type { VoiceRuntime } from "./loadRuntime";
 
 /** True when connected and the current route is the active voice channel (stage). */
 export function viewingActiveVoiceStage(
@@ -53,6 +52,7 @@ export type VoiceSessionValue = {
   channelId: Accessor<string | null>;
   serverId: Accessor<string | null>;
   channelName: Accessor<string | null>;
+  permission: Accessor<Channel["my_permission"] | null>;
   micOn: Accessor<boolean>;
   camOn: Accessor<boolean>;
   /** Client-only: silence remotes + force mic mute (039). */
@@ -113,6 +113,7 @@ export function VoiceSessionProvider(props: {
   const [channelId, setChannelId] = createSignal<string | null>(null);
   const [serverId, setServerId] = createSignal<string | null>(null);
   const [channelName, setChannelName] = createSignal<string | null>(null);
+  const [permission, setPermission] = createSignal<Channel["my_permission"] | null>(null);
   const [micOn, setMicOn] = createSignal(true);
   const [camOn, setCamOn] = createSignal(true);
   const [deafened, setDeafenedSignal] = createSignal(false);
@@ -148,7 +149,8 @@ export function VoiceSessionProvider(props: {
     setDeafenedSignal(false);
   }
 
-  function attachDeafenGuard(liveSession: LiveSession) {
+  async function attachDeafenGuard(liveSession: LiveSession) {
+    const { RoomEvent } = await loadVoiceRuntime();
     detachDeafenGuard?.();
     const room = liveSession.room;
     const onSubscribed = (
@@ -165,7 +167,8 @@ export function VoiceSessionProvider(props: {
     };
   }
 
-  function cameraPublication() {
+  async function cameraPublication() {
+    const { Track } = await loadVoiceRuntime();
     const lp = session?.room.localParticipant;
     if (!lp) return undefined;
     for (const pub of lp.videoTrackPublications.values()) {
@@ -200,7 +203,8 @@ export function VoiceSessionProvider(props: {
     setSpeakingAccountIds(new Set<string>());
   }
 
-  function attachActiveSpeakers(liveSession: LiveSession) {
+  async function attachActiveSpeakers(liveSession: LiveSession) {
+    const { RoomEvent } = await loadVoiceRuntime();
     clearSpeaking();
     const room = liveSession.room;
     const onSpeakers = (participants: Participant[]) => {
@@ -257,6 +261,7 @@ export function VoiceSessionProvider(props: {
     session = null;
     localCamTrack = null;
     // 035: free hardware before abandoning LiveKit on channel move
+    const { releaseLocalCapture } = await loadVoiceRuntime();
     await releaseLocalCapture({ localCamTrack: cam, session: s });
     localVideoEl = null;
     setLive(false);
@@ -277,6 +282,7 @@ export function VoiceSessionProvider(props: {
     session = null;
     localCamTrack = null;
     // 035 FR-007: release local capture first; leave HTTP is best-effort after.
+    const { releaseLocalCapture } = await loadVoiceRuntime();
     await releaseLocalCapture({ localCamTrack: cam, session: s });
     if (id) await leaveVoice(id).catch(() => undefined);
     localVideoEl = null;
@@ -284,6 +290,7 @@ export function VoiceSessionProvider(props: {
     setChannelId(null);
     setServerId(null);
     setChannelName(null);
+    setPermission(null);
     setCallStartedAt(null);
     queueMicrotask(() => {
       intentionalLeave = false;
@@ -313,7 +320,7 @@ export function VoiceSessionProvider(props: {
   }
 
   async function toggleMic() {
-    if (!session) return;
+    if (!session || permission() === "listen") return;
     const next = !micOn();
     if (next && deafened()) {
       applyRemoteVolumes(1);
@@ -324,20 +331,21 @@ export function VoiceSessionProvider(props: {
   }
 
   async function toggleCam() {
-    if (!session) return;
+    if (!session || permission() === "listen") return;
+    const runtime = await loadVoiceRuntime();
     const next = !camOn();
     if (!next) {
-      await cameraPublication()?.mute();
+      await (await cameraPublication())?.mute();
       await reportMedia(micOn(), false);
       return;
     }
-    let pub = cameraPublication();
+    let pub = await cameraPublication();
     if (!pub?.track) {
       try {
         await session.room.localParticipant.setCameraEnabled(true);
-        pub = cameraPublication();
+        pub = await cameraPublication();
         const track = pub?.track;
-        if (track && track instanceof LocalVideoTrack) {
+        if (track && track instanceof runtime.LocalVideoTrack) {
           localCamTrack = track;
           const el = track.attach();
           localVideoEl = el;
@@ -354,17 +362,17 @@ export function VoiceSessionProvider(props: {
     const mode = readBlurMode();
     const track =
       localCamTrack ??
-      (pub?.track instanceof LocalVideoTrack ? pub.track : null);
-    if (track && mode !== "off" && supportsCameraBlur()) {
+      (pub?.track instanceof runtime.LocalVideoTrack ? pub.track : null);
+    if (track && mode !== "off" && runtime.supportsCameraBlur()) {
       try {
-        await applyBlurMode(track, mode);
+        await runtime.applyBlurMode(track, mode);
       } catch {
         /* blur optional on panel path; leave camera off if gate fails */
-        await cameraPublication()?.mute();
+        await (await cameraPublication())?.mute();
         return;
       }
     }
-    await cameraPublication()?.unmute();
+    await (await cameraPublication())?.unmute();
     await reportMedia(micOn(), true);
   }
 
@@ -387,6 +395,7 @@ export function VoiceSessionProvider(props: {
     channelId,
     serverId,
     channelName,
+    permission,
     micOn,
     camOn,
     deafened,
@@ -419,6 +428,7 @@ export function VoiceSessionProvider(props: {
       localCamTrack: camTrack,
       localVideoEl: videoEl,
     }) => {
+      await loadVoiceRuntime();
       session = next;
       localCamTrack = camTrack;
       localVideoEl = videoEl;
@@ -429,9 +439,10 @@ export function VoiceSessionProvider(props: {
       setChannelId(channel.id);
       setServerId(channel.server_id);
       setChannelName(channel.name);
+      setPermission(channel.my_permission ?? null);
       setLive(true);
-      attachActiveSpeakers(next);
-      attachDeafenGuard(next);
+      await attachActiveSpeakers(next);
+      await attachDeafenGuard(next);
       startHeartbeat(channel.id);
       await patchVoiceMedia(channel.id, { mic_on: mic, cam_on: cam }).catch(() => undefined);
       await refreshCallStarted(channel.id, channel.server_id);
@@ -454,6 +465,7 @@ export function VoiceSessionProvider(props: {
       session = null;
       localCamTrack = null;
       // Room may already be gone; still stop orphan GUM / blur (035).
+      const { releaseLocalCapture } = await loadVoiceRuntime();
       await releaseLocalCapture({ localCamTrack: cam, session: s });
       localVideoEl = null;
       setLive(false);
@@ -461,6 +473,7 @@ export function VoiceSessionProvider(props: {
       setChannelId(null);
       setServerId(null);
       setChannelName(null);
+      setPermission(null);
       setCallStartedAt(null);
     },
     reportMedia,

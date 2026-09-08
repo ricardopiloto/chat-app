@@ -1,22 +1,35 @@
 import type { JSX } from "solid-js";
+import { onMount } from "solid-js";
 import IconUsers from "./icons/IconUsers";
+import { bootTheme } from "../theme/theme";
 
 type Props = {
   children: JSX.Element;
 };
 
 /**
- * Two-pane auth chrome (brand | form). Forces dark tokens on the local .app
- * root without flipping document theme via applyTheme.
+ * Two-pane auth chrome (brand | form). Applies resolved theme (system or stored override);
+ * no theme control on auth surfaces.
  */
 export default function AuthShell(props: Props) {
+  let root: HTMLDivElement | undefined;
+  onMount(() => {
+    bootTheme(root ?? null);
+  });
+
   return (
-    <div class="app auth-screen" data-theme="dark">
+    <div class="app auth-screen" ref={(el) => (root = el)}>
       <div class="auth-shell">
         <aside class="auth-pane-brand">
           <div class="auth-brand-block">
-            <div class="auth-brand-row">
-              <span class="topbar-mark auth-mark" aria-hidden="true" />
+            <div class="auth-brand-row" aria-label="Mesa">
+              <img
+                class="topbar-mark auth-mark"
+                src="/mesa-logo.png"
+                alt=""
+                width={160}
+                height={160}
+              />
               <span class="topbar-name auth-brand-name">Mesa</span>
             </div>
             <p class="auth-tagline">Converse com foco. No seu servidor, do seu jeito.</p>

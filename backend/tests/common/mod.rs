@@ -38,6 +38,7 @@ impl TestApp {
         config.cookie_secure = false;
         config.production = false;
         config.rate_limit_disabled = true;
+        config.default_invite_ttl_secs = 300;
         config.attachments_dir = dir.path().join("attachments");
         config.avatars_dir = dir.path().join("avatars");
         customize(&mut config);
@@ -112,9 +113,8 @@ impl TestApp {
         let json = if bytes.is_empty() {
             Value::Null
         } else {
-            serde_json::from_slice(&bytes).unwrap_or(Value::String(
-                String::from_utf8_lossy(&bytes).into_owned(),
-            ))
+            serde_json::from_slice(&bytes)
+                .unwrap_or(Value::String(String::from_utf8_lossy(&bytes).into_owned()))
         };
         (status, json, set_cookie, headers)
     }
@@ -149,9 +149,8 @@ impl TestApp {
         let json = if bytes.is_empty() {
             Value::Null
         } else {
-            serde_json::from_slice(&bytes).unwrap_or(Value::String(
-                String::from_utf8_lossy(&bytes).into_owned(),
-            ))
+            serde_json::from_slice(&bytes)
+                .unwrap_or(Value::String(String::from_utf8_lossy(&bytes).into_owned()))
         };
         (status, json, set_cookie)
     }

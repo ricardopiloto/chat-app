@@ -1,6 +1,6 @@
 import { leaveVoice } from "../api/client";
 import type { LiveSession } from "../video/liveClient";
-import { LocalVideoTrack } from "livekit-client";
+import type { LocalVideoTrack } from "livekit-client";
 import { releaseLocalCapture } from "./releaseLocalCapture";
 
 export type AbortFailedJoinArgs = {

@@ -13,6 +13,7 @@ import {
   trySetSlotCount,
   type SceneDraft,
 } from "../preferences/sceneDraft";
+import { errorMessage } from "../lib/apiError";
 import { ConfirmDirty } from "./Dialog";
 import {
   LAYOUT_KEYS,
@@ -71,7 +72,7 @@ export default function SceneEditor(props: Props) {
       setConfirmExit(false);
       props.onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(errorMessage(err));
     } finally {
       setBusy(false);
     }

@@ -1,7 +1,7 @@
-import { Show, createEffect, createSignal, onCleanup } from "solid-js";
-import { Navigate, Route, Router } from "@solidjs/router";
+import { Show, Suspense, createEffect, createSignal, lazy, onCleanup, type JSX } from "solid-js";
+import { Navigate, Route, Router, useParams, useSearchParams } from "@solidjs/router";
 import { api, type Account } from "./api/client";
-import { connectWs, type WsEnvelope } from "./api/ws";
+import { connectLiveWs, type LiveDeliveryStatus, type WsEnvelope } from "./api/ws";
 import {
   b64,
   generateIdentity,
@@ -13,18 +13,70 @@ import {
 import { handleHandoffEvent, loadAllServerKeys } from "./crypto/keyHandoff";
 import { markUnseen, removeChannel } from "./preferences/notifications";
 import AppShell from "./shell/AppShell";
-import { bootTheme } from "./theme/theme";
+import { bootTheme, startThemeListeners } from "./theme/theme";
 import Auth from "./pages/Auth";
 import Servers from "./pages/Servers";
-import ChannelRoute from "./pages/ChannelRoute";
 import EmptyServerPane from "./pages/EmptyServerPane";
 import Invite from "./pages/Invite";
 import { VoiceSessionProvider } from "./voice/VoiceSession";
+
+const ChannelRoute = lazy(() => import("./pages/ChannelRoute"));
+const RolePermissionsPage = lazy(() => import("./pages/RolePermissionsPage"));
+const MembersManagePage = lazy(() => import("./pages/MembersManagePage"));
+const SettingsHomePage = lazy(() => import("./pages/SettingsHomePage"));
+const RolesManagePage = lazy(() => import("./pages/RolesManagePage"));
+const ServerImagePage = lazy(() => import("./pages/ServerImagePage"));
+const ServerDeletePage = lazy(() => import("./pages/ServerDeletePage"));
+
+function RouteFallback() {
+  return <p class="main muted">A carregar…</p>;
+}
+
+function RedirectToSettingsMembers() {
+  const params = useParams<{ serverId: string }>();
+  return <Navigate href={`/servers/${params.serverId}/settings/members`} />;
+}
+
+function RedirectToSettingsRolePermissions() {
+  const params = useParams<{ serverId: string; roleId: string }>();
+  const [search] = useSearchParams();
+  const q = search.returnTo
+    ? `?returnTo=${encodeURIComponent(String(search.returnTo))}`
+    : "";
+  return (
+    <Navigate
+      href={`/servers/${params.serverId}/settings/roles/${params.roleId}/permissions${q}`}
+    />
+  );
+}
+
+function AuthedShell(props: {
+  me: Account;
+  identity: Identity;
+  onLogout: () => void;
+  onAccountPatch: (account: Account) => void;
+  onWs: (handler: (msg: WsEnvelope) => void) => () => void;
+  children: JSX.Element;
+}) {
+  return (
+    <AppShell
+      me={props.me}
+      identity={props.identity}
+      onLogout={props.onLogout}
+      onAccountPatch={props.onAccountPatch}
+      onWs={props.onWs}
+    >
+      {props.children}
+    </AppShell>
+  );
+}
 
 export default function App() {
   const [me, setMe] = createSignal<Account | null>(null);
   const [identity, setIdentity] = createSignal<Identity | null>(null);
   const [ready, setReady] = createSignal(false);
+  const [deliveryStatus, setDeliveryStatus] =
+    createSignal<LiveDeliveryStatus>("disconnected");
   const listeners = new Set<(msg: WsEnvelope) => void>();
   let ignoreBootMe = false;
 
@@ -75,6 +127,7 @@ export default function App() {
 
   createEffect(() => {
     bootTheme(document.querySelector(".app") as HTMLElement | null);
+    startThemeListeners();
     void api<Account | undefined>("/api/auth/me")
       .then((account) => {
         if (!ignoreBootMe) setMe(account ?? null);
@@ -90,19 +143,28 @@ export default function App() {
     const id = identity();
     if (!account || !id) return;
     void loadAllServerKeys(id, account.id);
-    const ws = connectWs((msg) => {
-      void handleHandoffEvent(msg, id, account.id);
-      if (msg.event === "message.new") {
-        const channelId = String(msg.payload.channel_id ?? "");
-        const focused = window.location.pathname.startsWith(`/channels/${channelId}`);
-        if (channelId && !focused) markUnseen(channelId);
-      }
-      if (msg.event === "channel.deleted") {
-        removeChannel(String(msg.payload.id ?? msg.payload.channel_id ?? ""));
-      }
-      listeners.forEach((h) => h(msg));
-    });
-    onCleanup(() => ws.close());
+    const live = connectLiveWs(
+      (msg) => {
+        void handleHandoffEvent(msg, id, account.id);
+        if (msg.event === "message.new") {
+          const channelId = String(msg.payload.channel_id ?? "");
+          const messageId = String(msg.payload.id ?? msg.payload.message_id ?? "");
+          const createdAt = String(msg.payload.created_at ?? "");
+          const focused = window.location.pathname.startsWith(`/channels/${channelId}`);
+          if (channelId && messageId && !focused) markUnseen(channelId, messageId, createdAt || undefined);
+        }
+        if (msg.event === "channel.deleted") {
+          removeChannel(String(msg.payload.id ?? msg.payload.channel_id ?? ""));
+        }
+        listeners.forEach((h) => h(msg));
+      },
+      (status) => setDeliveryStatus(status),
+    );
+    onCleanup(() => live.close());
+  });
+
+  createEffect(() => {
+    if (!me() || !identity()) setDeliveryStatus("disconnected");
   });
 
   async function logout() {
@@ -140,25 +202,174 @@ export default function App() {
             <Route
               path="/"
               component={() => (
-                <AppShell me={me()!} identity={identity()!} onLogout={() => void logout()} onAccountPatch={setMe} onWs={onWs}>
+                <AuthedShell
+                  me={me()!}
+                  identity={identity()!}
+                  onLogout={() => void logout()}
+                  onAccountPatch={setMe}
+                  onWs={onWs}
+                >
                   <Servers me={me()!} identity={identity()!} />
-                </AppShell>
+                </AuthedShell>
               )}
             />
             <Route
               path="/channels/:id"
               component={() => (
-                <AppShell me={me()!} identity={identity()!} onLogout={() => void logout()} onAccountPatch={setMe} onWs={onWs}>
-                  <ChannelRoute onWs={onWs} me={me()!} identity={identity()!} />
-                </AppShell>
+                <AuthedShell
+                  me={me()!}
+                  identity={identity()!}
+                  onLogout={() => void logout()}
+                  onAccountPatch={setMe}
+                  onWs={onWs}
+                >
+                  <Suspense fallback={<RouteFallback />}>
+                    <ChannelRoute
+                      onWs={onWs}
+                      me={me()!}
+                      identity={identity()!}
+                      deliveryStatus={deliveryStatus()}
+                    />
+                  </Suspense>
+                </AuthedShell>
               )}
             />
             <Route
               path="/servers/:serverId"
               component={() => (
-                <AppShell me={me()!} identity={identity()!} onLogout={() => void logout()} onAccountPatch={setMe} onWs={onWs}>
+                <AuthedShell
+                  me={me()!}
+                  identity={identity()!}
+                  onLogout={() => void logout()}
+                  onAccountPatch={setMe}
+                  onWs={onWs}
+                >
                   <EmptyServerPane />
-                </AppShell>
+                </AuthedShell>
+              )}
+            />
+            <Route
+              path="/servers/:serverId/settings"
+              component={() => (
+                <AuthedShell
+                  me={me()!}
+                  identity={identity()!}
+                  onLogout={() => void logout()}
+                  onAccountPatch={setMe}
+                  onWs={onWs}
+                >
+                  <Suspense fallback={<RouteFallback />}>
+                    <SettingsHomePage />
+                  </Suspense>
+                </AuthedShell>
+              )}
+            />
+            <Route
+              path="/servers/:serverId/settings/members"
+              component={() => (
+                <AuthedShell
+                  me={me()!}
+                  identity={identity()!}
+                  onLogout={() => void logout()}
+                  onAccountPatch={setMe}
+                  onWs={onWs}
+                >
+                  <Suspense fallback={<RouteFallback />}>
+                    <MembersManagePage />
+                  </Suspense>
+                </AuthedShell>
+              )}
+            />
+            <Route
+              path="/servers/:serverId/settings/roles"
+              component={() => (
+                <AuthedShell
+                  me={me()!}
+                  identity={identity()!}
+                  onLogout={() => void logout()}
+                  onAccountPatch={setMe}
+                  onWs={onWs}
+                >
+                  <Suspense fallback={<RouteFallback />}>
+                    <RolesManagePage />
+                  </Suspense>
+                </AuthedShell>
+              )}
+            />
+            <Route
+              path="/servers/:serverId/settings/roles/:roleId/permissions"
+              component={() => (
+                <AuthedShell
+                  me={me()!}
+                  identity={identity()!}
+                  onLogout={() => void logout()}
+                  onAccountPatch={setMe}
+                  onWs={onWs}
+                >
+                  <Suspense fallback={<RouteFallback />}>
+                    <RolePermissionsPage />
+                  </Suspense>
+                </AuthedShell>
+              )}
+            />
+            <Route
+              path="/servers/:serverId/settings/image"
+              component={() => (
+                <AuthedShell
+                  me={me()!}
+                  identity={identity()!}
+                  onLogout={() => void logout()}
+                  onAccountPatch={setMe}
+                  onWs={onWs}
+                >
+                  <Suspense fallback={<RouteFallback />}>
+                    <ServerImagePage />
+                  </Suspense>
+                </AuthedShell>
+              )}
+            />
+            <Route
+              path="/servers/:serverId/settings/delete"
+              component={() => (
+                <AuthedShell
+                  me={me()!}
+                  identity={identity()!}
+                  onLogout={() => void logout()}
+                  onAccountPatch={setMe}
+                  onWs={onWs}
+                >
+                  <Suspense fallback={<RouteFallback />}>
+                    <ServerDeletePage />
+                  </Suspense>
+                </AuthedShell>
+              )}
+            />
+            <Route
+              path="/servers/:serverId/members"
+              component={() => (
+                <AuthedShell
+                  me={me()!}
+                  identity={identity()!}
+                  onLogout={() => void logout()}
+                  onAccountPatch={setMe}
+                  onWs={onWs}
+                >
+                  <RedirectToSettingsMembers />
+                </AuthedShell>
+              )}
+            />
+            <Route
+              path="/servers/:serverId/roles/:roleId/permissions"
+              component={() => (
+                <AuthedShell
+                  me={me()!}
+                  identity={identity()!}
+                  onLogout={() => void logout()}
+                  onAccountPatch={setMe}
+                  onWs={onWs}
+                >
+                  <RedirectToSettingsRolePermissions />
+                </AuthedShell>
               )}
             />
           </Router>

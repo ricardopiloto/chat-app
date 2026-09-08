@@ -19,7 +19,7 @@ use uuid::Uuid;
 
 #[derive(Debug, Deserialize)]
 pub struct CreateInviteBody {
-    /// `null` = permanente; omitido = TTL padrão da instância; número = segundos.
+    /// Omitido = TTL padrão da instância; número = segundos. `null` é rejeitado (sem permanentes).
     #[serde(default)]
     pub expires_in_seconds: MaybeExpires,
     pub include_history: Option<bool>,
@@ -34,7 +34,9 @@ pub enum MaybeExpires {
 
 impl<'de> Deserialize<'de> for MaybeExpires {
     fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        Ok(MaybeExpires::Value(Option::<i64>::deserialize(deserializer)?))
+        Ok(MaybeExpires::Value(Option::<i64>::deserialize(
+            deserializer,
+        )?))
     }
 }
 
@@ -64,13 +66,21 @@ pub async fn create_invite(
         .ok_or_else(|| ApiError::not_found("server not found"))?;
     require_member(&state.pool, account.id, server_id).await?;
     if !permissions::is_channel_admin(server.owner_account_id, account.id) {
-        return Err(ApiError::forbidden("only the owner can create invites"));
+        let caps =
+            db::server_role::aggregated_caps(&state.pool, server_id, account.id).await?;
+        if !caps.can_create_invites {
+            return Err(ApiError::forbidden("sem permissão para criar convites"));
+        }
     }
     let expires_at = match body.expires_in_seconds {
         MaybeExpires::Missing => {
             Some(Utc::now() + Duration::seconds(state.config.default_invite_ttl_secs))
         }
-        MaybeExpires::Value(None) => None,
+        MaybeExpires::Value(None) => {
+            return Err(ApiError::bad_request(
+                "permanent invites are not allowed; omit expires_in_seconds for the instance default",
+            ));
+        }
         MaybeExpires::Value(Some(secs)) if secs < 0 => {
             return Err(ApiError::bad_request("expires_in_seconds must be >= 0"));
         }
@@ -88,6 +98,7 @@ pub async fn create_invite(
         expires_at,
         include_history,
         revoked_at: None,
+        use_count: 0,
     };
     db::invite::create(&state.pool, &invite).await?;
     Ok((StatusCode::CREATED, Json(invite.public())))
@@ -103,7 +114,11 @@ pub async fn list_invites(
         .ok_or_else(|| ApiError::not_found("server not found"))?;
     require_member(&state.pool, account.id, server_id).await?;
     if !permissions::is_channel_admin(server.owner_account_id, account.id) {
-        return Err(ApiError::forbidden("only the owner can list invites"));
+        let caps =
+            db::server_role::aggregated_caps(&state.pool, server_id, account.id).await?;
+        if !caps.can_create_invites {
+            return Err(ApiError::forbidden("sem permissão para listar convites"));
+        }
     }
     let invites: Vec<_> = db::invite::list_by_server(&state.pool, server_id)
         .await?
@@ -143,7 +158,11 @@ pub async fn revoke_invite(
         .await?
         .ok_or_else(|| ApiError::not_found("invite not found"))?;
     if !permissions::is_channel_admin(server.owner_account_id, account.id) {
-        return Err(ApiError::forbidden("only the owner can revoke invites"));
+        let caps =
+            db::server_role::aggregated_caps(&state.pool, invite.server_id, account.id).await?;
+        if !caps.can_create_invites {
+            return Err(ApiError::forbidden("sem permissão para revogar convites"));
+        }
     }
     db::invite::revoke(&state.pool, &code).await?;
     Ok(StatusCode::NO_CONTENT)
@@ -211,7 +230,12 @@ pub async fn accept_invite(
         joined_via_invite_id: Some(invite.id),
         key_handoff_status: KeyHandoffStatus::Pending,
     };
-    db::membership::create(&state.pool, &membership).await?;
+    let mut tx = state.pool.begin().await?;
+    db::membership::create(&mut *tx, &membership).await?;
+    if !db::invite::try_increment_use(&mut *tx, invite.id).await? {
+        return Err(ApiError::gone("invite expired, revoked, or invalid"));
+    }
+    tx.commit().await?;
     emit_invite_consumed(&state, &invite, account_id).await;
     Ok(Json(membership).into_response())
 }

@@ -9,6 +9,7 @@ import {
 import { useNavigate } from "@solidjs/router";
 import { RoomEvent, Track, type LocalTrack, type RemoteTrack } from "livekit-client";
 import { attachRemote } from "../video/liveClient";
+import { safePlay } from "../lib/safeMedia";
 import {
   CORNER_CLASS,
   clampPipPosition,
@@ -97,7 +98,7 @@ export default function FloatingVoicePip(): JSX.Element {
           el.playsInline = true;
         }
         if (el.parentElement !== node) node.replaceChildren(el);
-        void (el as HTMLMediaElement).play?.().catch(() => undefined);
+        safePlay(el as HTMLMediaElement);
       }
     }
   }

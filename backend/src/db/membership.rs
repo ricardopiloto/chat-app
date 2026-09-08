@@ -14,7 +14,8 @@ struct Row {
 
 fn map_row(row: Row) -> Result<Membership, sqlx::Error> {
     Ok(Membership {
-        account_id: Uuid::parse_str(&row.account_id).map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
+        account_id: Uuid::parse_str(&row.account_id)
+            .map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
         server_id: Uuid::parse_str(&row.server_id).map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
         joined_at: DateTime::parse_from_rfc3339(&row.joined_at)
             .map_err(|e| sqlx::Error::Decode(Box::new(e)))?
@@ -160,4 +161,28 @@ pub async fn list_server_ids_for_account(
     rows.into_iter()
         .map(|(id,)| Uuid::parse_str(&id).map_err(|e| sqlx::Error::Decode(Box::new(e))))
         .collect()
+}
+
+pub async fn delete(
+    pool: &SqlitePool,
+    account_id: Uuid,
+    server_id: Uuid,
+) -> Result<bool, sqlx::Error> {
+    let mut tx = pool.begin().await?;
+    sqlx::query(
+        "DELETE FROM server_role_member
+         WHERE account_id = ?
+           AND role_id IN (SELECT id FROM server_role WHERE server_id = ?)",
+    )
+    .bind(account_id.to_string())
+    .bind(server_id.to_string())
+    .execute(&mut *tx)
+    .await?;
+    let result = sqlx::query("DELETE FROM membership WHERE account_id = ? AND server_id = ?")
+        .bind(account_id.to_string())
+        .bind(server_id.to_string())
+        .execute(&mut *tx)
+        .await?;
+    tx.commit().await?;
+    Ok(result.rows_affected() != 0)
 }

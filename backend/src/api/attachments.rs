@@ -38,6 +38,18 @@ pub async fn upload_attachment(
     body: Bytes,
 ) -> Result<(StatusCode, Json<MessageAttachment>), ApiError> {
     let _channel = require_text_channel_member(&state.pool, account.id, channel_id).await?;
+    let server = db::server::find_by_id(&state.pool, _channel.server_id)
+        .await?
+        .ok_or_else(|| ApiError::not_found("server not found"))?;
+    let caps =
+        db::server_role::aggregated_caps(&state.pool, _channel.server_id, account.id).await?;
+    let caps = crate::domain::permissions::effective_role_caps(
+        server.owner_account_id == account.id,
+        caps,
+    );
+    if !caps.can_attach_files || !caps.can_send_messages {
+        return Err(ApiError::forbidden("sem permissão para anexar ficheiros"));
+    }
     let media_type = headers
         .get("x-mesa-media-type")
         .and_then(|v| v.to_str().ok())

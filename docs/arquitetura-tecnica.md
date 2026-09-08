@@ -101,7 +101,7 @@ O hub **não** carrega tráfego de mídia (voz/vídeo) — isso é responsabilid
 | Servidores | `POST /servers`, `GET /servers/{id}`, `PATCH /servers/{id}` | Criação define o criador como dono/admin |
 | Canais | `POST /servers/{id}/channels`, `GET /channels/{id}`, `PATCH /channels/{id}` | Tipo `texto` ou `voz_video`; canal de voz/vídeo carrega config de grade de câmeras |
 | Membros | `GET /servers/{id}/members`, `PATCH /servers/{id}/members/{user_id}` | Cargos/permissões por servidor |
-| Convites | `POST /servers/{id}/invites`, `GET /invites/{code}` | Expira por padrão; admin pode gerar permanente |
+| Convites | `POST /servers/{id}/invites`, `GET /invites/{code}` | TTL padrão 5 min (env); teto 10 usos; sem permanentes no produto |
 | Mensagens | `POST /channels/{id}/messages`, `GET /channels/{id}/messages` | Corpo trafega já cifrado pelo cliente |
 | Voz/Vídeo | `POST /channels/{id}/voice/join`, `POST /channels/{id}/voice/e2ee-toggle` | `join` retorna token LiveKit; `e2ee-toggle` grava log de auditoria |
 | Egress (pós-MVP) | `POST /channels/{id}/egress/start` | Só disponível quando E2EE do canal está desligada |

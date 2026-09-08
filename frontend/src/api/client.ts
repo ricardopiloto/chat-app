@@ -38,6 +38,79 @@ export type Channel = {
   created_by_account_id: string;
   e2ee_enabled: boolean;
   has_channel_key: boolean;
+  visibility: "public" | "private";
+  visible_to_new_members: boolean;
+  my_permission?: "read" | "write" | "listen" | "speak";
+};
+
+export type ChannelAclEntry = {
+  id?: string;
+  channel_id?: string;
+  subject_type: "account" | "role" | "everyone";
+  subject_id: string;
+  level: "read" | "write" | "listen" | "speak";
+  /** Default allow when omitted. */
+  effect?: "allow" | "deny";
+};
+
+export type RoleCapabilities = {
+  can_view_channels: boolean;
+  can_manage_channels: boolean;
+  can_manage_roles: boolean;
+  can_create_invites: boolean;
+  can_send_messages: boolean;
+  can_delete_messages: boolean;
+  can_attach_files: boolean;
+  can_remove_members: boolean;
+  can_mute_members: boolean;
+  can_connect_voice: boolean;
+  can_speak_voice: boolean;
+};
+
+export type ServerRole = {
+  id: string;
+  server_id: string;
+  name: string;
+  position: number;
+  can_create_channels: boolean;
+  capabilities: RoleCapabilities;
+  member_ids: string[];
+  is_system?: boolean;
+};
+
+export type ChannelAccessFactor = {
+  layer: string;
+  detail: string;
+};
+
+export type ChannelAccessExplain = {
+  account_id: string;
+  channel_id: string;
+  view: boolean;
+  level: ChannelAclEntry["level"] | null;
+  factors: ChannelAccessFactor[];
+};
+
+export const OPEN_ROLE_CAPABILITIES: RoleCapabilities = {
+  can_view_channels: true,
+  can_manage_channels: false,
+  can_manage_roles: false,
+  can_create_invites: false,
+  can_send_messages: true,
+  can_delete_messages: false,
+  can_attach_files: true,
+  can_remove_members: false,
+  can_mute_members: false,
+  can_connect_voice: true,
+  can_speak_voice: true,
+};
+
+export type CreateChannelBody = {
+  name: string;
+  type: "text" | "voice_video";
+  visibility?: "public" | "private";
+  custody_ack?: true;
+  channel_key_sealed?: string;
 };
 
 export type Message = {
@@ -47,6 +120,20 @@ export type Message = {
   content_ciphertext: string;
   created_at: string;
   attachment_ids?: string[];
+  reply_to_message_id?: string | null;
+  mentioned_account_ids?: string[];
+  reply_to_sender_account_id?: string | null;
+};
+
+export type UserNotification = {
+  id: string;
+  account_id?: string;
+  kind: "mention" | "reply";
+  channel_id: string;
+  message_id: string | null;
+  actor_account_id: string;
+  created_at: string;
+  read_at?: string | null;
 };
 
 export type AttachmentMeta = {
@@ -86,6 +173,7 @@ export type Invite = {
   server_id: string;
   expires_at: string | null;
   include_history: boolean;
+  use_count?: number;
 };
 
 export type InvitePreview = {
@@ -130,6 +218,12 @@ export type ServerMember = {
   account_id: string;
   handle: string;
   identity_pubkey: string;
+  has_avatar?: boolean;
+};
+
+export type ChannelMentionable = {
+  account_id: string;
+  handle: string;
   has_avatar?: boolean;
 };
 
@@ -196,8 +290,194 @@ export async function deleteChannel(channelId: string): Promise<void> {
   await api<void>(`/api/channels/${channelId}`, { method: "DELETE" });
 }
 
+export async function createChannel(
+  serverId: string,
+  body: CreateChannelBody,
+): Promise<Channel> {
+  return api<Channel>(`/api/servers/${serverId}/channels`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function patchChannel(
+  channelId: string,
+  body: Partial<Pick<Channel, "name" | "visibility" | "visible_to_new_members">>,
+): Promise<Channel> {
+  return api<Channel>(`/api/channels/${channelId}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function fetchChannelAcl(channelId: string): Promise<ChannelAclEntry[]> {
+  return api<ChannelAclEntry[]>(`/api/channels/${channelId}/acl`);
+}
+
+export async function putChannelAcl(
+  channelId: string,
+  entries: ChannelAclEntry[],
+): Promise<ChannelAclEntry[]> {
+  return api<ChannelAclEntry[]>(`/api/channels/${channelId}/acl`, {
+    method: "PUT",
+    body: JSON.stringify(
+      entries.map(({ subject_type, subject_id, level, effect }) => ({
+        subject_type,
+        subject_id,
+        level,
+        effect: effect ?? "allow",
+      })),
+    ),
+  });
+}
+
+export async function fetchServerRoles(serverId: string): Promise<ServerRole[]> {
+  return api<ServerRole[]>(`/api/servers/${serverId}/roles`);
+}
+
+export async function createServerRole(
+  serverId: string,
+  body: { name: string; can_create_channels?: boolean; capabilities?: RoleCapabilities },
+): Promise<ServerRole> {
+  return api<ServerRole>(`/api/servers/${serverId}/roles`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function patchServerRole(
+  serverId: string,
+  roleId: string,
+  body: {
+    name?: string;
+    can_create_channels?: boolean;
+    capabilities?: RoleCapabilities;
+  },
+): Promise<ServerRole> {
+  return api<ServerRole>(`/api/servers/${serverId}/roles/${roleId}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function deleteServerRole(serverId: string, roleId: string): Promise<void> {
+  await api<void>(`/api/servers/${serverId}/roles/${roleId}`, { method: "DELETE" });
+}
+
+export async function putRolePositions(
+  serverId: string,
+  roles: { id: string; position: number }[],
+): Promise<ServerRole[]> {
+  return api<ServerRole[]>(`/api/servers/${serverId}/roles/positions`, {
+    method: "PUT",
+    body: JSON.stringify({ roles }),
+  });
+}
+
+export async function fetchChannelAccess(
+  channelId: string,
+  accountId: string,
+): Promise<ChannelAccessExplain> {
+  return api<ChannelAccessExplain>(`/api/channels/${channelId}/access/${accountId}`);
+}
+
+export async function fetchChannelMentionables(
+  channelId: string,
+): Promise<ChannelMentionable[]> {
+  return api<ChannelMentionable[]>(`/api/channels/${channelId}/mentionables`);
+}
+
+export async function setServerRoleMembers(
+  serverId: string,
+  roleId: string,
+  memberIds: string[],
+): Promise<ServerRole> {
+  return api<ServerRole>(`/api/servers/${serverId}/roles/${roleId}/members`, {
+    method: "PUT",
+    body: JSON.stringify({ member_ids: memberIds }),
+  });
+}
+
+export async function setMemberRole(
+  serverId: string,
+  accountId: string,
+  roleId: string | null,
+): Promise<{ account_id: string; role_id: string | null }> {
+  return api<{ account_id: string; role_id: string | null }>(
+    `/api/servers/${serverId}/members/${accountId}/role`,
+    {
+      method: "PUT",
+      body: JSON.stringify({ role_id: roleId }),
+    },
+  );
+}
+
+export async function fetchServerPresence(serverId: string): Promise<{ online_account_ids: string[] }> {
+  return api<{ online_account_ids: string[] }>(`/api/servers/${serverId}/presence`);
+}
+
+export async function kickServerMember(serverId: string, accountId: string): Promise<void> {
+  await api<void>(`/api/servers/${serverId}/members/${accountId}`, { method: "DELETE" });
+}
+
+export type ChannelMute = {
+  channel_id: string;
+  account_id: string;
+  muted_by_account_id: string;
+  created_at: string;
+  ends_at: string;
+};
+
+export type MyChannelMute = {
+  muted: boolean;
+  ends_at?: string;
+  muted_by_account_id?: string;
+};
+
+export async function putChannelMute(
+  channelId: string,
+  accountId: string,
+  durationMinutes: number,
+): Promise<ChannelMute> {
+  return api<ChannelMute>(`/api/channels/${channelId}/mutes/${accountId}`, {
+    method: "PUT",
+    body: JSON.stringify({ duration_minutes: durationMinutes }),
+  });
+}
+
+export async function deleteChannelMute(channelId: string, accountId: string): Promise<void> {
+  await api<void>(`/api/channels/${channelId}/mutes/${accountId}`, { method: "DELETE" });
+}
+
+export async function fetchMyChannelMute(channelId: string): Promise<MyChannelMute> {
+  return api<MyChannelMute>(`/api/channels/${channelId}/mutes/me`);
+}
+
+export async function fetchChannelMutes(channelId: string): Promise<ChannelMute[]> {
+  return api<ChannelMute[]>(`/api/channels/${channelId}/mutes`);
+}
+
 export async function deleteMessage(channelId: string, messageId: string): Promise<void> {
   await api<void>(`/api/channels/${channelId}/messages/${messageId}`, { method: "DELETE" });
+}
+
+export async function listNotifications(opts?: {
+  unreadOnly?: boolean;
+  limit?: number;
+}): Promise<UserNotification[]> {
+  const q = new URLSearchParams();
+  if (opts?.unreadOnly === false) q.set("unread_only", "false");
+  else q.set("unread_only", "true");
+  if (opts?.limit != null) q.set("limit", String(opts.limit));
+  return api<UserNotification[]>(`/api/notifications?${q}`);
+}
+
+export async function markNotificationRead(notificationId: string): Promise<void> {
+  await api<void>(`/api/notifications/${notificationId}/read`, { method: "POST" });
+}
+
+export async function markAllNotificationsRead(): Promise<void> {
+  await api<void>(`/api/notifications/read-all`, { method: "POST" });
 }
 
 /** Mirror of server ACL for showing the Apagar control. */

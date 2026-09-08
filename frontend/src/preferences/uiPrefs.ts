@@ -1,42 +1,65 @@
+import { readFlag, readString, writeFlag, writeString } from "../lib/localPrefs";
+
 export type ViewMode = "composition" | "grid";
 
 const VIEW_KEY = "mesa.viewMode";
 const STAGE_KEY = "mesa.stageMode";
-const STAGE_CHANNELS_KEY = "mesa.stageChannelsExpanded";
+/** Preferred key for channels list drawer (055). */
+const CHANNELS_LIST_KEY = "mesa.channelsListExpanded";
+/** Legacy key — read fallback only. */
+const LEGACY_STAGE_CHANNELS_KEY = "mesa.stageChannelsExpanded";
 const MEMBERS_PANEL_KEY = "mesa.membersPanelOpen";
 
 export function readViewMode(): ViewMode {
-  const v = localStorage.getItem(VIEW_KEY);
+  const v = readString(VIEW_KEY);
   if (v === "composition" || v === "grid") return v;
   return "composition";
 }
 
 export function writeViewMode(mode: ViewMode): void {
-  localStorage.setItem(VIEW_KEY, mode);
+  writeString(VIEW_KEY, mode);
 }
 
 export function readStageMode(): boolean {
-  return localStorage.getItem(STAGE_KEY) === "1";
+  return readFlag(STAGE_KEY);
 }
 
 export function writeStageMode(on: boolean): void {
-  localStorage.setItem(STAGE_KEY, on ? "1" : "0");
+  writeFlag(STAGE_KEY, on);
 }
 
-/** Default false — stage keeps channel column as a narrow strip. */
+/**
+ * Channels list drawer expanded (desktop rail+lista).
+ * Reads `mesa.channelsListExpanded`, then legacy `mesa.stageChannelsExpanded`.
+ * Default true (expanded) when neither key is set.
+ */
+export function readChannelsListExpanded(): boolean {
+  const raw = readString(CHANNELS_LIST_KEY);
+  if (raw !== null) return raw === "1";
+  const legacy = readString(LEGACY_STAGE_CHANNELS_KEY);
+  if (legacy !== null) return legacy === "1";
+  return true;
+}
+
+export function writeChannelsListExpanded(on: boolean): void {
+  writeFlag(CHANNELS_LIST_KEY, on);
+}
+
+/** @deprecated Prefer readChannelsListExpanded — alias for call sites. */
 export function readStageChannelsExpanded(): boolean {
-  return localStorage.getItem(STAGE_CHANNELS_KEY) === "1";
+  return readChannelsListExpanded();
 }
 
+/** @deprecated Prefer writeChannelsListExpanded — alias for call sites. */
 export function writeStageChannelsExpanded(on: boolean): void {
-  localStorage.setItem(STAGE_CHANNELS_KEY, on ? "1" : "0");
+  writeChannelsListExpanded(on);
 }
 
 /** Default false — members panel closed until user opens it. */
 export function readMembersPanelOpen(): boolean {
-  return localStorage.getItem(MEMBERS_PANEL_KEY) === "1";
+  return readFlag(MEMBERS_PANEL_KEY);
 }
 
 export function writeMembersPanelOpen(on: boolean): void {
-  localStorage.setItem(MEMBERS_PANEL_KEY, on ? "1" : "0");
+  writeFlag(MEMBERS_PANEL_KEY, on);
 }

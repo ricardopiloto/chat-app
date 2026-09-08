@@ -13,6 +13,7 @@ import AuthShell from "../components/AuthShell";
 import IconAt from "../components/icons/IconAt";
 import { IconEyeOff, IconEyeOpen } from "../components/icons/IconEye";
 import { IconLockClosed } from "../components/icons/IconLock";
+import { errorMessage } from "../lib/apiError";
 
 type Props = {
   session?: Account | null;
@@ -46,7 +47,7 @@ export default function Auth(props: Props) {
       }
       return err.message;
     }
-    return err instanceof Error ? err.message : String(err);
+    return errorMessage(err);
   }
 
   async function submit(e: Event) {

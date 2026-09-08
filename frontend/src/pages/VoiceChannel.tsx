@@ -3,20 +3,11 @@ import CallBank, { deriveBank } from "../components/CallBank";
 import CameraGrid from "../components/CameraGrid";
 import SceneEditor from "../components/SceneEditor";
 import Dialog from "../components/Dialog";
-import CameraBlurMenu from "../components/CameraBlurMenu";
-import { IconCameraOffFilled, IconCameraOnFilled } from "../components/icons/IconCamera";
-import { IconChevronDown, IconChevronDownBlur } from "../components/icons/IconChevron";
 import { IconLockClosed, IconLockWarning } from "../components/icons/IconLock";
-import { IconMicOffFilled, IconMicOnFilled } from "../components/icons/IconMic";
-import { IconDeafenedFilled, IconDeafenOff } from "../components/icons/IconDeafen";
-import { IconPhoneHangupFilled } from "../components/icons/IconPhoneHangup";
 import IconUsers from "../components/icons/IconUsers";
 import {
-  ApiError,
   api,
   fetchVoiceOccupancy,
-  startEgress,
-  stopEgress,
   setChannelE2ee,
   type Account,
   type Channel,
@@ -34,20 +25,21 @@ import {
   rememberChannelKey,
 } from "../crypto/channelKey";
 import { readViewMode, writeViewMode, type ViewMode } from "../preferences/uiPrefs";
-import { readBlurMode, writeBlurMode, type CameraBlurMode } from "../blur/blurPreference";
+import { readBlurMode, type CameraBlurMode } from "../blur/blurPreference";
 import { requestStageMode, toggleMembersPanel, toggleStageMode } from "../shell/AppShell";
-import { attachRemote, createTestVideoTrack, joinLiveRoom, type LiveSession } from "../video/liveClient";
-import { abortFailedJoin } from "../voice/abortFailedJoin";
+import type { LiveSession } from "../video/liveClient";
 import { categorizeJoinError, joinErrorMessage } from "../voice/joinErrors";
-import { useVoiceSession, voiceDurationLabel } from "../voice/VoiceSession";
+import { loadVoiceRuntime, type VoiceRuntime } from "../voice/loadRuntime";
+import { errorMessage } from "../lib/apiError";
+import { KEY_SYNC_MSG, KEY_SYNC_SHORT } from "../lib/keySyncCopy";
+import { safePlay } from "../lib/safeMedia";
 import {
-  applyBlurMode,
-  waitUntilBlurred,
-  supportsCameraBlur,
-  BLUR_UNAVAILABLE,
-  BLUR_FAILED,
-} from "../video/backgroundBlur";
-import { LocalVideoTrack, Track, type RemoteTrack, type Participant } from "livekit-client";
+  isVoiceLoadFailed,
+  isVoiceLoading,
+  type VoiceLoadPhase,
+} from "../voice/voiceLoadState";
+import { useVoiceSession, voiceDurationLabel } from "../voice/VoiceSession";
+import type { LocalVideoTrack, Participant, RemoteTrack } from "livekit-client";
 import { useNavigate } from "@solidjs/router";
 
 type Props = {
@@ -81,26 +73,41 @@ export default function VoiceChannel(props: Props) {
   const [inCallIds, setInCallIds] = createSignal<string[]>([]);
   const [e2eeEnabled, setE2eeEnabled] = createSignal(props.channel.e2ee_enabled !== false);
   const [hasChannelKey, setHasChannelKey] = createSignal(!!props.channel.has_channel_key);
-  const [recording, setRecording] = createSignal(false);
   const [e2eeActor, setE2eeActor] = createSignal("");
   const [e2eeAt, setE2eeAt] = createSignal("");
-  const [gravarOpen, setGravarOpen] = createSignal(false);
   const [religarOpen, setReligarOpen] = createSignal(false);
   const [religarInput, setReligarInput] = createSignal("");
   const [membersOpen, setMembersOpen] = createSignal(false);
   const [blurMode, setBlurMode] = createSignal<CameraBlurMode>(readBlurMode());
-  const [blurMenuOpen, setBlurMenuOpen] = createSignal(false);
-  const [videoPausedByBlurFailure, setVideoPausedByBlurFailure] = createSignal(false);
   const [callStartedAt, setCallStartedAt] = createSignal<string | null>(null);
+  const [runtimePhase, setRuntimePhase] = createSignal<VoiceLoadPhase>("idle");
   const slotEls = new Map<number, HTMLDivElement>();
   const gradeEls = new Map<string, HTMLDivElement>();
   const remotes = new Map<string, RemoteTrack[]>();
   let localVideoEl: HTMLMediaElement | null = null;
   let session: LiveSession | null = null;
   let localCamTrack: LocalVideoTrack | null = null;
+  let rt: VoiceRuntime | null = null;
   let starting = false;
   /** Guards against leave() + hangup both running. */
   let leaving = false;
+  const listenOnly = () => props.channel.my_permission === "listen";
+
+  async function ensureRuntime(): Promise<VoiceRuntime> {
+    if (rt) {
+      setRuntimePhase("ready");
+      return rt;
+    }
+    setRuntimePhase("loading");
+    try {
+      rt = await loadVoiceRuntime();
+      setRuntimePhase("ready");
+      return rt;
+    } catch (err) {
+      setRuntimePhase("failed");
+      throw err;
+    }
+  }
 
   const [servers] = createResource(() => api<{ id: string; owner_account_id: string }[]>("/api/servers"));
 
@@ -160,18 +167,18 @@ export default function VoiceChannel(props: Props) {
 
   function layoutMedia() {
     const current = grid();
-    if (!current) return;
+    if (!current || !rt) return;
     if (viewMode() === "grid") {
       for (const node of gradeEls.values()) clearOrphanVideos(node, localVideoEl);
       for (const [identity, tracks] of remotes) {
         const node = gradeEls.get(identity);
         if (!node) continue;
-        for (const track of tracks) attachRemote(track, node);
+        for (const track of tracks) rt.attachRemote(track, node);
       }
       if (localVideoEl) {
         const node = gradeEls.get(props.me.id);
         if (node && localVideoEl.parentElement !== node) node.appendChild(localVideoEl);
-        void localVideoEl.play?.().catch(() => undefined);
+        safePlay(localVideoEl);
       }
       return;
     }
@@ -181,13 +188,13 @@ export default function VoiceChannel(props: Props) {
       if (idx === undefined) continue;
       const node = slotEls.get(idx);
       if (!node) continue;
-      for (const track of tracks) attachRemote(track, node);
+      for (const track of tracks) rt.attachRemote(track, node);
     }
     if (localVideoEl) {
       const mine = current.slots.find((s) => s.account_id === props.me.id)?.index ?? 0;
       const node = slotEls.get(mine);
       if (node && localVideoEl.parentElement !== node) node.appendChild(localVideoEl);
-      void localVideoEl.play?.().catch(() => undefined);
+      safePlay(localVideoEl);
     }
   }
 
@@ -200,6 +207,7 @@ export default function VoiceChannel(props: Props) {
   }
 
   async function captureLocal(
+    runtime: VoiceRuntime,
     mode: "camera" | "audio" | "test",
   ): Promise<{
     video?: MediaStreamTrack | LocalVideoTrack;
@@ -220,13 +228,13 @@ export default function VoiceChannel(props: Props) {
       } catch {
         /* ok */
       }
-      return { video: createTestVideoTrack(props.me.handle), audio };
+      return { video: runtime.createTestVideoTrack(props.me.handle), audio };
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       const raw = stream.getVideoTracks()[0];
       if (!raw) throw new Error("sem faixa de vídeo");
-      return { video: new LocalVideoTrack(raw), audio: stream.getAudioTracks()[0] };
+      return { video: new runtime.LocalVideoTrack(raw), audio: stream.getAudioTracks()[0] };
     } catch (avErr) {
       // Audio-only fallback when video fails but mic can still be obtained (031 cam soft-fail).
       try {
@@ -240,15 +248,15 @@ export default function VoiceChannel(props: Props) {
     }
   }
 
-  function cameraPublication() {
-    return voice.session()?.room.localParticipant.getTrackPublication(Track.Source.Camera);
-  }
-
-  async function gateBlurBeforeSend(track: LocalVideoTrack, mode: CameraBlurMode) {
+  async function gateBlurBeforeSend(
+    runtime: VoiceRuntime,
+    track: LocalVideoTrack,
+    mode: CameraBlurMode,
+  ) {
     if (mode === "off") return;
-    if (!supportsCameraBlur()) throw new Error(BLUR_UNAVAILABLE);
-    await applyBlurMode(track, mode);
-    await waitUntilBlurred(track);
+    if (!runtime.supportsCameraBlur()) throw new Error(runtime.BLUR_UNAVAILABLE);
+    await runtime.applyBlurMode(track, mode);
+    await runtime.waitUntilBlurred(track);
   }
 
   async function resolveMediaKey(): Promise<Uint8Array | null> {
@@ -268,27 +276,36 @@ export default function VoiceChannel(props: Props) {
     let localVideo: MediaStreamTrack | LocalVideoTrack | undefined;
     let partialSession: LiveSession | null = null;
     let cameraWarning = "";
+    const mayPublish = !listenOnly();
+    let runtime: VoiceRuntime | null = null;
     try {
+      setError("A carregar módulo de voz…");
+      runtime = await ensureRuntime();
       const key = await resolveMediaKey();
       if (!key) {
-        setError("Sincronizando chave…");
+        setError(KEY_SYNC_SHORT);
         return;
       }
       setError(
-        mode === "test"
+        !mayPublish
+          ? "A ligar em modo de escuta…"
+          : mode === "test"
           ? "A ligar com vídeo de teste…"
           : mode === "audio"
             ? "A pedir microfone…"
             : "A pedir câmera e microfone…",
       );
-      if (mode === "audio") {
+      if (!mayPublish) {
+        setMicOn(false);
+        setCamOn(false);
+      } else if (mode === "audio") {
         setCamOn(false);
       } else if (mode === "camera") {
         setCamOn(true);
       }
-      let local: Awaited<ReturnType<typeof captureLocal>>;
+      let local: Awaited<ReturnType<typeof captureLocal>> = {};
       try {
-        local = await captureLocal(mode);
+        if (mayPublish) local = await captureLocal(runtime, mode);
         setNeedGesture(false);
       } catch (err) {
         const name = err instanceof DOMException ? err.name : "";
@@ -312,38 +329,42 @@ export default function VoiceChannel(props: Props) {
           cameraOnly: true,
         });
       }
-      localCamTrack = local.video instanceof LocalVideoTrack ? local.video : null;
+      localCamTrack =
+        local.video instanceof runtime.LocalVideoTrack ? local.video : null;
       voice.setLocalCamTrack(localCamTrack);
       const wantBlur = blurMode();
       if (localCamTrack && wantBlur !== "off") {
-        if (!supportsCameraBlur()) {
-          setError(BLUR_UNAVAILABLE);
+        if (!runtime.supportsCameraBlur()) {
+          setError(runtime.BLUR_UNAVAILABLE);
           setBlurMode("off");
         } else {
           try {
-            await gateBlurBeforeSend(localCamTrack, wantBlur);
+            await gateBlurBeforeSend(runtime, localCamTrack, wantBlur);
           } catch {
-            setError(BLUR_FAILED);
-            setVideoPausedByBlurFailure(true);
+            setError(runtime.BLUR_FAILED);
             await localCamTrack.mute();
             setCamOn(false);
           }
         }
       }
-      setError((e) => (e === BLUR_FAILED || e === BLUR_UNAVAILABLE ? e : "A ligar…"));
+      setError((e) =>
+        e === runtime!.BLUR_FAILED || e === runtime!.BLUR_UNAVAILABLE ? e : "A ligar…",
+      );
       const useCam =
-        mode === "audio" ? false : Boolean(local.video) && (mode === "test" || camOn());
+        !mayPublish || mode === "audio"
+          ? false
+          : Boolean(local.video) && (mode === "test" || camOn());
       const join = await api<{ token: string; url: string; room: string }>(
         `/api/channels/${channelId}/voice/join`,
         {
           method: "POST",
-          body: JSON.stringify({ mic_on: micOn(), cam_on: useCam }),
+          body: JSON.stringify({ mic_on: mayPublish && micOn(), cam_on: useCam }),
         },
       );
       joined = true;
       const layout = await api<GridLayout>(`/api/channels/${channelId}/grid`);
       setGrid(layout);
-      partialSession = await joinLiveRoom({
+      partialSession = await runtime.joinLiveRoom({
         url: join.url,
         token: join.token,
         mediaKey: key,
@@ -375,7 +396,7 @@ export default function VoiceChannel(props: Props) {
         session,
         channel: props.channel,
         mode,
-        micOn: micOn(),
+        micOn: mayPublish && micOn(),
         camOn: useCam,
         localCamTrack,
         localVideoEl,
@@ -386,26 +407,32 @@ export default function VoiceChannel(props: Props) {
       if (cameraWarning) {
         setError(cameraWarning);
       } else {
-        setError((e) => (e === BLUR_FAILED || e === BLUR_UNAVAILABLE ? e : ""));
+        setError((e) =>
+          e === runtime!.BLUR_FAILED || e === runtime!.BLUR_UNAVAILABLE ? e : "",
+        );
       }
       requestAnimationFrame(() => queueMicrotask(layoutMedia));
     } catch (err) {
-      await abortFailedJoin({
-        channelId,
-        joined,
-        localCamTrack,
-        localVideo,
-        audioTracks: [localAudio],
-        session: partialSession,
-      });
-      localCamTrack = null;
-      voice.setLocalCamTrack(null);
-      session = null;
-      partialSession = null;
-      localVideoEl = null;
-      setLive(false);
-      requestStageMode(false);
-      setError(joinErrorMessage(categorizeJoinError(err)));
+      if (isVoiceLoadFailed(runtimePhase()) || !runtime) {
+        setError("Falha ao carregar o módulo de voz.");
+      } else {
+        await runtime.abortFailedJoin({
+          channelId,
+          joined,
+          localCamTrack,
+          localVideo,
+          audioTracks: [localAudio],
+          session: partialSession,
+        });
+        localCamTrack = null;
+        voice.setLocalCamTrack(null);
+        session = null;
+        partialSession = null;
+        localVideoEl = null;
+        setLive(false);
+        requestStageMode(false);
+        setError(joinErrorMessage(categorizeJoinError(err)));
+      }
     } finally {
       starting = false;
     }
@@ -423,111 +450,9 @@ export default function VoiceChannel(props: Props) {
       remotes.clear();
       setLive(false);
       setInCallIds([]);
-      setRecording(false);
-      setBlurMenuOpen(false);
-      setVideoPausedByBlurFailure(false);
       requestStageMode(false);
     } finally {
       leaving = false;
-    }
-  }
-
-  async function toggleMic() {
-    await voice.toggleMic();
-    setMicOn(voice.micOn());
-  }
-
-  async function toggleDeafen() {
-    await voice.toggleDeafen();
-    setMicOn(voice.micOn());
-  }
-
-  async function toggleCam() {
-    const next = !camOn();
-    if (!next) {
-      setCamOn(false);
-      await cameraPublication()?.mute();
-      await voice.reportMedia(micOn(), false);
-      return;
-    }
-    if (videoPausedByBlurFailure()) {
-      setError(BLUR_FAILED);
-      return;
-    }
-    const room = voice.session()?.room;
-    let pub = cameraPublication();
-    // Audio-only join (032): first cam-on acquires a camera track.
-    if (!pub?.track && room) {
-      try {
-        await room.localParticipant.setCameraEnabled(true);
-        pub = cameraPublication();
-        const track = pub?.track;
-        if (track && track instanceof LocalVideoTrack) {
-          localCamTrack = track;
-          voice.setLocalCamTrack(track);
-          const el = track.attach();
-          localVideoEl = el;
-          voice.setLocalVideoEl(el);
-          if (el instanceof HTMLVideoElement) {
-            el.muted = true;
-            el.autoplay = true;
-            el.playsInline = true;
-          }
-          layoutMedia();
-        }
-      } catch (err) {
-        setError(joinErrorMessage(categorizeJoinError(err)));
-        return;
-      }
-    }
-    const mode = blurMode();
-    if (localCamTrack && mode !== "off") {
-      try {
-        await gateBlurBeforeSend(localCamTrack, mode);
-      } catch {
-        setError(BLUR_FAILED);
-        setVideoPausedByBlurFailure(true);
-        await cameraPublication()?.mute();
-        return;
-      }
-    }
-    setCamOn(true);
-    await cameraPublication()?.unmute();
-    await voice.reportMedia(micOn(), true);
-  }
-
-  async function selectBlurMode(next: CameraBlurMode) {
-    setBlurMenuOpen(false);
-    if (next !== "off" && !supportsCameraBlur()) {
-      setError(BLUR_UNAVAILABLE);
-      return;
-    }
-    const previous = blurMode();
-    writeBlurMode(next);
-    setBlurMode(next);
-    if (!localCamTrack || !live()) {
-      if (next === "off" && (error() === BLUR_FAILED || error() === BLUR_UNAVAILABLE)) setError("");
-      return;
-    }
-    try {
-      if (next === "off") {
-        await applyBlurMode(localCamTrack, "off");
-        setVideoPausedByBlurFailure(false);
-        if (camOn()) await cameraPublication()?.unmute();
-        if (error() === BLUR_FAILED || error() === BLUR_UNAVAILABLE) setError("");
-        return;
-      }
-      const needsGate = previous === "off" || videoPausedByBlurFailure();
-      if (needsGate && camOn()) await cameraPublication()?.mute();
-      await applyBlurMode(localCamTrack, next);
-      if (needsGate) await waitUntilBlurred(localCamTrack);
-      setVideoPausedByBlurFailure(false);
-      if (camOn()) await cameraPublication()?.unmute();
-      if (error() === BLUR_FAILED || error() === BLUR_UNAVAILABLE) setError("");
-    } catch {
-      setError(BLUR_FAILED);
-      setVideoPausedByBlurFailure(true);
-      await cameraPublication()?.mute();
     }
   }
 
@@ -565,7 +490,7 @@ export default function VoiceChannel(props: Props) {
         const key = await ensureServerKey(serverId, identity, accountId);
         if (cancelled) return;
         if (!key && !loadChannelKey(channelId)) {
-          setError("Sincronizando chave do Servidor…");
+          setError(KEY_SYNC_MSG);
           await new Promise((r) => setTimeout(r, 1500));
           continue;
         }
@@ -612,9 +537,7 @@ export default function VoiceChannel(props: Props) {
         if (!enabled) {
           setE2eeActor(String(msg.payload.actor_account_id ?? ""));
           setE2eeAt(String(msg.payload.at ?? ""));
-          setRecording(true);
         } else {
-          setRecording(false);
           setE2eeActor("");
           setE2eeAt("");
         }
@@ -677,17 +600,19 @@ export default function VoiceChannel(props: Props) {
         localVideoEl = voice.localVideoEl();
         setMicOn(voice.micOn());
         setCamOn(voice.camOn());
-        const room = voice.session()?.room;
-        if (room) {
-          for (const p of room.remoteParticipants.values()) {
-            for (const pub of p.trackPublications.values()) {
-              const track = pub.track;
-              if (track) placeTrack(track as RemoteTrack, p);
+        void ensureRuntime().then(() => {
+          const room = voice.session()?.room;
+          if (room) {
+            for (const p of room.remoteParticipants.values()) {
+              for (const pub of p.trackPublications.values()) {
+                const track = pub.track;
+                if (track) placeTrack(track as RemoteTrack, p);
+              }
             }
           }
-        }
-        requestStageMode(true);
-        queueMicrotask(layoutMedia);
+          requestStageMode(true);
+          queueMicrotask(layoutMedia);
+        });
       });
       return;
     }
@@ -732,7 +657,6 @@ export default function VoiceChannel(props: Props) {
     const id = e2eeActor();
     return handles()[id] ?? (id || "alguém");
   };
-  const canRecord = () => admin() && hasChannelKey();
 
   async function persistLayout(layout: GridLayout) {
     const g = await api<GridLayout>(`/api/channels/${props.channel.id}/grid`, {
@@ -743,45 +667,6 @@ export default function VoiceChannel(props: Props) {
     await loadScenes();
     queueMicrotask(layoutMedia);
     requestAnimationFrame(() => queueMicrotask(layoutMedia));
-  }
-
-  async function confirmGravar() {
-    setError("");
-    try {
-      await startEgress(props.channel.id);
-      setRecording(true);
-      setE2eeEnabled(false);
-      setGravarOpen(false);
-      await voice.session()?.setE2EEEnabled(false);
-    } catch (err) {
-      const msg =
-        err instanceof ApiError
-          ? err.message
-          : err instanceof Error
-            ? err.message
-            : String(err);
-      setError(msg);
-      setGravarOpen(false);
-      // Refresh channel state in case compensate ran
-      try {
-        const ch = await api<Channel>(`/api/channels/${props.channel.id}`);
-        setE2eeEnabled(ch.e2ee_enabled);
-        setHasChannelKey(ch.has_channel_key);
-        if (ch.e2ee_enabled) setRecording(false);
-      } catch {
-        /* ignore */
-      }
-    }
-  }
-
-  async function stopRecording() {
-    setError("");
-    try {
-      await stopEgress(props.channel.id);
-      setRecording(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    }
   }
 
   async function confirmReligar() {
@@ -800,11 +685,10 @@ export default function VoiceChannel(props: Props) {
       await setChannelE2ee(props.channel.id, true);
       await voice.session()?.setE2EEEnabled(true);
       setE2eeEnabled(true);
-      setRecording(false);
       setReligarOpen(false);
       setReligarInput("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(errorMessage(err));
     }
   }
 
@@ -815,7 +699,6 @@ export default function VoiceChannel(props: Props) {
           <IconLockWarning size={22} />
           <div>
             <strong>E2EE desligada</strong>
-            {recording() ? " — gravando via Egress do servidor" : ""}
             <div class="muted">
               Desligada por {actorHandle()}
               {e2eeAt() ? ` · ${e2eeAt()}` : ""} · registado na auditoria
@@ -894,16 +777,48 @@ export default function VoiceChannel(props: Props) {
       </header>
 
       <Show when={!live()}>
-        <div class="row" style={{ padding: "16px 24px", gap: "8px", "flex-wrap": "wrap" }}>
-          <button type="button" class="btn btn-primary" onClick={() => void connect("camera")}>
-            {needGesture() ? "Permitir câmera e microfone" : "Entrar com câmera"}
-          </button>
-          <button type="button" class="btn btn-primary" onClick={() => void connect("audio")}>
-            {needGesture() ? "Permitir microfone" : "Entrar sem câmera (banco)"}
-          </button>
-          <button type="button" class="btn btn-secondary" onClick={() => void connect("test")}>
-            Vídeo de teste
-          </button>
+        <div class="row voice-module-load" style={{ padding: "16px 24px", gap: "8px", "flex-wrap": "wrap" }}>
+          <Show when={isVoiceLoading(runtimePhase())}>
+            <p class="muted" role="status">
+              A carregar módulo de voz…
+            </p>
+          </Show>
+          <Show when={isVoiceLoadFailed(runtimePhase())}>
+            <p class="error" role="alert">
+              {error() || "Falha ao carregar o módulo de voz."}
+            </p>
+            <button
+              type="button"
+              class="btn btn-primary"
+              onClick={() => {
+                setRuntimePhase("idle");
+                setError("");
+                void connect(listenOnly() ? "audio" : "camera");
+              }}
+            >
+              Tentar de novo
+            </button>
+          </Show>
+          <Show when={!isVoiceLoading(runtimePhase()) && !isVoiceLoadFailed(runtimePhase())}>
+            <Show
+              when={!listenOnly()}
+              fallback={
+                <button type="button" class="btn btn-primary" onClick={() => void connect("audio")}>
+                  Entrar para ouvir
+                </button>
+              }
+            >
+              <button type="button" class="btn btn-primary" onClick={() => void connect("camera")}>
+                {needGesture() ? "Permitir câmera e microfone" : "Entrar com câmera"}
+              </button>
+              <button type="button" class="btn btn-primary" onClick={() => void connect("audio")}>
+                {needGesture() ? "Permitir microfone" : "Entrar sem câmera (banco)"}
+              </button>
+              <button type="button" class="btn btn-secondary" onClick={() => void connect("test")}>
+                Vídeo de teste
+              </button>
+            </Show>
+          </Show>
         </div>
       </Show>
 
@@ -924,108 +839,6 @@ export default function VoiceChannel(props: Props) {
                   attachGrade={attachGrade}
                 />
               </Show>
-            </Show>
-
-            <Show when={live() && !editing()}>
-              <div class="call-controls">
-                <button
-                  type="button"
-                  class="btn btn-secondary call-ctrl call-ctrl-icon"
-                  classList={{
-                    "is-speaking":
-                      micOn() && voice.speakingAccountIds().has(props.me.id),
-                  }}
-                  aria-label={micOn() ? "Microfone ligado" : "Microfone desligado"}
-                  title={micOn() ? "Microfone ligado" : "Microfone desligado"}
-                  onClick={() => void toggleMic()}
-                >
-                  <Show when={micOn()} fallback={<IconMicOffFilled />}>
-                    <IconMicOnFilled />
-                  </Show>
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-secondary call-ctrl call-ctrl-icon"
-                  aria-label={voice.deafened() ? "Som da chamada desligado" : "Ensurdecer"}
-                  title={voice.deafened() ? "Ouvir de novo" : "Ensurdecer"}
-                  onClick={() => void toggleDeafen()}
-                >
-                  <Show when={voice.deafened()} fallback={<IconDeafenOff />}>
-                    <IconDeafenedFilled />
-                  </Show>
-                </button>
-                <div class="call-ctrl-split camera-blur-anchor">
-                  <button
-                    type="button"
-                    class="btn btn-secondary call-ctrl call-ctrl-icon"
-                    aria-label={camOn() ? "Câmera ligada" : "Câmera desligada"}
-                    title={camOn() ? "Câmera ligada" : "Câmera desligada"}
-                    onClick={() => void toggleCam()}
-                  >
-                    <Show when={camOn()} fallback={<IconCameraOffFilled />}>
-                      <IconCameraOnFilled />
-                    </Show>
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-secondary call-ctrl-chevron"
-                    data-blur={blurMode() === "off" ? "off" : "on"}
-                    aria-haspopup="menu"
-                    aria-expanded={blurMenuOpen()}
-                    aria-label={blurMode() === "off" ? "Fundo: sem blur" : "Fundo: blur ligado"}
-                    title={blurMode() === "off" ? "Fundo: sem blur" : "Fundo: blur ligado"}
-                    onClick={() => setBlurMenuOpen(!blurMenuOpen())}
-                  >
-                    <Show when={blurMode() !== "off"} fallback={<IconChevronDown />}>
-                      <IconChevronDownBlur />
-                    </Show>
-                  </button>
-                  <CameraBlurMenu
-                    open={blurMenuOpen()}
-                    mode={blurMode()}
-                    onClose={() => setBlurMenuOpen(false)}
-                    onSelect={(m) => void selectBlurMode(m)}
-                  />
-                </div>
-                <Show when={admin()}>
-                  <Show
-                    when={!recording()}
-                    fallback={
-                      <button type="button" class="btn btn-secondary" onClick={() => void stopRecording()}>
-                        Parar gravação
-                      </button>
-                    }
-                  >
-                    <button
-                      type="button"
-                      class="btn btn-secondary"
-                      disabled={!canRecord()}
-                      title={
-                        hasChannelKey()
-                          ? undefined
-                          : "Recrie o canal de voz para activar Gravar (chave de canal em falta)"
-                      }
-                      onClick={() => setGravarOpen(true)}
-                    >
-                      Gravar cena…
-                    </button>
-                  </Show>
-                </Show>
-                <button
-                  type="button"
-                  class="btn btn-danger call-ctrl call-ctrl-leave"
-                  aria-label="Sair da chamada"
-                  onClick={() => void leave()}
-                >
-                  <IconPhoneHangupFilled />
-                  <span>Sair</span>
-                </button>
-              </div>
-              <p class="privacy-line">
-                {e2eeEnabled()
-                  ? "E2EE activa · o servidor não decodifica nada"
-                  : "gravando via Egress do servidor"}
-              </p>
             </Show>
 
             <Show when={editing() && admin() && activeScene()}>
@@ -1055,28 +868,6 @@ export default function VoiceChannel(props: Props) {
       <p class="error" style={{ padding: "0 16px 8px" }}>
         {error()}
       </p>
-
-      <Dialog
-        open={gravarOpen()}
-        title="Gravar cena"
-        onClose={() => setGravarOpen(false)}
-        actions={
-          <>
-            <button type="button" class="btn btn-secondary" onClick={() => setGravarOpen(false)}>
-              Cancelar
-            </button>
-            <button type="button" class="btn btn-primary" onClick={() => void confirmGravar()}>
-              Confirmar e gravar
-            </button>
-          </>
-        }
-      >
-        <p>
-          A gravação e a exportação da cena acontecem no servidor (Egress), e isso é incompatível com
-          criptografia ponta-a-ponta: enquanto estiver a gravar, o servidor decodifica áudio e vídeo.
-          A troca é sua, e fica visível para todos no canal.
-        </p>
-      </Dialog>
 
       <Dialog
         open={religarOpen()}

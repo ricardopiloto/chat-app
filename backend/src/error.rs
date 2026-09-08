@@ -49,6 +49,22 @@ impl ApiError {
         }
     }
 
+    pub fn forbidden_code(code: impl Into<String>, message: impl Into<String>) -> Self {
+        Self {
+            status: StatusCode::FORBIDDEN,
+            message: message.into(),
+            code: Some(code.into()),
+        }
+    }
+
+    pub fn bad_request_code(code: impl Into<String>, message: impl Into<String>) -> Self {
+        Self {
+            status: StatusCode::BAD_REQUEST,
+            message: message.into(),
+            code: Some(code.into()),
+        }
+    }
+
     pub fn service_unavailable(code: impl Into<String>, message: impl Into<String>) -> Self {
         Self {
             status: StatusCode::SERVICE_UNAVAILABLE,

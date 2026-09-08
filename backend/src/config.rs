@@ -66,7 +66,7 @@ impl Config {
             default_invite_ttl_secs: env::var("DEFAULT_INVITE_TTL_SECS")
                 .ok()
                 .and_then(|s| s.parse().ok())
-                .unwrap_or(604_800),
+                .unwrap_or(300),
             attachments_dir: env::var("ATTACHMENTS_DIR")
                 .map(PathBuf::from)
                 .unwrap_or_else(|_| PathBuf::from("./data/attachments")),

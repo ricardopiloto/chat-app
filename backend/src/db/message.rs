@@ -10,6 +10,7 @@ struct Row {
     sender_account_id: String,
     content_ciphertext: Vec<u8>,
     created_at: String,
+    reply_to_message_id: Option<String>,
 }
 
 fn map_row(row: Row) -> Result<Message, sqlx::Error> {
@@ -24,7 +25,35 @@ fn map_row(row: Row) -> Result<Message, sqlx::Error> {
             .map_err(|e| sqlx::Error::Decode(Box::new(e)))?
             .with_timezone(&Utc),
         attachment_ids: Vec::new(),
+        reply_to_message_id: row
+            .reply_to_message_id
+            .map(|id| Uuid::parse_str(&id).map_err(|e| sqlx::Error::Decode(Box::new(e))))
+            .transpose()?,
+        mentioned_account_ids: Vec::new(),
+        reply_to_sender_account_id: None,
     })
+}
+
+async fn enrich(pool: &SqlitePool, message: &mut Message) -> Result<(), sqlx::Error> {
+    message.attachment_ids = crate::db::attachment::list_ids_for_message(pool, message.id).await?;
+    message.mentioned_account_ids = list_mentions(pool, message.id).await?;
+    if let Some(parent_id) = message.reply_to_message_id {
+        if let Some(parent) = find_by_id_raw(pool, parent_id).await? {
+            message.reply_to_sender_account_id = Some(parent.sender_account_id);
+        }
+    }
+    Ok(())
+}
+
+async fn find_by_id_raw(pool: &SqlitePool, id: Uuid) -> Result<Option<Message>, sqlx::Error> {
+    let row = sqlx::query_as::<_, Row>(
+        "SELECT id, channel_id, sender_account_id, content_ciphertext, created_at, reply_to_message_id
+         FROM message WHERE id = ?",
+    )
+    .bind(id.to_string())
+    .fetch_optional(pool)
+    .await?;
+    row.map(map_row).transpose()
 }
 
 pub async fn create(
@@ -34,16 +63,18 @@ pub async fn create(
     sender_account_id: Uuid,
     ciphertext: &[u8],
     created_at: DateTime<Utc>,
+    reply_to_message_id: Option<Uuid>,
 ) -> Result<Message, sqlx::Error> {
     sqlx::query(
-        "INSERT INTO message (id, channel_id, sender_account_id, content_ciphertext, created_at)
-         VALUES (?, ?, ?, ?, ?)",
+        "INSERT INTO message (id, channel_id, sender_account_id, content_ciphertext, created_at, reply_to_message_id)
+         VALUES (?, ?, ?, ?, ?, ?)",
     )
     .bind(id.to_string())
     .bind(channel_id.to_string())
     .bind(sender_account_id.to_string())
     .bind(ciphertext)
     .bind(created_at.to_rfc3339())
+    .bind(reply_to_message_id.map(|id| id.to_string()))
     .execute(pool)
     .await?;
     find_by_id(pool, id)
@@ -52,18 +83,11 @@ pub async fn create(
 }
 
 pub async fn find_by_id(pool: &SqlitePool, id: Uuid) -> Result<Option<Message>, sqlx::Error> {
-    let row = sqlx::query_as::<_, Row>(
-        "SELECT id, channel_id, sender_account_id, content_ciphertext, created_at
-         FROM message WHERE id = ?",
-    )
-    .bind(id.to_string())
-    .fetch_optional(pool)
-    .await?;
-    let mut message = match row.map(map_row).transpose()? {
+    let mut message = match find_by_id_raw(pool, id).await? {
         Some(m) => m,
         None => return Ok(None),
     };
-    message.attachment_ids = crate::db::attachment::list_ids_for_message(pool, message.id).await?;
+    enrich(pool, &mut message).await?;
     Ok(Some(message))
 }
 
@@ -75,7 +99,7 @@ pub async fn list_since(
     limit: i64,
 ) -> Result<Vec<Message>, sqlx::Error> {
     let rows = sqlx::query_as::<_, Row>(
-        "SELECT id, channel_id, sender_account_id, content_ciphertext, created_at
+        "SELECT id, channel_id, sender_account_id, content_ciphertext, created_at, reply_to_message_id
          FROM message
          WHERE channel_id = ?
            AND (? IS NULL OR created_at >= ?)
@@ -93,9 +117,38 @@ pub async fn list_since(
     .await?;
     let mut messages: Vec<Message> = rows.into_iter().map(map_row).collect::<Result<_, _>>()?;
     for message in &mut messages {
-        message.attachment_ids = crate::db::attachment::list_ids_for_message(pool, message.id).await?;
+        enrich(pool, message).await?;
     }
     Ok(messages)
+}
+
+pub async fn insert_mentions(
+    pool: &SqlitePool,
+    message_id: Uuid,
+    account_ids: &[Uuid],
+) -> Result<(), sqlx::Error> {
+    for account_id in account_ids {
+        sqlx::query(
+            "INSERT OR IGNORE INTO message_mention (message_id, account_id) VALUES (?, ?)",
+        )
+        .bind(message_id.to_string())
+        .bind(account_id.to_string())
+        .execute(pool)
+        .await?;
+    }
+    Ok(())
+}
+
+pub async fn list_mentions(pool: &SqlitePool, message_id: Uuid) -> Result<Vec<Uuid>, sqlx::Error> {
+    let rows: Vec<(String,)> = sqlx::query_as(
+        "SELECT account_id FROM message_mention WHERE message_id = ?",
+    )
+    .bind(message_id.to_string())
+    .fetch_all(pool)
+    .await?;
+    rows.into_iter()
+        .map(|(id,)| Uuid::parse_str(&id).map_err(|e| sqlx::Error::Decode(Box::new(e))))
+        .collect()
 }
 
 pub async fn delete_by_id(

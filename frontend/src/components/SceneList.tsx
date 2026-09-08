@@ -1,5 +1,6 @@
 import { For, Show, createSignal } from "solid-js";
 import { api, type Scene, type SceneList } from "../api/client";
+import { errorMessage } from "../lib/apiError";
 
 type Props = {
   channelId: string;
@@ -31,7 +32,7 @@ export default function SceneList(props: Props) {
       setName("");
       props.onChanged(await api<SceneList>(`/api/channels/${props.channelId}/scenes`));
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(errorMessage(err));
     }
   }
 
@@ -50,7 +51,7 @@ export default function SceneList(props: Props) {
       setName("");
       props.onChanged(await api<SceneList>(`/api/channels/${props.channelId}/scenes`));
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(errorMessage(err));
     }
   }
 
@@ -60,7 +61,7 @@ export default function SceneList(props: Props) {
       await api(`/api/channels/${props.channelId}/scenes/${id}/activate`, { method: "POST" });
       props.onChanged(await api<SceneList>(`/api/channels/${props.channelId}/scenes`));
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(errorMessage(err));
     }
   }
 
@@ -70,7 +71,7 @@ export default function SceneList(props: Props) {
       await api(`/api/channels/${props.channelId}/scenes/${id}`, { method: "DELETE" });
       props.onChanged(await api<SceneList>(`/api/channels/${props.channelId}/scenes`));
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(errorMessage(err));
     }
   }
 

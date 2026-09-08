@@ -74,6 +74,7 @@ pub async fn create_server(
         None,
         None,
         None,
+        None,
     )
     .await?;
     channel_provision::provision_channel(
@@ -83,10 +84,13 @@ pub async fn create_server(
         "mesa".into(),
         ChannelType::VoiceVideo,
         Some(4),
+        None,
         Some(true),
         Some(sealed),
     )
     .await?;
+
+    db::server_role::ensure_dono_role(&state.pool, server.id, account.id).await?;
 
     Ok((StatusCode::CREATED, Json(server)))
 }

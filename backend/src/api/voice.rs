@@ -1,6 +1,7 @@
 use crate::api::auth::session::AuthUser;
 use crate::db;
 use crate::domain::channel::{Channel, ChannelType};
+use crate::domain::permissions;
 use crate::domain::voice_occupancy::{VoiceOccupancyResponse, VoiceOccupant};
 use crate::error::ApiError;
 use crate::token;
@@ -39,7 +40,13 @@ async fn require_voice_owner(
     state: &AppState,
     account_id: Uuid,
     channel_id: Uuid,
-) -> Result<(crate::domain::channel::Channel, crate::domain::server::Server), ApiError> {
+) -> Result<
+    (
+        crate::domain::channel::Channel,
+        crate::domain::server::Server,
+    ),
+    ApiError,
+> {
     let channel = db::channel::find_by_id(&state.pool, channel_id)
         .await?
         .ok_or_else(|| ApiError::not_found("channel not found"))?;
@@ -51,7 +58,9 @@ async fn require_voice_owner(
         .await?
         .ok_or_else(|| ApiError::not_found("server not found"))?;
     if account_id != server.owner_account_id {
-        return Err(ApiError::forbidden("only the owner can manage voice privacy"));
+        return Err(ApiError::forbidden(
+            "only the owner can manage voice privacy",
+        ));
     }
     Ok((channel, server))
 }
@@ -92,16 +101,6 @@ fn parse_json_or_default<T: Default + DeserializeOwned>(body: &Bytes) -> Result<
         return Ok(T::default());
     }
     serde_json::from_slice(body).map_err(|_| ApiError::bad_request("invalid json"))
-}
-
-async fn require_voice_channel(pool: &sqlx::SqlitePool, channel_id: Uuid) -> Result<Channel, ApiError> {
-    let channel = db::channel::find_by_id(pool, channel_id)
-        .await?
-        .ok_or_else(|| ApiError::not_found("channel not found"))?;
-    if channel.kind != ChannelType::VoiceVideo {
-        return Err(ApiError::bad_request("not a voice/video channel"));
-    }
-    Ok(channel)
 }
 
 async fn layout_for_channel(
@@ -227,16 +226,32 @@ pub async fn join(
     Path(channel_id): Path<Uuid>,
     body: Bytes,
 ) -> Result<Json<VoiceJoinResponse>, ApiError> {
-    let channel = require_voice_channel(&state.pool, channel_id).await?;
-    crate::api::authz::require_member(&state.pool, account.id, channel.server_id).await?;
+    let (channel, _, access) =
+        crate::api::authz::require_channel_view(&state.pool, account.id, channel_id).await?;
+    if channel.kind != ChannelType::VoiceVideo || !permissions::can_listen_voice(access) {
+        return Err(ApiError::not_found("channel not found"));
+    }
+    let server = db::server::find_by_id(&state.pool, channel.server_id)
+        .await?
+        .ok_or_else(|| ApiError::not_found("channel not found"))?;
+    let caps =
+        db::server_role::aggregated_caps(&state.pool, channel.server_id, account.id).await?;
+    let caps = permissions::effective_role_caps(server.owner_account_id == account.id, caps);
+    if !caps.can_connect_voice {
+        return Err(ApiError::forbidden("sem permissão para entrar em voz"));
+    }
     let media: VoiceMediaBody = parse_json_or_default(&body)?;
+    let can_speak = permissions::can_speak_voice(access) && caps.can_speak_voice;
+    if !can_speak && (media.mic_on == Some(true) || media.cam_on == Some(true)) {
+        return Err(ApiError::forbidden("sem permissão para falar neste canal"));
+    }
     expire_stale(&state).await?;
-    let cam_on = media.cam_on.unwrap_or(true);
+    let cam_on = media.cam_on.unwrap_or(can_speak);
     upsert_occupant(
         &state,
         account.id,
         &channel,
-        media.mic_on.unwrap_or(true),
+        media.mic_on.unwrap_or(can_speak),
         cam_on,
     )
     .await?;
@@ -270,6 +285,7 @@ pub async fn join(
         &account.id.to_string(),
         &channel_id.to_string(),
         &account.handle,
+        can_speak,
     )
     .map_err(ApiError::internal)?;
     Ok(Json(VoiceJoinResponse {
@@ -284,8 +300,11 @@ pub async fn leave(
     AuthUser(account): AuthUser,
     Path(channel_id): Path<Uuid>,
 ) -> Result<StatusCode, ApiError> {
-    let channel = require_voice_channel(&state.pool, channel_id).await?;
-    crate::api::authz::require_member(&state.pool, account.id, channel.server_id).await?;
+    let (channel, _, _) =
+        crate::api::authz::require_channel_view(&state.pool, account.id, channel_id).await?;
+    if channel.kind != ChannelType::VoiceVideo {
+        return Err(ApiError::bad_request("not a voice/video channel"));
+    }
     expire_stale(&state).await?;
     if let Some(existing) = db::voice_occupancy::find_by_account(&state.pool, account.id).await? {
         if existing.channel_id == channel.id {
@@ -301,10 +320,16 @@ pub async fn patch_media(
     Path(channel_id): Path<Uuid>,
     body: Bytes,
 ) -> Result<StatusCode, ApiError> {
-    let channel = require_voice_channel(&state.pool, channel_id).await?;
-    crate::api::authz::require_member(&state.pool, account.id, channel.server_id).await?;
+    let (channel, _, _) =
+        crate::api::authz::require_channel_view(&state.pool, account.id, channel_id).await?;
+    if channel.kind != ChannelType::VoiceVideo {
+        return Err(ApiError::bad_request("not a voice/video channel"));
+    }
     expire_stale(&state).await?;
     let media: VoiceMediaBody = parse_json_or_default(&body)?;
+    if media.mic_on == Some(true) || media.cam_on == Some(true) {
+        crate::api::authz::require_speak(&state.pool, account.id, channel_id).await?;
+    }
     let existing = db::voice_occupancy::find_by_account(&state.pool, account.id)
         .await?
         .filter(|o| o.channel_id == channel.id);
@@ -328,13 +353,9 @@ pub async fn patch_media(
     // 032 FR-010: turning camera on may auto-assign a free slot (auto scene only).
     if effective_cam && !prev_cam {
         let slot_count = channel.grid_slot_count.unwrap_or(4);
-        let slots = db::grid::auto_assign_first_empty(
-            &state.pool,
-            channel_id,
-            account.id,
-            slot_count,
-        )
-        .await?;
+        let slots =
+            db::grid::auto_assign_first_empty(&state.pool, channel_id, account.id, slot_count)
+                .await?;
         let layout_key =
             if let Some(sid) = db::grid::active_scene_id(&state.pool, channel_id).await? {
                 db::scene::find_by_id(&state.pool, sid)
@@ -370,7 +391,21 @@ pub async fn occupancy(
     crate::api::authz::require_member(&state.pool, account.id, server_id).await?;
     expire_stale(&state).await?;
     let snap = db::voice_occupancy::snapshot_for_server(&state.pool, server_id).await?;
-    Ok(Json(snap))
+    let mut visible_channels = Vec::new();
+    for occupancy in snap.channels {
+        let Some(channel) = db::channel::find_by_id(&state.pool, occupancy.channel_id).await?
+        else {
+            continue;
+        };
+        let (_, access) =
+            crate::api::authz::channel_access(&state.pool, account.id, &channel).await?;
+        if access.view {
+            visible_channels.push(occupancy);
+        }
+    }
+    Ok(Json(VoiceOccupancyResponse {
+        channels: visible_channels,
+    }))
 }
 
 pub async fn set_e2ee(
@@ -388,14 +423,7 @@ pub async fn set_e2ee(
     let action = if body.enabled { "enable" } else { "disable" };
     let intent = body.intent.as_deref();
     db::channel::set_e2ee_enabled(&state.pool, channel_id, body.enabled).await?;
-    let entry = db::e2ee_audit::insert(
-        &state.pool,
-        channel_id,
-        account.id,
-        action,
-        intent,
-    )
-    .await?;
+    let entry = db::e2ee_audit::insert(&state.pool, channel_id, account.id, action, intent).await?;
     broadcast_e2ee(
         &state,
         channel.server_id,
@@ -418,11 +446,7 @@ fn livekit_http_host(ws_url: &str) -> String {
         .replacen("ws://", "http://", 1)
 }
 
-async fn try_start_egress(
-    state: &AppState,
-    room: &str,
-    filepath: &str,
-) -> Result<String, String> {
+async fn try_start_egress(state: &AppState, room: &str, filepath: &str) -> Result<String, String> {
     let host = livekit_http_host(&state.config.livekit_url);
     let client = EgressClient::with_api_key(
         &host,

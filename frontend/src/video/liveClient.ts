@@ -1,5 +1,6 @@
 import { Room, RoomEvent, Track, type LocalTrack, type LocalVideoTrack, type RemoteTrack, type Participant } from "livekit-client";
 import { ExternalE2EEKeyProvider } from "livekit-client";
+import { safePlay } from "../lib/safeMedia";
 
 export type LiveSession = {
   room: Room;
@@ -141,5 +142,5 @@ export function attachRemote(track: RemoteTrack, node: HTMLElement) {
   } else if (el.parentElement !== node) {
     node.appendChild(el);
   }
-  void (el as HTMLMediaElement).play?.().catch(() => undefined);
+  safePlay(el as HTMLMediaElement);
 }

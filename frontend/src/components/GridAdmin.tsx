@@ -1,5 +1,6 @@
 import { For, createSignal } from "solid-js";
 import { api, type GridLayout } from "../api/client";
+import { errorMessage } from "../lib/apiError";
 
 type Props = {
   channelId: string;
@@ -39,7 +40,7 @@ export default function GridAdmin(props: Props) {
         props.onSaved(grid);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(errorMessage(err));
     }
   }
 

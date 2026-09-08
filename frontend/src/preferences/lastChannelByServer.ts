@@ -1,21 +1,16 @@
 import type { Channel } from "../api/client";
+import { readJson, writeJson } from "../lib/localPrefs";
 
 const KEY = "mesa.lastChannelByServer";
 
 function readMap(): Record<string, string> {
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw) as unknown;
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
-    const out: Record<string, string> = {};
-    for (const [k, v] of Object.entries(parsed as Record<string, unknown>)) {
-      if (typeof v === "string" && v) out[k] = v;
-    }
-    return out;
-  } catch {
-    return {};
+  const parsed = readJson<unknown>(KEY, {});
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(parsed as Record<string, unknown>)) {
+    if (typeof v === "string" && v) out[k] = v;
   }
+  return out;
 }
 
 export function readLastChannel(serverId: string): string | null {
@@ -27,7 +22,7 @@ export function writeLastChannel(serverId: string, channelId: string): void {
   if (!serverId || !channelId) return;
   const map = readMap();
   map[serverId] = channelId;
-  localStorage.setItem(KEY, JSON.stringify(map));
+  writeJson(KEY, map);
 }
 
 /** Prefer last visited → first text → first any. */

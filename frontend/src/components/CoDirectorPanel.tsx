@@ -1,5 +1,6 @@
 import { For, createSignal } from "solid-js";
 import { api, type ChannelRole, type ServerMember } from "../api/client";
+import { errorMessage } from "../lib/apiError";
 
 type Props = {
   channelId: string;
@@ -25,7 +26,7 @@ export default function CoDirectorPanel(props: Props) {
       });
       props.onChanged(res.roles);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(errorMessage(err));
     }
   }
 

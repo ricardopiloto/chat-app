@@ -9,6 +9,50 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-09-08
+
+### Added
+
+- Unicode **emoji** in channel names and chat; composer **emoji picker** + `:shortcode:` suggest (no auto-replace); in-field chrome with attach left and emoji + paper-plane send right ([070-emoji-hypertext-picker](specs/070-emoji-hypertext-picker/)).
+- Message body **@handle** chips (background + bold) for other members; click opens members panel when available ([067-mention-handle-style](specs/067-mention-handle-style/)).
+- Composer **@ mention autocomplete**: picker of channel viewers (excludes self), dynamic filter, keyboard select; `GET /api/channels/{id}/mentionables` ([065-mention-autocomplete](specs/065-mention-autocomplete/)).
+- Message **@mentions** (client metadata, E2EE-safe), **replies** (`reply_to_message_id`), durable **Menção/Resposta** notifications (migration `0018`), TopBar list + deep-link `?msg=`, personal highlight until viewed, stick-to-bottom + «Saltar para o presente» ([062-message-mentions-replies](specs/062-message-mentions-replies/)).
+- Text channel **day separators**: inline dash line with **Hoje** / **Ontem** / full PT date; sticky label while scrolling (hidden when inline is at top); local TZ; no empty-day lines ([061-channel-day-separators](specs/061-channel-day-separators/)).
+- Permissions parity phase 1: role **hierarchy** (`position`), channel overwrites **Allow/Deny** with «todos os membros», denial reason codes, and admin **access inspect** (`0017`) ([060-permissions-parity-phase1](specs/060-permissions-parity-phase1/)).
+- Automatic system role **Dono** for the server creator (`is_system`, full caps, migration `0016` backfill); protected from delete/edit/reassign; members UI locks owner and hides Dono from other pickers ([059-server-owner-role](specs/059-server-owner-role/)).
+- Channel mute (timeout): role cap **Silenciar membros**, per-channel duration presets/custom, composer blocked until `ends_at`, unmute from members panel; kick remains membership-only (account retained) ([058-channel-mute-member](specs/058-channel-mute-member/)).
+- Server settings shell: gear/name → `/servers/:id/settings` with grouped nav (Membros, Perfis page, Imagem, Apagar), placeholder home, TopBar X exit; legacy members/permissions redirects ([056-server-settings-shell](specs/056-server-settings-shell/)).
+- Channel rename via double-click / double-tap on the sidebar name; `PATCH /api/channels/{id}` accepts `name` for owner ∪ creator ∪ **Gerenciar canal** ([054-channel-rename](specs/054-channel-rename/)).
+- Members manage page, session presence roster (Online/Offline by role), and server-name menu (**Membros** + **Perfis**) with single-role-per-member model and migration `0014` ([052-members-role-assignment](specs/052-members-role-assignment/)).
+- Server roles with channel-creation capability, public/private channel visibility, account/role ACLs, effective text/voice permission enforcement, owner-only member removal, and matching role/ACL/privacy controls in the frontend ([047-server-channel-permissions](specs/047-server-channel-permissions/)).
+- Dedicated role-permissions page (Geral/Texto/Voz toggles + Save/`returnTo`), expanded `server_role` capability flags (migration `0013`), and backend enforcement for invites, manage channels/roles, delete-others, attachments, kick, and voice ([047-server-channel-permissions](specs/047-server-channel-permissions/) Phase 10).
+
+### Fixed
+
+- Text chat no longer freezes after idle: WebSocket auto-reconnect, incremental message catch-up, and a non-modal delivery banner ([069-idle-chat-stall](specs/069-idle-chat-stall/)).
+- TopBar **Notificações** dropdown no longer clipped by the header: `.topbar` overflow/stacking so the panel paints above the shell; scrollable `max-height` on long lists ([066-topbar-notif-panel](specs/066-topbar-notif-panel/)).
+- Typing a valid `@handle` in text chat notifies again: send resolves mentions from the channel mentionables roster (same source as the picker), not a silent empty set ([065-mention-autocomplete](specs/065-mention-autocomplete/)).
+- Sidebar invite button respects role **Criar convites** (not owner-only); role-management gear stays owner-only ([050-invite-permission-ui](specs/050-invite-permission-ui/)).
+
+### Changed
+
+- Roles manage card heading shows **name only** (no «posição N» / «(sistema)» in `.permission-card-heading`) ([073-role-card-name-only](specs/073-role-card-name-only/)).
+- Channel names: max **32** characters, spaces → `-` while typing (create/rename); reject empty/hyphen-only; BE enforces on create/PATCH. Private sidebar **lock** on the right with **clear name reserve** (fade only in that band); rename/create fields do not scroll the sidebar horizontally ([072-channel-name-lock](specs/072-channel-name-lock/)).
+- TopBar notifications: auto-clear durable Menção/Resposta when the target message enters the viewport; session unreads track per-message with **5+** aggregate per channel (mentions/replies always full); **Limpar** via `POST /api/notifications/read-all`; larger bell (24px); binary badge unchanged ([071-notif-seen-collapse](specs/071-notif-seen-collapse/)).
+- TopBar notification list shows **channel name** + local when (`Hoje`/`Ontem`/`DD mmm HH:MM`) for durable items; session unseen shows name only (no UUID / Menção·Resposta labels) ([068-notif-channel-datetime](specs/068-notif-channel-datetime/)).
+- Day-separator dash lines span the text-scroll content width (inside panel padding); sticky day chip sits flush at the scroll top as a compact pill ([064-day-sep-full-width](specs/064-day-sep-full-width/)).
+- Channel ACL, rename, delete, and access inspect share one manage model: owner ∪ creator ∪ **Gerenciar canal** with role hierarchy vs creator; ACL PUT also requires outranking account/role subjects ([063-channel-acl-edit-parity](specs/063-channel-acl-edit-parity/)).
+- Login and app theme follow the browser/OS by default; TopBar cycles Sistema → Claro → Escuro with local `mesa.theme` (including explicit `system`); cross-tab + OS sync; early `index.html` boot reduces FOUC ([057-system-theme-preference](specs/057-system-theme-preference/)).
+- Server-name dropdown and rail context «Imagem / Apagar» replaced by settings shell navigation ([056-server-settings-shell](specs/056-server-settings-shell/)).
+- Channel list can hide behind the Server Rail on desktop (also outside stage): peek strip opens only; header «Ocultar canais» closes; preference `mesa.channelsListExpanded` with legacy fallback ([055-channels-rail-drawer](specs/055-channels-rail-drawer/)).
+- Production entry JS drops below 500 kB by lazy-loading LiveKit/voice (`loadVoiceRuntime` + route/PiP code-split); loading + retry UX on voice module failure; shared FE helpers (`apiError`, `capabilities`, `localPrefs`, `safeMedia`, …) and dedupe inventory ([053-frontend-build-optimize](specs/053-frontend-build-optimize/)).
+- «Papéis do servidor» defines profiles only; member role assignment moves to Gerir membros; presence panel groups by Online/Offline then role ([052-members-role-assignment](specs/052-members-role-assignment/)).
+- Topbar and auth brand use the Mesa logo image (`/mesa-logo.png`) instead of the solid accent mark; wordmark «Mesa» kept ([051-topbar-logo-image](specs/051-topbar-logo-image/)).
+- Call controls (mic, deafen, camera/blur, leave) live only on the user panel whenever in a call — including on the voice stage; stage `.call-controls` bar and scene-recording UI removed (G1 backlog) ([049-panel-only-call-controls](specs/049-panel-only-call-controls/)).
+- User panel spans the full left nav width (server rail + channel list) as one continuous card; server rail ends above the panel with `--shell-gutter`; thin `1px` + `--radius-lg` outline on the full `.app` chrome ([048-user-panel-span-rail](specs/048-user-panel-span-rail/)).
+- Invite codes default to a **5-minute** TTL (`DEFAULT_INVITE_TTL_SECS=300`), cap at **10** successful uses, reject permanent creates, and invalidate legacy usable invites on migration ([046-invite-5min-window](specs/046-invite-5min-window/)).
+- Public channels are always visible to all members; `visible_to_new_members` no longer hides public channels (hide via private + ACL) ([047-server-channel-permissions](specs/047-server-channel-permissions/) FR-008).
+
 ## [0.4.1] - 2026-09-06
 
 ### Changed
@@ -152,7 +196,8 @@ Initial tracked release baseline (features delivered through 006).
 
 - Earlier spikes and phases: see `specs/001-fase-0-spike/` … `specs/005-fase3-ui-corrections/` and `docs/`.
 
-[Unreleased]: https://github.com/ricardosobral/chat-app/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/ricardosobral/chat-app/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/ricardosobral/chat-app/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/ricardosobral/chat-app/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/ricardosobral/chat-app/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/ricardosobral/chat-app/compare/v0.2.0...v0.3.0

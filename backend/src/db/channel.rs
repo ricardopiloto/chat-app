@@ -1,4 +1,4 @@
-use crate::domain::channel::{Channel, ChannelType};
+use crate::domain::channel::{Channel, ChannelType, ChannelVisibility};
 use chrono::Utc;
 use sqlx::SqlitePool;
 use uuid::Uuid;
@@ -12,6 +12,8 @@ struct Row {
     grid_slot_count: Option<i64>,
     created_by_account_id: Option<String>,
     e2ee_enabled: i64,
+    visibility: String,
+    visible_to_new_members: i64,
     has_channel_key: i64,
 }
 
@@ -31,17 +33,22 @@ fn map_row(row: Row) -> Result<Channel, sqlx::Error> {
         created_by_account_id: created_by,
         e2ee_enabled: row.e2ee_enabled != 0,
         has_channel_key: row.has_channel_key != 0,
+        visibility: ChannelVisibility::parse(&row.visibility)
+            .ok_or_else(|| sqlx::Error::Decode("invalid channel visibility".into()))?,
+        visible_to_new_members: row.visible_to_new_members != 0,
+        my_permission: None,
     })
 }
 
 const SELECT_COLS: &str = "c.id, c.server_id, c.name, c.type, c.grid_slot_count,
-         c.created_by_account_id, c.e2ee_enabled,
+         c.created_by_account_id, c.e2ee_enabled, c.visibility, c.visible_to_new_members,
          CASE WHEN ck.channel_id IS NOT NULL THEN 1 ELSE 0 END AS has_channel_key";
 
 pub async fn create(pool: &SqlitePool, channel: &Channel) -> Result<(), sqlx::Error> {
     sqlx::query(
-        "INSERT INTO channel (id, server_id, name, type, grid_slot_count, created_at, created_by_account_id, e2ee_enabled)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO channel (id, server_id, name, type, grid_slot_count, created_at,
+                              created_by_account_id, e2ee_enabled, visibility, visible_to_new_members)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(channel.id.to_string())
     .bind(channel.server_id.to_string())
@@ -51,8 +58,38 @@ pub async fn create(pool: &SqlitePool, channel: &Channel) -> Result<(), sqlx::Er
     .bind(Utc::now().to_rfc3339())
     .bind(channel.created_by_account_id.to_string())
     .bind(if channel.e2ee_enabled { 1 } else { 0 })
+    .bind(channel.visibility.as_str())
+    .bind(if channel.visible_to_new_members { 1 } else { 0 })
     .execute(pool)
     .await?;
+    Ok(())
+}
+
+pub async fn update_visibility(
+    pool: &SqlitePool,
+    channel_id: Uuid,
+    visibility: ChannelVisibility,
+    visible_to_new_members: bool,
+) -> Result<(), sqlx::Error> {
+    sqlx::query("UPDATE channel SET visibility = ?, visible_to_new_members = ? WHERE id = ?")
+        .bind(visibility.as_str())
+        .bind(if visible_to_new_members { 1 } else { 0 })
+        .bind(channel_id.to_string())
+        .execute(pool)
+        .await?;
+    Ok(())
+}
+
+pub async fn update_name(
+    pool: &SqlitePool,
+    channel_id: Uuid,
+    name: &str,
+) -> Result<(), sqlx::Error> {
+    sqlx::query("UPDATE channel SET name = ? WHERE id = ?")
+        .bind(name)
+        .bind(channel_id.to_string())
+        .execute(pool)
+        .await?;
     Ok(())
 }
 
@@ -86,11 +123,10 @@ pub async fn list_by_server(
 }
 
 pub async fn count_by_server(pool: &SqlitePool, server_id: Uuid) -> Result<i64, sqlx::Error> {
-    let (n,): (i64,) =
-        sqlx::query_as("SELECT COUNT(*) FROM channel WHERE server_id = ?")
-            .bind(server_id.to_string())
-            .fetch_one(pool)
-            .await?;
+    let (n,): (i64,) = sqlx::query_as("SELECT COUNT(*) FROM channel WHERE server_id = ?")
+        .bind(server_id.to_string())
+        .fetch_one(pool)
+        .await?;
     Ok(n)
 }
 
@@ -157,6 +193,9 @@ pub async fn set_active_scene(
     Ok(())
 }
 
-pub async fn active_scene_id(pool: &SqlitePool, channel_id: Uuid) -> Result<Option<Uuid>, sqlx::Error> {
+pub async fn active_scene_id(
+    pool: &SqlitePool,
+    channel_id: Uuid,
+) -> Result<Option<Uuid>, sqlx::Error> {
     crate::db::grid::active_scene_id(pool, channel_id).await
 }

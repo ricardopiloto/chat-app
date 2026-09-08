@@ -3,18 +3,19 @@ import { A, useLocation, useNavigate, useParams } from "@solidjs/router";
 import {
   ApiError,
   api,
+  createChannel as createChannelRequest,
   deleteChannel,
   deleteServer,
-  deleteServerImage,
+  fetchServerRoles,
   fetchVoiceOccupancy,
   formatCallDuration,
-  putServerImage,
-  serverImageUrl,
+  patchChannel,
   type Account,
   type Channel,
   type CreateServerResult,
   type Invite,
   type Server,
+  type ServerRole,
   type VoiceChannelOccupancy,
 } from "../api/client";
 import type { WsEnvelope } from "../api/ws";
@@ -29,15 +30,34 @@ import { publishOwnEnvelope } from "../crypto/keyHandoff";
 import type { Identity } from "../crypto/identity";
 import Dialog, { useCopiedFeedback } from "../components/Dialog";
 import IdentityAvatar from "../components/IdentityAvatar";
-import ImageUploadDialog from "../components/ImageUploadDialog";
+import ChannelAclPanel from "../components/ChannelAclPanel";
+import { IconLockClosed } from "../components/icons/IconLock";
 import IconPlus from "../components/icons/IconPlus";
+import IconEmoji from "../components/icons/IconEmoji";
+import IconSettings from "../components/icons/IconSettings";
+import EmojiPicker from "../components/EmojiPicker";
+import type { EmojiEntry } from "../lib/emojiData";
+import { insertAtCaret } from "../lib/emojiShortcode";
+import {
+  channelNameErrorMessage,
+  normalizeChannelNameDraft,
+  validateChannelName,
+} from "../lib/channelName";
 import IconUserPlus from "../components/icons/IconUserPlus";
 import IconVoiceChannel from "../components/icons/IconVoiceChannel";
 import IconHeadphones from "../components/icons/IconHeadphones";
 import { IconMicOff, IconMicOn } from "../components/icons/IconMic";
 import { useVoiceSession } from "../voice/VoiceSession";
+import { errorMessage } from "../lib/apiError";
+import { canManageChannel, memberHasCapability } from "../lib/capabilities";
+import {
+  buildSettingsNav,
+  hasAnySettingsAccess,
+  isSettingsPath,
+} from "../lib/settingsAccess";
 import ContextMenu, { bindLongPress, type MenuState } from "./ContextMenu";
 import ServerRail from "./ServerRail";
+import SettingsNav from "./SettingsNav";
 import UserPanel from "./UserPanel";
 import {
   channelHref,
@@ -51,11 +71,14 @@ type Props = {
   selectedServerId: string | null;
   onSelectServer: (server: Server | null) => void;
   onWs?: (handler: (msg: WsEnvelope) => void) => () => void;
-  stageMode?: boolean;
-  stageChannelsExpanded?: boolean;
-  onToggleStageChannels?: () => void;
+  channelsListExpanded?: boolean;
+  onToggleChannels?: () => void;
+  /** Peek / show — sets expanded true only (never closes). */
+  onExpandChannels?: () => void;
   onLogout: () => void;
   onAccountPatch?: (account: Account) => void;
+  /** When true, sidebar shows settings nav instead of channels. */
+  settingsMode?: boolean;
 };
 
 export default function Sidebar(props: Props) {
@@ -67,7 +90,6 @@ export default function Sidebar(props: Props) {
   const [createServerOpen, setCreateServerOpen] = createSignal(false);
   const [createChannelOpen, setCreateChannelOpen] = createSignal(false);
   const [inviteOpen, setInviteOpen] = createSignal(false);
-  const [serverImageOpen, setServerImageOpen] = createSignal(false);
   const [confirmDelete, setConfirmDelete] = createSignal<
     | { kind: "channel"; channel: Channel }
     | { kind: "server"; server: Server }
@@ -78,11 +100,22 @@ export default function Sidebar(props: Props) {
   const [serverCustodyAck, setServerCustodyAck] = createSignal(false);
   const [channelName, setChannelName] = createSignal("");
   const [channelType, setChannelType] = createSignal<"text" | "voice_video">("text");
+  const [channelVisibility, setChannelVisibility] = createSignal<"public" | "private">("public");
+  const [visibleToNewMembers, setVisibleToNewMembers] = createSignal(true);
+  const [aclChannel, setAclChannel] = createSignal<Channel | null>(null);
   const [pendingKey, setPendingKey] = createSignal<Uint8Array | null>(null);
   const [custodyAck, setCustodyAck] = createSignal(false);
   const [error, setError] = createSignal("");
   const [inviteUrl, setInviteUrl] = createSignal("");
   const [menu, setMenu] = createSignal<MenuState | null>(null);
+  const [renamingId, setRenamingId] = createSignal<string | null>(null);
+  const [renameDraft, setRenameDraft] = createSignal("");
+  const [renamePrev, setRenamePrev] = createSignal("");
+  const [createEmojiOpen, setCreateEmojiOpen] = createSignal(false);
+  const [renameEmojiOpen, setRenameEmojiOpen] = createSignal(false);
+  let createNameInput: HTMLInputElement | undefined;
+  let renameNameInput: HTMLInputElement | undefined;
+  const [lastNameTap, setLastNameTap] = createSignal<{ id: string; at: number } | null>(null);
   const [occupancy, setOccupancy] = createSignal<Record<string, VoiceChannelOccupancy>>({});
   const [clock, setClock] = createSignal(Date.now());
   const copied = useCopiedFeedback();
@@ -92,6 +125,10 @@ export default function Sidebar(props: Props) {
   /** Select server and navigate main pane to that server’s channel or empty view (041). No hangup. */
   async function selectServerAndNavigate(server: Server) {
     props.onSelectServer(server);
+    if (props.settingsMode || isSettingsPath(routeLoc.pathname)) {
+      navigate(`/servers/${server.id}/settings`);
+      return;
+    }
     try {
       const list = await api<Channel[]>(`/api/servers/${server.id}/channels`);
       const target = resolveChannelForServer(server.id, list);
@@ -136,10 +173,31 @@ export default function Sidebar(props: Props) {
     }
   });
 
-  const [channels, { refetch: refetchChannels }] = createResource(
+  const [channels, { refetch: refetchChannels, mutate: mutateChannels }] = createResource(
     () => selected()?.id ?? props.selectedServerId,
     (id) => (id ? api<Channel[]>(`/api/servers/${id}/channels`) : Promise.resolve([] as Channel[])),
   );
+  const [roles, { refetch: refetchRoles }] = createResource(
+    () => selected()?.id ?? props.selectedServerId,
+    (id) => (id ? fetchServerRoles(id) : Promise.resolve([] as ServerRole[])),
+  );
+  const canCreateChannels = () =>
+    isOwner() || memberHasCapability(roles(), props.me.id, "can_create_channels");
+  const canCreateInvites = () =>
+    isOwner() || memberHasCapability(roles(), props.me.id, "can_create_invites");
+  const canOpenServerSettings = () =>
+    hasAnySettingsAccess(isOwner(), roles(), props.me.id);
+  const settingsGroups = () => {
+    const sid = selected()?.id;
+    if (!sid) return [];
+    return buildSettingsNav(sid, isOwner(), roles(), props.me.id);
+  };
+
+  function openServerSettings() {
+    const sid = selected()?.id;
+    if (!sid || !canOpenServerSettings()) return;
+    navigate(`/servers/${sid}/settings`);
+  }
 
   const textChannels = () => (channels() ?? []).filter((c) => c.type === "text");
   const voiceChannels = () => (channels() ?? []).filter((c) => c.type === "voice_video");
@@ -170,6 +228,17 @@ export default function Sidebar(props: Props) {
   createEffect(() => {
     const t = window.setInterval(() => setClock(Date.now()), 1000);
     onCleanup(() => window.clearInterval(t));
+  });
+
+  createEffect(() => {
+    const onRolesChanged = (e: Event) => {
+      const serverId = (e as CustomEvent<{ serverId?: string }>).detail?.serverId;
+      const current = selected()?.id ?? props.selectedServerId;
+      if (!serverId || !current || serverId !== current) return;
+      void refetchRoles();
+    };
+    window.addEventListener("mesa:roles-changed", onRolesChanged);
+    onCleanup(() => window.removeEventListener("mesa:roles-changed", onRolesChanged));
   });
 
   /** Nested roster: only occupants with mic or camera on (028). Avatar is decorative. */
@@ -247,6 +316,8 @@ export default function Sidebar(props: Props) {
   function openCreateChannel(type: "text" | "voice_video") {
     setChannelType(type);
     setChannelName("");
+    setChannelVisibility("public");
+    setVisibleToNewMembers(true);
     setPendingKey(type === "voice_video" ? generateChannelKey() : null);
     setCustodyAck(false);
     setError("");
@@ -305,7 +376,7 @@ export default function Sidebar(props: Props) {
       await refetch();
       await selectServerAndNavigate(server);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(errorMessage(err));
     }
   }
 
@@ -318,20 +389,37 @@ export default function Sidebar(props: Props) {
       setError("Confirme que guardou a chave do canal.");
       return;
     }
+    const rawName = channelName().trim()
+      ? channelName()
+      : channelType() === "text"
+        ? "geral"
+        : "mesa";
+    const checked = validateChannelName(rawName);
+    if (!checked.ok) {
+      setError(channelNameErrorMessage(checked.reason));
+      return;
+    }
     try {
-      const body: Record<string, unknown> = {
-        name: channelName().trim() || (channelType() === "text" ? "geral" : "mesa"),
+      const body: {
+        name: string;
+        type: "text" | "voice_video";
+        visibility: "public" | "private";
+        custody_ack?: true;
+        channel_key_sealed?: string;
+      } = {
+        name: checked.name,
         type: channelType(),
+        visibility: channelVisibility(),
       };
       const key = pendingKey();
       if (channelType() === "voice_video" && key) {
         body.custody_ack = true;
         body.channel_key_sealed = sealChannelKeyForSelf(key, props.identity);
       }
-      const ch = await api<Channel>(`/api/servers/${server.id}/channels`, {
-        method: "POST",
-        body: JSON.stringify(body),
-      });
+      let ch = await createChannelRequest(server.id, body);
+      if (ch.visibility === "public" && !visibleToNewMembers()) {
+        ch = await patchChannel(ch.id, { visible_to_new_members: false });
+      }
       if (key) rememberChannelKey(ch.id, key);
       setCreateChannelOpen(false);
       setChannelName("");
@@ -341,7 +429,7 @@ export default function Sidebar(props: Props) {
       writeLastChannel(server.id, ch.id);
       navigate(`/channels/${ch.id}?server=${server.id}&type=${ch.type}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(errorMessage(err));
     }
   }
 
@@ -359,14 +447,168 @@ export default function Sidebar(props: Props) {
       await copied.copy(url);
       setInviteOpen(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(errorMessage(err));
     }
   }
 
   function canDeleteChannel(c: Channel): boolean {
-    const server = selected();
-    if (!server) return false;
-    return c.created_by_account_id === props.me.id || server.owner_account_id === props.me.id;
+    return canManageChannel(props.me.id, selected(), c, roles());
+  }
+
+  function canRenameChannel(c: Channel): boolean {
+    return canManageChannel(props.me.id, selected(), c, roles());
+  }
+
+  function startRename(c: Channel) {
+    if (!canRenameChannel(c)) return;
+    setRenamePrev(c.name);
+    setRenameDraft(normalizeChannelNameDraft(c.name));
+    setRenamingId(c.id);
+    setError("");
+  }
+
+  function cancelRename() {
+    setRenamingId(null);
+    setRenameDraft("");
+    setRenamePrev("");
+  }
+
+  async function commitRename() {
+    const id = renamingId();
+    if (!id) return;
+    const checked = validateChannelName(renameDraft());
+    const prev = renamePrev();
+    if (!checked.ok) {
+      setError(channelNameErrorMessage(checked.reason));
+      setRenameDraft(normalizeChannelNameDraft(prev));
+      setRenamingId(null);
+      return;
+    }
+    if (checked.name === prev) {
+      cancelRename();
+      return;
+    }
+    setError("");
+    try {
+      const updated = await patchChannel(id, { name: checked.name });
+      mutateChannels((list) =>
+        (list ?? []).map((ch) => (ch.id === id ? { ...ch, name: updated.name } : ch)),
+      );
+      window.dispatchEvent(
+        new CustomEvent("mesa:channel-renamed", {
+          detail: { channelId: id, name: updated.name },
+        }),
+      );
+      void refetchChannels();
+      cancelRename();
+    } catch (err) {
+      setRenameDraft(normalizeChannelNameDraft(prev));
+      setRenamingId(null);
+      if (err instanceof ApiError && err.status === 403) {
+        setError("Sem permissão para renomear este canal.");
+      } else {
+        setError(errorMessage(err) || "Não foi possível renomear o canal.");
+      }
+    }
+  }
+
+  function onRenameKeyDown(e: KeyboardEvent) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      void commitRename();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      cancelRename();
+    }
+  }
+
+  function onChannelNameDblClick(c: Channel, e: MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    startRename(c);
+  }
+
+  function onChannelNamePointerUp(c: Channel, e: PointerEvent) {
+    if (e.pointerType === "mouse") return;
+    const now = Date.now();
+    const prev = lastNameTap();
+    if (prev && prev.id === c.id && now - prev.at < 300) {
+      e.preventDefault();
+      e.stopPropagation();
+      setLastNameTap(null);
+      startRename(c);
+      return;
+    }
+    setLastNameTap({ id: c.id, at: now });
+  }
+
+  function channelNameLabel(c: Channel, className?: string) {
+    return (
+      <span
+        class={className}
+        onDblClick={(e) => onChannelNameDblClick(c, e)}
+        onPointerUp={(e) => onChannelNamePointerUp(c, e)}
+      >
+        {c.name}
+      </span>
+    );
+  }
+
+  function channelRenameInput() {
+    return (
+      <div class="channel-name-emoji-wrap channel-rename-emoji-wrap">
+        <Show when={renameEmojiOpen()}>
+          <div class="channel-emoji-picker-anchor">
+            <EmojiPicker
+              onSelect={(entry) => {
+                const el = renameNameInput;
+                const caret = el?.selectionStart ?? renameDraft().length;
+                const { text, caret: next } = insertAtCaret(renameDraft(), caret, entry.glyph);
+                const normalized = normalizeChannelNameDraft(text);
+                setRenameDraft(normalized);
+                setRenameEmojiOpen(false);
+                requestAnimationFrame(() => {
+                  renameNameInput?.focus();
+                  const pos = Math.min(next, normalized.length);
+                  renameNameInput?.setSelectionRange(pos, pos);
+                });
+              }}
+              onClose={() => setRenameEmojiOpen(false)}
+            />
+          </div>
+        </Show>
+        <input
+          class="channel-rename-input"
+          type="text"
+          value={renameDraft()}
+          aria-label="Novo nome do canal"
+          onInput={(e) => setRenameDraft(normalizeChannelNameDraft(e.currentTarget.value))}
+          onKeyDown={onRenameKeyDown}
+          onBlur={() => {
+            window.setTimeout(() => {
+              if (renameEmojiOpen()) return;
+              void commitRename();
+            }, 150);
+          }}
+          ref={(el) => {
+            renameNameInput = el;
+            queueMicrotask(() => {
+              el?.focus();
+              el?.select();
+            });
+          }}
+        />
+        <button
+          type="button"
+          class="composer-icon-btn channel-name-emoji-btn"
+          aria-label="Emoji"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => setRenameEmojiOpen((v) => !v)}
+        >
+          <IconEmoji size={16} title="Emoji" />
+        </button>
+      </div>
+    );
   }
 
   function openChannelMenu(c: Channel, e: { clientX: number; clientY: number }) {
@@ -376,6 +618,10 @@ export default function Sidebar(props: Props) {
       y: e.clientY,
       items: [
         {
+          label: "Permissões do canal",
+          onSelect: () => setAclChannel(c),
+        },
+        {
           label: "Apagar canal",
           danger: true,
           onSelect: () => setConfirmDelete({ kind: "channel", channel: c }),
@@ -384,23 +630,8 @@ export default function Sidebar(props: Props) {
     });
   }
 
-  function openServerMenu(s: Server, e: { clientX: number; clientY: number }) {
-    if (s.owner_account_id !== props.me.id) return;
-    setMenu({
-      x: e.clientX,
-      y: e.clientY,
-      items: [
-        {
-          label: "Imagem do servidor",
-          onSelect: () => setServerImageOpen(true),
-        },
-        {
-          label: "Apagar servidor",
-          danger: true,
-          onSelect: () => setConfirmDelete({ kind: "server", server: s }),
-        },
-      ],
-    });
+  function openServerMenu(_s: Server, _e: { clientX: number; clientY: number }) {
+    // Imagem / Apagar moved to server settings (056); no rail context menu items.
   }
 
   async function confirmDeleteAction() {
@@ -434,7 +665,7 @@ export default function Sidebar(props: Props) {
             : "Não pode apagar o último canal do servidor.",
         );
       } else {
-        setError(err instanceof Error ? err.message : String(err));
+        setError(errorMessage(err));
       }
       setConfirmDelete(null);
     }
@@ -450,25 +681,51 @@ export default function Sidebar(props: Props) {
         onContextMenu={(s, e) => openServerMenu(s, e)}
       />
       <aside class="sidebar">
-        <Show when={props.stageMode}>
-          <button
-            type="button"
-            class="sidebar-stage-expand"
-            aria-expanded={!!props.stageChannelsExpanded}
-            aria-label={
-              props.stageChannelsExpanded ? "Ocultar canais" : "Mostrar canais"
+        <button
+          type="button"
+          class="channels-peek"
+          tabindex={props.channelsListExpanded || props.settingsMode ? -1 : 0}
+          aria-hidden={!!props.channelsListExpanded || !!props.settingsMode}
+          aria-label="Mostrar canais"
+          title="Mostrar canais"
+          onClick={() => props.onExpandChannels?.()}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              props.onExpandChannels?.();
             }
-            title={props.stageChannelsExpanded ? "Ocultar canais" : "Mostrar canais"}
-            onClick={() => props.onToggleStageChannels?.()}
-          >
-            <span class="sidebar-stage-expand-label">
-              {props.stageChannelsExpanded ? "ocultar canais" : "mostrar canais"}
-            </span>
-          </button>
-        </Show>
+          }}
+        />
         <div class="sidebar-header sidebar-header-static">
-          <span class="sidebar-server-name">{selected()?.name ?? "Sem servidor"}</span>
-          <Show when={selected() && isOwner()}>
+          <div class="sidebar-server-heading">
+            <Show
+              when={selected() && canOpenServerSettings()}
+              fallback={
+                <span class="sidebar-server-name">{selected()?.name ?? "Sem servidor"}</span>
+              }
+            >
+              <button
+                type="button"
+                class="sidebar-server-name-btn"
+                aria-label={`Configurações de ${selected()?.name ?? "servidor"}`}
+                onClick={() => openServerSettings()}
+              >
+                <span class="sidebar-server-name">{selected()?.name}</span>
+              </button>
+            </Show>
+            <Show when={selected() && canOpenServerSettings()}>
+              <button
+                type="button"
+                class="pane-icon-btn sidebar-settings-btn"
+                aria-label="Configurações do servidor"
+                title="Configurações do servidor"
+                onClick={() => openServerSettings()}
+              >
+                <IconSettings size={18} title="Configurações do servidor" />
+              </button>
+            </Show>
+          </div>
+          <Show when={selected() && canCreateInvites()}>
             <button
               type="button"
               class="pane-icon-btn sidebar-invite-btn"
@@ -482,10 +739,13 @@ export default function Sidebar(props: Props) {
         </div>
 
         <nav class="sidebar-nav">
-          <Show when={selected()}>
+          <Show when={selected() && props.settingsMode}>
+            <SettingsNav groups={settingsGroups()} />
+          </Show>
+          <Show when={selected() && !props.settingsMode}>
             <div class="sidebar-section-row">
               <div class="sidebar-section">Texto</div>
-              <Show when={isOwner()}>
+              <Show when={canCreateChannels()}>
                 <button
                   type="button"
                   class="sidebar-section-plus"
@@ -499,35 +759,57 @@ export default function Sidebar(props: Props) {
             </div>
             <For each={textChannels()}>
               {(c) => (
-                <A
-                  href={`/channels/${c.id}?server=${selected()!.id}&type=${c.type}`}
-                  class={`channel-item${activeChannelId() === c.id ? " active" : ""}`}
-                  onClick={() => {
-                    const sid = selected()?.id;
-                    if (sid) writeLastChannel(sid, c.id);
-                    window.dispatchEvent(new CustomEvent("mesa:close-drawer"));
-                  }}
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    openChannelMenu(c, e);
-                  }}
-                  ref={(el) => {
-                    if (!el || !canDeleteChannel(c)) return;
-                    const unbind = bindLongPress(el, (x, y) =>
-                      openChannelMenu(c, { clientX: x, clientY: y }),
-                    );
-                    onCleanup(unbind);
-                  }}
+                <Show
+                  when={renamingId() === c.id}
+                  fallback={
+                    <A
+                      href={`/channels/${c.id}?server=${selected()!.id}&type=${c.type}`}
+                      class={`channel-item${activeChannelId() === c.id ? " active" : ""}${c.visibility === "private" ? " channel-item-private" : ""}`}
+                      onClick={() => {
+                        const sid = selected()?.id;
+                        if (sid) writeLastChannel(sid, c.id);
+                        window.dispatchEvent(new CustomEvent("mesa:close-drawer"));
+                      }}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        openChannelMenu(c, e);
+                      }}
+                      ref={(el) => {
+                        if (!el || !canDeleteChannel(c)) return;
+                        const unbind = bindLongPress(el, (x, y) =>
+                          openChannelMenu(c, { clientX: x, clientY: y }),
+                        );
+                        onCleanup(unbind);
+                      }}
+                    >
+                      <span class="prefix">#</span>
+                      {channelNameLabel(c, "channel-name")}
+                      <Show when={c.visibility === "private"}>
+                        <span class="channel-lock" aria-hidden="true">
+                          <IconLockClosed size={14} title="Canal privado" />
+                        </span>
+                      </Show>
+                    </A>
+                  }
                 >
-                  <span class="prefix">#</span>
-                  <span>{c.name}</span>
-                </A>
+                  <div
+                    class={`channel-item channel-item-renaming${activeChannelId() === c.id ? " active" : ""}${c.visibility === "private" ? " channel-item-private" : ""}`}
+                  >
+                    <span class="prefix">#</span>
+                    {channelRenameInput()}
+                    <Show when={c.visibility === "private"}>
+                      <span class="channel-lock" aria-hidden="true">
+                        <IconLockClosed size={14} title="Canal privado" />
+                      </span>
+                    </Show>
+                  </div>
+                </Show>
               )}
             </For>
 
             <div class="sidebar-section-row">
               <div class="sidebar-section">Voz e vídeo</div>
-              <Show when={isOwner()}>
+              <Show when={canCreateChannels()}>
                 <button
                   type="button"
                   class="sidebar-section-plus"
@@ -549,38 +831,62 @@ export default function Sidebar(props: Props) {
                 };
                 return (
                 <div class="voice-channel-block">
-                <A
-                  href={`/channels/${c.id}?server=${selected()!.id}&type=${c.type}`}
-                  class={`channel-item${activeChannelId() === c.id ? " active" : ""}`}
-                  onClick={() => {
-                    const sid = selected()?.id;
-                    if (sid) writeLastChannel(sid, c.id);
-                    window.dispatchEvent(new CustomEvent("mesa:close-drawer"));
-                  }}
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    openChannelMenu(c, e);
-                  }}
-                  ref={(el) => {
-                    if (!el || !canDeleteChannel(c)) return;
-                    const unbind = bindLongPress(el, (x, y) =>
-                      openChannelMenu(c, { clientX: x, clientY: y }),
-                    );
-                    onCleanup(unbind);
-                  }}
-                >
-                  <span class="prefix channel-icon" aria-hidden="true">
-                    <IconVoiceChannel size={18} />
-                  </span>
-                  <span class="voice-channel-name">{c.name}</span>
-                  <Show when={timer()}>
-                    {(t) => (
-                      <span class="voice-call-timer" aria-label={`Duração da chamada ${t()}`}>
-                        {t()}
+                <Show
+                  when={renamingId() === c.id}
+                  fallback={
+                    <A
+                      href={`/channels/${c.id}?server=${selected()!.id}&type=${c.type}`}
+                      class={`channel-item${activeChannelId() === c.id ? " active" : ""}${c.visibility === "private" ? " channel-item-private" : ""}`}
+                      onClick={() => {
+                        const sid = selected()?.id;
+                        if (sid) writeLastChannel(sid, c.id);
+                        window.dispatchEvent(new CustomEvent("mesa:close-drawer"));
+                      }}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        openChannelMenu(c, e);
+                      }}
+                      ref={(el) => {
+                        if (!el || !canDeleteChannel(c)) return;
+                        const unbind = bindLongPress(el, (x, y) =>
+                          openChannelMenu(c, { clientX: x, clientY: y }),
+                        );
+                        onCleanup(unbind);
+                      }}
+                    >
+                      <span class="prefix channel-icon" aria-hidden="true">
+                        <IconVoiceChannel size={18} />
                       </span>
-                    )}
-                  </Show>
-                </A>
+                      {channelNameLabel(c, "voice-channel-name channel-name")}
+                      <Show when={timer()}>
+                        {(t) => (
+                          <span class="voice-call-timer" aria-label={`Duração da chamada ${t()}`}>
+                            {t()}
+                          </span>
+                        )}
+                      </Show>
+                      <Show when={c.visibility === "private"}>
+                        <span class="channel-lock" aria-hidden="true">
+                          <IconLockClosed size={14} title="Canal privado" />
+                        </span>
+                      </Show>
+                    </A>
+                  }
+                >
+                  <div
+                    class={`channel-item channel-item-renaming${activeChannelId() === c.id ? " active" : ""}${c.visibility === "private" ? " channel-item-private" : ""}`}
+                  >
+                    <span class="prefix channel-icon" aria-hidden="true">
+                      <IconVoiceChannel size={18} />
+                    </span>
+                    {channelRenameInput()}
+                    <Show when={c.visibility === "private"}>
+                      <span class="channel-lock" aria-hidden="true">
+                        <IconLockClosed size={14} title="Canal privado" />
+                      </span>
+                    </Show>
+                  </div>
+                </Show>
                 <Show when={names().length > 0}>
                   <ul class="voice-roster" aria-label={`Na chamada ${c.name}`}>
                     <For each={names()}>
@@ -643,13 +949,32 @@ export default function Sidebar(props: Props) {
             {error()}
           </p>
         </nav>
-
-        <UserPanel
-          me={props.me}
-          onLogout={props.onLogout}
-          onAccountPatch={props.onAccountPatch}
-        />
+        <Show when={!props.settingsMode}>
+          <button
+            type="button"
+            class="sidebar-channels-toggle"
+            aria-expanded={!!props.channelsListExpanded}
+            aria-label={
+              props.channelsListExpanded ? "Ocultar canais" : "Mostrar canais"
+            }
+            title={props.channelsListExpanded ? "Ocultar canais" : "Mostrar canais"}
+            onClick={() => {
+              if (props.channelsListExpanded) props.onToggleChannels?.();
+              else props.onExpandChannels?.();
+            }}
+          >
+            <span class="sidebar-channels-toggle-label">
+              {props.channelsListExpanded ? "ocultar canais" : "mostrar canais"}
+            </span>
+          </button>
+        </Show>
       </aside>
+
+      <UserPanel
+        me={props.me}
+        onLogout={props.onLogout}
+        onAccountPatch={props.onAccountPatch}
+      />
 
       <ContextMenu menu={menu()} onClose={() => setMenu(null)} />
 
@@ -743,14 +1068,84 @@ export default function Sidebar(props: Props) {
         <form id="create-channel-form" onSubmit={createChannel}>
           <div class="field">
             <label for="channel-name">Nome</label>
-            <input
-              id="channel-name"
-              class="input"
-              value={channelName()}
-              onInput={(e) => setChannelName(e.currentTarget.value)}
-              placeholder={channelType() === "text" ? "geral" : "mesa"}
-            />
+            <div class="channel-name-emoji-wrap">
+              <Show when={createEmojiOpen()}>
+                <div class="channel-emoji-picker-anchor">
+                  <EmojiPicker
+                    onSelect={(entry: EmojiEntry) => {
+                      const el = createNameInput;
+                      const caret = el?.selectionStart ?? channelName().length;
+                      const { text, caret: next } = insertAtCaret(
+                        channelName(),
+                        caret,
+                        entry.glyph,
+                      );
+                      const normalized = normalizeChannelNameDraft(text);
+                      setChannelName(normalized);
+                      setCreateEmojiOpen(false);
+                      requestAnimationFrame(() => {
+                        createNameInput?.focus();
+                        const pos = Math.min(next, normalized.length);
+                        createNameInput?.setSelectionRange(pos, pos);
+                      });
+                    }}
+                    onClose={() => setCreateEmojiOpen(false)}
+                  />
+                </div>
+              </Show>
+              <input
+                id="channel-name"
+                class="input"
+                ref={(el) => {
+                  createNameInput = el;
+                }}
+                value={channelName()}
+                onInput={(e) => setChannelName(normalizeChannelNameDraft(e.currentTarget.value))}
+                placeholder={channelType() === "text" ? "geral" : "mesa"}
+              />
+              <button
+                type="button"
+                class="composer-icon-btn channel-name-emoji-btn"
+                aria-label="Emoji"
+                onClick={() => setCreateEmojiOpen((v) => !v)}
+              >
+                <IconEmoji size={16} title="Emoji" />
+              </button>
+            </div>
           </div>
+          <div class="field">
+            <label>Visibilidade</label>
+            <div class="row" style={{ gap: "16px" }}>
+              <label class="check-line">
+                <input
+                  type="radio"
+                  name="create-channel-visibility"
+                  checked={channelVisibility() === "public"}
+                  onChange={() => setChannelVisibility("public")}
+                />
+                Público
+              </label>
+              <label class="check-line">
+                <input
+                  type="radio"
+                  name="create-channel-visibility"
+                  checked={channelVisibility() === "private"}
+                  onChange={() => setChannelVisibility("private")}
+                />
+                Privado
+              </label>
+            </div>
+          </div>
+          <Show when={channelVisibility() === "public"}>
+            <label class="check-line">
+              <input
+                type="checkbox"
+                checked={visibleToNewMembers()}
+                onChange={(e) => setVisibleToNewMembers(e.currentTarget.checked)}
+              />
+              Visível a novos membros
+            </label>
+          </Show>
           <Show when={channelType() === "voice_video" && pendingKey()}>
             {(key) => (
               <div class="custody-block">
@@ -801,7 +1196,10 @@ export default function Sidebar(props: Props) {
           </>
         }
       >
-        <p class="muted">Ligação copiada para a área de transferência quando possível.</p>
+        <p class="muted">
+          Ligação copiada para a área de transferência quando possível. Válido 5 minutos · até 10
+          entradas.
+        </p>
         <input class="input invite-code" readonly value={inviteUrl()} />
       </Dialog>
 
@@ -827,24 +1225,11 @@ export default function Sidebar(props: Props) {
         </p>
       </Dialog>
 
-      <ImageUploadDialog
-        open={serverImageOpen()}
-        title="Imagem do servidor"
-        hasImage={!!selected()?.has_image}
-        currentUrl={selected() ? serverImageUrl(selected()!.id) : undefined}
-        onClose={() => setServerImageOpen(false)}
-        onSave={async (file) => {
-          const server = selected();
-          if (!server) return;
-          await putServerImage(server.id, file, file.type);
-          await refetch();
-        }}
-        onRemove={async () => {
-          const server = selected();
-          if (!server) return;
-          await deleteServerImage(server.id);
-          await refetch();
-        }}
+      <ChannelAclPanel
+        open={!!aclChannel()}
+        channel={aclChannel()}
+        onClose={() => setAclChannel(null)}
+        onSaved={() => void refetchChannels()}
       />
     </div>
   );

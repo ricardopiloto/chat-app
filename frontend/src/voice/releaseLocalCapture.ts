@@ -1,4 +1,4 @@
-import { LocalVideoTrack } from "livekit-client";
+import type { LocalVideoTrack } from "livekit-client";
 import { stopBlurProcessor } from "../video/backgroundBlur";
 import type { LiveSession } from "../video/liveClient";
 

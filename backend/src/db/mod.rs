@@ -9,7 +9,9 @@ use std::str::FromStr;
 pub mod account;
 pub mod attachment;
 pub mod channel;
+pub mod channel_acl;
 pub mod channel_key;
+pub mod channel_mute;
 pub mod channel_role;
 pub mod e2ee_audit;
 pub mod grid;
@@ -17,10 +19,12 @@ pub mod invite;
 pub mod key_envelope;
 pub mod membership;
 pub mod message;
+pub mod notification;
 pub mod read_state;
 pub mod recording;
 pub mod scene;
 pub mod server;
+pub mod server_role;
 pub mod session;
 pub mod voice_occupancy;
 
@@ -39,9 +43,12 @@ pub async fn migrate(pool: &SqlitePool) -> Result<(), sqlx::migrate::MigrateErro
     sqlx::migrate!("./migrations").run(pool).await
 }
 
-pub async fn bootstrap(config: &Config) -> Result<SqlitePool, Box<dyn std::error::Error + Send + Sync>> {
+pub async fn bootstrap(
+    config: &Config,
+) -> Result<SqlitePool, Box<dyn std::error::Error + Send + Sync>> {
     let pool = connect(&config.database_url).await?;
     migrate(&pool).await?;
+    server_role::backfill_dono_for_all_servers(&pool).await?;
     Ok(pool)
 }
 

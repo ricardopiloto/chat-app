@@ -31,7 +31,9 @@ pub struct RegisterBody {
     pub invite_code: Option<String>,
 }
 
-pub fn encode_identity_vault(value: Option<&serde_json::Value>) -> Result<Option<Vec<u8>>, ApiError> {
+pub fn encode_identity_vault(
+    value: Option<&serde_json::Value>,
+) -> Result<Option<Vec<u8>>, ApiError> {
     let Some(value) = value else {
         return Ok(None);
     };
@@ -116,7 +118,9 @@ pub async fn register_inner(
         return Err(ApiError::bad_request("handle required"));
     }
     if body.password.len() < 8 {
-        return Err(ApiError::bad_request("password must be at least 8 characters"));
+        return Err(ApiError::bad_request(
+            "password must be at least 8 characters",
+        ));
     }
     let pubkey = decode_pubkey(&body.identity_pubkey)?;
     let identity_vault = encode_identity_vault(body.identity_vault.as_ref())?;
@@ -187,6 +191,11 @@ pub async fn register_inner(
                         key_handoff_status: KeyHandoffStatus::Pending,
                     };
                     db::membership::create(&mut *tx, &membership).await?;
+                    if !db::invite::try_increment_use(&mut *tx, inv.id).await? {
+                        return Err(ApiError::forbidden(
+                            "invite required after the first account exists",
+                        ));
+                    }
                 }
             }
 
@@ -202,7 +211,8 @@ pub async fn register_inner(
             if let Some(inv) = invite {
                 emit_invite_consumed(state, &inv, record.id).await;
             }
-            let token = persist_session(&state.pool, record.id, state.config.session_ttl_secs).await?;
+            let token =
+                persist_session(&state.pool, record.id, state.config.session_ttl_secs).await?;
             let jar = with_session_cookie(jar, token, state.config.cookie_secure);
             Ok((record, jar))
         }
@@ -234,7 +244,8 @@ pub async fn emit_invite_consumed(
     if let Ok(Some(account)) = db::account::find_by_id(&state.pool, new_member).await {
         use base64::Engine;
         let pubkey = base64::engine::general_purpose::STANDARD.encode(&account.identity_pubkey);
-        if let Ok(synced) = db::membership::list_synced_account_ids(&state.pool, invite.server_id).await
+        if let Ok(synced) =
+            db::membership::list_synced_account_ids(&state.pool, invite.server_id).await
         {
             state.ws.send_to_accounts(
                 &synced,

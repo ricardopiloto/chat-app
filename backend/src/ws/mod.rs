@@ -34,6 +34,20 @@ impl WsHub {
         }
     }
 
+    /// True when the account has at least one live WS sender.
+    pub fn is_online(&self, account_id: Uuid) -> bool {
+        let map = self.inner.lock().expect("ws hub");
+        map.get(&account_id).is_some_and(|list| !list.is_empty())
+    }
+
+    pub fn online_account_ids(&self) -> Vec<Uuid> {
+        let map = self.inner.lock().expect("ws hub");
+        map.iter()
+            .filter(|(_, list)| !list.is_empty())
+            .map(|(id, _)| *id)
+            .collect()
+    }
+
     pub fn send_to_account(&self, account_id: Uuid, payload: &str) {
         let mut map = self.inner.lock().expect("ws hub");
         if let Some(list) = map.get_mut(&account_id) {

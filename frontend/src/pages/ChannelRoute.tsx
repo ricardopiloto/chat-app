@@ -1,24 +1,51 @@
-import { Show, createEffect, createResource, createSignal, onCleanup } from "solid-js";
+import { ErrorBoundary, Show, Suspense, createEffect, createResource, createSignal, lazy, onCleanup } from "solid-js";
 import { useNavigate, useParams, useSearchParams } from "@solidjs/router";
 import { api, markChannelRead, type Account, type Channel } from "../api/client";
-import type { WsEnvelope } from "../api/ws";
+import type { LiveDeliveryStatus, WsEnvelope } from "../api/ws";
 import type { Identity } from "../crypto/identity";
 import { setActiveChannel } from "../preferences/activeChannel";
-import { markSeen } from "../preferences/notifications";
 import {
   channelHref,
   resolveChannelForServer,
   writeLastChannel,
 } from "../preferences/lastChannelByServer";
-// Topbar bell still uses session Set; ServerRail unread uses BE has_unread (037).
-import ChannelPage from "./Channel";
-import VoiceChannel from "./VoiceChannel";
+// Topbar session unseen clears on viewport / Limpar (071), not on channel enter.
+// Server-rail unread uses BE has_unread (037).
+
+const ChannelPage = lazy(() => import("./Channel"));
+const VoiceChannel = lazy(() => import("./VoiceChannel"));
 
 type Props = {
   me: Account;
   identity: Identity;
   onWs: (handler: (msg: WsEnvelope) => void) => () => void;
+  deliveryStatus?: LiveDeliveryStatus;
 };
+
+function VoiceChannelLoadFallback() {
+  return (
+    <div class="pane voice-pane voice-module-load" role="status">
+      <p class="muted" style={{ padding: "16px 24px" }}>
+        A carregar canal de voz…
+      </p>
+    </div>
+  );
+}
+
+function VoiceChannelLoadError(props: { reset: () => void }) {
+  return (
+    <div class="pane voice-pane voice-module-load" role="alert">
+      <p class="error" style={{ padding: "16px 24px 8px" }}>
+        Falha ao carregar o módulo de voz.
+      </p>
+      <div class="row" style={{ padding: "0 24px 16px", gap: "8px" }}>
+        <button type="button" class="btn btn-primary" onClick={() => props.reset()}>
+          Tentar de novo
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function ChannelRoute(props: Props) {
   const params = useParams();
@@ -26,12 +53,7 @@ export default function ChannelRoute(props: Props) {
   const navigate = useNavigate();
   const [realigning, setRealigning] = createSignal(false);
 
-  createEffect(() => {
-    const id = params.id;
-    if (id) markSeen(id);
-  });
-
-  const [channel] = createResource(
+  const [channel, { mutate: mutateChannel }] = createResource(
     () => ({
       id: params.id,
       server: String(search.server ?? ""),
@@ -47,6 +69,17 @@ export default function ChannelRoute(props: Props) {
       }
     },
   );
+
+  createEffect(() => {
+    const onRenamed = (e: Event) => {
+      const detail = (e as CustomEvent<{ channelId?: string; name?: string }>).detail;
+      if (!detail?.channelId || detail.name == null) return;
+      if (detail.channelId !== params.id) return;
+      mutateChannel((ch) => (ch ? { ...ch, name: detail.name! } : ch));
+    };
+    window.addEventListener("mesa:channel-renamed", onRenamed);
+    onCleanup(() => window.removeEventListener("mesa:channel-renamed", onRenamed));
+  });
 
   createEffect(() => {
     const ch = channel();
@@ -98,14 +131,28 @@ export default function ChannelRoute(props: Props) {
         {(ch) => (
           <Show
             when={ch().type === "voice_video"}
-            fallback={<ChannelPage me={props.me} channel={ch()} identity={props.identity} onWs={props.onWs} />}
+            fallback={
+              <Suspense fallback={<p class="main">A carregar canal…</p>}>
+                <ChannelPage
+                  me={props.me}
+                  channel={ch()}
+                  identity={props.identity}
+                  onWs={props.onWs}
+                  deliveryStatus={props.deliveryStatus ?? "connected"}
+                />
+              </Suspense>
+            }
           >
-            <VoiceChannel
-              me={props.me}
-              channel={ch()}
-              identity={props.identity}
-              onWs={props.onWs}
-            />
+            <ErrorBoundary fallback={(_err, reset) => <VoiceChannelLoadError reset={reset} />}>
+              <Suspense fallback={<VoiceChannelLoadFallback />}>
+                <VoiceChannel
+                  me={props.me}
+                  channel={ch()}
+                  identity={props.identity}
+                  onWs={props.onWs}
+                />
+              </Suspense>
+            </ErrorBoundary>
           </Show>
         )}
       </Show>

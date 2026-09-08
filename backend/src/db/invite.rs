@@ -1,4 +1,4 @@
-use crate::domain::invite::InviteRecord;
+use crate::domain::invite::{InviteRecord, INVITE_MAX_USES};
 use chrono::{DateTime, Utc};
 use sqlx::SqlitePool;
 use uuid::Uuid;
@@ -12,6 +12,7 @@ struct Row {
     expires_at: Option<String>,
     include_history: i64,
     revoked_at: Option<String>,
+    use_count: i64,
 }
 
 fn parse_dt(value: &str) -> Result<DateTime<Utc>, sqlx::Error> {
@@ -30,13 +31,17 @@ fn map_row(row: Row) -> Result<InviteRecord, sqlx::Error> {
         expires_at: row.expires_at.as_deref().map(parse_dt).transpose()?,
         include_history: row.include_history != 0,
         revoked_at: row.revoked_at.as_deref().map(parse_dt).transpose()?,
+        use_count: row.use_count,
     })
 }
 
+const SELECT_COLS: &str =
+    "id, code, server_id, created_by_account_id, expires_at, include_history, revoked_at, use_count";
+
 pub async fn create(pool: &SqlitePool, invite: &InviteRecord) -> Result<(), sqlx::Error> {
     sqlx::query(
-        "INSERT INTO invite (id, code, server_id, created_by_account_id, expires_at, include_history, revoked_at, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, NULL, ?)",
+        "INSERT INTO invite (id, code, server_id, created_by_account_id, expires_at, include_history, revoked_at, created_at, use_count)
+         VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?)",
     )
     .bind(invite.id.to_string())
     .bind(&invite.code)
@@ -45,6 +50,7 @@ pub async fn create(pool: &SqlitePool, invite: &InviteRecord) -> Result<(), sqlx
     .bind(invite.expires_at.map(|t| t.to_rfc3339()))
     .bind(i64::from(invite.include_history))
     .bind(Utc::now().to_rfc3339())
+    .bind(invite.use_count)
     .execute(pool)
     .await?;
     Ok(())
@@ -57,24 +63,18 @@ pub async fn find_by_code<'e, E>(
 where
     E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
 {
-    let row = sqlx::query_as::<_, Row>(
-        "SELECT id, code, server_id, created_by_account_id, expires_at, include_history, revoked_at
-         FROM invite WHERE code = ?",
-    )
-    .bind(code)
-    .fetch_optional(executor)
-    .await?;
+    let row = sqlx::query_as::<_, Row>(&format!("SELECT {SELECT_COLS} FROM invite WHERE code = ?"))
+        .bind(code)
+        .fetch_optional(executor)
+        .await?;
     row.map(map_row).transpose()
 }
 
 pub async fn find_by_id(pool: &SqlitePool, id: Uuid) -> Result<Option<InviteRecord>, sqlx::Error> {
-    let row = sqlx::query_as::<_, Row>(
-        "SELECT id, code, server_id, created_by_account_id, expires_at, include_history, revoked_at
-         FROM invite WHERE id = ?",
-    )
-    .bind(id.to_string())
-    .fetch_optional(pool)
-    .await?;
+    let row = sqlx::query_as::<_, Row>(&format!("SELECT {SELECT_COLS} FROM invite WHERE id = ?"))
+        .bind(id.to_string())
+        .fetch_optional(pool)
+        .await?;
     row.map(map_row).transpose()
 }
 
@@ -82,10 +82,9 @@ pub async fn list_by_server(
     pool: &SqlitePool,
     server_id: Uuid,
 ) -> Result<Vec<InviteRecord>, sqlx::Error> {
-    let rows = sqlx::query_as::<_, Row>(
-        "SELECT id, code, server_id, created_by_account_id, expires_at, include_history, revoked_at
-         FROM invite WHERE server_id = ? ORDER BY created_at DESC",
-    )
+    let rows = sqlx::query_as::<_, Row>(&format!(
+        "SELECT {SELECT_COLS} FROM invite WHERE server_id = ? ORDER BY created_at DESC"
+    ))
     .bind(server_id.to_string())
     .fetch_all(pool)
     .await?;
@@ -99,4 +98,20 @@ pub async fn revoke(pool: &SqlitePool, code: &str) -> Result<(), sqlx::Error> {
         .execute(pool)
         .await?;
     Ok(())
+}
+
+/// Atomically consume one use. Returns `true` if a use was taken.
+pub async fn try_increment_use<'e, E>(executor: E, invite_id: Uuid) -> Result<bool, sqlx::Error>
+where
+    E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
+{
+    let result = sqlx::query(
+        "UPDATE invite SET use_count = use_count + 1
+         WHERE id = ? AND use_count < ? AND revoked_at IS NULL",
+    )
+    .bind(invite_id.to_string())
+    .bind(INVITE_MAX_USES)
+    .execute(executor)
+    .await?;
+    Ok(result.rows_affected() == 1)
 }

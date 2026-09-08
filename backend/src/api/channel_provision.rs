@@ -1,5 +1,7 @@
 use crate::db;
-use crate::domain::channel::{Channel, ChannelType};
+use crate::domain::channel::{Channel, ChannelType, ChannelVisibility};
+use crate::domain::channel_acl::{AclSubjectType, ChannelAclEntry, PermLevel};
+use crate::domain::channel_name;
 use crate::error::ApiError;
 use base64::Engine;
 use sqlx::SqlitePool;
@@ -13,13 +15,11 @@ pub async fn provision_channel(
     name: String,
     kind: ChannelType,
     grid_slot_count: Option<i64>,
+    visibility: Option<ChannelVisibility>,
     custody_ack: Option<bool>,
     channel_key_sealed: Option<&str>,
 ) -> Result<Channel, ApiError> {
-    let name = name.trim().to_string();
-    if name.is_empty() {
-        return Err(ApiError::bad_request("name required"));
-    }
+    let name = channel_name::validate_channel_name(&name).map_err(ApiError::bad_request)?;
     let grid_slot_count = match kind {
         ChannelType::VoiceVideo => {
             let n = grid_slot_count.unwrap_or(4);
@@ -50,6 +50,7 @@ pub async fn provision_channel(
         None
     };
 
+    let visibility = visibility.unwrap_or(ChannelVisibility::Public);
     let mut channel = Channel {
         id: Uuid::new_v4(),
         server_id,
@@ -59,8 +60,28 @@ pub async fn provision_channel(
         created_by_account_id: created_by,
         e2ee_enabled: true,
         has_channel_key: false,
+        visibility,
+        visible_to_new_members: visibility == ChannelVisibility::Public,
+        my_permission: None,
     };
     db::channel::create(pool, &channel).await?;
+    if visibility == ChannelVisibility::Private {
+        db::channel_acl::upsert(
+            pool,
+            &ChannelAclEntry {
+                id: Uuid::new_v4(),
+                channel_id: channel.id,
+                subject_type: AclSubjectType::Account,
+                subject_id: created_by,
+                level: match kind {
+                    ChannelType::Text => PermLevel::Write,
+                    ChannelType::VoiceVideo => PermLevel::Speak,
+                },
+                effect: crate::domain::channel_acl::AclEffect::Allow,
+            },
+        )
+        .await?;
+    }
     if let Some(blob) = sealed_bytes {
         db::channel_key::insert(pool, channel.id, created_by, &blob).await?;
         channel.has_channel_key = true;

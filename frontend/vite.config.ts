@@ -34,6 +34,23 @@ export default defineConfig({
   plugins: [solid(), basicSsl()],
   clearScreen: false,
   customLogger: mesaDevLogger(),
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (
+            id.includes("node_modules/@livekit/track-processors") ||
+            id.includes("mediapipe")
+          ) {
+            return "livekit-blur";
+          }
+          if (id.includes("node_modules/livekit-client") || id.includes("@livekit/")) {
+            return "livekit";
+          }
+        },
+      },
+    },
+  },
   server: {
     port: 1420,
     strictPort: true,

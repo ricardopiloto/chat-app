@@ -14,6 +14,7 @@ pub fn mint(
     identity: &str,
     room: &str,
     name: &str,
+    can_publish: bool,
 ) -> Result<VoiceToken, String> {
     let token = AccessToken::with_api_key(&config.livekit_api_key, &config.livekit_api_secret)
         .with_identity(identity)
@@ -22,6 +23,8 @@ pub fn mint(
         .with_grants(VideoGrants {
             room_join: true,
             room: room.to_string(),
+            can_publish,
+            can_subscribe: true,
             ..Default::default()
         })
         .to_jwt()

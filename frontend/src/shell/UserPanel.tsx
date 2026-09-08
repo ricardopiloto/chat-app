@@ -1,5 +1,4 @@
-import { Show, createSignal, type JSX } from "solid-js";
-import { useParams } from "@solidjs/router";
+import { Show, createEffect, createSignal, type JSX } from "solid-js";
 import type { Account } from "../api/client";
 import AccountMenu from "../components/AccountMenu";
 import CameraBlurMenu from "../components/CameraBlurMenu";
@@ -11,19 +10,13 @@ import { IconMicOffFilled, IconMicOnFilled } from "../components/icons/IconMic";
 import { IconPhoneHangupFilled } from "../components/icons/IconPhoneHangup";
 import IconSettings from "../components/icons/IconSettings";
 import { readBlurMode, writeBlurMode, type CameraBlurMode } from "../blur/blurPreference";
-import {
-  applyBlurMode,
-  supportsCameraBlur,
-  BLUR_UNAVAILABLE,
-} from "../video/backgroundBlur";
-import {
-  useVoiceSession,
-  viewingActiveVoiceStage,
-} from "../voice/VoiceSession";
+import { loadVoiceRuntime } from "../voice/loadRuntime";
+import { useVoiceSession } from "../voice/VoiceSession";
 
 /** Panel call-control glyph size — mic is the visual base (042 FR-005). */
 const PANEL_CALL_ICON = 18;
 const PANEL_BLUR_CHEVRON = 14;
+const BLUR_UNAVAILABLE_MSG = "Blur de fundo não disponível";
 
 type Props = {
   me: Account;
@@ -33,14 +26,24 @@ type Props = {
 
 export default function UserPanel(props: Props): JSX.Element {
   const voice = useVoiceSession();
-  const params = useParams();
   const [accountOpen, setAccountOpen] = createSignal(false);
   const [blurMode, setBlurMode] = createSignal<CameraBlurMode>(readBlurMode());
   const [blurMenuOpen, setBlurMenuOpen] = createSignal(false);
+  const [blurSupported, setBlurSupported] = createSignal<boolean | null>(null);
 
-  const onStage = () => viewingActiveVoiceStage(params.id, voice);
-  /** 042/043: call group only when live and not on that call’s stage (never idle is-disabled). */
-  const showCallGroup = () => voice.live() && !onStage();
+  /** 049: call group whenever live (mesa or off-stage); never idle is-disabled. */
+  const showCallGroup = () => voice.live();
+  const listenOnly = () => voice.permission() === "listen";
+
+  createEffect(() => {
+    if (!voice.live()) {
+      setBlurSupported(null);
+      return;
+    }
+    void loadVoiceRuntime()
+      .then((rt) => setBlurSupported(rt.supportsCameraBlur()))
+      .catch(() => setBlurSupported(false));
+  });
 
   function openAccount() {
     setAccountOpen(true);
@@ -48,13 +51,21 @@ export default function UserPanel(props: Props): JSX.Element {
 
   async function selectBlurMode(next: CameraBlurMode) {
     setBlurMenuOpen(false);
-    if (next !== "off" && !supportsCameraBlur()) return;
+    let rt;
+    try {
+      rt = await loadVoiceRuntime();
+    } catch {
+      return;
+    }
+    const supported = rt.supportsCameraBlur();
+    setBlurSupported(supported);
+    if (next !== "off" && !supported) return;
     writeBlurMode(next);
     setBlurMode(next);
     const track = voice.localCamTrack();
     if (!track || !voice.live()) return;
     try {
-      await applyBlurMode(track, next);
+      await rt.applyBlurMode(track, next);
     } catch {
       /* panel path: ignore blur apply errors */
     }
@@ -109,8 +120,9 @@ export default function UserPanel(props: Props): JSX.Element {
               "is-speaking":
                 voice.micOn() && voice.speakingAccountIds().has(props.me.id),
             }}
+            disabled={listenOnly()}
             aria-label={voice.micOn() ? "Microfone ligado" : "Microfone desligado"}
-            title={voice.micOn() ? "Microfone ligado" : "Microfone desligado"}
+            title={listenOnly() ? "Sem permissão para falar" : voice.micOn() ? "Microfone ligado" : "Microfone desligado"}
             onClick={() => void voice.toggleMic()}
           >
             <Show when={voice.micOn()} fallback={<IconMicOffFilled size={PANEL_CALL_ICON} />}>
@@ -134,8 +146,9 @@ export default function UserPanel(props: Props): JSX.Element {
             <button
               type="button"
               class="btn btn-secondary call-ctrl call-ctrl-icon user-panel-ctrl"
+              disabled={listenOnly()}
               aria-label={voice.camOn() ? "Câmera ligada" : "Câmera desligada"}
-              title={voice.camOn() ? "Câmera ligada" : "Câmera desligada"}
+              title={listenOnly() ? "Sem permissão para publicar vídeo" : voice.camOn() ? "Câmera ligada" : "Câmera desligada"}
               onClick={() => void voice.toggleCam()}
             >
               <Show when={voice.camOn()} fallback={<IconCameraOffFilled size={PANEL_CALL_ICON} />}>
@@ -146,15 +159,16 @@ export default function UserPanel(props: Props): JSX.Element {
               type="button"
               class="btn btn-secondary call-ctrl-chevron"
               data-blur={blurMode() === "off" ? "off" : "on"}
+              disabled={listenOnly()}
               aria-haspopup="menu"
               aria-expanded={blurMenuOpen()}
               aria-label={blurMode() === "off" ? "Fundo: sem blur" : "Fundo: blur ligado"}
               title={
                 blurMode() === "off"
                   ? "Fundo: sem blur"
-                  : supportsCameraBlur()
-                    ? "Fundo: blur ligado"
-                    : BLUR_UNAVAILABLE
+                  : blurSupported() === false
+                    ? BLUR_UNAVAILABLE_MSG
+                    : "Fundo: blur ligado"
               }
               onClick={() => setBlurMenuOpen(!blurMenuOpen())}
             >
