@@ -14,12 +14,13 @@ import {
 } from "../api/client";
 import type { WsEnvelope } from "../api/ws";
 import IdentityAvatar from "./IdentityAvatar";
+import { systemRoleLabel, t } from "../i18n";
 import { errorMessage } from "../lib/apiError";
 import { memberHasCapability } from "../lib/capabilities";
 
 type Props = {
   serverId: string | null;
-  /** Active text/voice channel — enables Silenciar when set. */
+  /** Active text/voice channel — enables mute when set. */
   channelId: string | null;
   meId: string;
   onWs?: (handler: (msg: WsEnvelope) => void) => () => void;
@@ -49,12 +50,14 @@ function formatEndsAt(iso: string): string {
 
 function remainingLabel(endsAt: string): string {
   const ms = new Date(endsAt).getTime() - Date.now();
-  if (ms <= 0) return "expirado";
+  if (ms <= 0) return t("members.expired");
   const mins = Math.ceil(ms / 60_000);
-  if (mins < 60) return `~${mins} min`;
+  if (mins < 60) return t("members.remainingMins", { n: mins });
   const hours = Math.floor(mins / 60);
   const rem = mins % 60;
-  return rem > 0 ? `~${hours}h ${rem}m` : `~${hours}h`;
+  return rem > 0
+    ? t("members.remainingHoursMins", { h: hours, m: rem })
+    : t("members.remainingHours", { h: hours });
 }
 
 type RoleBucket = { key: string; label: string; members: ServerMember[] };
@@ -162,23 +165,26 @@ export default function MembersPanel(props: Props) {
     });
   });
 
-  function roleOf(accountId: string): { id: string; name: string } | null {
-    const role = (roles() ?? []).find((r) => r.member_ids.includes(accountId));
-    return role ? { id: role.id, name: role.name } : null;
+  function roleOf(accountId: string): ServerRole | null {
+    return (roles() ?? []).find((r) => r.member_ids.includes(accountId)) ?? null;
   }
 
   function buckets(list: ServerMember[]): RoleBucket[] {
     const order = roles() ?? [];
     const map = new Map<string, RoleBucket>();
     for (const role of order) {
-      map.set(role.id, { key: role.id, label: role.name, members: [] });
+      map.set(role.id, { key: role.id, label: systemRoleLabel(role), members: [] });
     }
-    map.set("__none__", { key: "__none__", label: "Sem papel", members: [] });
+    map.set("__none__", { key: "__none__", label: t("members.noRole"), members: [] });
     for (const m of list) {
       const r = roleOf(m.account_id);
       const key = r?.id ?? "__none__";
       if (!map.has(key)) {
-        map.set(key, { key, label: r?.name ?? "Sem papel", members: [] });
+        map.set(key, {
+          key,
+          label: r ? systemRoleLabel(r) : t("members.noRole"),
+          members: [],
+        });
       }
       map.get(key)!.members.push(m);
     }
@@ -194,7 +200,9 @@ export default function MembersPanel(props: Props) {
 
   async function kick(member: ServerMember) {
     const serverId = props.serverId;
-    if (!serverId || !window.confirm(`Remover ${member.handle} do servidor?`)) return;
+    if (!serverId || !window.confirm(t("members.removeConfirm", { handle: member.handle }))) {
+      return;
+    }
     await kickServerMember(serverId, member.account_id);
     await refetch();
     window.dispatchEvent(new CustomEvent("mesa:servers-refresh"));
@@ -222,7 +230,7 @@ export default function MembersPanel(props: Props) {
         new CustomEvent("mesa:channel-mute", { detail: { channelId, accountId: target.account_id } }),
       );
     } catch (err) {
-      setMuteError(errorMessage(err, "Não foi possível silenciar"));
+      setMuteError(errorMessage(err, t("members.muteFail")));
     } finally {
       setMuteBusy(false);
     }
@@ -240,7 +248,7 @@ export default function MembersPanel(props: Props) {
         new CustomEvent("mesa:channel-mute", { detail: { channelId, accountId: member.account_id } }),
       );
     } catch (err) {
-      setMuteError(errorMessage(err, "Não foi possível levantar o silêncio"));
+      setMuteError(errorMessage(err, t("members.unmuteFail")));
     } finally {
       setMuteBusy(false);
     }
@@ -253,7 +261,7 @@ export default function MembersPanel(props: Props) {
         <h3 class="members-status-title">
           {title} <span class="members-status-count">{list.length}</span>
         </h3>
-        <For each={groups} fallback={<p class="members-panel-status">Ninguém</p>}>
+        <For each={groups} fallback={<p class="members-panel-status">{t("members.nobody")}</p>}>
           {(group) => (
             <div class="members-role-group">
               <h4 class="members-role-title">{group.label}</h4>
@@ -278,32 +286,34 @@ export default function MembersPanel(props: Props) {
                                 <button
                                   type="button"
                                   class="btn btn-ghost members-mute"
-                                  aria-label={`Silenciar ${m.handle}`}
-                                  title="Silenciar neste canal"
+                                  aria-label={t("members.muteAria", { handle: m.handle })}
+                                  title={t("members.muteTitle")}
                                   disabled={muteBusy()}
                                   onClick={() => {
                                     setMuteError("");
                                     setMuteTarget(m);
                                   }}
                                 >
-                                  Silenciar
+                                  {t("members.mute")}
                                 </button>
                               }
                             >
                               {(mute) => (
                                 <>
                                   <span class="members-mute-remaining" title={formatEndsAt(mute().ends_at)}>
-                                    Silenciado {remainingLabel(mute().ends_at)}
+                                    {t("members.mutedLabel", {
+                                      remaining: remainingLabel(mute().ends_at),
+                                    })}
                                   </span>
                                   <button
                                     type="button"
                                     class="btn btn-ghost members-unmute"
-                                    aria-label={`Levantar silêncio de ${m.handle}`}
-                                    title="Levantar silêncio"
+                                    aria-label={t("members.unmuteAria", { handle: m.handle })}
+                                    title={t("members.unmuteTitle")}
                                     disabled={muteBusy()}
                                     onClick={() => void unmute(m)}
                                   >
-                                    Levantar
+                                    {t("members.unmute")}
                                   </button>
                                 </>
                               )}
@@ -317,11 +327,11 @@ export default function MembersPanel(props: Props) {
                             <button
                               type="button"
                               class="btn btn-ghost members-kick"
-                              aria-label={`Remover ${m.handle}`}
-                              title="Remover do servidor"
+                              aria-label={t("members.removeAria", { handle: m.handle })}
+                              title={t("members.removeTitle")}
                               onClick={() => void kick(m)}
                             >
-                              Remover
+                              {t("members.remove")}
                             </button>
                           </Show>
                         </div>
@@ -338,27 +348,27 @@ export default function MembersPanel(props: Props) {
   }
 
   return (
-    <aside class="members-panel" aria-label="Membros">
+    <aside class="members-panel" aria-label={t("members.title")}>
       <div class="members-panel-header">
-        <h2 class="members-panel-title">Membros</h2>
+        <h2 class="members-panel-title">{t("members.title")}</h2>
         <button
           type="button"
           class="btn btn-ghost btn-icon"
-          aria-label="Fechar membros"
+          aria-label={t("members.close")}
           onClick={() => closeMembersPanel()}
         >
           ×
         </button>
       </div>
       <Show when={!props.serverId}>
-        <p class="members-panel-status">Sem servidor seleccionado</p>
+        <p class="members-panel-status">{t("members.noServer")}</p>
       </Show>
       <Show when={props.serverId && members.loading}>
-        <p class="members-panel-status">A carregar…</p>
+        <p class="members-panel-status">{t("common.loading")}</p>
       </Show>
       <Show when={props.serverId && members.error}>
         <p class="error members-panel-status">
-          {errorMessage(members.error, "Não foi possível carregar membros")}
+          {errorMessage(members.error, t("members.loadFail"))}
         </p>
       </Show>
       <Show when={muteError()}>
@@ -366,8 +376,8 @@ export default function MembersPanel(props: Props) {
       </Show>
       <Show when={props.serverId && !members.loading && !members.error}>
         <div class="members-roster">
-          {renderSection("Online", onlineMembers())}
-          {renderSection("Offline", offlineMembers())}
+          {renderSection(t("members.online"), onlineMembers())}
+          {renderSection(t("members.offline"), offlineMembers())}
         </div>
       </Show>
 
@@ -380,8 +390,10 @@ export default function MembersPanel(props: Props) {
             aria-labelledby="members-mute-title"
           >
             <div class="members-mute-dialog-card">
-              <h3 id="members-mute-title">Silenciar {target().handle}</h3>
-              <p class="muted">Durante quanto tempo neste canal?</p>
+              <h3 id="members-mute-title">
+                {t("members.muteDialogTitle", { handle: target().handle })}
+              </h3>
+              <p class="muted">{t("members.muteDialogHint")}</p>
               <div class="members-mute-presets">
                 <For each={[...MUTE_PRESETS]}>
                   {(mins) => (
@@ -391,14 +403,14 @@ export default function MembersPanel(props: Props) {
                       disabled={muteBusy()}
                       onClick={() => void applyMute(mins)}
                     >
-                      {mins} min
+                      {t("members.muteMins", { n: mins })}
                     </button>
                   )}
                 </For>
               </div>
               <div class="members-mute-custom">
                 <label>
-                  Personalizado (min)
+                  {t("members.customMins")}
                   <input
                     type="number"
                     min={1}
@@ -414,13 +426,13 @@ export default function MembersPanel(props: Props) {
                   onClick={() => {
                     const n = Number.parseInt(customMinutes(), 10);
                     if (!Number.isFinite(n) || n < 1 || n > 1440) {
-                      setMuteError("Duração entre 1 e 1440 minutos");
+                      setMuteError(t("members.durationRange"));
                       return;
                     }
                     void applyMute(n);
                   }}
                 >
-                  Aplicar
+                  {t("common.apply")}
                 </button>
               </div>
               <button
@@ -429,7 +441,7 @@ export default function MembersPanel(props: Props) {
                 disabled={muteBusy()}
                 onClick={() => setMuteTarget(null)}
               >
-                Cancelar
+                {t("common.cancel")}
               </button>
             </div>
           </div>

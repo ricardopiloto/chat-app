@@ -9,6 +9,7 @@ import {
 import { useNavigate } from "@solidjs/router";
 import { RoomEvent, Track, type LocalTrack, type RemoteTrack } from "livekit-client";
 import { attachRemote } from "../video/liveClient";
+import { t } from "../i18n";
 import { safePlay } from "../lib/safeMedia";
 import {
   CORNER_CLASS,
@@ -30,9 +31,9 @@ function collectCameraTiles(
     out.push({ id: "local", kind: "local", track: localCam });
   } else if (room?.localParticipant) {
     for (const pub of room.localParticipant.videoTrackPublications.values()) {
-      const t = pub.track;
-      if (t && pub.source === Track.Source.Camera) {
-        out.push({ id: `local:${pub.trackSid}`, kind: "local", track: t });
+      const track = pub.track;
+      if (track && pub.source === Track.Source.Camera) {
+        out.push({ id: `local:${pub.trackSid}`, kind: "local", track });
         break;
       }
     }
@@ -40,10 +41,10 @@ function collectCameraTiles(
   if (room) {
     for (const p of room.remoteParticipants.values()) {
       for (const pub of p.videoTrackPublications.values()) {
-        const t = pub.track;
-        if (!t || pub.source !== Track.Source.Camera) continue;
-        if (t.kind !== Track.Kind.Video) continue;
-        out.push({ id: `${p.identity}:${pub.trackSid}`, kind: "remote", track: t as RemoteTrack });
+        const track = pub.track;
+        if (!track || pub.source !== Track.Source.Camera) continue;
+        if (track.kind !== Track.Kind.Video) continue;
+        out.push({ id: `${p.identity}:${pub.trackSid}`, kind: "remote", track: track as RemoteTrack });
       }
     }
   }
@@ -205,7 +206,7 @@ export default function FloatingVoicePip(): JSX.Element {
     setDragPos(null);
   }
 
-  const name = () => voice.channelName() ?? "Chamada";
+  const name = () => voice.channelName() ?? t("shell.call");
   const timer = () => voiceDurationLabel(voice.callStartedAt(), voice.now());
   const cornerClass = () => CORNER_CLASS[voice.pipCorner()];
 
@@ -234,7 +235,7 @@ export default function FloatingVoicePip(): JSX.Element {
       style={rootStyle()}
       ref={(el) => (rootEl = el)}
       role="region"
-      aria-label={`Chamada em miniatura: ${name()}`}
+      aria-label={t("shell.pipAria", { name: name() })}
     >
       <div
         class="voice-pip-header"
@@ -246,10 +247,10 @@ export default function FloatingVoicePip(): JSX.Element {
         <div class="voice-pip-title">
           <span>{name()}</span>
           <Show when={timer()}>
-            {(t) => (
+            {(dur) => (
               <span class="voice-pip-timer" aria-live="off">
                 {" "}
-                · {t()}
+                · {dur()}
               </span>
             )}
           </Show>
@@ -260,7 +261,7 @@ export default function FloatingVoicePip(): JSX.Element {
         fallback={
           <div class="voice-pip-fallback">
             <strong>{name()}</strong>
-            <span>Em chamada</span>
+            <span>{t("shell.inCall")}</span>
           </div>
         }
       >
@@ -291,13 +292,13 @@ export default function FloatingVoicePip(): JSX.Element {
           onPointerDown={stopActionPointer}
           onClick={() => goToStage()}
         >
-          Voltar à mesa
+          {t("shell.backToStage")}
         </button>
         <button
           type="button"
           class="btn btn-danger voice-pip-hangup"
-          aria-label="Sair da chamada"
-          title="Sair da chamada"
+          aria-label={t("shell.leaveCall")}
+          title={t("shell.leaveCall")}
           onPointerDown={stopActionPointer}
           onClick={() => void voice.hangup()}
         >

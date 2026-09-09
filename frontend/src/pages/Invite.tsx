@@ -6,6 +6,7 @@ import AuthShell from "../components/AuthShell";
 import IconAt from "../components/icons/IconAt";
 import { IconEyeOff, IconEyeOpen } from "../components/icons/IconEye";
 import { IconLockClosed } from "../components/icons/IconLock";
+import { t } from "../i18n";
 import { errorMessage } from "../lib/apiError";
 
 type Props = {
@@ -16,7 +17,7 @@ type Props = {
 function inviteFailureMessage(err: unknown): string {
   if (err instanceof ApiError) {
     if (err.status === 404 || err.status === 410 || err.status === 403) {
-      return "Este convite expirou, esgotou os usos ou já não é válido.";
+      return t("invite.invalid");
     }
     return err.message;
   }
@@ -69,18 +70,18 @@ export default function Invite(props: Props) {
         when={!preview.error}
         fallback={<p class="error">{inviteFailureMessage(preview.error)}</p>}
       >
-        <Show when={preview()} fallback={<p class="muted">A carregar convite…</p>}>
+        <Show when={preview()} fallback={<p class="muted">{t("invite.loading")}</p>}>
           {(p) => (
             <>
-              <h1>Convite</h1>
+              <h1>{t("invite.title")}</h1>
               <p>
-                Entrar em <strong>{p().server_name}</strong>
+                {t("invite.join")} <strong>{p().server_name}</strong>
               </p>
-              <p class="muted">{p().include_history ? "Inclui histórico" : "Sem histórico anterior"}</p>
+              <p class="muted">{p().include_history ? t("invite.withHistory") : t("invite.noHistory")}</p>
               <form onSubmit={accept} class="auth-actions">
                 <Show when={!props.me}>
                   <div class="field">
-                    <label for="inv-handle">Seu identificador</label>
+                    <label for="inv-handle">{t("auth.handleLabel")}</label>
                     <div class="input-affix">
                       <span class="input-affix-icon" aria-hidden="true">
                         <IconAt />
@@ -90,15 +91,15 @@ export default function Invite(props: Props) {
                         class="input"
                         required
                         autocomplete="username"
-                        placeholder="@ seu_handle"
+                        placeholder={t("auth.handlePlaceholder")}
                         value={handle()}
                         onInput={(e) => setHandle(e.currentTarget.value)}
                       />
                     </div>
-                    <p class="auth-field-hint">Este será o seu @handle nesta instância.</p>
+                    <p class="auth-field-hint">{t("auth.handleHint")}</p>
                   </div>
                   <div class="field">
-                    <label for="inv-password">Senha</label>
+                    <label for="inv-password">{t("auth.passwordLabel")}</label>
                     <div class="input-affix">
                       <span class="input-affix-icon" aria-hidden="true">
                         <IconLockClosed size={18} />
@@ -110,14 +111,14 @@ export default function Invite(props: Props) {
                         minLength={8}
                         autocomplete="new-password"
                         type={showPassword() ? "text" : "password"}
-                        placeholder="Sua senha"
+                        placeholder={t("auth.passwordPlaceholder")}
                         value={password()}
                         onInput={(e) => setPassword(e.currentTarget.value)}
                       />
                       <button
                         type="button"
                         class="input-affix-toggle"
-                        aria-label={showPassword() ? "Ocultar senha" : "Mostrar senha"}
+                        aria-label={showPassword() ? t("auth.hidePassword") : t("auth.showPassword")}
                         onClick={() => setShowPassword(!showPassword())}
                       >
                         <Show when={showPassword()} fallback={<IconEyeOpen />}>
@@ -128,7 +129,7 @@ export default function Invite(props: Props) {
                   </div>
                 </Show>
                 <button type="submit" class="btn auth-btn-primary btn-block">
-                  Aceitar convite
+                  {t("invite.accept")}
                 </button>
               </form>
             </>

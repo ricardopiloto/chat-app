@@ -13,6 +13,7 @@ import {
   trySetSlotCount,
   type SceneDraft,
 } from "../preferences/sceneDraft";
+import { t } from "../i18n";
 import { errorMessage } from "../lib/apiError";
 import { ConfirmDirty } from "./Dialog";
 import {
@@ -172,7 +173,7 @@ export default function SceneEditor(props: Props) {
           onClick={() => void save()}
           disabled={busy() || !isDirty(draft()) || !!reducePrompt()}
         >
-          Salvar cena
+          {t("scene.save")}
         </button>
       </div>
 
@@ -185,7 +186,7 @@ export default function SceneEditor(props: Props) {
             </p>
             <div class="row" style={{ gap: "8px" }}>
               <button type="button" class="btn btn-secondary" onClick={cancelReduce}>
-                Cancelar
+                {t("common.cancel")}
               </button>
               <button
                 type="button"
@@ -193,7 +194,7 @@ export default function SceneEditor(props: Props) {
                 disabled={p().selected.size !== p().delta}
                 onClick={confirmReduce}
               >
-                Remover seleccionados
+                {t("scene.removeSelected")}
               </button>
             </div>
           </div>
@@ -246,7 +247,7 @@ export default function SceneEditor(props: Props) {
 
         <div class="scene-editor-side">
           <div class="scene-editor-side-block scene-editor-side-block--slots">
-            <div class="scene-editor-side-heading">Câmeras na cena</div>
+            <div class="scene-editor-side-heading">{t("scene.cameras")}</div>
             <label class="field" style={{ "margin-bottom": "0" }}>
               <span class="muted" style={{ "font-size": "12px" }}>
                 Número de slots ({MIN_SCENE_SLOTS}–{MAX_SCENE_SLOTS})
@@ -263,7 +264,7 @@ export default function SceneEditor(props: Props) {
           </div>
 
           <div class="scene-editor-side-block scene-editor-side-block--layout">
-            <div class="scene-editor-side-heading">Layout da cena</div>
+            <div class="scene-editor-side-heading">{t("scene.layout")}</div>
             <div class="layout-list">
               <For each={LAYOUT_KEYS}>
                 {(key) => {

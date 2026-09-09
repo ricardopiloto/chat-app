@@ -8,6 +8,7 @@ import {
   putRolePositions,
   type ServerRole,
 } from "../api/client";
+import { systemRoleLabel, t } from "../i18n";
 import { errorMessage } from "../lib/apiError";
 import { runPanelAction } from "../lib/panelState";
 
@@ -114,34 +115,35 @@ export default function RolesManagePage() {
     navigate(`/servers/${serverId()}/settings/roles/${role.id}/permissions`);
   }
 
+  function displayName(role: ServerRole): string {
+    return systemRoleLabel(role);
+  }
+
   return (
     <div class="roles-manage-page main" role="main">
       <header class="roles-manage-header">
-        <h1 class="roles-manage-title">Perfis</h1>
-        <p class="muted">
-          Crie e configure papéis aqui. Atribua o papel de cada membro em Membros. Papéis mais
-          acima têm maior hierarquia.
-        </p>
+        <h1 class="roles-manage-title">{t("roles.title")}</h1>
+        <p class="muted">{t("roles.intro")}</p>
       </header>
       <form class="permission-create-row" onSubmit={(e) => void createRole(e)}>
         <input
           class="input"
           value={name()}
           onInput={(e) => setName(e.currentTarget.value)}
-          placeholder="Novo papel"
-          aria-label="Nome do papel"
+          placeholder={t("roles.newRole")}
+          aria-label={t("roles.nameLabel")}
         />
         <button type="submit" class="btn btn-primary" disabled={!name().trim() || saving()}>
-          Criar
+          {t("roles.create")}
         </button>
       </form>
       <div class="permission-list">
-        <For each={sortedRoles()} fallback={<p class="muted">Ainda não existem papéis.</p>}>
+        <For each={sortedRoles()} fallback={<p class="muted">{t("roles.empty")}</p>}>
           {(role) => (
             <section class="permission-card">
               <div class="permission-card-title">
                 <div class="permission-card-heading">
-                  <strong>{role.name}</strong>
+                  <strong>{displayName(role)}</strong>
                 </div>
                 <div class="permission-card-actions">
                   <Show when={canReorder(role)}>
@@ -149,7 +151,7 @@ export default function RolesManagePage() {
                       type="button"
                       class="btn btn-ghost"
                       disabled={!canMove(role, "up")}
-                      aria-label={`Subir ${role.name}`}
+                      aria-label={t("roles.moveUp", { name: displayName(role) })}
                       onClick={() => void moveRole(role, "up")}
                     >
                       ↑
@@ -158,7 +160,7 @@ export default function RolesManagePage() {
                       type="button"
                       class="btn btn-ghost"
                       disabled={!canMove(role, "down")}
-                      aria-label={`Descer ${role.name}`}
+                      aria-label={t("roles.moveDown", { name: displayName(role) })}
                       onClick={() => void moveRole(role, "down")}
                     >
                       ↓
@@ -169,11 +171,11 @@ export default function RolesManagePage() {
                     class="btn btn-secondary"
                     onClick={() => openPermissions(role)}
                   >
-                    Permissões
+                    {t("roles.permissions")}
                   </button>
                   <Show when={!role.is_system}>
                     <button type="button" class="btn btn-ghost" onClick={() => void removeRole(role)}>
-                      Apagar
+                      {t("common.delete")}
                     </button>
                   </Show>
                 </div>

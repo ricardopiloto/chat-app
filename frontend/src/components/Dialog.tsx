@@ -1,5 +1,6 @@
 import { For, Show, createEffect, createSignal, onCleanup, type JSX } from "solid-js";
 import { Portal } from "solid-js/web";
+import { t } from "../i18n";
 
 type Props = {
   open: boolean;
@@ -59,34 +60,34 @@ export function ConfirmDirty(props: {
   return (
     <Dialog
       open={props.open}
-      title="Alterações por guardar"
+      title={t("dialog.dirtyTitle")}
       onClose={props.onCancel}
       actions={
         <>
           <button type="button" class="btn btn-secondary" onClick={props.onCancel}>
-            Cancelar
+            {t("common.cancel")}
           </button>
           <button type="button" class="btn btn-secondary" onClick={props.onDiscard}>
-            Descartar
+            {t("dialog.discard")}
           </button>
           <button type="button" class="btn btn-primary" onClick={props.onSave}>
-            Guardar
+            {t("common.save")}
           </button>
         </>
       }
     >
-      <p>O rascunho da cena tem alterações. Guardar no servidor, descartar, ou continuar a editar?</p>
+      <p>{t("dialog.dirtyBody")}</p>
     </Dialog>
   );
 }
 
 /** Simple copy feedback helper used by invite dialogs. */
 export function useCopiedFeedback() {
-  const [label, setLabel] = createSignal("Copiar");
+  const [label, setLabel] = createSignal(t("dialog.copy"));
   async function copy(text: string) {
     await navigator.clipboard.writeText(text).catch(() => undefined);
-    setLabel("Copiado");
-    window.setTimeout(() => setLabel("Copiar"), 1600);
+    setLabel(t("dialog.copied"));
+    window.setTimeout(() => setLabel(t("dialog.copy")), 1600);
   }
   return { label, copy };
 }

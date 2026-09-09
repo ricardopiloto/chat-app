@@ -1,22 +1,17 @@
-import { Show, createEffect, createSignal, type JSX } from "solid-js";
+import { Show, createSignal, type JSX } from "solid-js";
 import type { Account } from "../api/client";
 import AccountMenu from "../components/AccountMenu";
-import CameraBlurMenu from "../components/CameraBlurMenu";
 import IdentityAvatar from "../components/IdentityAvatar";
 import { IconCameraOffFilled, IconCameraOnFilled } from "../components/icons/IconCamera";
-import { IconChevronDown, IconChevronDownBlur } from "../components/icons/IconChevron";
 import { IconDeafenedFilled, IconDeafenOff } from "../components/icons/IconDeafen";
 import { IconMicOffFilled, IconMicOnFilled } from "../components/icons/IconMic";
 import { IconPhoneHangupFilled } from "../components/icons/IconPhoneHangup";
 import IconSettings from "../components/icons/IconSettings";
-import { readBlurMode, writeBlurMode, type CameraBlurMode } from "../blur/blurPreference";
-import { loadVoiceRuntime } from "../voice/loadRuntime";
+import { t } from "../i18n";
 import { useVoiceSession } from "../voice/VoiceSession";
 
 /** Panel call-control glyph size — mic is the visual base (042 FR-005). */
 const PANEL_CALL_ICON = 18;
-const PANEL_BLUR_CHEVRON = 14;
-const BLUR_UNAVAILABLE_MSG = "Blur de fundo não disponível";
 
 type Props = {
   me: Account;
@@ -27,48 +22,16 @@ type Props = {
 export default function UserPanel(props: Props): JSX.Element {
   const voice = useVoiceSession();
   const [accountOpen, setAccountOpen] = createSignal(false);
-  const [blurMode, setBlurMode] = createSignal<CameraBlurMode>(readBlurMode());
-  const [blurMenuOpen, setBlurMenuOpen] = createSignal(false);
-  const [blurSupported, setBlurSupported] = createSignal<boolean | null>(null);
 
-  /** 049: call group whenever live (mesa or off-stage); never idle is-disabled. */
-  const showCallGroup = () => voice.live();
   const listenOnly = () => voice.permission() === "listen";
-
-  createEffect(() => {
-    if (!voice.live()) {
-      setBlurSupported(null);
-      return;
-    }
-    void loadVoiceRuntime()
-      .then((rt) => setBlurSupported(rt.supportsCameraBlur()))
-      .catch(() => setBlurSupported(false));
-  });
+  /** 080: leave whenever live. */
+  const showLeave = () => voice.live();
+  /** Mic/cam disabled only for listen-only while permission known. */
+  const micDisabled = () => listenOnly();
+  const camDisabled = () => listenOnly();
 
   function openAccount() {
     setAccountOpen(true);
-  }
-
-  async function selectBlurMode(next: CameraBlurMode) {
-    setBlurMenuOpen(false);
-    let rt;
-    try {
-      rt = await loadVoiceRuntime();
-    } catch {
-      return;
-    }
-    const supported = rt.supportsCameraBlur();
-    setBlurSupported(supported);
-    if (next !== "off" && !supported) return;
-    writeBlurMode(next);
-    setBlurMode(next);
-    const track = voice.localCamTrack();
-    if (!track || !voice.live()) return;
-    try {
-      await rt.applyBlurMode(track, next);
-    } catch {
-      /* panel path: ignore blur apply errors */
-    }
   }
 
   return (
@@ -80,7 +43,7 @@ export default function UserPanel(props: Props): JSX.Element {
           onClick={openAccount}
           aria-expanded={accountOpen()}
           aria-haspopup="menu"
-          aria-label={`Conta: ${props.me.handle}`}
+          aria-label={`${t("account.menu")}: ${props.me.handle}`}
         >
           <span class="user-panel-avatar-wrap">
             <IdentityAvatar
@@ -89,18 +52,16 @@ export default function UserPanel(props: Props): JSX.Element {
               handle={props.me.handle}
               hasAvatar={!!props.me.has_avatar}
             />
-            <span class="user-panel-online" title="Online" aria-label="Online" />
+            <span
+              class="user-panel-online"
+              title={t("common.online")}
+              aria-label={t("common.online")}
+            />
           </span>
-          <span class="user-panel-handle">{props.me.handle}</span>
-        </button>
-        <button
-          type="button"
-          class="user-panel-settings"
-          aria-label="Definições da conta"
-          title="Definições da conta"
-          onClick={openAccount}
-        >
-          <IconSettings size={18} title="Definições" />
+          <span class="user-panel-text">
+            <span class="user-panel-handle">{props.me.handle}</span>
+            <span class="user-panel-status">{t("common.online")}</span>
+          </span>
         </button>
         <AccountMenu
           open={accountOpen()}
@@ -111,90 +72,87 @@ export default function UserPanel(props: Props): JSX.Element {
         />
       </div>
 
-      <Show when={showCallGroup()}>
-        <div class="user-panel-calls" role="group" aria-label="Controlos da chamada">
-          <button
-            type="button"
-            class="btn btn-secondary call-ctrl call-ctrl-icon user-panel-ctrl"
-            classList={{
-              "is-speaking":
-                voice.micOn() && voice.speakingAccountIds().has(props.me.id),
-            }}
-            disabled={listenOnly()}
-            aria-label={voice.micOn() ? "Microfone ligado" : "Microfone desligado"}
-            title={listenOnly() ? "Sem permissão para falar" : voice.micOn() ? "Microfone ligado" : "Microfone desligado"}
-            onClick={() => void voice.toggleMic()}
-          >
-            <Show when={voice.micOn()} fallback={<IconMicOffFilled size={PANEL_CALL_ICON} />}>
-              <IconMicOnFilled size={PANEL_CALL_ICON} />
-            </Show>
-          </button>
-
-          <button
-            type="button"
-            class="btn btn-secondary call-ctrl call-ctrl-icon user-panel-ctrl"
-            aria-label={voice.deafened() ? "Som da chamada desligado" : "Ensurdecer"}
-            title={voice.deafened() ? "Ouvir de novo" : "Ensurdecer"}
-            onClick={() => void voice.toggleDeafen()}
-          >
-            <Show when={voice.deafened()} fallback={<IconDeafenOff size={PANEL_CALL_ICON} />}>
-              <IconDeafenedFilled size={PANEL_CALL_ICON} />
-            </Show>
-          </button>
-
-          <div class="call-ctrl-split camera-blur-anchor user-panel-cam-split">
-            <button
-              type="button"
-              class="btn btn-secondary call-ctrl call-ctrl-icon user-panel-ctrl"
-              disabled={listenOnly()}
-              aria-label={voice.camOn() ? "Câmera ligada" : "Câmera desligada"}
-              title={listenOnly() ? "Sem permissão para publicar vídeo" : voice.camOn() ? "Câmera ligada" : "Câmera desligada"}
-              onClick={() => void voice.toggleCam()}
-            >
-              <Show when={voice.camOn()} fallback={<IconCameraOffFilled size={PANEL_CALL_ICON} />}>
-                <IconCameraOnFilled size={PANEL_CALL_ICON} />
-              </Show>
-            </button>
-            <button
-              type="button"
-              class="btn btn-secondary call-ctrl-chevron"
-              data-blur={blurMode() === "off" ? "off" : "on"}
-              disabled={listenOnly()}
-              aria-haspopup="menu"
-              aria-expanded={blurMenuOpen()}
-              aria-label={blurMode() === "off" ? "Fundo: sem blur" : "Fundo: blur ligado"}
-              title={
-                blurMode() === "off"
-                  ? "Fundo: sem blur"
-                  : blurSupported() === false
-                    ? BLUR_UNAVAILABLE_MSG
-                    : "Fundo: blur ligado"
-              }
-              onClick={() => setBlurMenuOpen(!blurMenuOpen())}
-            >
-              <Show when={blurMode() !== "off"} fallback={<IconChevronDown size={PANEL_BLUR_CHEVRON} />}>
-                <IconChevronDownBlur size={PANEL_BLUR_CHEVRON} />
-              </Show>
-            </button>
-            <CameraBlurMenu
-              open={blurMenuOpen()}
-              mode={blurMode()}
-              onClose={() => setBlurMenuOpen(false)}
-              onSelect={(m) => void selectBlurMode(m)}
-            />
-          </div>
-
+      <div class="user-panel-calls" role="group" aria-label={t("shell.callControls")}>
+        <Show when={showLeave()}>
           <button
             type="button"
             class="btn btn-danger call-ctrl call-ctrl-icon user-panel-ctrl user-panel-leave"
-            aria-label="Sair da chamada"
-            title="Sair da chamada"
+            aria-label={t("shell.leaveCall")}
+            title={t("shell.leaveCall")}
             onClick={() => void voice.hangup()}
           >
             <IconPhoneHangupFilled size={PANEL_CALL_ICON} />
           </button>
-        </div>
-      </Show>
+        </Show>
+
+        <button
+          type="button"
+          class="btn btn-secondary call-ctrl call-ctrl-icon user-panel-ctrl"
+          classList={{
+            "is-speaking":
+              voice.live() &&
+              voice.micOn() &&
+              voice.speakingAccountIds().has(props.me.id),
+          }}
+          disabled={micDisabled()}
+          aria-label={voice.micOn() ? t("shell.micOn") : t("shell.micOff")}
+          title={
+            listenOnly()
+              ? t("shell.noSpeakPermission")
+              : voice.micOn()
+                ? t("shell.micOn")
+                : t("shell.micOff")
+          }
+          onClick={() => void voice.toggleMic()}
+        >
+          <Show when={voice.micOn()} fallback={<IconMicOffFilled size={PANEL_CALL_ICON} />}>
+            <IconMicOnFilled size={PANEL_CALL_ICON} />
+          </Show>
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-secondary call-ctrl call-ctrl-icon user-panel-ctrl"
+          aria-label={voice.deafened() ? t("shell.callSoundOff") : t("shell.deafen")}
+          title={voice.deafened() ? t("shell.undeafen") : t("shell.deafen")}
+          onClick={() => void voice.toggleDeafen()}
+        >
+          <Show when={voice.deafened()} fallback={<IconDeafenOff size={PANEL_CALL_ICON} />}>
+            <IconDeafenedFilled size={PANEL_CALL_ICON} />
+          </Show>
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-secondary call-ctrl call-ctrl-icon user-panel-ctrl"
+          classList={{ "is-on": voice.camOn() }}
+          disabled={camDisabled()}
+          aria-pressed={voice.camOn()}
+          aria-label={voice.camOn() ? t("shell.camOn") : t("shell.camOff")}
+          title={
+            listenOnly()
+              ? t("shell.noVideoPermission")
+              : voice.camOn()
+                ? t("shell.camOn")
+                : t("shell.camOff")
+          }
+          onClick={() => void voice.toggleCam()}
+        >
+          <Show when={voice.camOn()} fallback={<IconCameraOffFilled size={PANEL_CALL_ICON} />}>
+            <IconCameraOnFilled size={PANEL_CALL_ICON} />
+          </Show>
+        </button>
+
+        <button
+          type="button"
+          class="user-panel-settings"
+          aria-label={t("shell.accountSettings")}
+          title={t("shell.accountSettings")}
+          onClick={openAccount}
+        >
+          <IconSettings size={18} title={t("shell.accountSettingsShort")} />
+        </button>
+      </div>
     </div>
   );
 }

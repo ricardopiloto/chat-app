@@ -4,10 +4,8 @@ export type ViewMode = "composition" | "grid";
 
 const VIEW_KEY = "mesa.viewMode";
 const STAGE_KEY = "mesa.stageMode";
-/** Preferred key for channels list drawer (055). */
+/* Preferred key for channels list drawer (055 / 078 always-expanded). */
 const CHANNELS_LIST_KEY = "mesa.channelsListExpanded";
-/** Legacy key — read fallback only. */
-const LEGACY_STAGE_CHANNELS_KEY = "mesa.stageChannelsExpanded";
 const MEMBERS_PANEL_KEY = "mesa.membersPanelOpen";
 
 export function readViewMode(): ViewMode {
@@ -21,28 +19,25 @@ export function writeViewMode(mode: ViewMode): void {
 }
 
 export function readStageMode(): boolean {
-  return readFlag(STAGE_KEY);
+  // 081: stage mode retired — always off
+  return false;
 }
 
-export function writeStageMode(on: boolean): void {
-  writeFlag(STAGE_KEY, on);
+export function writeStageMode(_on: boolean): void {
+  writeFlag(STAGE_KEY, false);
 }
 
 /**
  * Channels list drawer expanded (desktop rail+lista).
- * Reads `mesa.channelsListExpanded`, then legacy `mesa.stageChannelsExpanded`.
- * Default true (expanded) when neither key is set.
+ * 078: collapse deferred — always report expanded; ignore legacy stored false.
  */
 export function readChannelsListExpanded(): boolean {
-  const raw = readString(CHANNELS_LIST_KEY);
-  if (raw !== null) return raw === "1";
-  const legacy = readString(LEGACY_STAGE_CHANNELS_KEY);
-  if (legacy !== null) return legacy === "1";
   return true;
 }
 
-export function writeChannelsListExpanded(on: boolean): void {
-  writeFlag(CHANNELS_LIST_KEY, on);
+/** 078: force expanded; writing false still persists expanded (clears collapse intent). */
+export function writeChannelsListExpanded(_on: boolean): void {
+  writeFlag(CHANNELS_LIST_KEY, true);
 }
 
 /** @deprecated Prefer readChannelsListExpanded — alias for call sites. */

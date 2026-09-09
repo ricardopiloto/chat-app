@@ -3,11 +3,15 @@
  * Separators are emitted only for civil days that appear in the loaded rows —
  * calendar gaps (e.g. D1 then D3 with no D2 messages) never invent a D2 line.
  */
+import { t } from "../i18n";
 
 export type TimelineMessage = {
   id: string;
   sender: string;
   createdAt?: string;
+  /** When true, rendered as a centered system row (not a msg-group). */
+  system?: boolean;
+  text?: string;
 };
 
 export type DaySeparatorItem = {
@@ -23,24 +27,16 @@ export type MsgGroupItem<T extends TimelineMessage = TimelineMessage> = {
   items: T[];
 };
 
+export type SystemItem<T extends TimelineMessage = TimelineMessage> = {
+  kind: "system";
+  dayKey: string;
+  item: T;
+};
+
 export type TimelineItem<T extends TimelineMessage = TimelineMessage> =
   | DaySeparatorItem
-  | MsgGroupItem<T>;
-
-const PT_MONTHS = [
-  "Janeiro",
-  "Fevereiro",
-  "Março",
-  "Abril",
-  "Maio",
-  "Junho",
-  "Julho",
-  "Agosto",
-  "Setembro",
-  "Outubro",
-  "Novembro",
-  "Dezembro",
-] as const;
+  | MsgGroupItem<T>
+  | SystemItem<T>;
 
 /** Local civil day `YYYY-MM-DD`, or null if unparseable. */
 export function civilDayKey(date: Date | string): string | null {
@@ -67,24 +63,24 @@ function shiftDayKey(dayKey: string, deltaDays: number): string | null {
   return civilDayKey(d);
 }
 
-/** Absolute `DD Mês AAAA` (pt product months). */
+/** Absolute `DD Month YYYY` using active locale months. */
 export function formatAbsoluteDayLabel(dayKey: string): string {
   const d = parseDayKey(dayKey);
   if (!d) return dayKey;
   const dd = String(d.getDate()).padStart(2, "0");
-  const month = PT_MONTHS[d.getMonth()] ?? "";
+  const month = t(`day.months.${d.getMonth()}`);
   return `${dd} ${month} ${d.getFullYear()}`;
 }
 
 /**
- * Hoje / Ontem for local today/yesterday; otherwise absolute PT date.
+ * Today / Yesterday for local today/yesterday; otherwise absolute date.
  */
 export function formatDayLabel(dayKey: string, now: Date = new Date()): string {
   const today = civilDayKey(now);
   if (!today) return formatAbsoluteDayLabel(dayKey);
-  if (dayKey === today) return "Hoje";
+  if (dayKey === today) return t("day.today");
   const yesterday = shiftDayKey(today, -1);
-  if (yesterday && dayKey === yesterday) return "Ontem";
+  if (yesterday && dayKey === yesterday) return t("day.yesterday");
   return formatAbsoluteDayLabel(dayKey);
 }
 
@@ -124,6 +120,15 @@ export function buildTimeline<T extends TimelineMessage>(
     }
 
     const groupDay = dayKey ?? prevDay ?? "unknown";
+    if (row.system) {
+      flushGroup();
+      out.push({
+        kind: "system",
+        dayKey: groupDay,
+        item: row,
+      });
+      continue;
+    }
     if (openGroup && openGroup.sender === row.sender && openGroup.dayKey === groupDay) {
       openGroup.items.push(row);
     } else {

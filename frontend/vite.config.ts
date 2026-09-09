@@ -1,6 +1,13 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { defineConfig, createLogger } from "vite";
 import solid from "vite-plugin-solid";
 import basicSsl from "@vitejs/plugin-basic-ssl";
+
+const pkg = JSON.parse(
+  readFileSync(join(dirname(fileURLToPath(import.meta.url)), "package.json"), "utf-8"),
+) as { version: string };
 
 /**
  * Vite's built-in WS proxy always logs `ws proxy error:` on half-close races
@@ -34,6 +41,9 @@ export default defineConfig({
   plugins: [solid(), basicSsl()],
   clearScreen: false,
   customLogger: mesaDevLogger(),
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+  },
   build: {
     rollupOptions: {
       output: {

@@ -1,5 +1,6 @@
 import { For, Show } from "solid-js";
 import { serverImageUrl, type Server } from "../api/client";
+import { t } from "../i18n";
 
 type Props = {
   servers: Server[];
@@ -20,7 +21,7 @@ function initials(name: string): string {
 
 export default function ServerRail(props: Props) {
   return (
-    <nav class="server-rail" aria-label="Servidores">
+    <nav class="server-rail" aria-label={t("servers.title")}>
       <div class="server-rail-list">
         <For each={props.servers}>
           {(s) => (
@@ -35,8 +36,8 @@ export default function ServerRail(props: Props) {
               aria-label={
                 [
                   s.name,
-                  s.has_unread ? "mensagens não lidas" : null,
-                  s.has_voice ? "voz activa" : null,
+                  s.has_unread ? t("shell.unreadMessages") : null,
+                  s.has_voice ? t("shell.voiceActive") : null,
                 ]
                   .filter(Boolean)
                   .join(", ")
@@ -72,8 +73,8 @@ export default function ServerRail(props: Props) {
       <button
         type="button"
         class="server-rail-btn server-rail-create"
-        aria-label="Criar servidor"
-        title="Criar servidor"
+        aria-label={t("servers.create")}
+        title={t("servers.create")}
         onClick={() => props.onCreate?.()}
       >
         <span class="server-rail-glyph" aria-hidden="true">

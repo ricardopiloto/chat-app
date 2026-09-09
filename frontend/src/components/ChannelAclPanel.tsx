@@ -12,6 +12,7 @@ import {
   type ServerMember,
   type ServerRole,
 } from "../api/client";
+import { t } from "../i18n";
 import { errorMessage } from "../lib/apiError";
 import { runPanelAction } from "../lib/panelState";
 import Dialog from "./Dialog";
@@ -25,17 +26,13 @@ type Props = {
 
 const EVERYONE_SUBJECT_ID = "00000000-0000-0000-0000-000000000000";
 
-const LEVEL_LABELS: Record<ChannelAclEntry["level"], string> = {
-  read: "Ler",
-  write: "Escrever",
-  listen: "Ouvir",
-  speak: "Falar",
-};
+function levelLabel(level: ChannelAclEntry["level"]): string {
+  return t(`acl.level.${level}`);
+}
 
-const EFFECT_LABELS: Record<NonNullable<ChannelAclEntry["effect"]>, string> = {
-  allow: "Permitir",
-  deny: "Negar",
-};
+function effectLabel(effect: NonNullable<ChannelAclEntry["effect"]>): string {
+  return effect === "allow" ? t("acl.allow") : t("acl.deny");
+}
 
 type SubjectType = ChannelAclEntry["subject_type"];
 
@@ -191,10 +188,10 @@ export default function ChannelAclPanel(props: Props) {
       actions={
         <>
           <button type="button" class="btn btn-secondary" onClick={props.onClose}>
-            Cancelar
+            {t("common.cancel")}
           </button>
           <button type="button" class="btn btn-primary" disabled={saving()} onClick={() => void save()}>
-            Guardar
+            {t("common.save")}
           </button>
         </>
       }
@@ -268,8 +265,8 @@ export default function ChannelAclPanel(props: Props) {
           }
           aria-label="Efeito"
         >
-          <option value="allow">{EFFECT_LABELS.allow}</option>
-          <option value="deny">{EFFECT_LABELS.deny}</option>
+          <option value="allow">{effectLabel("allow")}</option>
+          <option value="deny">{effectLabel("deny")}</option>
         </select>
         <select
           class="input"
@@ -278,7 +275,7 @@ export default function ChannelAclPanel(props: Props) {
           aria-label="Nível"
         >
           <For each={availableLevels()}>
-            {(item) => <option value={item}>{LEVEL_LABELS[item]}</option>}
+            {(item) => <option value={item}>{levelLabel(item)}</option>}
           </For>
         </select>
         <button
@@ -304,12 +301,12 @@ export default function ChannelAclPanel(props: Props) {
                 {subjectTypeLabel(entry)}: {subjectLabel(entry)}
               </span>
               <span>
-                {EFFECT_LABELS[entry.effect ?? "allow"]} — {LEVEL_LABELS[entry.level]}
+                {effectLabel(entry.effect ?? "allow")} — {levelLabel(entry.level)}
               </span>
               <button
                 type="button"
                 class="btn btn-ghost"
-                aria-label={`Remover ${subjectLabel(entry)}`}
+                aria-label={t("acl.removeSubject", { name: subjectLabel(entry) })}
                 onClick={() => setEntries((prev) => prev.filter((item) => item !== entry))}
               >
                 ×
@@ -350,7 +347,7 @@ export default function ChannelAclPanel(props: Props) {
               </p>
               <p>
                 <strong>Nível efectivo:</strong>{" "}
-                {result().level != null ? LEVEL_LABELS[result().level!] : "—"}
+                {result().level != null ? levelLabel(result().level!) : "—"}
               </p>
               <ul class="permission-inspect-factors">
                 <For each={result().factors}>

@@ -1,6 +1,7 @@
 import type { JSX } from "solid-js";
 import { onMount } from "solid-js";
 import IconUsers from "./icons/IconUsers";
+import { APP_VERSION } from "../lib/appVersion";
 import { bootTheme } from "../theme/theme";
 
 type Props = {
@@ -41,6 +42,9 @@ export default function AuthShell(props: Props) {
                 Esta é uma instância self-hosted do Mesa. Não possui federação com outras
                 instâncias.
               </span>
+            </p>
+            <p class="app-version auth-app-version" aria-label={`Versão ${APP_VERSION}`}>
+              {APP_VERSION}
             </p>
           </div>
         </aside>

@@ -19,6 +19,7 @@ import Servers from "./pages/Servers";
 import EmptyServerPane from "./pages/EmptyServerPane";
 import Invite from "./pages/Invite";
 import { VoiceSessionProvider } from "./voice/VoiceSession";
+import { getLocale, t } from "./i18n";
 
 const ChannelRoute = lazy(() => import("./pages/ChannelRoute"));
 const RolePermissionsPage = lazy(() => import("./pages/RolePermissionsPage"));
@@ -26,10 +27,13 @@ const MembersManagePage = lazy(() => import("./pages/MembersManagePage"));
 const SettingsHomePage = lazy(() => import("./pages/SettingsHomePage"));
 const RolesManagePage = lazy(() => import("./pages/RolesManagePage"));
 const ServerImagePage = lazy(() => import("./pages/ServerImagePage"));
+const ServerWelcomePage = lazy(() => import("./pages/ServerWelcomePage"));
 const ServerDeletePage = lazy(() => import("./pages/ServerDeletePage"));
 
 function RouteFallback() {
-  return <p class="main muted">A carregar…</p>;
+  // Touch locale so Suspense fallback re-renders on language change.
+  void getLocale();
+  return <p class="main muted">{t("common.loading")}</p>;
 }
 
 function RedirectToSettingsMembers() {
@@ -174,7 +178,7 @@ export default function App() {
   }
 
   return (
-    <Show when={ready()} fallback={<p class="auth-screen muted">A carregar…</p>}>
+    <Show when={ready()} fallback={<p class="auth-screen muted">{t("common.loading")}</p>}>
       <Show
         when={me() && identity()}
         fallback={
@@ -324,6 +328,22 @@ export default function App() {
                 >
                   <Suspense fallback={<RouteFallback />}>
                     <ServerImagePage />
+                  </Suspense>
+                </AuthedShell>
+              )}
+            />
+            <Route
+              path="/servers/:serverId/settings/welcome"
+              component={() => (
+                <AuthedShell
+                  me={me()!}
+                  identity={identity()!}
+                  onLogout={() => void logout()}
+                  onAccountPatch={setMe}
+                  onWs={onWs}
+                >
+                  <Suspense fallback={<RouteFallback />}>
+                    <ServerWelcomePage />
                   </Suspense>
                 </AuthedShell>
               )}

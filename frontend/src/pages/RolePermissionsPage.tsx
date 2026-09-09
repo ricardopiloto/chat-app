@@ -7,89 +7,92 @@ import {
   type RoleCapabilities,
   type ServerRole,
 } from "../api/client";
+import { systemRoleLabel, t } from "../i18n";
 import { errorMessage } from "../lib/apiError";
 
 type CapKey = keyof RoleCapabilities;
 
 type CapDef = {
   key: CapKey;
-  title: string;
-  description: string;
-  section: "Geral" | "Texto" | "Voz / vídeo";
+  titleKey: string;
+  descKey: string;
+  sectionKey: string;
 };
 
 const CAP_DEFS: CapDef[] = [
   {
     key: "can_view_channels",
-    section: "Geral",
-    title: "Visualizar canal",
-    description:
-      "Permite ver canais. Em canais públicos todos os membros continuam a ver o canal; use privado + ACL para ocultar.",
+    sectionKey: "roles.caps.sectionGeneral",
+    titleKey: "roles.caps.viewChannelsTitle",
+    descKey: "roles.caps.viewChannelsDesc",
   },
   {
     key: "can_manage_channels",
-    section: "Geral",
-    title: "Gerenciar canal",
-    description: "Permite criar, editar ou apagar canais neste servidor.",
+    sectionKey: "roles.caps.sectionGeneral",
+    titleKey: "roles.caps.manageChannelsTitle",
+    descKey: "roles.caps.manageChannelsDesc",
   },
   {
     key: "can_manage_roles",
-    section: "Geral",
-    title: "Gerenciar papéis / cargos",
-    description: "Permite criar, editar e apagar papéis e atribuir membros a papéis.",
+    sectionKey: "roles.caps.sectionGeneral",
+    titleKey: "roles.caps.manageRolesTitle",
+    descKey: "roles.caps.manageRolesDesc",
   },
   {
     key: "can_create_invites",
-    section: "Geral",
-    title: "Criar convites",
-    description: "Permite gerar e gerir códigos de convite para este servidor.",
+    sectionKey: "roles.caps.sectionGeneral",
+    titleKey: "roles.caps.createInvitesTitle",
+    descKey: "roles.caps.createInvitesDesc",
   },
   {
     key: "can_remove_members",
-    section: "Geral",
-    title: "Remover membros",
-    description: "Permite remover (expulsar) outros membros do servidor.",
+    sectionKey: "roles.caps.sectionGeneral",
+    titleKey: "roles.caps.removeMembersTitle",
+    descKey: "roles.caps.removeMembersDesc",
   },
   {
     key: "can_mute_members",
-    section: "Geral",
-    title: "Silenciar membros",
-    description:
-      "Permite silenciar (timeout) membros num canal de texto por um período definido.",
+    sectionKey: "roles.caps.sectionGeneral",
+    titleKey: "roles.caps.muteMembersTitle",
+    descKey: "roles.caps.muteMembersDesc",
   },
   {
     key: "can_send_messages",
-    section: "Texto",
-    title: "Enviar mensagens",
-    description: "Permite enviar mensagens em canais de texto (sujeito também à ACL do canal).",
+    sectionKey: "roles.caps.sectionText",
+    titleKey: "roles.caps.sendMessagesTitle",
+    descKey: "roles.caps.sendMessagesDesc",
   },
   {
     key: "can_delete_messages",
-    section: "Texto",
-    title: "Apagar mensagens",
-    description: "Permite apagar mensagens de outros autores (o autor pode sempre apagar as próprias).",
+    sectionKey: "roles.caps.sectionText",
+    titleKey: "roles.caps.deleteMessagesTitle",
+    descKey: "roles.caps.deleteMessagesDesc",
   },
   {
     key: "can_attach_files",
-    section: "Texto",
-    title: "Anexar ficheiros",
-    description: "Permite carregar anexos / imagens nas mensagens de texto.",
+    sectionKey: "roles.caps.sectionText",
+    titleKey: "roles.caps.attachFilesTitle",
+    descKey: "roles.caps.attachFilesDesc",
   },
   {
     key: "can_connect_voice",
-    section: "Voz / vídeo",
-    title: "Entrar / ouvir",
-    description: "Permite entrar em canais de voz/vídeo e ouvir a chamada.",
+    sectionKey: "roles.caps.sectionVoice",
+    titleKey: "roles.caps.connectVoiceTitle",
+    descKey: "roles.caps.connectVoiceDesc",
   },
   {
     key: "can_speak_voice",
-    section: "Voz / vídeo",
-    title: "Falar",
-    description: "Permite transmitir microfone e câmara na chamada.",
+    sectionKey: "roles.caps.sectionVoice",
+    titleKey: "roles.caps.speakVoiceTitle",
+    descKey: "roles.caps.speakVoiceDesc",
   },
 ];
 
-const SECTIONS = ["Geral", "Texto", "Voz / vídeo"] as const;
+const SECTION_KEYS = [
+  "roles.caps.sectionGeneral",
+  "roles.caps.sectionText",
+  "roles.caps.sectionVoice",
+] as const;
 
 export default function RolePermissionsPage() {
   const params = useParams();
@@ -120,7 +123,7 @@ export default function RolePermissionsPage() {
           setDraft({ ...OPEN_ROLE_CAPABILITIES, ...found.capabilities });
           setDirty(false);
         } else {
-          setError("Papel não encontrado.");
+          setError(t("roles.notFound"));
         }
       })
       .catch((err) => setError(errorMessage(err)));
@@ -159,19 +162,24 @@ export default function RolePermissionsPage() {
     navigate(returnTo());
   }
 
+  const roleTitle = () => {
+    const r = role();
+    return r ? systemRoleLabel(r) : "…";
+  };
+
   return (
     <div class="role-permissions-page main" role="main">
       <header class="role-permissions-header">
         <div>
-          <p class="muted">Permissões do papel</p>
-          <h1>{role()?.name ?? "…"}</h1>
+          <p class="muted">{t("roles.permissionsOf")}</p>
+          <h1>{roleTitle()}</h1>
           <Show when={role()?.is_system}>
-            <p class="muted">Perfil de sistema — permissões apenas para consulta.</p>
+            <p class="muted">{t("roles.systemReadonly")}</p>
           </Show>
         </div>
         <div class="role-permissions-actions">
           <button type="button" class="btn btn-secondary" onClick={cancel}>
-            {role()?.is_system ? "Fechar" : "Cancelar"}
+            {role()?.is_system ? t("common.close") : t("common.cancel")}
           </button>
           <Show when={!role()?.is_system}>
             <button
@@ -180,22 +188,22 @@ export default function RolePermissionsPage() {
               disabled={!dirty() || saving() || !role()}
               onClick={() => void save()}
             >
-              Guardar
+              {t("common.save")}
             </button>
           </Show>
         </div>
       </header>
 
-      <For each={[...SECTIONS]}>
-        {(section) => (
+      <For each={[...SECTION_KEYS]}>
+        {(sectionKey) => (
           <section class="role-permissions-section">
-            <h2>{section}</h2>
-            <For each={CAP_DEFS.filter((d) => d.section === section)}>
+            <h2>{t(sectionKey)}</h2>
+            <For each={CAP_DEFS.filter((d) => d.sectionKey === sectionKey)}>
               {(def) => (
                 <div class="role-permission-row">
                   <div class="role-permission-copy">
-                    <strong>{def.title}</strong>
-                    <p class="muted">{def.description}</p>
+                    <strong>{t(def.titleKey)}</strong>
+                    <p class="muted">{t(def.descKey)}</p>
                   </div>
                   <label class="role-permission-toggle">
                     <input
@@ -204,7 +212,7 @@ export default function RolePermissionsPage() {
                       checked={draft()[def.key]}
                       disabled={!!role()?.is_system}
                       onChange={(e) => setCap(def.key, e.currentTarget.checked)}
-                      aria-label={def.title}
+                      aria-label={t(def.titleKey)}
                     />
                     <span class="role-permission-switch" aria-hidden="true" />
                   </label>

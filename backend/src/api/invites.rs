@@ -23,6 +23,9 @@ pub struct CreateInviteBody {
     #[serde(default)]
     pub expires_in_seconds: MaybeExpires,
     pub include_history: Option<bool>,
+    /// Required when server has no owner welcome destination and no text channel named `geral`.
+    #[serde(default)]
+    pub welcome_channel_id: Option<Uuid>,
 }
 
 #[derive(Debug, Default)]
@@ -87,6 +90,42 @@ pub async fn create_invite(
         MaybeExpires::Value(Some(secs)) => Some(Utc::now() + Duration::seconds(secs)),
     };
     let include_history = body.include_history.unwrap_or(false);
+    let needs_welcome =
+        crate::api::welcome::invite_requires_welcome_channel(&state.pool, server_id).await?;
+    let welcome_channel_id = if needs_welcome {
+        let channel_id = body.welcome_channel_id.ok_or_else(|| {
+            ApiError::bad_request(
+                "welcome_channel_id required when server has no welcome destination and no text channel named geral",
+            )
+        })?;
+        if !crate::api::welcome::validate_text_channel_on_server(
+            &state.pool,
+            server_id,
+            channel_id,
+        )
+        .await?
+        {
+            return Err(ApiError::bad_request(
+                "welcome_channel_id must be a text channel on this server",
+            ));
+        }
+        Some(channel_id)
+    } else if let Some(channel_id) = body.welcome_channel_id {
+        if !crate::api::welcome::validate_text_channel_on_server(
+            &state.pool,
+            server_id,
+            channel_id,
+        )
+        .await?
+        {
+            return Err(ApiError::bad_request(
+                "welcome_channel_id must be a text channel on this server",
+            ));
+        }
+        Some(channel_id)
+    } else {
+        None
+    };
     let mut bytes = [0u8; 18];
     rand::thread_rng().fill_bytes(&mut bytes);
     let code = hex::encode(bytes);
@@ -99,6 +138,7 @@ pub async fn create_invite(
         include_history,
         revoked_at: None,
         use_count: 0,
+        welcome_channel_id,
     };
     db::invite::create(&state.pool, &invite).await?;
     Ok((StatusCode::CREATED, Json(invite.public())))

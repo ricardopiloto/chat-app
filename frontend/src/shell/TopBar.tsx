@@ -11,6 +11,8 @@ import IconSearch from "../components/icons/IconSearch";
 import IconSun from "../components/icons/IconSun";
 import IconSystem from "../components/icons/IconSystem";
 import SearchPanel from "../components/SearchPanel";
+import { t } from "../i18n";
+import { APP_VERSION } from "../lib/appVersion";
 import { channelDisplayName, formatNotifWhen } from "../lib/notifFormat";
 import {
   NOTIF_MESSAGE_READ_EVENT,
@@ -53,9 +55,9 @@ type SessionPanelRow =
 const inflight = new Map<string, Promise<void>>();
 
 function preferenceLabel(pref: ThemePreference): string {
-  if (pref === "light") return "Tema claro";
-  if (pref === "dark") return "Tema escuro";
-  return "Tema: sistema";
+  if (pref === "light") return t("shell.themeLight");
+  if (pref === "dark") return t("shell.themeDark");
+  return t("shell.themeSystem");
 }
 
 function buildSessionRows(): SessionPanelRow[] {
@@ -250,14 +252,19 @@ export default function TopBar(props: Props) {
           type="button"
           class="menu-toggle"
           onClick={() => props.onMenuToggle?.()}
-          aria-label="Canais"
+          aria-label={t("shell.channels")}
         >
-          <IconMenu title="Canais" size={20} />
+          <IconMenu title={t("shell.channels")} size={20} />
         </button>
       </Show>
       <div class="topbar-brand" aria-label="Mesa">
         <img class="topbar-mark" src="/mesa-logo.png" alt="" width={28} height={28} />
-        <span class="topbar-name">Mesa</span>
+        <div class="topbar-brand-text">
+          <span class="topbar-name">Mesa</span>
+          <span class="app-version topbar-version" aria-label={`Versão ${APP_VERSION}`}>
+            {APP_VERSION}
+          </span>
+        </div>
       </div>
       <span class="topbar-instance">{instanceLabel()}</span>
       <div class="topbar-actions">
@@ -265,11 +272,11 @@ export default function TopBar(props: Props) {
           <button
             type="button"
             class="topbar-icon-btn topbar-settings-close"
-            aria-label="Fechar configurações"
-            title="Fechar configurações"
+            aria-label={t("shell.closeSettings")}
+            title={t("shell.closeSettings")}
             onClick={() => props.onExitSettings?.()}
           >
-            <IconClose title="Fechar configurações" size={20} />
+            <IconClose title={t("shell.closeSettings")} size={20} />
           </button>
         </Show>
         <Show
@@ -278,10 +285,10 @@ export default function TopBar(props: Props) {
             <button
               type="button"
               class="topbar-icon-btn"
-              aria-label="Pesquisar"
+              aria-label={t("common.search")}
               onClick={() => openSearch(null)}
             >
-              <IconSearch title="Pesquisar" size={20} />
+              <IconSearch title={t("common.search")} size={20} />
             </button>
           }
         >
@@ -301,11 +308,11 @@ export default function TopBar(props: Props) {
           <button
             type="button"
             class="topbar-icon-btn"
-            aria-label="Notificações"
+            aria-label={t("shell.notifications")}
             aria-expanded={notifOpen()}
             onClick={() => setNotifOpen((v) => !v)}
           >
-            <IconBell title="Notificações" size={24} />
+            <IconBell title={t("shell.notifications")} size={24} />
             <Show when={showNotifBadge()}>
               <span class="topbar-notif-dot" aria-hidden="true" />
             </Show>
@@ -319,12 +326,12 @@ export default function TopBar(props: Props) {
                     class="topbar-notif-clear"
                     onClick={() => void onClearAll()}
                   >
-                    Limpar
+                    {t("common.clear")}
                   </button>
                 </div>
               </Show>
               <Show when={durableNotifs().length > 0}>
-                <p class="muted topbar-notif-section">Menções e respostas</p>
+                <p class="muted topbar-notif-section">{t("shell.mentionsReplies")}</p>
                 <ul class="topbar-notif-list">
                   <For each={durableNotifs()}>
                     {(n) => {
@@ -352,7 +359,7 @@ export default function TopBar(props: Props) {
                   class="muted topbar-notif-section"
                   classList={{ "topbar-notif-section-spaced": durableNotifs().length > 0 }}
                 >
-                  Canais com mensagens novas:
+                  {t("shell.channelsWithNew")}
                 </p>
                 <ul class="topbar-notif-list">
                   <For each={sessionRows()}>
@@ -366,7 +373,7 @@ export default function TopBar(props: Props) {
                               onClick={() => setNotifOpen(false)}
                             >
                               <span class="topbar-notif-channel">{labelForChannel(row.channelId)}</span>
-                              <span class="topbar-notif-when">5+ notificações pendentes</span>
+                              <span class="topbar-notif-when">{t("topbar.pendingPlus")}</span>
                             </A>
                           </li>
                         );
@@ -391,7 +398,7 @@ export default function TopBar(props: Props) {
                 </ul>
               </Show>
               <Show when={!showNotifBadge()}>
-                <p class="muted">Sem atividade nova nesta sessão.</p>
+                <p class="muted">{t("shell.noActivity")}</p>
               </Show>
             </div>
           </Show>
@@ -404,13 +411,13 @@ export default function TopBar(props: Props) {
           onClick={cycleTheme}
         >
           <Show when={themePref() === "light"}>
-            <IconSun title="Tema claro" size={20} />
+            <IconSun title={t("shell.themeLight")} size={20} />
           </Show>
           <Show when={themePref() === "dark"}>
-            <IconMoon title="Tema escuro" size={20} />
+            <IconMoon title={t("shell.themeDark")} size={20} />
           </Show>
           <Show when={themePref() === "system"}>
-            <IconSystem title="Tema: sistema" size={20} />
+            <IconSystem title={t("shell.themeSystem")} size={20} />
           </Show>
         </button>
       </div>

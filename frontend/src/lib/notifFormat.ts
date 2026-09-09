@@ -1,21 +1,5 @@
+import { t } from "../i18n";
 import { civilDayKey } from "./daySeparators";
-
-const PT_MONTH_SHORT = [
-  "jan",
-  "fev",
-  "mar",
-  "abr",
-  "mai",
-  "jun",
-  "jul",
-  "ago",
-  "set",
-  "out",
-  "nov",
-  "dez",
-] as const;
-
-const FALLBACK_CHANNEL = "Canal indisponível";
 
 function pad2(n: number): string {
   return String(n).padStart(2, "0");
@@ -35,14 +19,14 @@ function shiftCivilDay(dayKey: string, deltaDays: number): string | null {
 
 /** Channel label for notif rows: `#name`, or short fallback (no long UUID). */
 export function channelDisplayName(name: string | null | undefined): string {
-  const t = name?.trim();
-  if (t) return t.startsWith("#") ? t : `#${t}`;
-  return FALLBACK_CHANNEL;
+  const raw = name?.trim();
+  if (raw) return raw.startsWith("#") ? raw : `#${raw}`;
+  return t("notif.channelUnavailable");
 }
 
 /**
  * Local relative/short datetime for notification rows:
- * Hoje HH:MM | Ontem HH:MM | DD mmm HH:MM
+ * Today HH:MM | Yesterday HH:MM | DD mmm HH:MM
  */
 export function formatNotifWhen(iso: string, now: Date = new Date()): string {
   if (!iso?.trim()) return "";
@@ -52,10 +36,10 @@ export function formatNotifWhen(iso: string, now: Date = new Date()): string {
   const today = civilDayKey(now);
   if (!dayKey || !today) return formatHm(d);
   const hm = formatHm(d);
-  if (dayKey === today) return `Hoje ${hm}`;
+  if (dayKey === today) return `${t("day.today")} ${hm}`;
   const yesterday = shiftCivilDay(today, -1);
-  if (yesterday && dayKey === yesterday) return `Ontem ${hm}`;
+  if (yesterday && dayKey === yesterday) return `${t("day.yesterday")} ${hm}`;
   const dd = pad2(d.getDate());
-  const mon = PT_MONTH_SHORT[d.getMonth()] ?? "";
+  const mon = t(`day.monthsShort.${d.getMonth()}`);
   return `${dd} ${mon} ${hm}`;
 }

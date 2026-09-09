@@ -12,6 +12,8 @@ type Props = {
   mode: CameraBlurMode;
   onClose: () => void;
   onSelect: (mode: CameraBlurMode) => void;
+  /** 080: open below anchor when near pane header (default above for bottom bar). */
+  placement?: "above" | "below";
 };
 
 export default function CameraBlurMenu(props: Props) {
@@ -43,7 +45,11 @@ export default function CameraBlurMenu(props: Props) {
 
   return (
     <Show when={props.open}>
-      <div class="camera-blur-menu" ref={(el) => (panelRef = el)}>
+      <div
+        class="camera-blur-menu"
+        classList={{ "camera-blur-menu--below": props.placement === "below" }}
+        ref={(el) => (panelRef = el)}
+      >
         <div class="camera-blur-menu-panel" role="menu" aria-label="Fundo da câmera">
           <For each={OPTIONS}>
             {(opt) => (

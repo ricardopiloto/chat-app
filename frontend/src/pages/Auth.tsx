@@ -13,6 +13,7 @@ import AuthShell from "../components/AuthShell";
 import IconAt from "../components/icons/IconAt";
 import { IconEyeOff, IconEyeOpen } from "../components/icons/IconEye";
 import { IconLockClosed } from "../components/icons/IconLock";
+import { t } from "../i18n";
 import { errorMessage } from "../lib/apiError";
 
 type Props = {
@@ -40,10 +41,10 @@ export default function Auth(props: Props) {
     if (err instanceof IdentityUnlockError) return err.message;
     if (err instanceof ApiError) {
       if (err.status === 401 && err.message === "invalid credentials") {
-        return "identificador ou senha incorrectos";
+        return t("auth.invalidCredentials");
       }
       if (err.status === 401 && err.message === "unauthorized") {
-        return "sessão expirada. Entre outra vez.";
+        return t("auth.sessionExpired");
       }
       return err.message;
     }
@@ -115,7 +116,7 @@ export default function Auth(props: Props) {
   return (
     <AuthShell>
       <Show when={!session()}>
-        <div class="auth-tabs" role="tablist" aria-label="Autenticação">
+        <div class="auth-tabs" role="tablist" aria-label={t("auth.tablist")}>
           <button
             type="button"
             role="tab"
@@ -123,7 +124,7 @@ export default function Auth(props: Props) {
             aria-selected={mode() === "login"}
             onClick={() => setMode("login")}
           >
-            Entrar
+            {t("auth.login")}
           </button>
           <button
             type="button"
@@ -132,7 +133,7 @@ export default function Auth(props: Props) {
             aria-selected={mode() === "register"}
             onClick={() => setMode("register")}
           >
-            Criar conta
+            {t("auth.register")}
           </button>
         </div>
       </Show>
@@ -141,23 +142,23 @@ export default function Auth(props: Props) {
         when={!session()}
         fallback={
           <>
-            <h1>Desbloquear chaves</h1>
+            <h1>{t("auth.unlockTitle")}</h1>
             <p class="muted">
-              Autenticado como <strong>{session()?.handle}</strong>. A senha abre as chaves E2EE
-              neste navegador — o servidor só guarda o cofre cifrado.
+              {t("auth.unlockHintPrefix")} <strong>{session()?.handle}</strong>
+              {t("auth.unlockHintSuffix")}
             </p>
           </>
         }
       >
         <Show when={mode() === "register"}>
-          <p class="muted">A primeira conta da instância é livre. Depois disso é preciso um convite.</p>
+          <p class="muted">{t("auth.registerHint")}</p>
         </Show>
       </Show>
 
       <form onSubmit={submit} class="auth-actions">
         <Show when={!session()}>
           <div class="field">
-            <label for="auth-handle">Seu identificador</label>
+            <label for="auth-handle">{t("auth.handleLabel")}</label>
             <div class="input-affix">
               <span class="input-affix-icon" aria-hidden="true">
                 <IconAt />
@@ -167,16 +168,16 @@ export default function Auth(props: Props) {
                 class="input"
                 required
                 autocomplete="username"
-                placeholder="@ seu_handle"
+                placeholder={t("auth.handlePlaceholder")}
                 value={handle()}
                 onInput={(e) => setHandle(e.currentTarget.value)}
               />
             </div>
-            <p class="auth-field-hint">Este será o seu @handle nesta instância.</p>
+            <p class="auth-field-hint">{t("auth.handleHint")}</p>
           </div>
         </Show>
         <div class="field">
-          <label for="auth-password">Senha</label>
+          <label for="auth-password">{t("auth.passwordLabel")}</label>
           <div class="input-affix">
             <span class="input-affix-icon" aria-hidden="true">
               <IconLockClosed size={18} />
@@ -188,14 +189,14 @@ export default function Auth(props: Props) {
               minLength={8}
               autocomplete={session() || mode() === "login" ? "current-password" : "new-password"}
               type={showPassword() ? "text" : "password"}
-              placeholder="Sua senha"
+              placeholder={t("auth.passwordPlaceholder")}
               value={password()}
               onInput={(e) => setPassword(e.currentTarget.value)}
             />
             <button
               type="button"
               class="input-affix-toggle"
-              aria-label={showPassword() ? "Ocultar senha" : "Mostrar senha"}
+              aria-label={showPassword() ? t("auth.hidePassword") : t("auth.showPassword")}
               onClick={() => setShowPassword(!showPassword())}
             >
               <Show when={showPassword()} fallback={<IconEyeOpen />}>
@@ -205,16 +206,20 @@ export default function Auth(props: Props) {
           </div>
         </div>
         <button type="submit" class="btn auth-btn-primary btn-block" disabled={busy()}>
-          {session() ? "Desbloquear" : mode() === "register" ? "Criar conta" : "Entrar"}
+          {session()
+            ? t("auth.unlockSubmit")
+            : mode() === "register"
+              ? t("auth.submitRegister")
+              : t("auth.submitLogin")}
         </button>
       </form>
 
       <Show when={!session() && mode() === "login"}>
         <div class="auth-divider" aria-hidden="true">
-          ou
+          {t("auth.or")}
         </div>
         <button type="button" class="btn auth-btn-outline btn-block" onClick={() => setMode("register")}>
-          Criar conta
+          {t("auth.register")}
         </button>
       </Show>
 
@@ -229,7 +234,7 @@ export default function Auth(props: Props) {
             void props.onClearSession?.();
           }}
         >
-          Entrar com outra conta
+          {t("auth.switchAccount")}
         </button>
       </Show>
       <Show when={missingVault() && !!session() && !!props.onRecoverIdentity}>
@@ -239,7 +244,7 @@ export default function Auth(props: Props) {
           disabled={busy()}
           onClick={(e) => void recover(e)}
         >
-          Gerar novas chaves neste aparelho
+          {t("auth.recover")}
         </button>
       </Show>
       <p class="error">{error()}</p>

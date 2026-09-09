@@ -11,19 +11,37 @@ struct Row {
     content_ciphertext: Vec<u8>,
     created_at: String,
     reply_to_message_id: Option<String>,
+    kind: String,
+    content_plaintext: Option<String>,
 }
 
 fn map_row(row: Row) -> Result<Message, sqlx::Error> {
     use base64::Engine;
+    let kind = if row.kind.is_empty() {
+        "user".to_string()
+    } else {
+        row.kind
+    };
+    let is_system = kind == "system";
     Ok(Message {
         id: Uuid::parse_str(&row.id).map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
         channel_id: Uuid::parse_str(&row.channel_id).map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
-        sender_account_id: Uuid::parse_str(&row.sender_account_id)
-            .map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
-        content_ciphertext: base64::engine::general_purpose::STANDARD.encode(&row.content_ciphertext),
+        // System rows omit sender in API; DB may store a real id for FK (account NOT NULL).
+        sender_account_id: if is_system {
+            Uuid::nil()
+        } else {
+            Uuid::parse_str(&row.sender_account_id).map_err(|e| sqlx::Error::Decode(Box::new(e)))?
+        },
+        content_ciphertext: if row.content_ciphertext.is_empty() || is_system {
+            String::new()
+        } else {
+            base64::engine::general_purpose::STANDARD.encode(&row.content_ciphertext)
+        },
         created_at: DateTime::parse_from_rfc3339(&row.created_at)
             .map_err(|e| sqlx::Error::Decode(Box::new(e)))?
             .with_timezone(&Utc),
+        kind,
+        content_plaintext: row.content_plaintext,
         attachment_ids: Vec::new(),
         reply_to_message_id: row
             .reply_to_message_id
@@ -35,6 +53,9 @@ fn map_row(row: Row) -> Result<Message, sqlx::Error> {
 }
 
 async fn enrich(pool: &SqlitePool, message: &mut Message) -> Result<(), sqlx::Error> {
+    if message.is_system() {
+        return Ok(());
+    }
     message.attachment_ids = crate::db::attachment::list_ids_for_message(pool, message.id).await?;
     message.mentioned_account_ids = list_mentions(pool, message.id).await?;
     if let Some(parent_id) = message.reply_to_message_id {
@@ -45,11 +66,12 @@ async fn enrich(pool: &SqlitePool, message: &mut Message) -> Result<(), sqlx::Er
     Ok(())
 }
 
+const SELECT_COLS: &str = "id, channel_id, sender_account_id, content_ciphertext, created_at, reply_to_message_id, kind, content_plaintext";
+
 async fn find_by_id_raw(pool: &SqlitePool, id: Uuid) -> Result<Option<Message>, sqlx::Error> {
-    let row = sqlx::query_as::<_, Row>(
-        "SELECT id, channel_id, sender_account_id, content_ciphertext, created_at, reply_to_message_id
-         FROM message WHERE id = ?",
-    )
+    let row = sqlx::query_as::<_, Row>(&format!(
+        "SELECT {SELECT_COLS} FROM message WHERE id = ?"
+    ))
     .bind(id.to_string())
     .fetch_optional(pool)
     .await?;
@@ -66,8 +88,8 @@ pub async fn create(
     reply_to_message_id: Option<Uuid>,
 ) -> Result<Message, sqlx::Error> {
     sqlx::query(
-        "INSERT INTO message (id, channel_id, sender_account_id, content_ciphertext, created_at, reply_to_message_id)
-         VALUES (?, ?, ?, ?, ?, ?)",
+        "INSERT INTO message (id, channel_id, sender_account_id, content_ciphertext, created_at, reply_to_message_id, kind, content_plaintext)
+         VALUES (?, ?, ?, ?, ?, ?, 'user', NULL)",
     )
     .bind(id.to_string())
     .bind(channel_id.to_string())
@@ -75,6 +97,33 @@ pub async fn create(
     .bind(ciphertext)
     .bind(created_at.to_rfc3339())
     .bind(reply_to_message_id.map(|id| id.to_string()))
+    .execute(pool)
+    .await?;
+    find_by_id(pool, id)
+        .await?
+        .ok_or_else(|| sqlx::Error::RowNotFound)
+}
+
+/// Persist a system (non-E2EE) message.
+/// `fk_sender_account_id` must exist in `account` (SQLite FK); API still omits sender for system.
+pub async fn create_system(
+    pool: &SqlitePool,
+    id: Uuid,
+    channel_id: Uuid,
+    fk_sender_account_id: Uuid,
+    plaintext: &str,
+    created_at: DateTime<Utc>,
+) -> Result<Message, sqlx::Error> {
+    sqlx::query(
+        "INSERT INTO message (id, channel_id, sender_account_id, content_ciphertext, created_at, reply_to_message_id, kind, content_plaintext)
+         VALUES (?, ?, ?, ?, ?, NULL, 'system', ?)",
+    )
+    .bind(id.to_string())
+    .bind(channel_id.to_string())
+    .bind(fk_sender_account_id.to_string())
+    .bind(&[] as &[u8])
+    .bind(created_at.to_rfc3339())
+    .bind(plaintext)
     .execute(pool)
     .await?;
     find_by_id(pool, id)
@@ -98,15 +147,15 @@ pub async fn list_since(
     before: Option<DateTime<Utc>>,
     limit: i64,
 ) -> Result<Vec<Message>, sqlx::Error> {
-    let rows = sqlx::query_as::<_, Row>(
-        "SELECT id, channel_id, sender_account_id, content_ciphertext, created_at, reply_to_message_id
+    let rows = sqlx::query_as::<_, Row>(&format!(
+        "SELECT {SELECT_COLS}
          FROM message
          WHERE channel_id = ?
            AND (? IS NULL OR created_at >= ?)
            AND (? IS NULL OR created_at < ?)
          ORDER BY created_at ASC
-         LIMIT ?",
-    )
+         LIMIT ?"
+    ))
     .bind(channel_id.to_string())
     .bind(since.map(|t| t.to_rfc3339()))
     .bind(since.map(|t| t.to_rfc3339()))

@@ -50,7 +50,7 @@ async fn membership_for_channel(
     Ok((channel, membership))
 }
 
-async fn send_to_channel_viewers<T: Serialize>(
+pub(crate) async fn send_to_channel_viewers<T: Serialize>(
     state: &AppState,
     channel: &crate::domain::channel::Channel,
     event: &str,

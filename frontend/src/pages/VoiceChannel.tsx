@@ -25,13 +25,14 @@ import {
   rememberChannelKey,
 } from "../crypto/channelKey";
 import { readViewMode, writeViewMode, type ViewMode } from "../preferences/uiPrefs";
-import { readBlurMode, type CameraBlurMode } from "../blur/blurPreference";
-import { requestStageMode, toggleMembersPanel, toggleStageMode } from "../shell/AppShell";
+import { readBlurMode, writeBlurMode, type CameraBlurMode } from "../blur/blurPreference";
+import { requestStageMode, toggleMembersPanel } from "../shell/AppShell";
 import type { LiveSession } from "../video/liveClient";
 import { categorizeJoinError, joinErrorMessage } from "../voice/joinErrors";
 import { loadVoiceRuntime, type VoiceRuntime } from "../voice/loadRuntime";
+import { t } from "../i18n";
 import { errorMessage } from "../lib/apiError";
-import { KEY_SYNC_MSG, KEY_SYNC_SHORT } from "../lib/keySyncCopy";
+import { keySyncMsg, keySyncShort } from "../lib/keySyncCopy";
 import { safePlay } from "../lib/safeMedia";
 import {
   isVoiceLoadFailed,
@@ -68,8 +69,7 @@ export default function VoiceChannel(props: Props) {
   const [members, setMembers] = createSignal<ServerMember[]>([]);
   const [viewMode, setViewMode] = createSignal<ViewMode>(readViewMode());
   const [editing, setEditing] = createSignal(false);
-  const [micOn, setMicOn] = createSignal(true);
-  const [camOn, setCamOn] = createSignal(true);
+  const [camOn, setCamOn] = createSignal(false);
   const [inCallIds, setInCallIds] = createSignal<string[]>([]);
   const [e2eeEnabled, setE2eeEnabled] = createSignal(props.channel.e2ee_enabled !== false);
   const [hasChannelKey, setHasChannelKey] = createSignal(!!props.channel.has_channel_key);
@@ -92,6 +92,24 @@ export default function VoiceChannel(props: Props) {
   /** Guards against leave() + hangup both running. */
   let leaving = false;
   const listenOnly = () => props.channel.my_permission === "listen";
+
+  async function selectHeaderBlur(next: CameraBlurMode) {
+    writeBlurMode(next);
+    setBlurMode(next);
+    const track = voice.localCamTrack();
+    if (!track || !voice.camOn()) return;
+    try {
+      const runtime = await ensureRuntime();
+      if (next !== "off" && !runtime.supportsCameraBlur()) {
+        setError(runtime.BLUR_UNAVAILABLE);
+        return;
+      }
+      await runtime.applyBlurMode(track, next);
+    } catch {
+      const runtime = rt;
+      setError(runtime?.BLUR_FAILED ?? t("shell.blurUnavailable"));
+    }
+  }
 
   async function ensureRuntime(): Promise<VoiceRuntime> {
     if (rt) {
@@ -277,26 +295,27 @@ export default function VoiceChannel(props: Props) {
     let partialSession: LiveSession | null = null;
     let cameraWarning = "";
     const mayPublish = !listenOnly();
+    /** 080/081: inherit panel session mic/cam preferences on join. */
+    const preferredMic = voice.micOn();
     let runtime: VoiceRuntime | null = null;
     try {
-      setError("A carregar módulo de voz…");
+      setError(t("voice.loadModule"));
       runtime = await ensureRuntime();
       const key = await resolveMediaKey();
       if (!key) {
-        setError(KEY_SYNC_SHORT);
+        setError(keySyncShort());
         return;
       }
       setError(
         !mayPublish
-          ? "A ligar em modo de escuta…"
+          ? t("voice.connectingListen")
           : mode === "test"
-          ? "A ligar com vídeo de teste…"
+          ? t("voice.connectingTest")
           : mode === "audio"
-            ? "A pedir microfone…"
-            : "A pedir câmera e microfone…",
+            ? t("voice.askingMic")
+            : t("voice.askingCamMic"),
       );
       if (!mayPublish) {
-        setMicOn(false);
         setCamOn(false);
       } else if (mode === "audio") {
         setCamOn(false);
@@ -313,7 +332,7 @@ export default function VoiceChannel(props: Props) {
           setNeedGesture(true);
           setError(
             mode === "audio"
-              ? "Precisas de permitir o microfone para entrar na chamada."
+              ? t("voice.micPermission")
               : joinErrorMessage("permission"),
           );
           return;
@@ -348,7 +367,7 @@ export default function VoiceChannel(props: Props) {
         }
       }
       setError((e) =>
-        e === runtime!.BLUR_FAILED || e === runtime!.BLUR_UNAVAILABLE ? e : "A ligar…",
+        e === runtime!.BLUR_FAILED || e === runtime!.BLUR_UNAVAILABLE ? e : t("voice.connecting"),
       );
       const useCam =
         !mayPublish || mode === "audio"
@@ -358,7 +377,7 @@ export default function VoiceChannel(props: Props) {
         `/api/channels/${channelId}/voice/join`,
         {
           method: "POST",
-          body: JSON.stringify({ mic_on: mayPublish && micOn(), cam_on: useCam }),
+          body: JSON.stringify({ mic_on: mayPublish && preferredMic, cam_on: useCam }),
         },
       );
       joined = true;
@@ -378,7 +397,11 @@ export default function VoiceChannel(props: Props) {
           if (voice.consumeIntentionalLeave()) return;
           void voice.dropped();
           requestStageMode(false);
-          setError(`Ligação encerrada${reason != null ? ` (${String(reason)})` : ""}.`);
+          setError(
+            t("voice.connectionClosed", {
+              detail: reason != null ? ` (${String(reason)})` : "",
+            }),
+          );
         },
         onLocalTrack: (el) => {
           localVideoEl = el;
@@ -396,14 +419,14 @@ export default function VoiceChannel(props: Props) {
         session,
         channel: props.channel,
         mode,
-        micOn: mayPublish && micOn(),
+        micOn: mayPublish && preferredMic,
         camOn: useCam,
         localCamTrack,
         localVideoEl,
       });
       setLive(true);
       refreshInCall();
-      requestStageMode(true);
+      requestStageMode(false);
       if (cameraWarning) {
         setError(cameraWarning);
       } else {
@@ -414,7 +437,7 @@ export default function VoiceChannel(props: Props) {
       requestAnimationFrame(() => queueMicrotask(layoutMedia));
     } catch (err) {
       if (isVoiceLoadFailed(runtimePhase()) || !runtime) {
-        setError("Falha ao carregar o módulo de voz.");
+        setError(t("channel.voiceLoadFail"));
       } else {
         await runtime.abortFailedJoin({
           channelId,
@@ -490,7 +513,7 @@ export default function VoiceChannel(props: Props) {
         const key = await ensureServerKey(serverId, identity, accountId);
         if (cancelled) return;
         if (!key && !loadChannelKey(channelId)) {
-          setError(KEY_SYNC_MSG);
+          setError(keySyncMsg());
           await new Promise((r) => setTimeout(r, 1500));
           continue;
         }
@@ -575,7 +598,11 @@ export default function VoiceChannel(props: Props) {
         if (voice.consumeIntentionalLeave()) return;
         void voice.dropped();
         requestStageMode(false);
-        setError(`Ligação encerrada${reason != null ? ` (${String(reason)})` : ""}.`);
+        setError(
+          t("voice.connectionClosed", {
+            detail: reason != null ? ` (${String(reason)})` : "",
+          }),
+        );
       },
     });
     onCleanup(() => voice.setHandlers(null));
@@ -583,7 +610,6 @@ export default function VoiceChannel(props: Props) {
 
   createEffect(() => {
     if (!live()) return;
-    setMicOn(voice.micOn());
     setCamOn(voice.camOn());
   });
 
@@ -598,7 +624,6 @@ export default function VoiceChannel(props: Props) {
         session = voice.session();
         localCamTrack = voice.localCamTrack();
         localVideoEl = voice.localVideoEl();
-        setMicOn(voice.micOn());
         setCamOn(voice.camOn());
         void ensureRuntime().then(() => {
           const room = voice.session()?.room;
@@ -610,7 +635,7 @@ export default function VoiceChannel(props: Props) {
               }
             }
           }
-          requestStageMode(true);
+          requestStageMode(false);
           queueMicrotask(layoutMedia);
         });
       });
@@ -655,7 +680,7 @@ export default function VoiceChannel(props: Props) {
     );
   const actorHandle = () => {
     const id = e2eeActor();
-    return handles()[id] ?? (id || "alguém");
+    return handles()[id] ?? (id || t("common.someone"));
   };
 
   async function persistLayout(layout: GridLayout) {
@@ -675,7 +700,7 @@ export default function VoiceChannel(props: Props) {
     if (!key) {
       key = parseChannelKeyInput(religarInput());
       if (!key) {
-        setError("Chave do canal inválida.");
+        setError(t("voice.invalidKey"));
         return;
       }
       rememberChannelKey(props.channel.id, key);
@@ -698,15 +723,15 @@ export default function VoiceChannel(props: Props) {
         <div class="e2ee-banner" role="status">
           <IconLockWarning size={22} />
           <div>
-            <strong>E2EE desligada</strong>
+            <strong>{t("voice.e2eeOff")}</strong>
             <div class="muted">
-              Desligada por {actorHandle()}
-              {e2eeAt() ? ` · ${e2eeAt()}` : ""} · registado na auditoria
+              {t("voice.e2eeOffBy", { handle: actorHandle() })}
+              {e2eeAt() ? ` · ${e2eeAt()}` : ""} · {t("voice.e2eeAudit")}
             </div>
           </div>
           <Show when={admin() && hasChannelKey()}>
             <button type="button" class="btn btn-secondary" onClick={() => setReligarOpen(true)}>
-              Religar E2EE
+              {t("voice.reenableE2ee")}
             </button>
           </Show>
         </div>
@@ -716,13 +741,13 @@ export default function VoiceChannel(props: Props) {
         <div>
           <div class="pane-title">{props.channel.name}</div>
           <div class="pane-sub">
-            {occupied()} de {slotCount()} em cena
+            {t("voice.occupied", { n: occupied(), total: slotCount() })}
             <Show when={voiceDurationLabel(callStartedAt(), voice.now())}>
-              {(t) => (
+              {(dur) => (
                 <>
                   {" · "}
-                  <span class="voice-call-timer" aria-label={`Duração da chamada ${t()}`}>
-                    {t()}
+                  <span class="voice-call-timer" aria-label={t("voice.callDuration", { duration: dur() })}>
+                    {dur()}
                   </span>
                 </>
               )}
@@ -737,7 +762,7 @@ export default function VoiceChannel(props: Props) {
               checked={viewMode() === "composition"}
               onChange={() => setMode("composition")}
             />
-            Composição
+            {t("voice.composition")}
           </label>
           <label class="seg-opt">
             <input
@@ -746,12 +771,12 @@ export default function VoiceChannel(props: Props) {
               checked={viewMode() === "grid"}
               onChange={() => setMode("grid")}
             />
-            Grade
+            {t("voice.grid")}
           </label>
         </div>
         <Show when={admin() && !editing()}>
           <button type="button" class="btn btn-primary" onClick={() => setEditing(true)}>
-            Editar cena
+            {t("voice.editScene")}
           </button>
         </Show>
         <button
@@ -759,33 +784,45 @@ export default function VoiceChannel(props: Props) {
           class="pane-icon-btn"
           disabled={!props.channel.server_id}
           aria-expanded={membersOpen()}
-          aria-label="Membros"
-          title="Membros"
+          aria-label={t("shell.members")}
+          title={t("shell.members")}
           onClick={() => toggleMembersPanel()}
         >
           <IconUsers size={20} />
         </button>
-        <button type="button" class="btn btn-ghost" onClick={() => toggleStageMode()}>
-          Modo palco
-        </button>
+        <Show when={live() && !listenOnly()}>
+          <label class="voice-header-blur">
+            <span class="voice-header-blur-label">{t("voice.blurEffect")}</span>
+            <select
+              class="voice-header-blur-select"
+              aria-label={t("voice.blurEffect")}
+              value={blurMode()}
+              onChange={(e) => void selectHeaderBlur(e.currentTarget.value as CameraBlurMode)}
+            >
+              <option value="off">{t("voice.blurNone")}</option>
+              <option value="light">{t("voice.blurLight")}</option>
+              <option value="strong">{t("voice.blurStrong")}</option>
+            </select>
+          </label>
+        </Show>
         <span class={`e2ee-chip${e2eeEnabled() ? "" : " off"}`}>
           <Show when={e2eeEnabled()} fallback={<IconLockWarning size={16} />}>
             <IconLockClosed size={16} />
           </Show>
-          {e2eeEnabled() ? "E2EE activa" : "E2EE off"}
+          {e2eeEnabled() ? t("channel.e2eeOn") : t("voice.e2eeOffChip")}
         </span>
       </header>
 
       <Show when={!live()}>
-        <div class="row voice-module-load" style={{ padding: "16px 24px", gap: "8px", "flex-wrap": "wrap" }}>
+        <div class="row voice-module-load voice-prejoin" style={{ padding: "16px 24px", gap: "8px", "flex-wrap": "wrap" }}>
           <Show when={isVoiceLoading(runtimePhase())}>
             <p class="muted" role="status">
-              A carregar módulo de voz…
+              {t("voice.loadModule")}
             </p>
           </Show>
           <Show when={isVoiceLoadFailed(runtimePhase())}>
             <p class="error" role="alert">
-              {error() || "Falha ao carregar o módulo de voz."}
+              {error() || t("channel.voiceLoadFail")}
             </p>
             <button
               type="button"
@@ -793,10 +830,12 @@ export default function VoiceChannel(props: Props) {
               onClick={() => {
                 setRuntimePhase("idle");
                 setError("");
-                void connect(listenOnly() ? "audio" : "camera");
+                void connect(
+                  listenOnly() ? "audio" : voice.camOn() ? "camera" : "audio",
+                );
               }}
             >
-              Tentar de novo
+              {t("channel.tryAgain")}
             </button>
           </Show>
           <Show when={!isVoiceLoading(runtimePhase()) && !isVoiceLoadFailed(runtimePhase())}>
@@ -804,19 +843,32 @@ export default function VoiceChannel(props: Props) {
               when={!listenOnly()}
               fallback={
                 <button type="button" class="btn btn-primary" onClick={() => void connect("audio")}>
-                  Entrar para ouvir
+                  {t("voice.joinListen")}
                 </button>
               }
             >
-              <button type="button" class="btn btn-primary" onClick={() => void connect("camera")}>
-                {needGesture() ? "Permitir câmera e microfone" : "Entrar com câmera"}
-              </button>
-              <button type="button" class="btn btn-primary" onClick={() => void connect("audio")}>
-                {needGesture() ? "Permitir microfone" : "Entrar sem câmera (banco)"}
-              </button>
-              <button type="button" class="btn btn-secondary" onClick={() => void connect("test")}>
-                Vídeo de teste
-              </button>
+              <div class="voice-prejoin-controls">
+                <button
+                  type="button"
+                  class="btn btn-primary voice-prejoin-join"
+                  onClick={() =>
+                    void connect(voice.camOn() ? "camera" : "audio")
+                  }
+                >
+                  {needGesture()
+                    ? voice.camOn()
+                      ? t("voice.allowCamMic")
+                      : t("voice.allowMic")
+                    : t("voice.join")}
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  onClick={() => void connect("test")}
+                >
+                  {t("voice.testVideo")}
+                </button>
+              </div>
             </Show>
           </Show>
         </div>
@@ -865,37 +917,37 @@ export default function VoiceChannel(props: Props) {
           </>
         )}
       </Show>
-      <p class="error" style={{ padding: "0 16px 8px" }}>
+      <p class="error voice-pane-error" style={{ padding: "0 16px 8px" }}>
         {error()}
       </p>
 
       <Dialog
         open={religarOpen()}
-        title="Religar E2EE"
+        title={t("voice.reenableE2ee")}
         onClose={() => setReligarOpen(false)}
         actions={
           <>
             <button type="button" class="btn btn-secondary" onClick={() => setReligarOpen(false)}>
-              Cancelar
+              {t("common.cancel")}
             </button>
             <button type="button" class="btn btn-primary" onClick={() => void confirmReligar()}>
-              Religar
+              {t("voice.reenable")}
             </button>
           </>
         }
       >
         <Show
           when={!loadChannelKey(props.channel.id)}
-          fallback={<p class="muted">A chave deste canal está guardada neste dispositivo.</p>}
+          fallback={<p class="muted">{t("voice.keyOnDevice")}</p>}
         >
           <div class="field">
-            <label for="religar-key">Chave do canal (base64)</label>
+            <label for="religar-key">{t("voice.channelKeyLabel")}</label>
             <input
               id="religar-key"
               class="input"
               value={religarInput()}
               onInput={(e) => setReligarInput(e.currentTarget.value)}
-              placeholder="Cole a chave que guardou na criação"
+              placeholder={t("voice.channelKeyPlaceholder")}
             />
           </div>
         </Show>

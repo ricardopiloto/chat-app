@@ -165,9 +165,10 @@ export default function SearchPanel(props: Props) {
           const rows = await api<Message[]>(`/api/channels/${ch.id}/messages`);
           if (gen !== searchGen) return;
           for (const row of rows) {
+            if (row.kind === "system") continue;
             let text = "";
             try {
-              text = await decryptMessage(key, row.content_ciphertext);
+              text = await decryptMessage(key, row.content_ciphertext ?? "");
             } catch {
               continue;
             }

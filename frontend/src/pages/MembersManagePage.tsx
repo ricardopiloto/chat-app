@@ -9,6 +9,7 @@ import {
   type ServerMember,
 } from "../api/client";
 import IdentityAvatar from "../components/IdentityAvatar";
+import { t } from "../i18n";
 import { errorMessage } from "../lib/apiError";
 
 export default function MembersManagePage() {
@@ -60,7 +61,7 @@ export default function MembersManagePage() {
   }
 
   async function kick(member: ServerMember) {
-    if (!window.confirm(`Remover ${member.handle} do servidor?`)) return;
+    if (!window.confirm(t("settings.removeConfirm", { handle: member.handle }))) return;
     setError("");
     try {
       await kickServerMember(serverId(), member.account_id);
@@ -79,12 +80,14 @@ export default function MembersManagePage() {
     <div class="members-manage-page">
       <header class="members-manage-header">
         <button type="button" class="btn btn-ghost" onClick={() => goBack()}>
-          Definições
+          {t("settings.home")}
         </button>
         <div>
-          <h1 class="members-manage-title">Gerir membros</h1>
+          <h1 class="members-manage-title">{t("settings.membersTitle")}</h1>
           <p class="muted members-manage-sub">
-            {server()?.name ?? "Servidor"} — atribua um papel por membro
+            {t("settings.membersSub", {
+              server: server()?.name ?? t("settings.serverFallback"),
+            })}
           </p>
         </div>
       </header>
@@ -93,10 +96,10 @@ export default function MembersManagePage() {
         <input
           class="input"
           type="search"
-          placeholder="Pesquisar membro…"
+          placeholder={t("settings.searchMember")}
           value={query()}
           onInput={(e) => setQuery(e.currentTarget.value)}
-          aria-label="Pesquisar membro"
+          aria-label={t("settings.searchMember")}
         />
       </div>
 
@@ -107,11 +110,11 @@ export default function MembersManagePage() {
       </Show>
 
       <Show when={members.loading || roles.loading}>
-        <p class="muted">A carregar…</p>
+        <p class="muted">{t("common.loading")}</p>
       </Show>
 
       <ul class="members-manage-list">
-        <For each={filtered()} fallback={<li class="muted">Sem membros</li>}>
+        <For each={filtered()} fallback={<li class="muted">{t("settings.noMembers")}</li>}>
           {(m) => (
             <li class="members-manage-row">
               <IdentityAvatar
@@ -126,20 +129,20 @@ export default function MembersManagePage() {
                 fallback={
                   <select
                     class="input members-manage-role"
-                    aria-label={`Papel de ${m.handle}`}
+                    aria-label={t("settings.roleOf", { handle: m.handle })}
                     disabled={busyId() === m.account_id}
                     value={roleForMember(m.account_id)}
                     onChange={(e) => void onRoleChange(m, e.currentTarget.value)}
                   >
-                    <option value="">Sem papel</option>
+                    <option value="">{t("roles.noRole")}</option>
                     <For each={(roles() ?? []).filter((r) => !r.is_system)}>
                       {(role) => <option value={role.id}>{role.name}</option>}
                     </For>
                   </select>
                 }
               >
-                <span class="members-manage-role-locked" title="Papel de sistema">
-                  Dono
+                <span class="members-manage-role-locked" title={t("roles.systemRoleTitle")}>
+                  {t("roles.system.owner")}
                 </span>
               </Show>
               <Show when={server()?.owner_account_id !== m.account_id}>
@@ -148,7 +151,7 @@ export default function MembersManagePage() {
                   class="btn btn-ghost"
                   onClick={() => void kick(m)}
                 >
-                  Remover
+                  {t("common.remove")}
                 </button>
               </Show>
             </li>

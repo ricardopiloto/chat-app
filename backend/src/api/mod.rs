@@ -27,6 +27,7 @@ pub mod scenes;
 pub mod servers;
 pub mod unfurl;
 pub mod voice;
+pub mod welcome;
 
 pub fn router(state: AppState) -> axum::Router {
     Router::new()
@@ -52,6 +53,10 @@ pub fn router(state: AppState) -> axum::Router {
                     post(servers::create_server).get(servers::list_servers),
                 )
                 .route("/servers/{server_id}", delete(servers::delete_server))
+                .route(
+                    "/servers/{server_id}/welcome",
+                    get(servers::get_welcome).patch(servers::patch_welcome),
+                )
                 .route(
                     "/servers/{server_id}/roles",
                     get(roles::list_roles).post(roles::create_role),

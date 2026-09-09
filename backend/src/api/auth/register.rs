@@ -258,4 +258,6 @@ pub async fn emit_invite_consumed(
             );
         }
     }
+
+    crate::api::welcome::announce_member_join(state, invite, new_member).await;
 }

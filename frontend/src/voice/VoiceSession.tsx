@@ -115,7 +115,8 @@ export function VoiceSessionProvider(props: {
   const [channelName, setChannelName] = createSignal<string | null>(null);
   const [permission, setPermission] = createSignal<Channel["my_permission"] | null>(null);
   const [micOn, setMicOn] = createSignal(true);
-  const [camOn, setCamOn] = createSignal(true);
+  /** 081: preferred cam defaults off (JOIN without camera until panel toggled). */
+  const [camOn, setCamOn] = createSignal(false);
   const [deafened, setDeafenedSignal] = createSignal(false);
   const [callStartedAt, setCallStartedAt] = createSignal<string | null>(null);
   const [now, setNow] = createSignal(Date.now());
@@ -142,11 +143,10 @@ export function VoiceSessionProvider(props: {
     }
   }
 
-  function clearDeafenState() {
+  function detachLiveDeafen() {
     detachDeafenGuard?.();
     detachDeafenGuard = null;
-    if (deafened()) applyRemoteVolumes(1);
-    setDeafenedSignal(false);
+    if (session) applyRemoteVolumes(1);
   }
 
   async function attachDeafenGuard(liveSession: LiveSession) {
@@ -254,7 +254,7 @@ export function VoiceSessionProvider(props: {
     intentionalLeave = true;
     stopHeartbeat();
     clearSpeaking();
-    clearDeafenState();
+    detachLiveDeafen();
     setPipCorner(DEFAULT_CORNER);
     const s = session;
     const cam = localCamTrack;
@@ -275,7 +275,8 @@ export function VoiceSessionProvider(props: {
     intentionalLeave = true;
     stopHeartbeat();
     clearSpeaking();
-    clearDeafenState();
+    // 080: keep mic/deafen session prefs after hangup (browser-session only)
+    detachLiveDeafen();
     setPipCorner(DEFAULT_CORNER);
     const s = session;
     const cam = localCamTrack;
@@ -299,7 +300,9 @@ export function VoiceSessionProvider(props: {
 
   async function setDeafened(on: boolean) {
     if (!live() || !session) {
-      setDeafenedSignal(false);
+      // 080: preferred deafen while idle (session memory)
+      setDeafenedSignal(on);
+      if (on) setMicOn(false);
       return;
     }
     if (on) {
@@ -320,7 +323,14 @@ export function VoiceSessionProvider(props: {
   }
 
   async function toggleMic() {
-    if (!session || permission() === "listen") return;
+    if (permission() === "listen") return;
+    if (!session || !live()) {
+      // 080: preferred mic while idle
+      const next = !micOn();
+      if (next && deafened()) setDeafenedSignal(false);
+      setMicOn(next);
+      return;
+    }
     const next = !micOn();
     if (next && deafened()) {
       applyRemoteVolumes(1);
@@ -331,7 +341,12 @@ export function VoiceSessionProvider(props: {
   }
 
   async function toggleCam() {
-    if (!session || permission() === "listen") return;
+    if (permission() === "listen") return;
+    if (!session || !live()) {
+      // 081: preferred camera while idle
+      setCamOn(!camOn());
+      return;
+    }
     const runtime = await loadVoiceRuntime();
     const next = !camOn();
     if (!next) {
@@ -428,6 +443,7 @@ export function VoiceSessionProvider(props: {
       localCamTrack: camTrack,
       localVideoEl: videoEl,
     }) => {
+      const preferDeafen = deafened();
       await loadVoiceRuntime();
       session = next;
       localCamTrack = camTrack;
@@ -435,7 +451,6 @@ export function VoiceSessionProvider(props: {
       setLastMode(mode);
       setMicOn(mic);
       setCamOn(cam);
-      setDeafenedSignal(false);
       setChannelId(channel.id);
       setServerId(channel.server_id);
       setChannelName(channel.name);
@@ -444,7 +459,13 @@ export function VoiceSessionProvider(props: {
       await attachActiveSpeakers(next);
       await attachDeafenGuard(next);
       startHeartbeat(channel.id);
+      if (!mic) {
+        await next.room.localParticipant.setMicrophoneEnabled(false).catch(() => undefined);
+      }
       await patchVoiceMedia(channel.id, { mic_on: mic, cam_on: cam }).catch(() => undefined);
+      if (preferDeafen) {
+        await setDeafened(true);
+      }
       await refreshCallStarted(channel.id, channel.server_id);
       if (!pageHideBound) {
         window.addEventListener("pagehide", onPageHide);
@@ -457,7 +478,7 @@ export function VoiceSessionProvider(props: {
       if (intentionalLeave) return;
       stopHeartbeat();
       clearSpeaking();
-      clearDeafenState();
+      detachLiveDeafen();
       setPipCorner(DEFAULT_CORNER);
       const id = channelId();
       const s = session;

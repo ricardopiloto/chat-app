@@ -9,6 +9,26 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-09-08
+
+### Added
+
+- Frontend **multi-idioma** EN + pt-BR (custom catalogs, browser detect + `mesa.locale`, Account menu language control; system role labels translate; user content stays raw) ([074-i18n-en-ptbr](specs/074-i18n-en-ptbr/)).
+- Product **version label** (`X.Y.Z` from package): Auth brand footer + under TopBar «Mesa»; FE/BE manifests for this release **0.6.0** ([076-app-version-label](specs/076-app-version-label/)).
+- **Member join welcome** (system chat announce on invite accept/register): destination owner channel → `#geral` → per-invite channel; owner GET/PATCH `/api/servers/{id}/welcome`; centered FE system rows ([077-member-join-welcome](specs/077-member-join-welcome/)).
+- **Discord-style user panel**: identity (handle / Online); mic · deafen · camera · settings; leave while in call; channel-list collapse deferred ([078-user-panel-discord](specs/078-user-panel-discord/), [081-panel-cam-header-blur](specs/081-panel-cam-header-blur/)).
+- **Chat image lightbox**: click message attachments to view full decrypted image; fit + zoom/pan; Escape/backdrop/X close; prev/next within the same message (no wrap, zoom reset); download control ([079-chat-image-zoom](specs/079-chat-image-zoom/)).
+
+### Changed
+
+- Voice **call chrome**: camera on the user panel (session preference drives JOIN; pre-join is JOIN-only); blur as header select (none / light / strong); removed in-call bottom bar and stage mode ([080-call-controls-restore](specs/080-call-controls-restore/), [081-panel-cam-header-blur](specs/081-panel-cam-header-blur/)).
+- Mic and deafen work **out of call** as browser-session preferences; joining a call inherits that state ([080-call-controls-restore](specs/080-call-controls-restore/)).
+
+### Fixed
+
+- Leave call always available from the user panel while live; mid-call camera/blur reachable after entering without camera ([080-call-controls-restore](specs/080-call-controls-restore/), [081-panel-cam-header-blur](specs/081-panel-cam-header-blur/)).
+- User-panel call control sizing/alignment (32×32 peers; stage + collapsed-channels layout) ([075-panel-cam-ctrl-align](specs/075-panel-cam-ctrl-align/)).
+
 ## [0.5.0] - 2026-09-08
 
 ### Added
@@ -196,7 +216,8 @@ Initial tracked release baseline (features delivered through 006).
 
 - Earlier spikes and phases: see `specs/001-fase-0-spike/` … `specs/005-fase3-ui-corrections/` and `docs/`.
 
-[Unreleased]: https://github.com/ricardosobral/chat-app/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/ricardosobral/chat-app/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/ricardosobral/chat-app/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/ricardosobral/chat-app/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/ricardosobral/chat-app/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/ricardosobral/chat-app/compare/v0.3.0...v0.4.0

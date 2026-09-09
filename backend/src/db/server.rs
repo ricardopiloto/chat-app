@@ -1,4 +1,4 @@
-use crate::domain::server::Server;
+use crate::domain::server::{Server, ServerWelcomeSettings};
 use crate::domain::voice_occupancy::OCCUPANT_STALE_SECS;
 use chrono::{Duration, Utc};
 use sqlx::SqlitePool;
@@ -129,5 +129,42 @@ pub async fn set_image(
         .bind(server_id.to_string())
         .execute(pool)
         .await?;
+    Ok(())
+}
+
+pub async fn get_welcome_settings(
+    pool: &SqlitePool,
+    server_id: Uuid,
+) -> Result<Option<ServerWelcomeSettings>, sqlx::Error> {
+    let row: Option<(Option<String>, Option<String>)> = sqlx::query_as(
+        "SELECT welcome_channel_id, welcome_message_template FROM server WHERE id = ?",
+    )
+    .bind(server_id.to_string())
+    .fetch_optional(pool)
+    .await?;
+    row.map(|(channel_id, template)| {
+        Ok(ServerWelcomeSettings {
+            welcome_channel_id: channel_id
+                .map(|id| Uuid::parse_str(&id).map_err(|e| sqlx::Error::Decode(Box::new(e))))
+                .transpose()?,
+            welcome_message_template: template,
+        })
+    })
+    .transpose()
+}
+
+pub async fn set_welcome_settings(
+    pool: &SqlitePool,
+    server_id: Uuid,
+    settings: &ServerWelcomeSettings,
+) -> Result<(), sqlx::Error> {
+    sqlx::query(
+        "UPDATE server SET welcome_channel_id = ?, welcome_message_template = ? WHERE id = ?",
+    )
+    .bind(settings.welcome_channel_id.map(|id| id.to_string()))
+    .bind(&settings.welcome_message_template)
+    .bind(server_id.to_string())
+    .execute(pool)
+    .await?;
     Ok(())
 }

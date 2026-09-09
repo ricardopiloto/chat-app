@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearchParams } from "@solidjs/router";
 import { api, markChannelRead, type Account, type Channel } from "../api/client";
 import type { LiveDeliveryStatus, WsEnvelope } from "../api/ws";
 import type { Identity } from "../crypto/identity";
+import { t } from "../i18n";
 import { setActiveChannel } from "../preferences/activeChannel";
 import {
   channelHref,
@@ -26,7 +27,7 @@ function VoiceChannelLoadFallback() {
   return (
     <div class="pane voice-pane voice-module-load" role="status">
       <p class="muted" style={{ padding: "16px 24px" }}>
-        A carregar canal de voz…
+        {t("channel.loadVoice")}
       </p>
     </div>
   );
@@ -36,11 +37,11 @@ function VoiceChannelLoadError(props: { reset: () => void }) {
   return (
     <div class="pane voice-pane voice-module-load" role="alert">
       <p class="error" style={{ padding: "16px 24px 8px" }}>
-        Falha ao carregar o módulo de voz.
+        {t("channel.voiceLoadFail")}
       </p>
       <div class="row" style={{ padding: "0 24px 16px", gap: "8px" }}>
         <button type="button" class="btn btn-primary" onClick={() => props.reset()}>
-          Tentar de novo
+          {t("channel.tryAgain")}
         </button>
       </div>
     </div>
@@ -126,13 +127,13 @@ export default function ChannelRoute(props: Props) {
   });
 
   return (
-    <Show when={!channel.loading && !realigning()} fallback={<p class="main">A carregar canal…</p>}>
-      <Show when={channel()} fallback={<p class="main">Canal não encontrado.</p>}>
+    <Show when={!channel.loading && !realigning()} fallback={<p class="main">{t("channel.loadChannel")}</p>}>
+      <Show when={channel()} fallback={<p class="main">{t("channel.notFound")}</p>}>
         {(ch) => (
           <Show
             when={ch().type === "voice_video"}
             fallback={
-              <Suspense fallback={<p class="main">A carregar canal…</p>}>
+              <Suspense fallback={<p class="main">{t("channel.loadChannel")}</p>}>
                 <ChannelPage
                   me={props.me}
                   channel={ch()}

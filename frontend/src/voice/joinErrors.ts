@@ -1,4 +1,5 @@
 import { ApiError } from "../api/client";
+import { t } from "../i18n";
 
 /** Join / capture error taxonomy for voice channel connect (031). */
 
@@ -55,24 +56,22 @@ export function joinErrorMessage(
   if (opts?.cameraOnly) {
     switch (category) {
       case "permission":
-        return "Câmera sem permissão — entraste só com áudio.";
+        return t("voice.camOnlyPermission");
       case "device":
-        return "Câmera indisponível — entraste só com áudio.";
       case "connection":
-        return "Câmera indisponível — entraste só com áudio.";
       default:
-        return "Câmera indisponível — entraste só com áudio.";
+        return t("voice.camOnlyUnavailable");
     }
   }
 
   switch (category) {
     case "permission":
-      return "Precisas de permitir o microfone para entrar na chamada.";
+      return t("voice.errPermission");
     case "device":
-      return "Não foi possível usar o microfone ou a câmera (dispositivo em falta ou ocupado).";
+      return t("voice.errDevice");
     case "connection":
-      return "Não foi possível ligar à sala. Tenta de novo.";
+      return t("voice.errConnection");
     default:
-      return "Não foi possível entrar na chamada. Tenta de novo.";
+      return t("voice.errGeneric");
   }
 }

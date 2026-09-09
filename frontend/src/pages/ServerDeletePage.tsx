@@ -1,6 +1,7 @@
 import { Show, createResource, createSignal } from "solid-js";
 import { useNavigate, useParams } from "@solidjs/router";
 import { api, deleteServer, type Server } from "../api/client";
+import { t } from "../i18n";
 import { errorMessage } from "../lib/apiError";
 
 export default function ServerDeletePage() {
@@ -19,7 +20,7 @@ export default function ServerDeletePage() {
   async function onDelete() {
     const s = server();
     if (!s || busy()) return;
-    if (!window.confirm(`Apagar permanentemente «${s.name}»? Não há recuperação.`)) return;
+    if (!window.confirm(t("settings.deleteConfirm", { name: s.name }))) return;
     setBusy(true);
     setError("");
     try {
@@ -36,15 +37,13 @@ export default function ServerDeletePage() {
   return (
     <div class="server-delete-page main" role="main">
       <header class="server-settings-page-header">
-        <h1>Apagar servidor</h1>
-        <p class="muted">
-          Remove o servidor, canais e histórico. Esta acção não pode ser anulada.
-        </p>
+        <h1>{t("settings.deleteServer")}</h1>
+        <p class="muted">{t("settings.deleteBody")}</p>
       </header>
       <Show when={server()}>
         {(s) => (
           <p>
-            Vai apagar <strong>{s().name}</strong>.
+            {t("settings.deleteWillLead")} <strong>{s().name}</strong>.
           </p>
         )}
       </Show>
@@ -55,7 +54,7 @@ export default function ServerDeletePage() {
         disabled={busy() || !server()}
         onClick={() => void onDelete()}
       >
-        Apagar servidor
+        {t("settings.deleteServer")}
       </button>
       <Show when={error()}>
         <p class="error" role="alert">

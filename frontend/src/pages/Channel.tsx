@@ -59,8 +59,9 @@ import {
 import { toggleMembersPanel, openMembersPanel } from "../shell/AppShell";
 import { showToast } from "../ui/toast";
 import IdentityAvatar from "../components/IdentityAvatar";
+import { t } from "../i18n";
 import { errorMessage } from "../lib/apiError";
-import { KEY_SYNC_MSG } from "../lib/keySyncCopy";
+import { keySyncMsg } from "../lib/keySyncCopy";
 import {
   buildTimeline,
   formatDayLabel,
@@ -103,6 +104,7 @@ type Row = {
   replyToMessageId?: string | null;
   mentionedAccountIds: string[];
   replyToSenderAccountId?: string | null;
+  system?: boolean;
 };
 
 type Pending = {
@@ -114,11 +116,25 @@ type Pending = {
 async function decodeRows(key: Uint8Array, rows: Message[]): Promise<Row[]> {
   const decoded: Row[] = [];
   for (const row of rows) {
+    if (row.kind === "system") {
+      decoded.push({
+        id: row.id,
+        sender: "",
+        text: row.content_plaintext ?? "",
+        createdAt: row.created_at,
+        attachmentIds: [],
+        replyToMessageId: null,
+        mentionedAccountIds: [],
+        replyToSenderAccountId: null,
+        system: true,
+      });
+      continue;
+    }
     try {
       decoded.push({
         id: row.id,
-        sender: row.sender_account_id,
-        text: await decryptMessage(key, row.content_ciphertext),
+        sender: row.sender_account_id ?? "",
+        text: await decryptMessage(key, row.content_ciphertext ?? ""),
         createdAt: row.created_at,
         attachmentIds: row.attachment_ids ?? [],
         replyToMessageId: row.reply_to_message_id ?? null,
@@ -128,7 +144,7 @@ async function decodeRows(key: Uint8Array, rows: Message[]): Promise<Row[]> {
     } catch {
       decoded.push({
         id: row.id,
-        sender: row.sender_account_id,
+        sender: row.sender_account_id ?? "",
         text: "[indeterminável]",
         createdAt: row.created_at,
         attachmentIds: row.attachment_ids ?? [],
@@ -356,7 +372,7 @@ export default function ChannelPage(props: Props) {
   function replyQuoteText(m: Row): string {
     const parent = replyParent(m);
     if (parent?.text) return truncateReply(parent.text);
-    return "Mensagem indisponível";
+    return t("channel.msgUnavailable");
   }
 
   function muteEndsLabel(): string {
@@ -415,13 +431,13 @@ export default function ChannelPage(props: Props) {
 
   function tryPushPending(next: Pending[], file: File): string | null {
     if (next.length >= MAX_ATTACHMENTS_PER_MESSAGE) {
-      return `Máximo de ${MAX_ATTACHMENTS_PER_MESSAGE} anexos por mensagem.`;
+      return t("channel.maxAttachments", { n: MAX_ATTACHMENTS_PER_MESSAGE });
     }
     if (!ALLOWED_MEDIA_TYPES.has(file.type)) {
-      return "Só JPEG, PNG, WebP ou GIF.";
+      return t("channel.attachTypes");
     }
     if (file.size > MAX_ATTACHMENT_BYTES) {
-      return "Cada anexo pode ter no máximo 5 MiB.";
+      return t("channel.attachSize");
     }
     next.push({
       localId: crypto.randomUUID(),
@@ -462,11 +478,11 @@ export default function ChannelPage(props: Props) {
         const err = tryPushPending(next, file);
         if (err) {
           lastErr = err;
-          if (err.startsWith("Máximo")) break;
+          if (err === t("channel.maxAttachments", { n: MAX_ATTACHMENTS_PER_MESSAGE })) break;
           continue;
         }
       } catch (err) {
-        lastErr = errorMessage(err, "Falha ao preparar imagem colada.");
+        lastErr = errorMessage(err, t("channel.pasteFail"));
       }
     }
     setPendingFiles(next);
@@ -544,7 +560,7 @@ export default function ChannelPage(props: Props) {
         if (!key) {
           setPending(true);
           setServerKey(undefined);
-          setError(KEY_SYNC_MSG);
+          setError(keySyncMsg());
           await new Promise((r) => setTimeout(r, 1500));
           continue;
         }
@@ -598,6 +614,28 @@ export default function ChannelPage(props: Props) {
       }
       if (msg.event !== "message.new") return;
       if (String(msg.payload.channel_id) !== channelId) return;
+      if (String(msg.payload.kind ?? "") === "system") {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: String(msg.payload.id),
+            sender: "",
+            text: String(msg.payload.content_plaintext ?? ""),
+            attachmentIds: [],
+            createdAt: msg.payload.created_at ? String(msg.payload.created_at) : undefined,
+            replyToMessageId: null,
+            mentionedAccountIds: [],
+            replyToSenderAccountId: null,
+            system: true,
+          },
+        ]);
+        if (stuckToBottom()) {
+          requestAnimationFrame(() => scrollToBottom());
+        } else {
+          setPendingNewCount((n) => n + 1);
+        }
+        return;
+      }
       const key = getServerKey(serverId);
       if (!key) return;
       try {
@@ -664,7 +702,7 @@ export default function ChannelPage(props: Props) {
         if (gen !== jumpGen) return;
         if (!ok) {
           setMsgUnavailable(true);
-          showToast("Mensagem indisponível");
+          showToast(t("channel.msgUnavailable"));
         }
         return;
       }
@@ -673,7 +711,7 @@ export default function ChannelPage(props: Props) {
       if (!key) {
         if (gen === jumpGen) {
           setMsgUnavailable(true);
-          showToast("Mensagem indisponível");
+          showToast(t("channel.msgUnavailable"));
         }
         return;
       }
@@ -696,7 +734,7 @@ export default function ChannelPage(props: Props) {
             if (gen !== jumpGen) return;
             if (!ok) {
               setMsgUnavailable(true);
-              showToast("Mensagem indisponível");
+              showToast(t("channel.msgUnavailable"));
             }
             return;
           }
@@ -707,7 +745,7 @@ export default function ChannelPage(props: Props) {
 
       if (gen !== jumpGen) return;
       setMsgUnavailable(true);
-      showToast("Mensagem indisponível");
+      showToast(t("channel.msgUnavailable"));
     })();
   });
 
@@ -725,7 +763,7 @@ export default function ChannelPage(props: Props) {
       const err = tryPushPending(next, file);
       if (err) {
         lastErr = err;
-        if (err.startsWith("Máximo")) break;
+        if (err === t("channel.maxAttachments", { n: MAX_ATTACHMENTS_PER_MESSAGE })) break;
         continue;
       }
     }
@@ -896,7 +934,7 @@ export default function ChannelPage(props: Props) {
     if (sending() || !canWrite() || composerBlocked()) return;
     const key = await ensureServerKey(props.channel.server_id, props.identity, props.me.id);
     if (!key) {
-      setError("Ainda sincronizando a chave.");
+      setError(t("channel.keyStillSyncing"));
       return;
     }
     const text = draft().trim();
@@ -952,7 +990,7 @@ export default function ChannelPage(props: Props) {
   }
 
   async function requestDelete(messageId: string) {
-    if (!window.confirm("Apagar esta mensagem? Esta acção não pode ser anulada.")) {
+    if (!window.confirm(t("channel.deleteConfirm"))) {
       return;
     }
     setError("");
@@ -1161,7 +1199,7 @@ export default function ChannelPage(props: Props) {
       <header class="pane-header">
         <div>
           <div class="pane-title"># {props.channel.name}</div>
-          <div class="pane-sub">Canal de texto · visível a todo o servidor</div>
+          <div class="pane-sub">{t("channel.textVisible")}</div>
         </div>
         <button
           type="button"
@@ -1169,22 +1207,22 @@ export default function ChannelPage(props: Props) {
           style={{ "margin-left": "auto" }}
           disabled={!props.channel.server_id}
           aria-expanded={membersOpen()}
-          aria-label="Membros"
-          title="Membros"
+          aria-label={t("shell.members")}
+          title={t("shell.members")}
           onClick={() => toggleMembersPanel()}
         >
           <IconUsers size={20} />
         </button>
         <span class="e2ee-chip">
           <IconLockClosed size={16} />
-          E2EE activa
+          {t("channel.e2eeOn")}
         </span>
       </header>
       <Show when={showDeliveryBanner()}>
         <div class="channel-delivery-banner" role="status">
           {catchUpBusy() && deliveryStatus() === "connected"
-            ? "A recuperar mensagens…"
-            : "Actualizações interrompidas — a reconectar…"}
+            ? t("channel.deliveryCatchUp")
+            : t("channel.deliveryBanner")}
         </div>
       </Show>
       <div
@@ -1217,6 +1255,13 @@ export default function ChannelPage(props: Props) {
                   </div>
                 );
               }
+              if (item.kind === "system") {
+                return (
+                  <div class="msg-system" data-message-id={item.item.id} role="status">
+                    {item.item.text}
+                  </div>
+                );
+              }
               const g = item as MsgGroupItem<Row>;
               return (
                 <div class="text-measure">
@@ -1231,9 +1276,9 @@ export default function ChannelPage(props: Props) {
                     <div class="msg-meta">
                       {displayHandle(g.sender)}
                       <Show when={g.items[0]?.createdAt}>
-                        {(t) => (
+                        {(createdAt) => (
                           <span class="msg-time">
-                            {new Date(t()).toLocaleTimeString([], {
+                            {new Date(createdAt()).toLocaleTimeString([], {
                               hour: "2-digit",
                               minute: "2-digit",
                             })}
@@ -1253,8 +1298,8 @@ export default function ChannelPage(props: Props) {
                             <button
                               type="button"
                               class="btn msg-reply-btn"
-                              title="Responder"
-                              aria-label="Responder"
+                              title={t("channel.reply")}
+                              aria-label={t("channel.reply")}
                               onClick={() => setReplyTarget(m)}
                             >
                               <IconReply />
@@ -1271,8 +1316,8 @@ export default function ChannelPage(props: Props) {
                             <button
                               type="button"
                               class="btn msg-delete"
-                              title="Apagar"
-                              aria-label="Apagar mensagem"
+                              title={t("common.delete")}
+                              aria-label={t("channel.deleteMessage")}
                               onClick={() => void requestDelete(m.id)}
                             >
                               <IconTrash />
@@ -1315,18 +1360,18 @@ export default function ChannelPage(props: Props) {
       </div>
       <Show when={msgUnavailable()}>
         <div class="msg-unavailable-banner" role="status">
-          Mensagem indisponível
+          {t("channel.msgUnavailable")}
         </div>
       </Show>
       <Show
         when={canWrite()}
-        fallback={<p class="muted composer-read-only">Pode ler este canal, mas não enviar mensagens.</p>}
+        fallback={<p class="muted composer-read-only">{t("channel.readOnly")}</p>}
       >
         <Show
           when={!composerBlocked()}
           fallback={
             <p class="muted composer-muted-banner">
-              Silenciado neste canal até {muteEndsLabel() || "…"}. Não pode enviar mensagens novas.
+              {t("channel.mutedBanner", { when: muteEndsLabel() || "…" })}
             </p>
           }
         >
@@ -1340,7 +1385,7 @@ export default function ChannelPage(props: Props) {
                   <button
                     type="button"
                     class="btn btn-ghost"
-                    aria-label={`Remover ${p.file.name}`}
+                    aria-label={t("channel.removeAttachment", { name: p.file.name })}
                     onClick={() => removePending(p.localId)}
                   >
                     ×
@@ -1357,8 +1402,9 @@ export default function ChannelPage(props: Props) {
               class="btn jump-to-present"
               onClick={() => jumpToPresent()}
             >
-              Saltar para o presente
-              {pendingNewCount() > 1 ? ` (${pendingNewCount()})` : ""}
+              {pendingNewCount() > 1
+                ? t("channel.jumpPresentN", { n: pendingNewCount() })
+                : t("channel.jumpPresent")}
             </button>
           </Show>
           <Show when={replyTarget()}>
@@ -1366,13 +1412,13 @@ export default function ChannelPage(props: Props) {
               <div class="composer-reply">
                 <IconReply size={14} aria-hidden="true" />
                 <span class="composer-reply-label">
-                  Respondendo a <strong>{displayHandle(target().sender)}</strong>
+                  {t("channel.replyingTo")} <strong>{displayHandle(target().sender)}</strong>
                   {target().text ? `: ${truncateReply(target().text)}` : ""}
                 </span>
                 <button
                   type="button"
                   class="btn btn-ghost composer-reply-cancel"
-                  aria-label="Cancelar resposta"
+                  aria-label={t("channel.cancelReply")}
                   onClick={() => setReplyTarget(null)}
                 >
                   ×
@@ -1420,10 +1466,10 @@ export default function ChannelPage(props: Props) {
               type="button"
               class="composer-icon-btn composer-attach-btn"
               disabled={pending() || pendingFiles().length >= MAX_ATTACHMENTS_PER_MESSAGE}
-              aria-label="Anexar imagem"
+              aria-label={t("channel.attachImage")}
               onClick={() => fileInput?.click()}
             >
-              <IconPlus size={18} title="Anexar imagem" />
+              <IconPlus size={18} title={t("channel.attachImage")} />
             </button>
             <input
               ref={(el) => {
@@ -1444,14 +1490,14 @@ export default function ChannelPage(props: Props) {
                   setEmojiSuggestOpen(false);
                 }, 150);
               }}
-              placeholder="Escrever mensagem…"
+              placeholder={t("channel.placeholder")}
               autocomplete="off"
             />
             <div class="composer-trailing">
               <button
                 type="button"
                 class="composer-icon-btn"
-                aria-label="Emoji"
+                aria-label={t("channel.emoji")}
                 aria-expanded={emojiPickerOpen()}
                 onClick={() => {
                   setEmojiPickerOpen((v) => !v);
@@ -1459,15 +1505,15 @@ export default function ChannelPage(props: Props) {
                   setMentionOpen(false);
                 }}
               >
-                <IconEmoji size={18} title="Emoji" />
+                <IconEmoji size={18} title={t("channel.emoji")} />
               </button>
               <button
                 type="submit"
                 class="composer-icon-btn composer-send-btn"
-                aria-label="Enviar"
+                aria-label={t("channel.send")}
                 disabled={pending() || sending() || !canSend()}
               >
-                <IconSend size={18} title="Enviar" />
+                <IconSend size={18} title={t("channel.send")} />
               </button>
             </div>
           </div>

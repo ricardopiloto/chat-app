@@ -5,7 +5,6 @@ import type { WsEnvelope } from "../api/ws";
 import type { Identity } from "../crypto/identity";
 import MembersPanel from "../components/MembersPanel";
 import {
-  readChannelsListExpanded,
   readMembersPanelOpen,
   readStageMode,
   writeChannelsListExpanded,
@@ -17,6 +16,7 @@ import {
   resolveChannelForServer,
 } from "../preferences/lastChannelByServer";
 import { isSettingsPath } from "../lib/settingsAccess";
+import { t } from "../i18n";
 import { bootTheme } from "../theme/theme";
 import ToastHost from "../components/ToastHost";
 import Sidebar from "./Sidebar";
@@ -70,9 +70,8 @@ export default function AppShell(props: Props) {
     serverIdFromRoute(params, location.search),
   );
   const [stageMode, setStageMode] = createSignal(readStageMode());
-  const [channelsListExpanded, setChannelsListExpanded] = createSignal(
-    readChannelsListExpanded(),
-  );
+  /** 078: channels list always expanded (collapse deferred). */
+  const [channelsListExpanded, setChannelsListExpanded] = createSignal(true);
   const [membersPanelOpen, setMembersPanelOpen] = createSignal(readMembersPanelOpen());
   const [focusMemberId, setFocusMemberId] = createSignal<string | null>(null);
   const [drawerOpen, setDrawerOpen] = createSignal(false);
@@ -93,7 +92,10 @@ export default function AppShell(props: Props) {
 
   createEffect(() => {
     const on = props.stageMode;
-    if (typeof on === "boolean") setStageMode(on);
+    if (typeof on === "boolean") {
+      // 081: ignore attempts to turn stage on
+      setStage(false);
+    }
   });
 
   createEffect(() => {
@@ -106,21 +108,24 @@ export default function AppShell(props: Props) {
     onCleanup(() => window.removeEventListener("resize", onResize));
   });
 
-  function setStage(on: boolean) {
-    setStageMode(on);
-    writeStageMode(on);
-    props.onStageModeChange?.(on);
-    if (on) {
-      setDrawerOpen(false);
-      // Same effect as «Ocultar canais»: peek behind Server Rail
-      setChannelsExpanded(false);
-    }
+  function setStage(_on: boolean) {
+    // 081: never enable stage mode
+    setStageMode(false);
+    writeStageMode(false);
+    props.onStageModeChange?.(false);
   }
 
+  /** 078: collapse deferred — only force expanded; ignore collapse requests. */
   function setChannelsExpanded(expanded: boolean) {
-    setChannelsListExpanded(expanded);
-    writeChannelsListExpanded(expanded);
-    broadcastChannelsListState(expanded);
+    if (!expanded) {
+      setChannelsListExpanded(true);
+      writeChannelsListExpanded(true);
+      broadcastChannelsListState(true);
+      return;
+    }
+    setChannelsListExpanded(true);
+    writeChannelsListExpanded(true);
+    broadcastChannelsListState(true);
   }
 
   function setMembersOpen(open: boolean) {
@@ -130,15 +135,16 @@ export default function AppShell(props: Props) {
   }
 
   function toggleMenu() {
-    if (stageMode()) setStage(false);
+    if (stageMode()) {
+      window.dispatchEvent(new CustomEvent("mesa:stage-mode", { detail: { stage: false } }));
+    }
     setDrawerOpen((o) => !o);
   }
 
   createEffect(() => {
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent<{ stage?: boolean; toggle?: boolean }>).detail;
-      if (detail?.toggle) setStage(!stageMode());
-      else if (typeof detail?.stage === "boolean") setStage(detail.stage);
+    const handler = (_e: Event) => {
+      // 081: stage mode retired — force off on any request/toggle
+      setStage(false);
     };
     window.addEventListener("mesa:stage-mode", handler);
     onCleanup(() => window.removeEventListener("mesa:stage-mode", handler));
@@ -186,7 +192,7 @@ export default function AppShell(props: Props) {
   const shellClass = () => {
     const parts = ["shell"];
     if (stageMode()) parts.push("stage-mode");
-    if (!channelsListExpanded()) parts.push("channels-collapsed");
+    // 078: never apply channels-collapsed
     if (membersPanelOpen()) parts.push("members-open");
     if (narrow() && drawerOpen() && !stageMode()) parts.push("drawer-open");
     return parts.join(" ");
@@ -234,7 +240,7 @@ export default function AppShell(props: Props) {
         <button
           type="button"
           class="shell-backdrop"
-          aria-label="Fechar menu"
+          aria-label={t("shell.closeMenu")}
           onClick={() => setDrawerOpen(false)}
         />
         <Sidebar
@@ -243,8 +249,8 @@ export default function AppShell(props: Props) {
           selectedServerId={selectedServerId()}
           onSelectServer={(s: Server | null) => setSelectedServerId(s?.id ?? null)}
           onWs={props.onWs}
-          channelsListExpanded={channelsListExpanded()}
-          onToggleChannels={() => setChannelsExpanded(!channelsListExpanded())}
+          channelsListExpanded={true}
+          onToggleChannels={() => setChannelsExpanded(true)}
           onExpandChannels={() => setChannelsExpanded(true)}
           onLogout={props.onLogout}
           onAccountPatch={props.onAccountPatch}
@@ -273,12 +279,14 @@ export default function AppShell(props: Props) {
   );
 }
 
-export function requestStageMode(stage: boolean) {
-  window.dispatchEvent(new CustomEvent("mesa:stage-mode", { detail: { stage } }));
+export function requestStageMode(_stage: boolean) {
+  // 081: always request off
+  window.dispatchEvent(new CustomEvent("mesa:stage-mode", { detail: { stage: false } }));
 }
 
 export function toggleStageMode() {
-  window.dispatchEvent(new CustomEvent("mesa:stage-mode", { detail: { toggle: true } }));
+  // 081: no-op product behavior — keep off
+  window.dispatchEvent(new CustomEvent("mesa:stage-mode", { detail: { stage: false } }));
 }
 
 export function requestMembersPanel(open: boolean) {

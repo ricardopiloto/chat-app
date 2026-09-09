@@ -1,9 +1,10 @@
 use crate::api::auth::session::AuthUser;
 use crate::api::channel_provision;
+use crate::api::welcome::validate_text_channel_on_server;
 use crate::db;
 use crate::domain::channel::ChannelType;
 use crate::domain::membership::{KeyHandoffStatus, Membership};
-use crate::domain::server::Server;
+use crate::domain::server::{Server, ServerWelcomeSettings};
 use crate::error::ApiError;
 use crate::AppState;
 use axum::extract::{Path, State};
@@ -127,4 +128,87 @@ pub async fn delete_server(
         .await;
     db::server::delete(&state.pool, server_id).await?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PatchWelcomeBody {
+    pub welcome_channel_id: Option<Option<Uuid>>,
+    pub welcome_message_template: Option<Option<String>>,
+}
+
+async fn require_owner(
+    state: &AppState,
+    account_id: Uuid,
+    server_id: Uuid,
+) -> Result<Server, ApiError> {
+    let server = db::server::find_by_id(&state.pool, server_id)
+        .await?
+        .ok_or_else(|| ApiError::not_found("server not found"))?;
+    if account_id != server.owner_account_id {
+        return Err(ApiError::forbidden("only the owner can manage welcome settings"));
+    }
+    Ok(server)
+}
+
+pub async fn get_welcome(
+    State(state): State<AppState>,
+    AuthUser(account): AuthUser,
+    Path(server_id): Path<Uuid>,
+) -> Result<Json<ServerWelcomeSettings>, ApiError> {
+    require_owner(&state, account.id, server_id).await?;
+    let settings = db::server::get_welcome_settings(&state.pool, server_id)
+        .await?
+        .unwrap_or(ServerWelcomeSettings {
+            welcome_channel_id: None,
+            welcome_message_template: None,
+        });
+    Ok(Json(settings))
+}
+
+pub async fn patch_welcome(
+    State(state): State<AppState>,
+    AuthUser(account): AuthUser,
+    Path(server_id): Path<Uuid>,
+    Json(body): Json<PatchWelcomeBody>,
+) -> Result<Json<ServerWelcomeSettings>, ApiError> {
+    require_owner(&state, account.id, server_id).await?;
+    let mut settings = db::server::get_welcome_settings(&state.pool, server_id)
+        .await?
+        .unwrap_or(ServerWelcomeSettings {
+            welcome_channel_id: None,
+            welcome_message_template: None,
+        });
+
+    if let Some(channel_opt) = body.welcome_channel_id {
+        if let Some(channel_id) = channel_opt {
+            if !validate_text_channel_on_server(&state.pool, server_id, channel_id).await? {
+                return Err(ApiError::bad_request(
+                    "welcome_channel_id must be a text channel on this server",
+                ));
+            }
+            settings.welcome_channel_id = Some(channel_id);
+        } else {
+            settings.welcome_channel_id = None;
+        }
+    }
+
+    if let Some(template_opt) = body.welcome_message_template {
+        if let Some(raw) = template_opt {
+            let trimmed = raw.trim().to_string();
+            if trimmed.is_empty() {
+                settings.welcome_message_template = None;
+            } else if !trimmed.contains("{nome}") {
+                return Err(ApiError::bad_request(
+                    "welcome_message_template must contain {nome}",
+                ));
+            } else {
+                settings.welcome_message_template = Some(trimmed);
+            }
+        } else {
+            settings.welcome_message_template = None;
+        }
+    }
+
+    db::server::set_welcome_settings(&state.pool, server_id, &settings).await?;
+    Ok(Json(settings))
 }

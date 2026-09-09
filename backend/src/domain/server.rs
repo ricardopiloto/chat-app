@@ -16,3 +16,10 @@ pub struct Server {
     #[serde(skip)]
     pub image_content_type: Option<String>,
 }
+
+/// Owner-configurable join welcome settings (077).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ServerWelcomeSettings {
+    pub welcome_channel_id: Option<Uuid>,
+    pub welcome_message_template: Option<String>,
+}

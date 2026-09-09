@@ -3,6 +3,7 @@
  * Migrated surfaces: see specs/053-frontend-build-optimize/inventory.md C1.
  */
 import { ApiError } from "../api/client";
+import { t } from "../i18n";
 
 function messageFromObject(err: object): string | null {
   if ("message" in err) {
@@ -12,8 +13,9 @@ function messageFromObject(err: object): string | null {
   return null;
 }
 
-export function errorMessage(err: unknown, fallback = "Algo correu mal."): string {
-  if (err == null) return fallback;
+export function errorMessage(err: unknown, fallback?: string): string {
+  const resolvedFallback = fallback ?? t("errors.generic");
+  if (err == null) return resolvedFallback;
   if (typeof err === "string" && err.trim()) return err;
   if (err instanceof ApiError) {
     if (err.message.trim()) return err.message;
@@ -23,5 +25,5 @@ export function errorMessage(err: unknown, fallback = "Algo correu mal."): strin
     const msg = messageFromObject(err);
     if (msg) return msg;
   }
-  return fallback;
+  return resolvedFallback;
 }

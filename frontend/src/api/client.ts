@@ -116,9 +116,11 @@ export type CreateChannelBody = {
 export type Message = {
   id: string;
   channel_id: string;
-  sender_account_id: string;
-  content_ciphertext: string;
+  sender_account_id?: string | null;
+  content_ciphertext?: string;
   created_at: string;
+  kind?: string;
+  content_plaintext?: string | null;
   attachment_ids?: string[];
   reply_to_message_id?: string | null;
   mentioned_account_ids?: string[];
@@ -174,7 +176,46 @@ export type Invite = {
   expires_at: string | null;
   include_history: boolean;
   use_count?: number;
+  welcome_channel_id?: string | null;
 };
+
+export type ServerWelcomeSettings = {
+  welcome_channel_id: string | null;
+  welcome_message_template: string | null;
+};
+
+export async function fetchServerWelcome(
+  serverId: string,
+): Promise<ServerWelcomeSettings> {
+  return api<ServerWelcomeSettings>(`/api/servers/${serverId}/welcome`);
+}
+
+export async function patchServerWelcome(
+  serverId: string,
+  body: {
+    welcome_channel_id?: string | null;
+    welcome_message_template?: string | null;
+  },
+): Promise<ServerWelcomeSettings> {
+  return api<ServerWelcomeSettings>(`/api/servers/${serverId}/welcome`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function createInvite(
+  serverId: string,
+  body: {
+    include_history?: boolean;
+    welcome_channel_id?: string;
+    expires_in_seconds?: number;
+  } = {},
+): Promise<Invite> {
+  return api<Invite>(`/api/servers/${serverId}/invites`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
 
 export type InvitePreview = {
   server_name: string;

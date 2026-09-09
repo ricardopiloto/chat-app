@@ -1,5 +1,6 @@
 import { Show, createEffect, createSignal, onCleanup } from "solid-js";
 import { ALLOWED_AVATAR_TYPES, MAX_AVATAR_BYTES } from "../api/client";
+import { t } from "../i18n";
 import { errorMessage } from "../lib/apiError";
 import Dialog from "./Dialog";
 
@@ -43,12 +44,12 @@ export default function ImageUploadDialog(props: Props) {
     input.value = "";
     if (!next) return;
     if (!ALLOWED_AVATAR_TYPES.has(next.type)) {
-      setError("Use JPEG, PNG ou WebP (GIF não é aceite).");
+      setError(t("upload.typeError"));
       setFile(null);
       return;
     }
     if (next.size > MAX_AVATAR_BYTES) {
-      setError("A imagem não pode exceder 1 MiB.");
+      setError(t("upload.sizeError"));
       setFile(null);
       return;
     }
@@ -101,7 +102,7 @@ export default function ImageUploadDialog(props: Props) {
             disabled={busy()}
             onClick={() => props.onClose()}
           >
-            Cancelar
+            {t("common.cancel")}
           </button>
           <Show when={props.hasImage}>
             <button
@@ -110,7 +111,7 @@ export default function ImageUploadDialog(props: Props) {
               disabled={busy()}
               onClick={() => void remove()}
             >
-              Remover
+              {t("common.remove")}
             </button>
           </Show>
           <button
@@ -119,7 +120,7 @@ export default function ImageUploadDialog(props: Props) {
             disabled={busy() || !file()}
             onClick={() => void save()}
           >
-            Guardar
+            {t("common.save")}
           </button>
         </>
       }

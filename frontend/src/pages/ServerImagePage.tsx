@@ -8,6 +8,7 @@ import {
   type Server,
 } from "../api/client";
 import ImageUploadDialog from "../components/ImageUploadDialog";
+import { t } from "../i18n";
 import { errorMessage } from "../lib/apiError";
 
 export default function ServerImagePage() {
@@ -25,24 +26,24 @@ export default function ServerImagePage() {
   return (
     <div class="server-image-page main" role="main">
       <header class="server-settings-page-header">
-        <h1>Imagem do servidor</h1>
-        <p class="muted">Atualize a imagem mostrada no rail e na lista de servidores.</p>
+        <h1>{t("settings.serverImage")}</h1>
+        <p class="muted">{t("settings.imageHint")}</p>
       </header>
-      <Show when={server()} fallback={<p class="muted">A carregar…</p>}>
+      <Show when={server()} fallback={<p class="muted">{t("common.loading")}</p>}>
         {(s) => (
           <div class="server-image-preview-block">
             <Show
               when={s().has_image}
-              fallback={<div class="server-image-placeholder muted">Sem imagem</div>}
+              fallback={<div class="server-image-placeholder muted">{t("settings.noImage")}</div>}
             >
               <img
                 class="server-image-preview"
                 src={serverImageUrl(s().id)}
-                alt={`Imagem de ${s().name}`}
+                alt={t("settings.imageAlt", { name: s().name })}
               />
             </Show>
             <button type="button" class="btn btn-primary" onClick={() => setDialogOpen(true)}>
-              Alterar imagem
+              {t("settings.changeImage")}
             </button>
           </div>
         )}
@@ -54,7 +55,7 @@ export default function ServerImagePage() {
       </Show>
       <ImageUploadDialog
         open={dialogOpen()}
-        title="Imagem do servidor"
+        title={t("settings.serverImage")}
         hasImage={!!server()?.has_image}
         currentUrl={server() ? serverImageUrl(server()!.id) : undefined}
         onClose={() => setDialogOpen(false)}

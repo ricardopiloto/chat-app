@@ -2,9 +2,10 @@
  * Server settings nav visibility (056-server-settings-shell).
  */
 import type { ServerRole } from "../api/client";
+import { t } from "../i18n";
 import { memberHasCapability } from "./capabilities";
 
-export type SettingsItemId = "members" | "roles" | "image" | "delete";
+export type SettingsItemId = "members" | "roles" | "image" | "welcome" | "delete";
 
 export type SettingsNavItem = {
   id: SettingsItemId;
@@ -48,22 +49,22 @@ export function buildSettingsNav(
   if (people) {
     groups.push({
       id: "people",
-      label: "Pessoas",
+      label: t("settings.people"),
       items: [
         {
           id: "members",
-          label: "Membros",
+          label: t("settings.members"),
           href: `/servers/${serverId}/settings/members`,
         },
       ],
     });
     groups.push({
       id: "roles",
-      label: "Funções",
+      label: t("settings.rolesGroup"),
       items: [
         {
           id: "roles",
-          label: "Perfis",
+          label: t("settings.roles"),
           href: `/servers/${serverId}/settings/roles`,
         },
       ],
@@ -73,16 +74,21 @@ export function buildSettingsNav(
   if (isOwner) {
     groups.push({
       id: "server",
-      label: "Servidor",
+      label: t("settings.serverGroup"),
       items: [
         {
           id: "image",
-          label: "Imagem do servidor",
+          label: t("settings.serverImage"),
           href: `/servers/${serverId}/settings/image`,
         },
         {
+          id: "welcome",
+          label: t("settings.welcome"),
+          href: `/servers/${serverId}/settings/welcome`,
+        },
+        {
           id: "delete",
-          label: "Apagar servidor",
+          label: t("settings.deleteServer"),
           href: `/servers/${serverId}/settings/delete`,
         },
       ],

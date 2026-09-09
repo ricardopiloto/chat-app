@@ -1,5 +1,6 @@
 import type { Account } from "../api/client";
 import type { Identity } from "../crypto/identity";
+import { t } from "../i18n";
 
 type Props = {
   me: Account;
@@ -12,9 +13,9 @@ export default function Servers(_props: Props) {
     <div class="home-empty pane">
       <div>
         <p style={{ "font-size": "16px", "font-weight": "600", color: "var(--color-text)" }}>
-          Escolha um canal
+          {t("servers.pickChannel")}
         </p>
-        <p class="muted">Use a barra lateral para abrir texto ou voz neste Servidor.</p>
+        <p class="muted">{t("servers.pickChannelHint")}</p>
       </div>
     </div>
   );

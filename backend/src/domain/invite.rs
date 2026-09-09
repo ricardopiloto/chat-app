@@ -13,6 +13,8 @@ pub struct Invite {
     pub include_history: bool,
     #[serde(default)]
     pub use_count: i64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub welcome_channel_id: Option<Uuid>,
 }
 
 #[derive(Debug, Clone)]
@@ -25,6 +27,7 @@ pub struct InviteRecord {
     pub include_history: bool,
     pub revoked_at: Option<DateTime<Utc>>,
     pub use_count: i64,
+    pub welcome_channel_id: Option<Uuid>,
 }
 
 impl InviteRecord {
@@ -35,6 +38,7 @@ impl InviteRecord {
             expires_at: self.expires_at,
             include_history: self.include_history,
             use_count: self.use_count,
+            welcome_channel_id: self.welcome_channel_id,
         }
     }
 
