@@ -9,6 +9,16 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [0.8.0.1] - 2026-09-11
+
+### Changed
+
+- Shell chrome: hairline `border` (`var(--color-divider)`) on topbar, server rail, sidebar header, channel list (`.sidebar-nav`), and user panel.
+
+### Notes
+
+- Product / frontend label **0.8.0.1**; backend crate version is **0.8.1** (Cargo requires SemVer `MAJOR.MINOR.PATCH` and rejects a fourth numeric segment).
+
 ## [0.8.0] - 2026-09-11
 
 ### Changed
@@ -254,7 +264,8 @@ Initial tracked release baseline (features delivered through 006).
 
 - Earlier spikes and phases: see `specs/001-fase-0-spike/` … `specs/005-fase3-ui-corrections/` and `docs/`.
 
-[Unreleased]: https://github.com/ricardosobral/chat-app/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/ricardosobral/chat-app/compare/v0.8.0.1...HEAD
+[0.8.0.1]: https://github.com/ricardosobral/chat-app/compare/v0.8.0...v0.8.0.1
 [0.8.0]: https://github.com/ricardosobral/chat-app/compare/v0.7.1...v0.8.0
 [0.7.1]: https://github.com/ricardosobral/chat-app/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/ricardosobral/chat-app/compare/v0.6.0...v0.7.0

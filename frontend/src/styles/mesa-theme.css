@@ -139,6 +139,7 @@ a:hover {
   padding: 0 16px;
   background: var(--panel);
   border-radius: var(--radius-lg);
+  border: 1px solid var(--color-divider);
   /* 066: allow notif/search/account menus to paint below the bar (was overflow:hidden clipping) */
   overflow: visible;
   position: relative;
@@ -340,6 +341,7 @@ img.user-avatar {
   padding: 12px 0 10px;
   background: color-mix(in srgb, var(--panel) 92%, #000);
   border-radius: var(--radius-lg);
+  border: 1px solid var(--color-divider);
 }
 .server-rail-list {
   flex: 1;
@@ -481,6 +483,7 @@ img.server-rail-glyph {
   border: 0;
   background: var(--panel);
   border-radius: var(--radius-lg);
+  border: 1px solid var(--color-divider);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -589,6 +592,7 @@ img.server-rail-glyph {
   gap: 3px;
   background: var(--panel);
   border-radius: var(--radius-lg);
+  border: 1px solid var(--color-divider);
 }
 .sidebar-section-row {
   display: flex;
@@ -1073,6 +1077,7 @@ img.voice-roster-avatar {
   margin-top: 0;
   background: color-mix(in srgb, var(--panel) 92%, #000 8%);
   border-radius: var(--radius-lg);
+  border: 1px solid var(--color-divider);
   padding: 6px 8px;
   display: flex;
   flex-direction: column;
