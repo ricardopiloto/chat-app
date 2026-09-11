@@ -279,6 +279,7 @@ export type VoiceOccupantView = {
   handle: string;
   mic_on: boolean;
   cam_on: boolean;
+  screen_on?: boolean;
   has_avatar?: boolean;
 };
 
@@ -311,9 +312,18 @@ export async function leaveVoice(channelId: string): Promise<void> {
   await api<void>(`/api/channels/${channelId}/voice/leave`, { method: "POST" });
 }
 
+/** Best-effort leave that can complete during tab unload (087). Fire-and-forget. */
+export function leaveVoiceKeepalive(channelId: string): void {
+  void fetch(`/api/channels/${channelId}/voice/leave`, {
+    method: "POST",
+    credentials: "include",
+    keepalive: true,
+  }).catch(() => undefined);
+}
+
 export async function patchVoiceMedia(
   channelId: string,
-  body: { mic_on?: boolean; cam_on?: boolean } = {},
+  body: { mic_on?: boolean; cam_on?: boolean; screen_on?: boolean } = {},
 ): Promise<void> {
   await api<void>(`/api/channels/${channelId}/voice/media`, {
     method: "PATCH",

@@ -12,6 +12,7 @@ import {
   api,
   formatCallDuration,
   leaveVoice,
+  leaveVoiceKeepalive,
   patchVoiceMedia,
   type Channel,
 } from "../api/client";
@@ -43,6 +44,9 @@ export function viewingActiveVoiceStage(
 
 export type VoiceTrackHandlers = {
   onTrack: (track: RemoteTrack, participant: Participant) => void;
+  /** 088: remove remote screen/cam tracks from Grade maps when unsubscribed. */
+  onTrackUnsubscribed?: (track: RemoteTrack, participant: Participant) => void;
+  onParticipantDisconnected?: (participant: Participant) => void;
   onLocalTrack: (el: HTMLMediaElement, kind: "video" | "audio") => void;
   onDisconnected: (reason?: unknown) => void;
 };
@@ -55,6 +59,8 @@ export type VoiceSessionValue = {
   permission: Accessor<Channel["my_permission"] | null>;
   micOn: Accessor<boolean>;
   camOn: Accessor<boolean>;
+  /** Local screen-share publication active (082). */
+  screenOn: Accessor<boolean>;
   /** Client-only: silence remotes + force mic mute (039). */
   deafened: Accessor<boolean>;
   callStartedAt: Accessor<string | null>;
@@ -68,6 +74,7 @@ export type VoiceSessionValue = {
   session: () => LiveSession | null;
   localCamTrack: () => LocalVideoTrack | null;
   localVideoEl: () => HTMLMediaElement | null;
+  localScreenVideoEl: () => HTMLMediaElement | null;
   setMicOn: Setter<boolean>;
   setCamOn: Setter<boolean>;
   setLocalCamTrack: (track: LocalVideoTrack | null) => void;
@@ -90,10 +97,14 @@ export type VoiceSessionValue = {
   toggleMic: () => Promise<void>;
   /** Shared camera on/off (+ blur preference when enabling). */
   toggleCam: () => Promise<void>;
+  /** Screen share on/off (Grade UI gate is caller's responsibility). */
+  toggleScreenShare: () => Promise<void>;
   setDeafened: (on: boolean) => Promise<void>;
   toggleDeafen: () => Promise<void>;
   consumeIntentionalLeave: () => boolean;
   dispatchTrack: (track: RemoteTrack, participant: Participant) => void;
+  dispatchTrackUnsubscribed: (track: RemoteTrack, participant: Participant) => void;
+  dispatchParticipantDisconnected: (participant: Participant) => void;
   dispatchLocalTrack: (el: HTMLMediaElement, kind: "video" | "audio") => void;
 };
 
@@ -117,6 +128,7 @@ export function VoiceSessionProvider(props: {
   const [micOn, setMicOn] = createSignal(true);
   /** 081: preferred cam defaults off (JOIN without camera until panel toggled). */
   const [camOn, setCamOn] = createSignal(false);
+  const [screenOn, setScreenOn] = createSignal(false);
   const [deafened, setDeafenedSignal] = createSignal(false);
   const [callStartedAt, setCallStartedAt] = createSignal<string | null>(null);
   const [now, setNow] = createSignal(Date.now());
@@ -127,6 +139,9 @@ export function VoiceSessionProvider(props: {
   let session: LiveSession | null = null;
   let localCamTrack: LocalVideoTrack | null = null;
   let localVideoEl: HTMLMediaElement | null = null;
+  let localScreenVideoEl: HTMLMediaElement | null = null;
+  let screenTrackEndedHandler: ((this: MediaStreamTrack, ev: Event) => void) | null = null;
+  let screenMediaTrack: MediaStreamTrack | null = null;
   let handlers: VoiceTrackHandlers | null = null;
   let heartbeat: number | undefined;
   let intentionalLeave = false;
@@ -175,6 +190,77 @@ export function VoiceSessionProvider(props: {
       if (pub.source === Track.Source.Camera) return pub;
     }
     return undefined;
+  }
+
+  function clearLocalScreenEl() {
+    if (screenMediaTrack && screenTrackEndedHandler) {
+      screenMediaTrack.removeEventListener("ended", screenTrackEndedHandler);
+    }
+    screenMediaTrack = null;
+    screenTrackEndedHandler = null;
+    if (localScreenVideoEl) {
+      try {
+        localScreenVideoEl.remove();
+      } catch {
+        /* ignore */
+      }
+    }
+    localScreenVideoEl = null;
+  }
+
+  async function stopScreenShare() {
+    clearLocalScreenEl();
+    const id = channelId();
+    if (session) {
+      await session.room.localParticipant.setScreenShareEnabled(false).catch(() => undefined);
+    }
+    setScreenOn(false);
+    if (id) await patchVoiceMedia(id, { screen_on: false }).catch(() => undefined);
+  }
+
+  async function toggleScreenShare() {
+    if (permission() === "listen") return;
+    if (!session || !live()) return;
+    if (screenOn()) {
+      await stopScreenShare();
+      return;
+    }
+    try {
+      await session.room.localParticipant.setScreenShareEnabled(true, {
+        audio: true,
+      });
+    } catch {
+      // User cancelled picker or browser denied — no server start
+      return;
+    }
+    const { Track } = await loadVoiceRuntime();
+    const lp = session.room.localParticipant;
+    for (const pub of lp.videoTrackPublications.values()) {
+      if (pub.source !== Track.Source.ScreenShare || !pub.track) continue;
+      const mt = pub.track.mediaStreamTrack;
+      if (mt) {
+        try {
+          mt.contentHint = "detail";
+        } catch {
+          /* optional */
+        }
+        screenMediaTrack = mt;
+        screenTrackEndedHandler = () => {
+          void stopScreenShare();
+        };
+        mt.addEventListener("ended", screenTrackEndedHandler);
+      }
+      const el = pub.track.attach();
+      localScreenVideoEl = el;
+      if (el instanceof HTMLVideoElement) {
+        el.muted = true;
+        el.autoplay = true;
+        el.playsInline = true;
+      }
+    }
+    setScreenOn(true);
+    const id = channelId();
+    if (id) await patchVoiceMedia(id, { screen_on: true }).catch(() => undefined);
   }
 
   createEffect(() => {
@@ -256,6 +342,7 @@ export function VoiceSessionProvider(props: {
     clearSpeaking();
     detachLiveDeafen();
     setPipCorner(DEFAULT_CORNER);
+    await stopScreenShare();
     const s = session;
     const cam = localCamTrack;
     session = null;
@@ -278,6 +365,7 @@ export function VoiceSessionProvider(props: {
     // 080: keep mic/deafen session prefs after hangup (browser-session only)
     detachLiveDeafen();
     setPipCorner(DEFAULT_CORNER);
+    await stopScreenShare();
     const s = session;
     const cam = localCamTrack;
     session = null;
@@ -340,6 +428,17 @@ export function VoiceSessionProvider(props: {
     await reportMedia(next, camOn());
   }
 
+  /** 091: keep session preview canonical and notify VoiceChannel (join-equivalent). */
+  function adoptLocalCamPreview(el: HTMLMediaElement) {
+    localVideoEl = el;
+    if (el instanceof HTMLVideoElement) {
+      el.muted = true;
+      el.autoplay = true;
+      el.playsInline = true;
+    }
+    handlers?.onLocalTrack(el, "video");
+  }
+
   async function toggleCam() {
     if (permission() === "listen") return;
     if (!session || !live()) {
@@ -362,13 +461,7 @@ export function VoiceSessionProvider(props: {
         const track = pub?.track;
         if (track && track instanceof runtime.LocalVideoTrack) {
           localCamTrack = track;
-          const el = track.attach();
-          localVideoEl = el;
-          if (el instanceof HTMLVideoElement) {
-            el.muted = true;
-            el.autoplay = true;
-            el.playsInline = true;
-          }
+          adoptLocalCamPreview(track.attach());
         }
       } catch {
         return;
@@ -387,6 +480,12 @@ export function VoiceSessionProvider(props: {
         return;
       }
     }
+    // Re-attach if session lost the preview element (mid-call unmute / remount).
+    if (!localVideoEl && track) {
+      adoptLocalCamPreview(track.attach());
+    } else if (localVideoEl) {
+      adoptLocalCamPreview(localVideoEl);
+    }
     await (await cameraPublication())?.unmute();
     await reportMedia(micOn(), true);
   }
@@ -398,10 +497,11 @@ export function VoiceSessionProvider(props: {
     if (id) await patchVoiceMedia(id, { mic_on: mic, cam_on: cam }).catch(() => undefined);
   }
 
-  /** Best-effort on tab close; browsers may limit work (035 SC-006). */
+  /** Best-effort on tab close/refresh: keepalive leave first (087), then hangup. */
   function onPageHide() {
     const id = channelId();
     if (!id || !live()) return;
+    leaveVoiceKeepalive(id);
     void hangup();
   }
 
@@ -413,6 +513,7 @@ export function VoiceSessionProvider(props: {
     permission,
     micOn,
     camOn,
+    screenOn,
     deafened,
     callStartedAt,
     now,
@@ -423,6 +524,7 @@ export function VoiceSessionProvider(props: {
     session: () => session,
     localCamTrack: () => localCamTrack,
     localVideoEl: () => localVideoEl,
+    localScreenVideoEl: () => localScreenVideoEl,
     setMicOn,
     setCamOn,
     setLocalCamTrack: (track) => {
@@ -451,6 +553,8 @@ export function VoiceSessionProvider(props: {
       setLastMode(mode);
       setMicOn(mic);
       setCamOn(cam);
+      setScreenOn(false);
+      clearLocalScreenEl();
       setChannelId(channel.id);
       setServerId(channel.server_id);
       setChannelName(channel.name);
@@ -480,6 +584,7 @@ export function VoiceSessionProvider(props: {
       clearSpeaking();
       detachLiveDeafen();
       setPipCorner(DEFAULT_CORNER);
+      await stopScreenShare();
       const id = channelId();
       const s = session;
       const cam = localCamTrack;
@@ -500,11 +605,18 @@ export function VoiceSessionProvider(props: {
     reportMedia,
     toggleMic,
     toggleCam,
+    toggleScreenShare,
     setDeafened,
     toggleDeafen,
     consumeIntentionalLeave: () => intentionalLeave,
     dispatchTrack: (track, participant) => {
       handlers?.onTrack(track, participant);
+    },
+    dispatchTrackUnsubscribed: (track, participant) => {
+      handlers?.onTrackUnsubscribed?.(track, participant);
+    },
+    dispatchParticipantDisconnected: (participant) => {
+      handlers?.onParticipantDisconnected?.(participant);
     },
     dispatchLocalTrack: (el, kind) => {
       handlers?.onLocalTrack(el, kind);

@@ -12,6 +12,7 @@ pub struct VoiceOccupant {
     pub server_id: Uuid,
     pub mic_on: bool,
     pub cam_on: bool,
+    pub screen_on: bool,
     pub joined_at: DateTime<Utc>,
     pub last_seen_at: DateTime<Utc>,
 }
@@ -22,6 +23,7 @@ pub struct OccupantView {
     pub handle: String,
     pub mic_on: bool,
     pub cam_on: bool,
+    pub screen_on: bool,
     pub has_avatar: bool,
 }
 

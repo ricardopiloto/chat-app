@@ -1,6 +1,10 @@
 import { Show, createEffect, createResource, createSignal, onCleanup, untrack } from "solid-js";
 import CallBank, { deriveBank } from "../components/CallBank";
-import CameraGrid from "../components/CameraGrid";
+import CameraGrid, {
+  buildGradeTiles,
+  camTileKey,
+  screenTileKey,
+} from "../components/CameraGrid";
 import SceneEditor from "../components/SceneEditor";
 import Dialog from "../components/Dialog";
 import { IconLockClosed, IconLockWarning } from "../components/icons/IconLock";
@@ -80,10 +84,18 @@ export default function VoiceChannel(props: Props) {
   const [membersOpen, setMembersOpen] = createSignal(false);
   const [blurMode, setBlurMode] = createSignal<CameraBlurMode>(readBlurMode());
   const [callStartedAt, setCallStartedAt] = createSignal<string | null>(null);
+  const [screenShareActive, setScreenShareActive] = createSignal(false);
+  const [gradeScreenIds, setGradeScreenIds] = createSignal<string[]>([]);
+  const [gradeCameraIds, setGradeCameraIds] = createSignal<string[]>([]);
+  const [spotlightId, setSpotlightId] = createSignal<string | null>(null);
   const [runtimePhase, setRuntimePhase] = createSignal<VoiceLoadPhase>("idle");
   const slotEls = new Map<number, HTMLDivElement>();
-  const gradeEls = new Map<string, HTMLDivElement>();
-  const remotes = new Map<string, RemoteTrack[]>();
+  /** 083: attach targets keyed by `cam:` / `screen:` tile keys. */
+  const gradeTileEls = new Map<string, HTMLDivElement>();
+  const remotesCam = new Map<string, RemoteTrack[]>();
+  const remotesScreen = new Map<string, RemoteTrack[]>();
+  const remotesAudio: RemoteTrack[] = [];
+  let audioHost: HTMLDivElement | null = null;
   let localVideoEl: HTMLMediaElement | null = null;
   let session: LiveSession | null = null;
   let localCamTrack: LocalVideoTrack | null = null;
@@ -155,7 +167,11 @@ export default function VoiceChannel(props: Props) {
   }
 
   function refreshInCall() {
-    const ids = new Set<string>([props.me.id, ...remotes.keys()]);
+    const ids = new Set<string>([
+      props.me.id,
+      ...remotesCam.keys(),
+      ...remotesScreen.keys(),
+    ]);
     const room = voice.session()?.room;
     if (room) {
       for (const p of room.remoteParticipants.values()) {
@@ -165,14 +181,34 @@ export default function VoiceChannel(props: Props) {
     setInCallIds([...ids]);
   }
 
-  function attachSlot(index: number, el: HTMLDivElement) {
-    slotEls.set(index, el);
+  function scheduleLayout() {
     queueMicrotask(layoutMedia);
+    requestAnimationFrame(() => queueMicrotask(layoutMedia));
   }
 
-  function attachGrade(identity: string, el: HTMLDivElement) {
-    gradeEls.set(identity, el);
-    queueMicrotask(layoutMedia);
+  function attachSlot(index: number, el: HTMLDivElement) {
+    slotEls.set(index, el);
+    scheduleLayout();
+  }
+
+  function attachGradeTile(key: string, el: HTMLDivElement) {
+    gradeTileEls.set(key, el);
+    scheduleLayout();
+  }
+
+  /** 091: session-owned preview is canonical; keep page cache in sync. */
+  function resolveLocalCamEl(): HTMLMediaElement | null {
+    const fromSession = voice.localVideoEl();
+    if (fromSession) {
+      localVideoEl = fromSession;
+      return fromSession;
+    }
+    return localVideoEl;
+  }
+
+  function gradeTiles() {
+    const cams = gradeCameraIds().length ? gradeCameraIds() : [props.me.id];
+    return buildGradeTiles(cams, gradeScreenIds());
   }
 
   function clearOrphanVideos(node: HTMLElement, keep: HTMLMediaElement | null) {
@@ -183,45 +219,158 @@ export default function VoiceChannel(props: Props) {
     }
   }
 
+  function applyOccupancyScreenFlag(occupants: { screen_on?: boolean }[] | undefined) {
+    setScreenShareActive((occupants ?? []).some((o) => o.screen_on));
+  }
+
+  function refreshGradeLists() {
+    const screens = new Set<string>([...remotesScreen.keys()]);
+    if (voice.screenOn()) screens.add(props.me.id);
+    const cams = new Set<string>([...remotesCam.keys()]);
+    if (voice.camOn() || voice.localVideoEl() || localVideoEl) cams.add(props.me.id);
+    const room = voice.session()?.room;
+    if (room) {
+      for (const p of room.remoteParticipants.values()) {
+        cams.add(p.identity);
+      }
+    }
+    cams.add(props.me.id);
+    // Prefer screen list order stable
+    setGradeScreenIds([...screens]);
+    setGradeCameraIds([...cams]);
+    const spot = spotlightId();
+    if (spot && !screens.has(spot)) setSpotlightId(null);
+    refreshInCall();
+  }
+
+  function pruneGradeHosts(validKeys: Set<string>) {
+    for (const key of [...gradeTileEls.keys()]) {
+      if (!validKeys.has(key)) gradeTileEls.delete(key);
+    }
+  }
+
+  function pruneSlotHosts(validIndices: Set<number>) {
+    for (const idx of [...slotEls.keys()]) {
+      if (!validIndices.has(idx)) slotEls.delete(idx);
+    }
+  }
+
   function layoutMedia() {
     const current = grid();
     if (!current || !rt) return;
+    const localCam = resolveLocalCamEl();
+
+    // Always keep remote audio (incl. screen-share audio) playing
+    if (audioHost) {
+      for (const track of remotesAudio) rt.attachRemote(track, audioHost);
+    }
+
     if (viewMode() === "grid") {
-      for (const node of gradeEls.values()) clearOrphanVideos(node, localVideoEl);
-      for (const [identity, tracks] of remotes) {
-        const node = gradeEls.get(identity);
-        if (!node) continue;
-        for (const track of tracks) rt.attachRemote(track, node);
+      const validKeys = new Set(gradeTiles().map((t) => t.key));
+      pruneGradeHosts(validKeys);
+      const localScreen = voice.localScreenVideoEl();
+      for (const [key, node] of gradeTileEls) {
+        if (key.startsWith("screen:")) clearOrphanVideos(node, localScreen);
+        else clearOrphanVideos(node, localCam);
       }
-      if (localVideoEl) {
-        const node = gradeEls.get(props.me.id);
-        if (node && localVideoEl.parentElement !== node) node.appendChild(localVideoEl);
-        safePlay(localVideoEl);
+
+      for (const [identity, tracks] of remotesScreen) {
+        const node = gradeTileEls.get(screenTileKey(identity));
+        if (!node) continue;
+        for (const track of tracks) {
+          if (track.kind === "video") rt.attachRemote(track, node);
+        }
+      }
+      if (localScreen) {
+        const node = gradeTileEls.get(screenTileKey(props.me.id));
+        if (node && localScreen.parentElement !== node) node.appendChild(localScreen);
+        safePlay(localScreen);
+      }
+
+      for (const [identity, tracks] of remotesCam) {
+        const node = gradeTileEls.get(camTileKey(identity));
+        if (!node) continue;
+        for (const track of tracks) {
+          if (track.kind === "video") rt.attachRemote(track, node);
+        }
+      }
+      if (localCam) {
+        const node = gradeTileEls.get(camTileKey(props.me.id));
+        if (node && localCam.parentElement !== node) node.appendChild(localCam);
+        safePlay(localCam);
       }
       return;
     }
-    for (const node of slotEls.values()) clearOrphanVideos(node, localVideoEl);
-    for (const [identity, tracks] of remotes) {
+
+    // Composition: cameras only in slots — never screen video
+    pruneSlotHosts(new Set(current.slots.map((s) => s.index)));
+    for (const node of slotEls.values()) clearOrphanVideos(node, localCam);
+    for (const [identity, tracks] of remotesCam) {
       const idx = current.slots.find((s) => s.account_id === identity)?.index;
       if (idx === undefined) continue;
       const node = slotEls.get(idx);
       if (!node) continue;
-      for (const track of tracks) rt.attachRemote(track, node);
+      for (const track of tracks) {
+        if (track.kind === "video") rt.attachRemote(track, node);
+      }
     }
-    if (localVideoEl) {
+    if (localCam) {
       const mine = current.slots.find((s) => s.account_id === props.me.id)?.index ?? 0;
       const node = slotEls.get(mine);
-      if (node && localVideoEl.parentElement !== node) node.appendChild(localVideoEl);
-      safePlay(localVideoEl);
+      if (node && localCam.parentElement !== node) node.appendChild(localCam);
+      safePlay(localCam);
     }
   }
 
-  function placeTrack(track: RemoteTrack, participant: Participant) {
-    const list = remotes.get(participant.identity) ?? [];
-    if (!list.includes(track)) list.push(track);
-    remotes.set(participant.identity, list);
-    refreshInCall();
-    layoutMedia();
+  async function placeTrack(track: RemoteTrack, participant: Participant) {
+    const runtime = rt ?? (await ensureRuntime());
+    const { Track } = runtime;
+    if (track.kind === Track.Kind.Audio) {
+      if (!remotesAudio.includes(track)) remotesAudio.push(track);
+      if (audioHost) runtime.attachRemote(track, audioHost);
+      return;
+    }
+    if (track.source === Track.Source.ScreenShare) {
+      const list = remotesScreen.get(participant.identity) ?? [];
+      if (!list.includes(track)) list.push(track);
+      remotesScreen.set(participant.identity, list);
+    } else {
+      const list = remotesCam.get(participant.identity) ?? [];
+      if (!list.includes(track)) list.push(track);
+      remotesCam.set(participant.identity, list);
+    }
+    refreshGradeLists();
+    scheduleLayout();
+  }
+
+  /** 088: drop ended publications so Grade does not keep empty «Tela» tiles. */
+  async function removeTrack(track: RemoteTrack, participant: Participant) {
+    const runtime = rt ?? (await ensureRuntime());
+    const { Track } = runtime;
+    if (track.kind === Track.Kind.Audio) {
+      const idx = remotesAudio.indexOf(track);
+      if (idx >= 0) remotesAudio.splice(idx, 1);
+      scheduleLayout();
+      return;
+    }
+    if (track.source === Track.Source.ScreenShare) {
+      const list = (remotesScreen.get(participant.identity) ?? []).filter((t) => t !== track);
+      if (list.length) remotesScreen.set(participant.identity, list);
+      else remotesScreen.delete(participant.identity);
+    } else {
+      const list = (remotesCam.get(participant.identity) ?? []).filter((t) => t !== track);
+      if (list.length) remotesCam.set(participant.identity, list);
+      else remotesCam.delete(participant.identity);
+    }
+    refreshGradeLists();
+    scheduleLayout();
+  }
+
+  function clearRemoteParticipantMedia(identity: string) {
+    remotesScreen.delete(identity);
+    remotesCam.delete(identity);
+    refreshGradeLists();
+    scheduleLayout();
   }
 
   async function captureLocal(
@@ -391,6 +540,10 @@ export default function VoiceChannel(props: Props) {
         localVideo: local.video,
         localAudio: local.audio,
         onTrack: (track, participant) => voice.dispatchTrack(track, participant),
+        onTrackUnsubscribed: (track, participant) =>
+          voice.dispatchTrackUnsubscribed(track, participant),
+        onParticipantDisconnected: (participant) =>
+          voice.dispatchParticipantDisconnected(participant),
         onDisconnected: (reason) => {
           session = null;
           setLive(false);
@@ -411,7 +564,8 @@ export default function VoiceChannel(props: Props) {
             el.autoplay = true;
             el.playsInline = true;
           }
-          layoutMedia();
+          refreshGradeLists();
+          scheduleLayout();
         },
       });
       session = partialSession;
@@ -434,7 +588,7 @@ export default function VoiceChannel(props: Props) {
           e === runtime!.BLUR_FAILED || e === runtime!.BLUR_UNAVAILABLE ? e : "",
         );
       }
-      requestAnimationFrame(() => queueMicrotask(layoutMedia));
+      scheduleLayout();
     } catch (err) {
       if (isVoiceLoadFailed(runtimePhase()) || !runtime) {
         setError(t("channel.voiceLoadFail"));
@@ -470,7 +624,12 @@ export default function VoiceChannel(props: Props) {
       localCamTrack = null;
       session = null;
       localVideoEl = null;
-      remotes.clear();
+      voice.setLocalVideoEl(null);
+      remotesCam.clear();
+      remotesScreen.clear();
+      remotesAudio.length = 0;
+      setGradeScreenIds([]);
+      setSpotlightId(null);
       setLive(false);
       setInCallIds([]);
       requestStageMode(false);
@@ -482,14 +641,13 @@ export default function VoiceChannel(props: Props) {
   function setMode(mode: ViewMode) {
     writeViewMode(mode);
     setViewMode(mode);
-    queueMicrotask(layoutMedia);
-    requestAnimationFrame(() => queueMicrotask(layoutMedia));
+    scheduleLayout();
   }
 
   createEffect(() => {
     grid();
     viewMode();
-    queueMicrotask(layoutMedia);
+    scheduleLayout();
   });
 
   createEffect(() => {
@@ -525,6 +683,7 @@ export default function VoiceChannel(props: Props) {
           const snap = await fetchVoiceOccupancy(serverId);
           const row = snap.channels.find((c) => c.channel_id === channelId);
           setCallStartedAt(row?.call_started_at ?? null);
+          applyOccupancyScreenFlag(row?.occupants);
         } catch {
           setCallStartedAt(null);
         }
@@ -541,6 +700,17 @@ export default function VoiceChannel(props: Props) {
         setCallStartedAt(
           typeof started === "string" ? started : started == null ? null : String(started),
         );
+        const occupants = msg.payload.occupants as
+          | { account_id?: string; screen_on?: boolean }[]
+          | undefined;
+        applyOccupancyScreenFlag(occupants);
+        const spot = spotlightId();
+        if (spot && Array.isArray(occupants)) {
+          const still = occupants.some(
+            (o) => Boolean(o.screen_on) && String(o.account_id ?? "") === spot,
+          );
+          if (!still) setSpotlightId(null);
+        }
       }
       if (msg.event === "grid.updated" && String(msg.payload.channel_id) === channelId) {
         setGrid(msg.payload.grid as GridLayout);
@@ -582,6 +752,10 @@ export default function VoiceChannel(props: Props) {
   createEffect(() => {
     voice.setHandlers({
       onTrack: placeTrack,
+      onTrackUnsubscribed: removeTrack,
+      onParticipantDisconnected: (participant) => {
+        clearRemoteParticipantMedia(participant.identity);
+      },
       onLocalTrack: (el) => {
         localVideoEl = el;
         voice.setLocalVideoEl(el);
@@ -590,7 +764,8 @@ export default function VoiceChannel(props: Props) {
           el.autoplay = true;
           el.playsInline = true;
         }
-        layoutMedia();
+        refreshGradeLists();
+        scheduleLayout();
       },
       onDisconnected: (reason) => {
         session = null;
@@ -606,6 +781,22 @@ export default function VoiceChannel(props: Props) {
       },
     });
     onCleanup(() => voice.setHandlers(null));
+  });
+
+  createEffect(() => {
+    // 091: spotlight remounts Grade hosts — rebind after DOM settles
+    spotlightId();
+    scheduleLayout();
+  });
+
+  createEffect(() => {
+    voice.screenOn();
+    voice.camOn();
+    // 091: sync page cache from session when cam toggles (localVideoEl is not a signal).
+    const sessionEl = voice.localVideoEl();
+    if (sessionEl) localVideoEl = sessionEl;
+    refreshGradeLists();
+    scheduleLayout();
   });
 
   createEffect(() => {
@@ -651,7 +842,11 @@ export default function VoiceChannel(props: Props) {
           session = null;
           localCamTrack = null;
           localVideoEl = null;
-          remotes.clear();
+          remotesCam.clear();
+          remotesScreen.clear();
+          remotesAudio.length = 0;
+          setGradeScreenIds([]);
+          setSpotlightId(null);
           requestStageMode(false);
         } finally {
           moving = false;
@@ -719,6 +914,14 @@ export default function VoiceChannel(props: Props) {
 
   return (
     <div class={`pane voice-pane${editing() ? " voice-pane-editing" : ""}`}>
+      <div
+        class="voice-audio-host"
+        aria-hidden="true"
+        ref={(el) => {
+          audioHost = el;
+          queueMicrotask(layoutMedia);
+        }}
+      />
       <Show when={!e2eeEnabled()}>
         <div class="e2ee-banner" role="status">
           <IconLockWarning size={22} />
@@ -764,7 +967,7 @@ export default function VoiceChannel(props: Props) {
             />
             {t("voice.composition")}
           </label>
-          <label class="seg-opt">
+          <label class={`seg-opt${screenShareActive() ? " has-screen-share" : ""}`}>
             <input
               type="radio"
               name="view-mode"
@@ -772,6 +975,13 @@ export default function VoiceChannel(props: Props) {
               onChange={() => setMode("grid")}
             />
             {t("voice.grid")}
+            <Show when={screenShareActive()}>
+              <span
+                class="screen-share-indicator"
+                aria-label={t("voice.screenShareActive")}
+                title={t("voice.screenShareActive")}
+              />
+            </Show>
           </label>
         </div>
         <Show when={admin() && !editing()}>
@@ -887,8 +1097,12 @@ export default function VoiceChannel(props: Props) {
                   grid={g()}
                   handles={handles()}
                   attachSlot={attachSlot}
-                  gradeIdentities={inCallIds().length ? inCallIds() : [props.me.id]}
-                  attachGrade={attachGrade}
+                  gradeTiles={gradeTiles()}
+                  attachGradeTile={attachGradeTile}
+                  spotlightId={spotlightId()}
+                  onToggleSpotlight={(id) =>
+                    setSpotlightId((cur) => (cur === id ? null : id))
+                  }
                 />
               </Show>
             </Show>

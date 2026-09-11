@@ -1,4 +1,4 @@
-use chat_backend::{build_state, config::Config, router};
+use chat_backend::{api::voice, build_state, config::Config, router};
 use tokio::net::TcpListener;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -18,6 +18,7 @@ async fn main() {
     }
     let bind = config.bind.clone();
     let state = build_state(config).await.expect("database");
+    voice::spawn_stale_occupancy_sweeper(state.clone());
     let app = router(state).layer(tower_http::trace::TraceLayer::new_for_http());
     let listener = TcpListener::bind(&bind).await.expect("bind");
     tracing::info!("listening on {bind}");

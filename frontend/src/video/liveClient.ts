@@ -50,6 +50,8 @@ async function applyKey(keyProvider: ExternalE2EEKeyProvider, key: Uint8Array) {
   );
 }
 
+const attachedEls = new WeakMap<RemoteTrack, HTMLMediaElement>();
+
 export async function joinLiveRoom(opts: {
   url: string;
   token: string;
@@ -59,6 +61,10 @@ export async function joinLiveRoom(opts: {
   localVideo?: MediaStreamTrack | LocalVideoTrack;
   localAudio?: MediaStreamTrack;
   onTrack: (track: RemoteTrack, participant: Participant) => void;
+  /** 088: mirror subscribe so Grade Maps drop ended ScreenShare (and other) tracks. */
+  onTrackUnsubscribed?: (track: RemoteTrack, participant: Participant) => void;
+  /** 088: wipe screen/cam maps when a remote leaves mid-share. */
+  onParticipantDisconnected?: (participant: Participant) => void;
   onLocalTrack: (el: HTMLMediaElement, kind: "video" | "audio") => void;
   onDisconnected?: (reason?: unknown) => void;
 }): Promise<LiveSession> {
@@ -74,6 +80,22 @@ export async function joinLiveRoom(opts: {
   room.on(RoomEvent.TrackSubscribed, (track, _pub, participant) => {
     opts.onTrack(track, participant);
   });
+  if (opts.onTrackUnsubscribed) {
+    room.on(RoomEvent.TrackUnsubscribed, (track, _pub, participant) => {
+      try {
+        track.detach();
+      } catch {
+        /* already detached */
+      }
+      attachedEls.delete(track);
+      opts.onTrackUnsubscribed?.(track, participant);
+    });
+  }
+  if (opts.onParticipantDisconnected) {
+    room.on(RoomEvent.ParticipantDisconnected, (participant) => {
+      opts.onParticipantDisconnected?.(participant);
+    });
+  }
   if (opts.onDisconnected) {
     room.on(RoomEvent.Disconnected, (reason) => opts.onDisconnected?.(reason));
   }
@@ -113,6 +135,7 @@ export async function joinLiveRoom(opts: {
         await Promise.allSettled([
           lp.setCameraEnabled(false),
           lp.setMicrophoneEnabled(false),
+          lp.setScreenShareEnabled(false),
         ]);
         // stopTracks=true; await full signaling close before killing E2EE worker
         await room.disconnect(true);
@@ -122,8 +145,6 @@ export async function joinLiveRoom(opts: {
     },
   };
 }
-
-const attachedEls = new WeakMap<RemoteTrack, HTMLMediaElement>();
 
 export function attachRemote(track: RemoteTrack, node: HTMLElement) {
   let el = attachedEls.get(track);

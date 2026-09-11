@@ -2,7 +2,7 @@ use axum::body::Body;
 use axum::http::{Request, StatusCode};
 use axum::Router;
 use chat_backend::config::Config;
-use chat_backend::{build_state, router};
+use chat_backend::{build_state, router, AppState};
 use http_body_util::BodyExt;
 use serde_json::{json, Value};
 use tempfile::TempDir;
@@ -22,6 +22,7 @@ pub fn create_server_body(name: &str) -> Value {
 pub struct TestApp {
     pub router: Router,
     pub pool: sqlx::SqlitePool,
+    pub state: AppState,
     _dir: TempDir,
 }
 
@@ -45,8 +46,9 @@ impl TestApp {
         let state = build_state(config).await.expect("state");
         let pool = state.pool.clone();
         Self {
-            router: router(state),
+            router: router(state.clone()),
             pool,
+            state,
             _dir: dir,
         }
     }

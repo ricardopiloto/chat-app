@@ -966,8 +966,11 @@ img.voice-roster-avatar {
   color: var(--muted);
 }
 
-/* 039/048/078: user panel — Discord row: identity | leave? mic▾ deafen▾ settings */
+/* 039/048/078/084: user panel — single: identity | calls | settings; stacked: calls above */
 .user-panel {
+  /* 084: min readable handle width + hysteresis before unstack */
+  --user-panel-name-min: 6ch;
+  --user-panel-name-unstack: 7.5ch;
   flex: none;
   margin-top: 0;
   background: color-mix(in srgb, var(--panel) 92%, #000 8%);
@@ -978,6 +981,31 @@ img.voice-roster-avatar {
   align-items: center;
   gap: 8px;
   min-width: 0;
+  position: relative; /* flow in shell-nav row 2 — never overlay channels */
+}
+/* 084: stacked — upper centered call actions; lower identity + settings (grid reflow) */
+.user-panel--stacked {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 4px;
+}
+.user-panel--stacked .user-panel-calls {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  justify-content: center;
+  width: 100%;
+}
+.user-panel--stacked .user-panel-identity {
+  grid-column: 1;
+  grid-row: 2;
+  min-width: var(--user-panel-name-min);
+}
+.user-panel--stacked .user-panel-settings {
+  grid-column: 2;
+  grid-row: 2;
 }
 .user-panel-identity {
   display: flex;
@@ -1135,6 +1163,11 @@ img.voice-roster-avatar {
   top: auto;
   right: auto;
   left: 0;
+  z-index: 40;
+}
+/* 084: stacked panel is taller — keep menu above the whole bar */
+.user-panel--stacked .account-menu {
+  bottom: calc(100% + 6px);
 }
 .user-panel-ctrl.is-speaking {
   position: relative;
@@ -3529,6 +3562,124 @@ img.msg-avatar {
 .user-panel-ctrl.is-on {
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent-500, #5865f2) 55%, transparent);
 }
+
+/* 082 screen share */
+.voice-audio-host {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.screen-share-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-accent-500, #5865f2);
+  flex: none;
+  margin-inline-start: 6px;
+  vertical-align: middle;
+}
+.seg-opt.has-screen-share {
+  position: relative;
+}
+.channel-item.has-screen-share .screen-share-indicator {
+  margin-inline-start: 4px;
+}
+.grade-stage-unified {
+  display: grid;
+  gap: 8px;
+  min-height: 0;
+  height: 100%;
+}
+/* 086: spotlight = main stage + bottom filmstrip (not grid span) */
+.grade-stage-spotlight {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  height: 100%;
+}
+.grade-spotlight-main {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.grade-spotlight-main .grade-spotlight-main-slot,
+.grade-spotlight-main .slot {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+.grade-spotlight-strip {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  min-height: 96px;
+  max-height: 22%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.grade-spotlight-strip-slot,
+.grade-spotlight-strip .slot {
+  flex: 1 1 0;
+  min-width: 120px;
+  max-width: 280px;
+  min-height: 88px;
+}
+.grade-tile-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.grade-screen-chip-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.grade-screen-chip-tag {
+  font-size: 11px;
+  opacity: 0.85;
+  white-space: nowrap;
+}
+.grade-spotlight-btn {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  padding: 0 4px;
+  font-size: 14px;
+  line-height: 1;
+  opacity: 0.85;
+  flex: none;
+}
+.grade-spotlight-btn:hover {
+  opacity: 1;
+}
+.grade-screen-tile.is-dimmed {
+  opacity: 0.72;
+}
+.grade-screen-tile.is-spotlight {
+  z-index: 1;
+  outline: 1px solid color-mix(in srgb, var(--color-accent-500, #5865f2) 55%, transparent);
+  outline-offset: -1px;
+}
+/* 085: screen tiles show full frame (no webcam cover crop); dark letterbox */
+.grade-screen-tile .slot-media {
+  background: #000;
+}
+.grade-screen-tile .slot-media video {
+  object-fit: contain;
+  object-position: center;
+  background: #000;
+  transform: none;
+}
+
 .voice-header-blur {
   display: inline-flex;
   align-items: center;

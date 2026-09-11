@@ -251,6 +251,10 @@ export default function Sidebar(props: Props) {
     return (occupancy()[channelId]?.occupants ?? []).filter((o) => o.mic_on || o.cam_on);
   }
 
+  function channelHasScreenShare(channelId: string) {
+    return (occupancy()[channelId]?.occupants ?? []).some((o) => o.screen_on);
+  }
+
   function callStartedAt(channelId: string): string | null {
     return occupancy()[channelId]?.call_started_at ?? null;
   }
@@ -849,6 +853,7 @@ export default function Sidebar(props: Props) {
               {(c) => {
                 const started = () => callStartedAt(c.id);
                 const names = () => transmitting(c.id);
+                const sharing = () => channelHasScreenShare(c.id);
                 const timer = () => {
                   const at = started();
                   return at ? formatCallDuration(at, clock()) : null;
@@ -860,7 +865,7 @@ export default function Sidebar(props: Props) {
                   fallback={
                     <A
                       href={`/channels/${c.id}?server=${selected()!.id}&type=${c.type}`}
-                      class={`channel-item${activeChannelId() === c.id ? " active" : ""}${c.visibility === "private" ? " channel-item-private" : ""}`}
+                      class={`channel-item${activeChannelId() === c.id ? " active" : ""}${c.visibility === "private" ? " channel-item-private" : ""}${sharing() ? " has-screen-share" : ""}`}
                       onClick={() => {
                         const sid = selected()?.id;
                         if (sid) writeLastChannel(sid, c.id);
@@ -882,6 +887,13 @@ export default function Sidebar(props: Props) {
                         <IconVoiceChannel size={18} />
                       </span>
                       {channelNameLabel(c, "voice-channel-name channel-name")}
+                      <Show when={sharing()}>
+                        <span
+                          class="screen-share-indicator"
+                          aria-label={t("voice.screenShareActive")}
+                          title={t("voice.screenShareActive")}
+                        />
+                      </Show>
                       <Show when={timer()}>
                         {(dur) => (
                           <span class="voice-call-timer" aria-label={t("shell.callDuration", { duration: dur() })}>

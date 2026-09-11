@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mesa — protótipo visual</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    /* fixed — always dark; used for text/icons drawn ON TOP of the ember accent,
+       never as a page background, so it must NOT flip with the theme */
+    --ink-950:#14121A;
+
+    /* surfaces — these DO flip between themes */
+    --bg-outer:#0A090D;
+    --bg-deep:#14121A;
+    --bg-rail:#0F0D14;
+    --ink-900:#1C1926;
+    --ink-850:#252031;
+    --ink-800:#2E2839;
+    --line:rgba(237,230,220,.09);
+    --line-strong:rgba(237,230,220,.17);
+    --parchment:#EDE6DC;
+    --parchment-dim:#AFA598;
+    --parchment-faint:#847A70;
+    --ember:#D98A3D;
+    --ember-strong:#F0A452;
+    --ember-wash:rgba(217,138,61,.15);
+    --ember-ring:rgba(240,164,82,.55);
+    --jade:#5CB394;
+    --jade-wash:rgba(92,179,148,.16);
+    --wine:#9C5A66;
+    --slate:#5A7191;
+    --plum:#7C5F8E;
+    --umber:#A5824F;
+    --radius-token:20px;
+    --radius-card:16px;
+    --radius-pill:999px;
+    --font-display:'Fraunces', Georgia, 'Iowan Old Style', serif;
+    --font-ui:'Manrope', -apple-system, 'Segoe UI', system-ui, sans-serif;
+    --shadow-soft:0 10px 30px rgba(0,0,0,.38);
+    --shadow-lift:0 4px 14px rgba(0,0,0,.30);
+    color-scheme:dark;
+  }
+
+  /* -- light theme: same "candlelit table" concept, daylight through a window
+     instead of a room at night. Seat tiles / camera art stay dark in both
+     themes (video chrome doesn't repaint), only chrome surfaces flip. -- */
+  body[data-theme="light"]{
+    --bg-outer:#F5EEE0;
+    --bg-deep:#F8F2E6;
+    --bg-rail:#EFE5CF;
+    --ink-900:#FFFFFF;
+    --ink-850:#F2EADA;
+    --ink-800:#E6DAC0;
+    --line:rgba(36,28,18,.09);
+    --line-strong:rgba(36,28,18,.18);
+    --parchment:#241C14;
+    --parchment-dim:#6E6152;
+    --parchment-faint:#94856F;
+    --ember:#B9661F;
+    --ember-strong:#A8570F;
+    --ember-wash:rgba(185,102,31,.13);
+    --ember-ring:rgba(168,87,15,.48);
+    --jade:#2C8A69;
+    --jade-wash:rgba(44,138,105,.13);
+    --shadow-soft:0 10px 26px rgba(36,28,18,.14);
+    --shadow-lift:0 4px 12px rgba(36,28,18,.10);
+    color-scheme:light;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;}
+  body{
+    background:var(--bg-outer);
+    transition:background .18s ease, color .18s ease;
+    color:var(--parchment);
+    font-family:var(--font-ui);
+    -webkit-font-smoothing:antialiased;
+    display:flex;
+    flex-direction:column;
+    height:100vh;
+    overflow:hidden;
+  }
+  ::selection{background:var(--ember-wash);color:var(--parchment);}
+  button{font-family:inherit;cursor:pointer;}
+  input{font-family:inherit;}
+
+  /* ---------- proto switcher (tooling chrome, not product UI) ---------- */
+  .proto-switcher{
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:9px 18px;
+    background:var(--bg-outer);
+    border-bottom:1px dashed var(--line-strong);
+    font-size:12.5px;
+  }
+  .proto-switcher .label{color:var(--parchment-faint);letter-spacing:.02em;}
+  .proto-switcher .tabs{display:flex;gap:6px;}
+  .theme-toggle{
+    margin-left:auto;width:30px;height:30px;border-radius:50%;
+    border:1px solid var(--line-strong);background:transparent;
+    color:var(--parchment-dim);display:flex;align-items:center;justify-content:center;
+    transition:color .12s ease,border-color .12s ease;
+  }
+  .theme-toggle:hover{color:var(--ember-strong);border-color:var(--ember);}
+  .theme-toggle svg{width:15px;height:15px;}
+  .theme-toggle .ico-sun{display:none;}
+  body[data-theme="light"] .theme-toggle .ico-sun{display:inline-flex;}
+  body[data-theme="light"] .theme-toggle .ico-moon{display:none;}
+  .proto-switcher button{
+    background:transparent;
+    border:1px solid var(--line-strong);
+    color:var(--parchment-dim);
+    padding:6px 13px;
+    border-radius:var(--radius-pill);
+    font-size:12.5px;
+    font-weight:600;
+    transition:color .12s ease, border-color .12s ease, background .12s ease;
+  }
+  .proto-switcher button.active{
+    color:var(--ink-950);
+    background:var(--ember-strong);
+    border-color:var(--ember-strong);
+  }
+  .proto-switcher button:not(.active):hover{
+    color:var(--parchment);
+    border-color:rgba(237,230,220,.32);
+  }
+
+  .stage{flex:1 1 auto;min-height:0;position:relative;}
+  .screen{position:absolute;inset:0;display:none;}
+  .screen.active{display:flex;}
+
+  /* ================= APP SHELL (voz + texto) ================= */
+  .shell{display:flex;width:100%;height:100%;background:var(--bg-deep);}
+
+  /* -- server rail -- */
+  .rail{
+    flex:0 0 76px;
+    background:var(--bg-rail);
+    border-right:1px solid var(--line);
+    display:flex;flex-direction:column;align-items:center;
+    padding:16px 0;gap:10px;
+  }
+  .rail-brand{
+    width:38px;height:38px;border-radius:12px;
+    background:linear-gradient(160deg,var(--ember-strong),var(--ember));
+    display:flex;align-items:center;justify-content:center;
+    color:var(--ink-950);font-family:var(--font-display);font-weight:600;font-size:17px;
+    margin-bottom:6px;box-shadow:var(--shadow-lift);
+  }
+  .rail-sep{width:28px;height:1px;background:var(--line-strong);margin:2px 0 6px;}
+  .rail-server{
+    position:relative;width:46px;height:46px;border-radius:15px;
+    background:var(--ink-850);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:13.5px;color:var(--parchment-dim);
+    border:1px solid var(--line);
+    transition:border-radius .16s ease, color .16s ease, border-color .16s ease;
+  }
+  .rail-server:hover{border-radius:13px;color:var(--parchment);}
+  .rail-server.active{
+    color:var(--ink-950);
+    background:var(--ember-strong);
+    border-color:var(--ember-strong);
+    border-radius:13px;
+  }
+  .rail-server.active::before{
+    content:"";position:absolute;left:-14px;top:50%;translate:0 -50%;
+    width:4px;height:22px;border-radius:3px;background:var(--parchment);
+  }
+  .rail-server .dot-voice{
+    position:absolute;bottom:-3px;right:-3px;width:11px;height:11px;border-radius:50%;
+    background:var(--jade);border:2px solid var(--bg-rail);
+  }
+  .rail-create{
+    width:46px;height:46px;border-radius:15px;
+    border:1.5px dashed var(--line-strong);background:transparent;
+    color:var(--parchment-faint);font-size:19px;display:flex;align-items:center;justify-content:center;
+    margin-top:4px;transition:border-color .14s ease,color .14s ease;
+  }
+  .rail-create:hover{color:var(--ember-strong);border-color:var(--ember);}
+
+  /* -- sidebar -- */
+  .sidebar{
+    flex:0 0 268px;
+    background:var(--ink-900);
+    border-right:1px solid var(--line);
+    display:flex;flex-direction:column;
+    min-width:0;
+  }
+  .sidebar-head{
+    padding:18px 18px 14px;border-bottom:1px solid var(--line);
+  }
+  .sidebar-head h1{
+    margin:0 0 3px;font-family:var(--font-display);font-weight:600;font-size:20px;letter-spacing:.01em;
+  }
+  .sidebar-head .instance{font-size:12px;color:var(--parchment-faint);}
+  .sidebar-scroll{flex:1;overflow-y:auto;padding:14px 12px 8px;}
+  .side-section{margin-bottom:6px;}
+  .side-section-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:8px 8px 6px;color:var(--parchment-dim);
+  }
+  .side-section-head .label{
+    display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;letter-spacing:.02em;
+  }
+  .side-section-head .icon{color:var(--ember);opacity:.85;}
+  .side-section-head .add{
+    width:20px;height:20px;border-radius:6px;background:transparent;border:none;
+    color:var(--parchment-faint);display:flex;align-items:center;justify-content:center;font-size:15px;
+  }
+  .side-section-head .add:hover{color:var(--parchment);background:var(--line);}
+
+  .chan-row{
+    display:flex;align-items:center;gap:9px;
+    padding:8px 10px;margin:1px 0;border-radius:10px;
+    color:var(--parchment-dim);font-size:14px;font-weight:500;
+    position:relative;
+  }
+  .chan-row:hover{background:var(--line);color:var(--parchment);}
+  .chan-row.active{background:var(--ember-wash);color:var(--parchment);}
+  .chan-row.active::before{
+    content:"";position:absolute;left:-12px;top:50%;translate:0 -50%;
+    width:3px;height:16px;border-radius:2px;background:var(--ember-strong);
+  }
+  .chan-row .hash{color:var(--parchment-faint);font-weight:600;}
+  .chan-row.active .hash{color:var(--ember-strong);}
+
+  .voice-chan{border-radius:10px;overflow:hidden;margin:1px 0;}
+  .voice-chan-row{
+    display:flex;align-items:center;gap:9px;padding:9px 10px;
+    color:var(--parchment);font-weight:600;font-size:14px;background:var(--jade-wash);
+    border:1px solid rgba(92,179,148,.28);border-radius:10px;
+  }
+  .voice-chan-row .ico{color:var(--jade);}
+  .voice-chan-row .stage-name{font-family:var(--font-display);font-weight:500;font-size:14.5px;}
+  .voice-chan-row .count{margin-left:auto;font-size:11.5px;color:var(--parchment-dim);font-weight:600;}
+  .roster{padding:6px 4px 4px 30px;display:flex;flex-direction:column;gap:2px;}
+  .roster-row{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;font-size:13px;color:var(--parchment-dim);}
+  .roster-row:hover{background:var(--line);}
+  .token-mini{
+    width:22px;height:22px;border-radius:7px;flex:0 0 auto;
+    display:flex;align-items:center;justify-content:center;
+    font-size:10px;font-weight:700;color:var(--ink-950);
+  }
+  .roster-row .name{flex:1;color:var(--parchment);font-weight:500;}
+  .roster-row.speaking .token-mini{box-shadow:0 0 0 2px var(--ink-900),0 0 0 4px var(--ember-ring);}
+  .mic-ico{color:var(--parchment-faint);}
+  .mic-ico.off{color:var(--wine);}
+  .mic-ico.on{color:var(--jade);}
+
+  .sidebar-user{
+    flex:0 0 auto;margin:10px;padding:9px 10px;border-radius:var(--radius-card);
+    background:var(--ink-850);border:1px solid var(--line);
+    display:flex;align-items:center;gap:9px;box-shadow:var(--shadow-lift);
+  }
+  .sidebar-user .token-mini{width:34px;height:34px;border-radius:10px;font-size:13px;position:relative;}
+  .sidebar-user .status-dot{
+    position:absolute;bottom:-2px;right:-2px;width:9px;height:9px;border-radius:50%;
+    background:var(--jade);border:2px solid var(--ink-850);
+  }
+  .sidebar-user .who{flex:1;min-width:0;}
+  .sidebar-user .who .handle{font-size:13px;font-weight:700;color:var(--parchment);}
+  .sidebar-user .who .tag{font-size:11px;color:var(--parchment-faint);}
+  .sidebar-user .ctrls{display:flex;gap:3px;}
+  .sidebar-user .ctrls button{
+    width:28px;height:28px;border-radius:8px;border:none;background:transparent;
+    color:var(--parchment-dim);display:flex;align-items:center;justify-content:center;
+  }
+  .sidebar-user .ctrls button:hover{background:var(--line);color:var(--parchment);}
+
+  /* -- main column -- */
+  .main{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg-deep);}
+
+  .pane-head{
+    flex:0 0 auto;display:flex;align-items:center;gap:14px;
+    padding:14px 22px;border-bottom:1px solid var(--line);
+  }
+  .pane-head .titles{min-width:0;}
+  .pane-head h2{margin:0;font-size:18px;font-weight:600;display:flex;align-items:center;gap:7px;}
+  .pane-head .sub{font-size:12.5px;color:var(--parchment-faint);margin-top:2px;}
+  .pane-head .stage-title{font-family:var(--font-display);font-weight:500;font-size:20px;}
+
+  .seg{
+    margin-left:auto;display:flex;background:var(--ink-850);border:1px solid var(--line);
+    border-radius:var(--radius-pill);padding:3px;gap:2px;
+  }
+  .seg button{
+    border:none;background:transparent;color:var(--parchment-dim);
+    font-size:12.5px;font-weight:700;padding:6px 14px;border-radius:var(--radius-pill);
+  }
+  .seg button.active{background:var(--ember-strong);color:var(--ink-950);}
+
+  .icon-btn{
+    width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--ink-850);
+    color:var(--parchment-dim);display:flex;align-items:center;justify-content:center;
+  }
+  .icon-btn:hover{color:var(--parchment);border-color:var(--line-strong);}
+  .icon-btn.open{color:var(--ember-strong);border-color:rgba(217,138,61,.4);background:var(--ember-wash);}
+
+  .chip-e2ee{
+    display:flex;align-items:center;gap:6px;padding:6px 12px 6px 10px;border-radius:var(--radius-pill);
+    background:var(--jade-wash);border:1px solid rgba(92,179,148,.35);
+    color:var(--jade);font-size:12px;font-weight:700;white-space:nowrap;
+  }
+
+  /* -- voice stage content -- */
+  .stage-body{flex:1;min-height:0;padding:22px;display:flex;gap:16px;}
+  .grid-tokens{
+    flex:1;display:grid;grid-template-columns:1.35fr .85fr .85fr;grid-template-rows:1fr 1fr;
+    gap:14px;
+  }
+  .seat{
+    position:relative;border-radius:var(--radius-token);overflow:hidden;
+    display:flex;align-items:flex-end;
+    border:1px solid var(--line);box-shadow:var(--shadow-soft);
+  }
+  .seat.gm{grid-row:1 / 3;}
+  .seat .bg{position:absolute;inset:0;}
+  .seat.c-ember .bg{background:radial-gradient(120% 140% at 30% 15%,#4A2E17,#231A14 70%);}
+  .seat.c-plum .bg{background:radial-gradient(120% 140% at 70% 10%,#3B2C46,#1F1A26 70%);}
+  .seat.c-slate .bg{background:radial-gradient(120% 140% at 30% 10%,#243244,#181C24 70%);}
+  .seat.c-wine .bg{background:radial-gradient(120% 140% at 70% 15%,#402129,#221619 70%);}
+  .seat.c-umber .bg{background:radial-gradient(120% 140% at 50% 10%,#3E2F17,#221A11 70%);}
+  .seat .initials{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-family:var(--font-display);font-size:54px;font-weight:500;color:rgba(237,230,220,.12);
+  }
+  .seat.gm .initials{font-size:78px;}
+  .seat.speaking{box-shadow:0 0 0 2px var(--bg-deep),0 0 0 5px var(--ember-ring),var(--shadow-soft);
+    animation:pulse-ring 2.4s ease-in-out infinite;}
+  @keyframes pulse-ring{
+    0%,100%{box-shadow:0 0 0 2px var(--bg-deep),0 0 0 5px rgba(240,164,82,.45),var(--shadow-soft);}
+    50%{box-shadow:0 0 0 2px var(--bg-deep),0 0 0 8px rgba(240,164,82,.22),var(--shadow-soft);}
+  }
+  .nameplate{
+    position:relative;z-index:1;width:100%;display:flex;align-items:center;gap:8px;
+    padding:10px 12px;background:linear-gradient(0deg,rgba(10,9,13,.72),transparent);
+  }
+  .nameplate .nm{font-size:13px;font-weight:700;color:var(--parchment);}
+  .nameplate .role{font-size:10.5px;color:var(--ember-strong);font-weight:700;margin-left:2px;}
+  .nameplate .spacer{flex:1;}
+  .nameplate svg{width:15px;height:15px;}
+  .nameplate .mic-off{color:var(--wine);}
+  .nameplate .mic-on{color:var(--jade);}
+
+  .bank{
+    flex:0 0 84px;display:flex;flex-direction:column;gap:10px;align-items:center;
+    padding-top:2px;
+  }
+  .bank .lbl{font-size:10.5px;color:var(--parchment-faint);text-align:center;writing-mode:vertical-rl;transform:rotate(180deg);letter-spacing:.04em;}
+  .bank-avatars{display:flex;flex-direction:column;gap:8px;}
+  .bank-avatars .token-mini{width:44px;height:44px;border-radius:13px;font-size:14px;}
+
+  /* -- members panel -- */
+  .members{
+    flex:0 0 240px;background:var(--ink-900);border-left:1px solid var(--line);
+    display:flex;flex-direction:column;
+  }
+  .members-head{padding:16px 16px 10px;border-bottom:1px solid var(--line);}
+  .members-head h3{margin:0;font-size:13px;font-weight:700;color:var(--parchment-dim);letter-spacing:.02em;}
+  .members-list{padding:10px;overflow-y:auto;flex:1;}
+  .member-row{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;}
+  .member-row:hover{background:var(--line);}
+  .member-row .token-mini{width:32px;height:32px;border-radius:10px;font-size:12px;}
+  .member-row .mn{font-size:13.5px;font-weight:600;color:var(--parchment);}
+  .member-row .mrole{font-size:11px;color:var(--parchment-faint);}
+  .member-group-label{font-size:11px;color:var(--parchment-faint);font-weight:700;padding:10px 10px 4px;letter-spacing:.02em;}
+
+  /* -- text channel content -- */
+  .text-body{flex:1;min-height:0;display:flex;flex-direction:column;}
+  .msgs{flex:1;overflow-y:auto;padding:20px 26px 6px;display:flex;flex-direction:column;gap:16px;}
+  .day-sep{display:flex;align-items:center;gap:12px;color:var(--parchment-faint);font-size:11.5px;margin:4px 0;}
+  .day-sep::before,.day-sep::after{content:"";flex:1;height:1px;background:var(--line-strong);}
+  .msg{display:flex;gap:12px;}
+  .msg .token-mini{width:36px;height:36px;border-radius:11px;font-size:13px;flex:0 0 auto;}
+  .msg .body{min-width:0;}
+  .msg .meta{display:flex;align-items:baseline;gap:8px;margin-bottom:2px;}
+  .msg .meta .nm{font-size:14px;font-weight:700;color:var(--parchment);}
+  .msg .meta .time{font-size:11px;color:var(--parchment-faint);}
+  .msg .text{font-size:14.5px;line-height:1.55;color:var(--parchment-dim);}
+  .msg .text em.mention{color:var(--ember-strong);font-style:normal;font-weight:600;background:var(--ember-wash);padding:0 4px;border-radius:5px;}
+
+  .composer{flex:0 0 auto;padding:16px 26px 20px;}
+  .composer-bar{
+    display:flex;align-items:center;gap:10px;background:var(--ink-850);
+    border:1px solid var(--line-strong);border-radius:var(--radius-pill);padding:6px 8px 6px 18px;
+  }
+  .composer-bar input{
+    flex:1;background:transparent;border:none;outline:none;color:var(--parchment);font-size:14px;
+  }
+  .composer-bar input::placeholder{color:var(--parchment-faint);}
+  .send-btn{
+    width:36px;height:36px;border-radius:50%;border:none;background:var(--ember-strong);
+    color:var(--ink-950);display:flex;align-items:center;justify-content:center;flex:0 0 auto;
+  }
+
+  /* ================= LOGIN SCREEN ================= */
+  .login{width:100%;height:100%;display:flex;background:var(--bg-deep);}
+  .login-hero{
+    flex:1.1;position:relative;display:flex;flex-direction:column;justify-content:center;
+    padding:64px;overflow:hidden;background:var(--bg-deep);
+  }
+  .login-hero::before{
+    content:"";position:absolute;left:-10%;top:-10%;width:70%;height:70%;
+    background:radial-gradient(circle,var(--ember-wash),transparent 70%);
+    filter:blur(10px);
+  }
+  .login-hero .mark{position:relative;font-family:var(--font-display);font-weight:600;font-size:44px;color:var(--parchment);margin-bottom:14px;}
+  .login-hero .mark span{color:var(--ember-strong);}
+  .login-hero p{position:relative;max-width:360px;color:var(--parchment-dim);font-size:15px;line-height:1.6;}
+  .login-hero .foot{position:relative;margin-top:auto;font-size:12px;color:var(--parchment-faint);}
+  .login-form{
+    flex:1;display:flex;align-items:center;justify-content:center;background:var(--ink-900);
+    border-left:1px solid var(--line);
+  }
+  .login-card{width:340px;}
+  .login-card h2{font-size:22px;margin:0 0 6px;font-weight:700;}
+  .login-card .hint{font-size:13px;color:var(--parchment-faint);margin-bottom:26px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12px;font-weight:700;color:var(--parchment-dim);margin-bottom:6px;}
+  .field input{
+    width:100%;background:var(--ink-850);border:1px solid var(--line-strong);border-radius:11px;
+    padding:11px 13px;color:var(--parchment);font-size:14px;outline:none;
+  }
+  .field input:focus{border-color:var(--ember);box-shadow:0 0 0 3px var(--ember-wash);}
+  .btn-primary{
+    width:100%;padding:12px;border:none;border-radius:11px;background:var(--ember-strong);
+    color:var(--ink-950);font-size:14.5px;font-weight:800;margin-top:6px;
+  }
+  .btn-primary:hover{background:var(--ember);}
+  .login-card .alt{text-align:center;margin-top:16px;font-size:12.5px;color:var(--parchment-faint);}
+  .login-card .alt a{color:var(--ember-strong);text-decoration:none;font-weight:600;}
+
+  ::-webkit-scrollbar{width:9px;}
+  ::-webkit-scrollbar-thumb{background:var(--ink-800);border-radius:6px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+</style>
+</head>
+<body>
+
+<div class="proto-switcher">
+  <span class="label">Protótipo — Mesa · conceito de lançamento</span>
+  <div class="tabs">
+    <button data-target="voz" class="active">Mesa de voz</button>
+    <button data-target="texto">Canal de texto</button>
+    <button data-target="entrar">Entrar</button>
+  </div>
+  <button class="theme-toggle" id="theme-toggle" title="Alternar modo claro/escuro" aria-label="Alternar modo claro/escuro">
+    <svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+    <svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2M12 19.5v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M2.5 12h2M19.5 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>
+  </button>
+</div>
+
+<div class="stage">
+
+  <!-- ===================== VOICE SCREEN ===================== -->
+  <div class="screen active" id="screen-voz">
+    <div class="shell">
+      <!-- rail -->
+      <nav class="rail">
+        <div class="rail-brand">M</div>
+        <div class="rail-sep"></div>
+        <div class="rail-server active">EV<span class="dot-voice"></span></div>
+        <div class="rail-server">TS</div>
+        <button class="rail-create">+</button>
+      </nav>
+
+      <!-- sidebar -->
+      <aside class="sidebar">
+        <div class="sidebar-head">
+          <h1>Ecos de Valdren</h1>
+          <div class="instance">Instância · valdren.mesa</div>
+        </div>
+        <div class="sidebar-scroll">
+          <div class="side-section">
+            <div class="side-section-head">
+              <span class="label"><span class="icon">#</span>Texto</span>
+              <button class="add">+</button>
+            </div>
+            <div class="chan-row"><span class="hash">#</span>geral</div>
+            <div class="chan-row"><span class="hash">#</span>lore</div>
+            <div class="chan-row"><span class="hash">#</span>rolagens</div>
+          </div>
+          <div class="side-section">
+            <div class="side-section-head">
+              <span class="label"><span class="icon">♪</span>Voz e vídeo</span>
+              <button class="add">+</button>
+            </div>
+            <div class="voice-chan">
+              <div class="voice-chan-row">
+                <span class="ico">▶</span>
+                <span class="stage-name">A Taverna do Corvo</span>
+                <span class="count">3</span>
+              </div>
+              <div class="roster">
+                <div class="roster-row speaking">
+                  <span class="token-mini" style="background:var(--ember)">LY</span>
+                  <span class="name">Lyra_GM</span>
+                  <svg class="mic-ico on" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z"/><path d="M19 11a7 7 0 0 1-14 0M12 18v3"/></svg>
+                </div>
+                <div class="roster-row">
+                  <span class="token-mini" style="background:var(--slate)">TH</span>
+                  <span class="name">Thiago</span>
+                  <svg class="mic-ico off" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l18 18M9 9v3a3 3 0 0 0 4.6 2.55M15 9.34V6a3 3 0 0 0-5.94-.6"/><path d="M19 11a7 7 0 0 1-9.8 6.4M12 18v3"/></svg>
+                </div>
+                <div class="roster-row">
+                  <span class="token-mini" style="background:var(--plum)">NS</span>
+                  <span class="name">NoturnaScribe</span>
+                  <svg class="mic-ico on" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z"/><path d="M19 11a7 7 0 0 1-14 0M12 18v3"/></svg>
+                </div>
+              </div>
+            </div>
+            <div class="chan-row" style="margin-top:2px;"><span class="ico" style="color:var(--parchment-faint)">▷</span>&nbsp;câmara de descanso</div>
+          </div>
+        </div>
+        <div class="sidebar-user">
+          <span class="token-mini" style="background:var(--umber);position:relative;">AD<span class="status-dot"></span></span>
+          <div class="who">
+            <div class="handle">adminvtt</div>
+            <div class="tag">A Taverna do Corvo</div>
+          </div>
+          <div class="ctrls">
+            <button title="Microfone"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z"/><path d="M19 11a7 7 0 0 1-14 0M12 18v3"/></svg></button>
+            <button title="Câmara"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="12" height="12" rx="2.5"/><path d="m21 8-6 4 6 4V8Z"/></svg></button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- main -->
+      <div class="main">
+        <header class="pane-head">
+          <div class="titles">
+            <h2><span class="stage-title">A Taverna do Corvo</span></h2>
+            <div class="sub">3 na mesa · 42:17</div>
+          </div>
+          <div class="seg">
+            <button class="active">Composição</button>
+            <button>Grade</button>
+          </div>
+          <button class="icon-btn open" title="Membros">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </button>
+          <button class="icon-btn" title="Mais opções">⋯</button>
+          <span class="chip-e2ee">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="4.5" y="10.5" width="15" height="9" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></svg>
+            E2EE ativa
+          </span>
+        </header>
+
+        <div class="stage-body">
+          <div class="grid-tokens">
+            <div class="seat gm c-ember speaking">
+              <div class="bg"></div><div class="initials">LY</div>
+              <div class="nameplate">
+                <span class="nm">Lyra_GM</span><span class="role">mestra</span>
+                <span class="spacer"></span>
+                <svg class="mic-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z"/><path d="M19 11a7 7 0 0 1-14 0M12 18v3"/></svg>
+              </div>
+            </div>
+            <div class="seat c-slate">
+              <div class="bg"></div><div class="initials">TH</div>
+              <div class="nameplate">
+                <span class="nm">Thiago</span><span class="spacer"></span>
+                <svg class="mic-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l18 18M9 9v3a3 3 0 0 0 4.6 2.55M15 9.34V6a3 3 0 0 0-5.94-.6"/><path d="M19 11a7 7 0 0 1-9.8 6.4M12 18v3"/></svg>
+              </div>
+            </div>
+            <div class="seat c-plum">
+              <div class="bg"></div><div class="initials">NS</div>
+              <div class="nameplate">
+                <span class="nm">NoturnaScribe</span><span class="spacer"></span>
+                <svg class="mic-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z"/><path d="M19 11a7 7 0 0 1-14 0M12 18v3"/></svg>
+              </div>
+            </div>
+            <div class="seat c-wine">
+              <div class="bg"></div><div class="initials">·</div>
+              <div class="nameplate"><span class="nm" style="color:var(--parchment-faint)">assento livre</span></div>
+            </div>
+            <div class="seat c-umber">
+              <div class="bg"></div><div class="initials">·</div>
+              <div class="nameplate"><span class="nm" style="color:var(--parchment-faint)">assento livre</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- members -->
+      <aside class="members">
+        <div class="members-head"><h3>Membros · 6</h3></div>
+        <div class="members-list">
+          <div class="member-group-label">Na mesa — 3</div>
+          <div class="member-row"><span class="token-mini" style="background:var(--ember)">LY</span><div><div class="mn">Lyra_GM</div><div class="mrole">mestra</div></div></div>
+          <div class="member-row"><span class="token-mini" style="background:var(--slate)">TH</span><div><div class="mn">Thiago</div><div class="mrole">jogador</div></div></div>
+          <div class="member-row"><span class="token-mini" style="background:var(--plum)">NS</span><div><div class="mn">NoturnaScribe</div><div class="mrole">jogadora</div></div></div>
+          <div class="member-group-label">Offline — 3</div>
+          <div class="member-row" style="opacity:.55"><span class="token-mini" style="background:var(--wine)">CA</span><div><div class="mn">Caio</div><div class="mrole">jogador</div></div></div>
+          <div class="member-row" style="opacity:.55"><span class="token-mini" style="background:var(--umber)">RB</span><div><div class="mn">Rubiana</div><div class="mrole">jogadora</div></div></div>
+          <div class="member-row" style="opacity:.55"><span class="token-mini" style="background:var(--jade)">AD</span><div><div class="mn">adminvtt</div><div class="mrole">dono</div></div></div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ===================== TEXT SCREEN ===================== -->
+  <div class="screen" id="screen-texto">
+    <div class="shell">
+      <nav class="rail">
+        <div class="rail-brand">M</div>
+        <div class="rail-sep"></div>
+        <div class="rail-server active">EV<span class="dot-voice"></span></div>
+        <div class="rail-server">TS</div>
+        <button class="rail-create">+</button>
+      </nav>
+      <aside class="sidebar">
+        <div class="sidebar-head">
+          <h1>Ecos de Valdren</h1>
+          <div class="instance">Instância · valdren.mesa</div>
+        </div>
+        <div class="sidebar-scroll">
+          <div class="side-section">
+            <div class="side-section-head">
+              <span class="label"><span class="icon">#</span>Texto</span>
+              <button class="add">+</button>
+            </div>
+            <div class="chan-row active"><span class="hash">#</span>geral</div>
+            <div class="chan-row"><span class="hash">#</span>lore</div>
+            <div class="chan-row"><span class="hash">#</span>rolagens</div>
+          </div>
+          <div class="side-section">
+            <div class="side-section-head">
+              <span class="label"><span class="icon">♪</span>Voz e vídeo</span>
+              <button class="add">+</button>
+            </div>
+            <div class="voice-chan">
+              <div class="voice-chan-row" style="background:transparent;border-color:var(--line);">
+                <span class="ico" style="color:var(--parchment-faint)">▷</span>
+                <span class="stage-name" style="color:var(--parchment-dim);">A Taverna do Corvo</span>
+                <span class="count">3</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="sidebar-user">
+          <span class="token-mini" style="background:var(--umber);position:relative;">AD<span class="status-dot"></span></span>
+          <div class="who"><div class="handle">adminvtt</div><div class="tag">online</div></div>
+          <div class="ctrls">
+            <button title="Definições"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.4.4.74.76.98"/></svg></button>
+          </div>
+        </div>
+      </aside>
+      <div class="main">
+        <header class="pane-head">
+          <div class="titles">
+            <h2><span class="hash" style="color:var(--parchment-faint)">#</span>&nbsp;geral</h2>
+            <div class="sub">Canal de texto · visível a todo o servidor</div>
+          </div>
+          <button class="icon-btn" title="Pesquisar" style="margin-left:auto;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          </button>
+          <button class="icon-btn" title="Membros">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </button>
+          <span class="chip-e2ee">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="4.5" y="10.5" width="15" height="9" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></svg>
+            E2EE ativa
+          </span>
+        </header>
+        <div class="text-body">
+          <div class="msgs">
+            <div class="day-sep">hoje</div>
+            <div class="msg">
+              <span class="token-mini" style="background:var(--ember)">LY</span>
+              <div class="body">
+                <div class="meta"><span class="nm">Lyra_GM</span><span class="time">20:04</span></div>
+                <div class="text">Sessão de hoje: chegamos aos portões de Valdren ao anoitecer. Tragam as fichas atualizadas.</div>
+              </div>
+            </div>
+            <div class="msg">
+              <span class="token-mini" style="background:var(--slate)">TH</span>
+              <div class="body">
+                <div class="meta"><span class="nm">Thiago</span><span class="time">20:06</span></div>
+                <div class="text">Confirmado — já subi o inventário no canal <em class="mention">#lore</em>.</div>
+              </div>
+            </div>
+            <div class="msg">
+              <span class="token-mini" style="background:var(--plum)">NS</span>
+              <div class="body">
+                <div class="meta"><span class="nm">NoturnaScribe</span><span class="time">20:11</span></div>
+                <div class="text">Entro por volta das 21h, vou adiantar a rolagem de percepção antes.</div>
+              </div>
+            </div>
+            <div class="msg">
+              <span class="token-mini" style="background:var(--umber)">AD</span>
+              <div class="body">
+                <div class="meta"><span class="nm">adminvtt</span><span class="time">20:12</span></div>
+                <div class="text">A Taverna do Corvo já está aberta, entrem quando quiserem.</div>
+              </div>
+            </div>
+          </div>
+          <div class="composer">
+            <div class="composer-bar">
+              <input type="text" placeholder="Escreva uma mensagem em #geral" />
+              <button class="send-btn" title="Enviar">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m3 11 18-8-8 18-2-8-8-2Z"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== LOGIN SCREEN ===================== -->
+  <div class="screen" id="screen-entrar">
+    <div class="login">
+      <div class="login-hero">
+        <div class="mark">Me<span>sa</span></div>
+        <p>Chat e vídeo self-hosted para grupos de RPG — composição de câmaras nativa e criptografia ponta-a-ponta por omissão. Sem federação, sem servidor a ler as vossas sessões.</p>
+        <div class="foot">self-hosted · sem federação</div>
+      </div>
+      <div class="login-form">
+        <div class="login-card">
+          <h2>Entrar à mesa</h2>
+          <div class="hint">Usa a tua identidade desta instância.</div>
+          <div class="field">
+            <label>Identificador</label>
+            <input type="text" placeholder="adminvtt" />
+          </div>
+          <div class="field">
+            <label>Palavra-passe</label>
+            <input type="password" placeholder="••••••••••" />
+          </div>
+          <button class="btn-primary">Entrar à mesa</button>
+          <div class="alt">Novo por aqui? <a href="#">Pede um convite ao teu grupo</a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const themeToggle = document.getElementById('theme-toggle');
+  themeToggle.addEventListener('click', () => {
+    const isLight = document.body.getAttribute('data-theme') === 'light';
+    document.body.setAttribute('data-theme', isLight ? 'dark' : 'light');
+  });
+
+  const tabs = document.querySelectorAll('.proto-switcher .tabs button');
+  const screens = { voz: document.getElementById('screen-voz'), texto: document.getElementById('screen-texto'), entrar: document.getElementById('screen-entrar') };
+  tabs.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabs.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      Object.values(screens).forEach(s => s.classList.remove('active'));
+      screens[btn.dataset.target].classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>

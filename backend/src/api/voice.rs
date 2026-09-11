@@ -94,6 +94,7 @@ async fn broadcast_e2ee(
 pub struct VoiceMediaBody {
     pub mic_on: Option<bool>,
     pub cam_on: Option<bool>,
+    pub screen_on: Option<bool>,
 }
 
 fn parse_json_or_default<T: Default + DeserializeOwned>(body: &Bytes) -> Result<T, ApiError> {
@@ -162,7 +163,8 @@ async fn apply_leave(
     Ok(())
 }
 
-async fn expire_stale(state: &AppState) -> Result<(), ApiError> {
+/// Remove occupants past `OCCUPANT_STALE_SECS` and broadcast (request path + sweeper).
+pub async fn expire_stale(state: &AppState) -> Result<(), ApiError> {
     let stale = db::voice_occupancy::list_stale(&state.pool, Utc::now()).await?;
     for occ in stale {
         let Some(channel) = db::channel::find_by_id(&state.pool, occ.channel_id).await? else {
@@ -172,6 +174,20 @@ async fn expire_stale(state: &AppState) -> Result<(), ApiError> {
         apply_leave(state, occ.account_id, &channel).await?;
     }
     Ok(())
+}
+
+/// Background loop so WS-only peers still see ghosts clear (087).
+pub fn spawn_stale_occupancy_sweeper(state: AppState) {
+    tokio::spawn(async move {
+        let mut tick = tokio::time::interval(std::time::Duration::from_secs(20));
+        tick.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+        loop {
+            tick.tick().await;
+            if let Err(err) = expire_stale(&state).await {
+                tracing::warn!(?err, "voice occupancy stale sweeper failed");
+            }
+        }
+    });
 }
 
 async fn upsert_occupant(
@@ -190,6 +206,7 @@ async fn upsert_occupant(
                 channel.id,
                 Some(mic_on),
                 Some(cam_on),
+                None,
                 now,
             )
             .await?;
@@ -210,6 +227,7 @@ async fn upsert_occupant(
             server_id: channel.server_id,
             mic_on,
             cam_on,
+            screen_on: false,
             joined_at: now,
             last_seen_at: now,
         },
@@ -327,7 +345,7 @@ pub async fn patch_media(
     }
     expire_stale(&state).await?;
     let media: VoiceMediaBody = parse_json_or_default(&body)?;
-    if media.mic_on == Some(true) || media.cam_on == Some(true) {
+    if media.mic_on == Some(true) || media.cam_on == Some(true) || media.screen_on == Some(true) {
         crate::api::authz::require_speak(&state.pool, account.id, channel_id).await?;
     }
     let existing = db::voice_occupancy::find_by_account(&state.pool, account.id)
@@ -343,6 +361,7 @@ pub async fn patch_media(
         channel.id,
         media.mic_on,
         media.cam_on,
+        media.screen_on,
         Utc::now(),
     )
     .await?;

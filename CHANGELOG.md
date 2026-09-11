@@ -9,6 +9,31 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+### Changed
+
+- **Reverted Mesa à Vela (089)**: restore blurple/cool-grey/Inter identity; voice header Editar cena + blur visible again; remove place type, seat tones, pill composer, jade E2EE chip, Manrope/Fraunces assets ([090-revert-mesa-vela](specs/090-revert-mesa-vela/)).
+
+
+## [0.7.0] - 2026-09-10
+
+### Added
+
+- **Screen share** on voice/video channels: LiveKit publish (detail hint + optional system audio); occupancy `screen_on`; Grade-only start/stop control and screen tiles; Composition keeps cameras (share audio still plays); indicators on Grade seg + sidebar channel item; local spotlight + screen-priority layout; no auto mode switch / scene restore ([082-screen-share](specs/082-screen-share/)).
+
+### Changed
+
+
+- Grade layout: screen shares are equal tiles in one unified grid with cameras (order: all cams, then all screens); removed fixed screen/camera bands; screen chips show handle + share affordance; spotlight enlarges a screen cell inside the grid ([083-grade-screen-tiles](specs/083-grade-screen-tiles/)).
+- **User panel overflow**: when call icons would crush the handle below a min readable width, controls move to a centered upper row (Settings stays with identity); taller panel reflows the channel list upward ([084-user-panel-stack](specs/084-user-panel-stack/)).
+- Grade **screen-share tiles** show the full shared frame (`contain` + dark letterbox) instead of webcam fill/crop; camera tiles unchanged ([085-screen-share-fit](specs/085-screen-share-fit/)).
+
+### Fixed
+
+- Grade **screen spotlight** no longer crushes/hides the share: spotlight uses main stage + bottom filmstrip instead of grid span enlarge ([086-fix-spotlight-layout](specs/086-fix-spotlight-layout/)).
+- Voice **ghost occupants** after refresh/tab close: keepalive leave on unload + periodic server stale occupancy sweeper with broadcast ([087-disconnect-on-unload](specs/087-disconnect-on-unload/)).
+- Ending **screen share** removes the Grade screen tile and share indicators (LiveKit unsubscribe clears `remotesScreen`; no leftover empty «Tela» cell) ([088-clear-ended-screen-tile](specs/088-clear-ended-screen-tile/)).
+- **Webcam blank** in Composition/Grade after screen-share layout work: unify local preview with session, notify page on mid-call cam enable, rebind on tile/slot mount so leave/rejoin or start-share is not required to show cameras ([091-fix-webcam-attach](specs/091-fix-webcam-attach/)).
+
 ## [0.6.0] - 2026-09-08
 
 ### Added
@@ -216,7 +241,8 @@ Initial tracked release baseline (features delivered through 006).
 
 - Earlier spikes and phases: see `specs/001-fase-0-spike/` … `specs/005-fase3-ui-corrections/` and `docs/`.
 
-[Unreleased]: https://github.com/ricardosobral/chat-app/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/ricardosobral/chat-app/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/ricardosobral/chat-app/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/ricardosobral/chat-app/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/ricardosobral/chat-app/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/ricardosobral/chat-app/compare/v0.4.0...v0.4.1

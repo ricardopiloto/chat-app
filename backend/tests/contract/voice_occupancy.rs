@@ -339,6 +339,84 @@ async fn media_patch_and_silent_occupant() {
 }
 
 #[tokio::test]
+async fn screen_on_patch_idempotent_and_cleared_on_leave() {
+    let app = TestApp::new().await;
+    let (_, _, alice) = app.register("alice_ss", "password1", None).await;
+    let alice = must_cookie(alice);
+    let (server_id, channel_id) = voice_channel(&app, &alice).await;
+
+    app.request(
+        "POST",
+        &format!("/api/channels/{channel_id}/voice/join"),
+        Some(json!({ "mic_on": true, "cam_on": false })),
+        Some(&alice),
+    )
+    .await;
+    let (_, snap0, _) = app
+        .request(
+            "GET",
+            &format!("/api/servers/{server_id}/voice-occupancy"),
+            None,
+            Some(&alice),
+        )
+        .await;
+    assert_eq!(snap0["channels"][0]["occupants"][0]["screen_on"], false);
+
+    let (status, _, _) = app
+        .request(
+            "PATCH",
+            &format!("/api/channels/{channel_id}/voice/media"),
+            Some(json!({ "screen_on": true })),
+            Some(&alice),
+        )
+        .await;
+    assert_eq!(status, StatusCode::NO_CONTENT);
+    let (_, snap, _) = app
+        .request(
+            "GET",
+            &format!("/api/servers/{server_id}/voice-occupancy"),
+            None,
+            Some(&alice),
+        )
+        .await;
+    assert_eq!(snap["channels"][0]["occupants"][0]["screen_on"], true);
+
+    let (status2, _, _) = app
+        .request(
+            "PATCH",
+            &format!("/api/channels/{channel_id}/voice/media"),
+            Some(json!({ "screen_on": true })),
+            Some(&alice),
+        )
+        .await;
+    assert_eq!(status2, StatusCode::NO_CONTENT);
+
+    app.request(
+        "POST",
+        &format!("/api/channels/{channel_id}/voice/leave"),
+        None,
+        Some(&alice),
+    )
+    .await;
+    let (_, snap_leave, _) = app
+        .request(
+            "GET",
+            &format!("/api/servers/{server_id}/voice-occupancy"),
+            None,
+            Some(&alice),
+        )
+        .await;
+    let channels = snap_leave["channels"].as_array().unwrap();
+    assert!(
+        channels.is_empty()
+            || channels[0]["occupants"]
+                .as_array()
+                .map(|a| a.is_empty())
+                .unwrap_or(true)
+    );
+}
+
+#[tokio::test]
 async fn leave_text_channel_is_bad_request() {
     let app = TestApp::new().await;
     let (_, _, alice) = app.register("alice", "password1", None).await;
@@ -489,6 +567,47 @@ async fn stale_occupant_is_removed_on_snapshot() {
         .execute(&app.pool)
         .await
         .unwrap();
+
+    let (_, snap, _) = app
+        .request(
+            "GET",
+            &format!("/api/servers/{server_id}/voice-occupancy"),
+            None,
+            Some(&alice),
+        )
+        .await;
+    assert!(snap["channels"].as_array().unwrap().is_empty(), "{snap}");
+}
+
+/// 087: sweeper uses the same `expire_stale` path without requiring a GET.
+#[tokio::test]
+async fn stale_occupant_cleared_by_expire_stale_direct() {
+    let app = TestApp::new().await;
+    let (_, _, alice) = app.register("alice", "password1", None).await;
+    let alice = must_cookie(alice);
+    let (server_id, channel_id) = voice_channel(&app, &alice).await;
+    let (_, me, _) = app.request("GET", "/api/auth/me", None, Some(&alice)).await;
+    let alice_id = me["id"].as_str().unwrap();
+
+    app.request(
+        "POST",
+        &format!("/api/channels/{channel_id}/voice/join"),
+        None,
+        Some(&alice),
+    )
+    .await;
+
+    let stale = (Utc::now() - Duration::seconds(120)).to_rfc3339();
+    sqlx::query("UPDATE voice_occupant SET last_seen_at = ? WHERE account_id = ?")
+        .bind(&stale)
+        .bind(alice_id)
+        .execute(&app.pool)
+        .await
+        .unwrap();
+
+    chat_backend::api::voice::expire_stale(&app.state)
+        .await
+        .expect("expire_stale");
 
     let (_, snap, _) = app
         .request(

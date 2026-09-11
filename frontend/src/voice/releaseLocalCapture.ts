@@ -63,6 +63,7 @@ export async function releaseLocalCapture(args: ReleaseLocalCaptureArgs = {}): P
       await Promise.allSettled([
         lp.setCameraEnabled(false),
         lp.setMicrophoneEnabled(false),
+        lp.setScreenShareEnabled(false),
       ]);
     } catch {
       /* ignore */
