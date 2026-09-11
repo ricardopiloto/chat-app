@@ -130,6 +130,7 @@ export const en: MessageTree = {
     accountSettings: "Account settings",
     accountSettingsShort: "Settings",
     callControls: "Call controls",
+    panelChannel: "Current channel: {name}",
     noSpeakPermission: "No permission to speak",
     deafen: "Deafen",
     undeafen: "Undeafen",

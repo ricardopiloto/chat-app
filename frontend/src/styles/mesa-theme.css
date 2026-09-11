@@ -966,46 +966,64 @@ img.voice-roster-avatar {
   color: var(--muted);
 }
 
-/* 039/048/078/084: user panel — single: identity | calls | settings; stacked: calls above */
+/* 039/048/078/084/093: user panel — always stacked (calls above; identity | channel | settings) */
 .user-panel {
-  /* 084: min readable handle width + hysteresis before unstack */
   --user-panel-name-min: 6ch;
-  --user-panel-name-unstack: 7.5ch;
   flex: none;
   margin-top: 0;
   background: color-mix(in srgb, var(--panel) 92%, #000 8%);
   border-radius: var(--radius-lg);
   padding: 6px 8px;
   display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  min-width: 0;
+  position: relative; /* flow in shell-nav row 2 — never overlay channels */
+}
+.user-panel--stacked {
+  /* 093: permanent stacked layout language (supersedes 084 measure toggle) */
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.user-panel--stacked .user-panel-calls {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+/* 093: collapse empty upper control row (no tall reserved band) */
+.user-panel-calls:not(:has(.user-panel-ctrl)) {
+  display: none;
+}
+.user-panel-lower {
+  display: flex;
   flex-direction: row;
   align-items: center;
   gap: 8px;
   min-width: 0;
-  position: relative; /* flow in shell-nav row 2 — never overlay channels */
-}
-/* 084: stacked — upper centered call actions; lower identity + settings (grid reflow) */
-.user-panel--stacked {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-rows: auto auto;
-  align-items: center;
-  column-gap: 8px;
-  row-gap: 4px;
-}
-.user-panel--stacked .user-panel-calls {
-  grid-column: 1 / -1;
-  grid-row: 1;
-  justify-content: center;
   width: 100%;
 }
 .user-panel--stacked .user-panel-identity {
-  grid-column: 1;
-  grid-row: 2;
+  flex: 1 1 auto;
   min-width: var(--user-panel-name-min);
 }
+.user-panel-channel {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-align: right;
+  pointer-events: none;
+  user-select: none;
+}
 .user-panel--stacked .user-panel-settings {
-  grid-column: 2;
-  grid-row: 2;
+  flex: none;
 }
 .user-panel-identity {
   display: flex;
@@ -1165,7 +1183,7 @@ img.voice-roster-avatar {
   left: 0;
   z-index: 40;
 }
-/* 084: stacked panel is taller — keep menu above the whole bar */
+/* 093: stacked panel is taller — keep menu above the whole bar */
 .user-panel--stacked .account-menu {
   bottom: calc(100% + 6px);
 }

@@ -131,6 +131,7 @@ export const ptBR: MessageTree = {
     accountSettings: "Definições da conta",
     accountSettingsShort: "Definições",
     callControls: "Controlos da chamada",
+    panelChannel: "Canal actual: {name}",
     noSpeakPermission: "Sem permissão para falar",
     deafen: "Ensurdecer",
     undeafen: "Ouvir de novo",

@@ -219,6 +219,21 @@ export default function VoiceChannel(props: Props) {
     }
   }
 
+  /** 094: remove frozen last-frame videos for a departed (or cam-cleared) identity. */
+  function scrubMediaForIdentity(identity: string) {
+    const camNode = gradeTileEls.get(camTileKey(identity));
+    if (camNode) clearOrphanVideos(camNode, null);
+    const screenNode = gradeTileEls.get(screenTileKey(identity));
+    if (screenNode) clearOrphanVideos(screenNode, null);
+    const current = grid();
+    if (!current) return;
+    for (const slot of current.slots) {
+      if (slot.account_id !== identity) continue;
+      const node = slotEls.get(slot.index);
+      if (node) clearOrphanVideos(node, null);
+    }
+  }
+
   function applyOccupancyScreenFlag(occupants: { screen_on?: boolean }[] | undefined) {
     setScreenShareActive((occupants ?? []).some((o) => o.screen_on));
   }
@@ -239,7 +254,8 @@ export default function VoiceChannel(props: Props) {
     setGradeScreenIds([...screens]);
     setGradeCameraIds([...cams]);
     const spot = spotlightId();
-    if (spot && !screens.has(spot)) setSpotlightId(null);
+    // 088/094: drop spotlight if neither screen nor camera presence remains
+    if (spot && !screens.has(spot) && !cams.has(spot)) setSpotlightId(null);
     refreshInCall();
   }
 
@@ -343,7 +359,7 @@ export default function VoiceChannel(props: Props) {
     scheduleLayout();
   }
 
-  /** 088: drop ended publications so Grade does not keep empty «Tela» tiles. */
+  /** 088/094: drop ended publications so Grade does not keep empty/frozen tiles. */
   async function removeTrack(track: RemoteTrack, participant: Participant) {
     const runtime = rt ?? (await ensureRuntime());
     const { Track } = runtime;
@@ -361,6 +377,8 @@ export default function VoiceChannel(props: Props) {
       const list = (remotesCam.get(participant.identity) ?? []).filter((t) => t !== track);
       if (list.length) remotesCam.set(participant.identity, list);
       else remotesCam.delete(participant.identity);
+      // 094: clear frozen last frame immediately (cam-off while in-call keeps Grade seat via remoteParticipants)
+      scrubMediaForIdentity(participant.identity);
     }
     refreshGradeLists();
     scheduleLayout();
@@ -369,6 +387,9 @@ export default function VoiceChannel(props: Props) {
   function clearRemoteParticipantMedia(identity: string) {
     remotesScreen.delete(identity);
     remotesCam.delete(identity);
+    // 094: scrub before list refresh so Composição/Grade hosts lose last frame
+    scrubMediaForIdentity(identity);
+    if (spotlightId() === identity) setSpotlightId(null);
     refreshGradeLists();
     scheduleLayout();
   }

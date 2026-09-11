@@ -991,6 +991,13 @@ export default function Sidebar(props: Props) {
         me={props.me}
         onLogout={props.onLogout}
         onAccountPatch={props.onAccountPatch}
+        openChannelName={
+          (() => {
+            const id = activeChannelId();
+            if (!id) return null;
+            return channels()?.find((c) => c.id === id)?.name ?? null;
+          })()
+        }
       />
 
       <ContextMenu menu={menu()} onClose={() => setMenu(null)} />

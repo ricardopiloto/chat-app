@@ -81,7 +81,24 @@ export default function FloatingVoicePip(): JSX.Element {
     setTiles(collectCameraTiles(room, voice.localCamTrack()));
   }
 
+  /** 094: detach media for tile hosts no longer in the active list. */
+  function pruneTileHosts() {
+    const valid = new Set(tiles().map((t) => t.id));
+    for (const [id, node] of [...tileEls.entries()]) {
+      if (valid.has(id)) continue;
+      detachTileMedia(node);
+      tileEls.delete(id);
+    }
+  }
+
+  function clearAllPipMedia() {
+    setTiles([]);
+    for (const node of tileEls.values()) detachTileMedia(node);
+    tileEls.clear();
+  }
+
   function layoutTiles() {
+    pruneTileHosts();
     for (const tile of tiles()) {
       const node = tileEls.get(tile.id);
       if (!node) continue;
@@ -105,17 +122,29 @@ export default function FloatingVoicePip(): JSX.Element {
   }
 
   createEffect(() => {
+    if (!voice.live()) {
+      clearAllPipMedia();
+      return;
+    }
     refreshTiles();
     const room = voice.session()?.room;
     if (!room) return;
-    const onChange = () => refreshTiles();
+    const onChange = () => {
+      refreshTiles();
+      queueMicrotask(() => {
+        pruneTileHosts();
+        layoutTiles();
+      });
+    };
     room.on(RoomEvent.TrackSubscribed, onChange);
     room.on(RoomEvent.TrackUnsubscribed, onChange);
+    room.on(RoomEvent.ParticipantDisconnected, onChange);
     room.on(RoomEvent.LocalTrackPublished, onChange);
     room.on(RoomEvent.LocalTrackUnpublished, onChange);
     onCleanup(() => {
       room.off(RoomEvent.TrackSubscribed, onChange);
       room.off(RoomEvent.TrackUnsubscribed, onChange);
+      room.off(RoomEvent.ParticipantDisconnected, onChange);
       room.off(RoomEvent.LocalTrackPublished, onChange);
       room.off(RoomEvent.LocalTrackUnpublished, onChange);
     });
@@ -127,8 +156,7 @@ export default function FloatingVoicePip(): JSX.Element {
   });
 
   onCleanup(() => {
-    for (const node of tileEls.values()) detachTileMedia(node);
-    tileEls.clear();
+    clearAllPipMedia();
   });
 
   createEffect(() => {

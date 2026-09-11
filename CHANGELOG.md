@@ -9,10 +9,16 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-09-11
+
+### Fixed
+
+- Leaving a call with camera on no longer leaves a **frozen last frame** on Grade, Composition, or floating PIP; scrub DOM videos on unsubscribe/disconnect and prune PIP tiles on hangup ([094-clear-left-camera-tile](specs/094-clear-left-camera-tile/)).
+
 ### Changed
 
+- **User panel layout**: always use the two-row stacked style (controls upper, identity + Settings lower); overflow measure from 084 removed; show read-only current channel name between handle and Settings (live call channel when in call, else open channel) ([093-user-panel-fixed-layout](specs/093-user-panel-fixed-layout/)).
 - **Reverted Mesa à Vela (089)**: restore blurple/cool-grey/Inter identity; voice header Editar cena + blur visible again; remove place type, seat tones, pill composer, jade E2EE chip, Manrope/Fraunces assets ([090-revert-mesa-vela](specs/090-revert-mesa-vela/)).
-
 
 ## [0.7.0] - 2026-09-10
 
@@ -241,7 +247,8 @@ Initial tracked release baseline (features delivered through 006).
 
 - Earlier spikes and phases: see `specs/001-fase-0-spike/` … `specs/005-fase3-ui-corrections/` and `docs/`.
 
-[Unreleased]: https://github.com/ricardosobral/chat-app/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/ricardosobral/chat-app/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/ricardosobral/chat-app/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/ricardosobral/chat-app/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/ricardosobral/chat-app/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/ricardosobral/chat-app/compare/v0.4.1...v0.5.0
