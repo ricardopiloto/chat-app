@@ -89,6 +89,8 @@ export default function VoiceChannel(props: Props) {
   const [gradeCameraIds, setGradeCameraIds] = createSignal<string[]>([]);
   const [spotlightId, setSpotlightId] = createSignal<string | null>(null);
   const [runtimePhase, setRuntimePhase] = createSignal<VoiceLoadPhase>("idle");
+  const [headerMoreOpen, setHeaderMoreOpen] = createSignal(false);
+  let headerMoreWrap: HTMLDivElement | undefined;
   const slotEls = new Map<number, HTMLDivElement>();
   /** 083: attach targets keyed by `cam:` / `screen:` tile keys. */
   const gradeTileEls = new Map<string, HTMLDivElement>();
@@ -104,6 +106,30 @@ export default function VoiceChannel(props: Props) {
   /** Guards against leave() + hangup both running. */
   let leaving = false;
   const listenOnly = () => props.channel.my_permission === "listen";
+
+  createEffect(() => {
+    if (!headerMoreOpen()) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setHeaderMoreOpen(false);
+      }
+    };
+    const onPointer = (e: PointerEvent) => {
+      const tEl = e.target;
+      if (headerMoreWrap && tEl instanceof Node && headerMoreWrap.contains(tEl)) return;
+      setHeaderMoreOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    const id = window.setTimeout(() => {
+      window.addEventListener("pointerdown", onPointer);
+    }, 0);
+    onCleanup(() => {
+      window.clearTimeout(id);
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("pointerdown", onPointer);
+    });
+  });
 
   async function selectHeaderBlur(next: CameraBlurMode) {
     writeBlurMode(next);
@@ -963,7 +989,7 @@ export default function VoiceChannel(props: Props) {
 
       <header class="pane-header">
         <div>
-          <div class="pane-title">{props.channel.name}</div>
+          <div class="pane-title font-place">{props.channel.name}</div>
           <div class="pane-sub">
             {t("voice.occupied", { n: occupied(), total: slotCount() })}
             <Show when={voiceDurationLabel(callStartedAt(), voice.now())}>
@@ -978,23 +1004,24 @@ export default function VoiceChannel(props: Props) {
             </Show>
           </div>
         </div>
-        <div class="seg" style={{ "margin-left": "auto" }}>
-          <label class="seg-opt">
-            <input
-              type="radio"
-              name="view-mode"
-              checked={viewMode() === "composition"}
-              onChange={() => setMode("composition")}
-            />
+        <div class="seg" role="group" aria-label={`${t("voice.composition")} / ${t("voice.grid")}`}>
+          <button
+            type="button"
+            classList={{ active: viewMode() === "composition" }}
+            aria-pressed={viewMode() === "composition"}
+            onClick={() => setMode("composition")}
+          >
             {t("voice.composition")}
-          </label>
-          <label class={`seg-opt${screenShareActive() ? " has-screen-share" : ""}`}>
-            <input
-              type="radio"
-              name="view-mode"
-              checked={viewMode() === "grid"}
-              onChange={() => setMode("grid")}
-            />
+          </button>
+          <button
+            type="button"
+            classList={{
+              active: viewMode() === "grid",
+              "has-screen-share": screenShareActive(),
+            }}
+            aria-pressed={viewMode() === "grid"}
+            onClick={() => setMode("grid")}
+          >
             {t("voice.grid")}
             <Show when={screenShareActive()}>
               <span
@@ -1003,13 +1030,8 @@ export default function VoiceChannel(props: Props) {
                 title={t("voice.screenShareActive")}
               />
             </Show>
-          </label>
-        </div>
-        <Show when={admin() && !editing()}>
-          <button type="button" class="btn btn-primary" onClick={() => setEditing(true)}>
-            {t("voice.editScene")}
           </button>
-        </Show>
+        </div>
         <button
           type="button"
           class="pane-icon-btn"
@@ -1021,21 +1043,51 @@ export default function VoiceChannel(props: Props) {
         >
           <IconUsers size={20} />
         </button>
-        <Show when={live() && !listenOnly()}>
-          <label class="voice-header-blur">
-            <span class="voice-header-blur-label">{t("voice.blurEffect")}</span>
-            <select
-              class="voice-header-blur-select"
-              aria-label={t("voice.blurEffect")}
-              value={blurMode()}
-              onChange={(e) => void selectHeaderBlur(e.currentTarget.value as CameraBlurMode)}
-            >
-              <option value="off">{t("voice.blurNone")}</option>
-              <option value="light">{t("voice.blurLight")}</option>
-              <option value="strong">{t("voice.blurStrong")}</option>
-            </select>
-          </label>
-        </Show>
+        <div class="voice-header-more" ref={(el) => (headerMoreWrap = el)}>
+          <button
+            type="button"
+            class="pane-icon-btn voice-header-more-btn"
+            aria-expanded={headerMoreOpen()}
+            aria-haspopup="menu"
+            aria-label={t("voice.headerMore")}
+            title={t("voice.headerMore")}
+            onClick={() => setHeaderMoreOpen((o) => !o)}
+          >
+            ⋯
+          </button>
+          <Show when={headerMoreOpen()}>
+            <div class="voice-header-more-menu" role="menu" aria-label={t("voice.headerMore")}>
+              <Show when={admin() && !editing()}>
+                <button
+                  type="button"
+                  class="voice-header-more-item"
+                  role="menuitem"
+                  onClick={() => {
+                    setHeaderMoreOpen(false);
+                    setEditing(true);
+                  }}
+                >
+                  {t("voice.editScene")}
+                </button>
+              </Show>
+              <Show when={live() && !listenOnly()}>
+                <label class="voice-header-more-item voice-header-more-blur" role="none">
+                  <span>{t("voice.blurEffect")}</span>
+                  <select
+                    class="voice-header-blur-select"
+                    aria-label={t("voice.blurEffect")}
+                    value={blurMode()}
+                    onChange={(e) => void selectHeaderBlur(e.currentTarget.value as CameraBlurMode)}
+                  >
+                    <option value="off">{t("voice.blurNone")}</option>
+                    <option value="light">{t("voice.blurLight")}</option>
+                    <option value="strong">{t("voice.blurStrong")}</option>
+                  </select>
+                </label>
+              </Show>
+            </div>
+          </Show>
+        </div>
         <span class={`e2ee-chip${e2eeEnabled() ? "" : " off"}`}>
           <Show when={e2eeEnabled()} fallback={<IconLockWarning size={16} />}>
             <IconLockClosed size={16} />
@@ -1110,7 +1162,12 @@ export default function VoiceChannel(props: Props) {
           <>
             <Show when={!editing()}>
               <Show when={viewMode() === "composition"}>
-                <CameraGrid grid={g()} handles={handles()} attachSlot={attachSlot} />
+                <CameraGrid
+                  grid={g()}
+                  handles={handles()}
+                  attachSlot={attachSlot}
+                  speakingIds={voice.speakingAccountIds()}
+                />
                 <CallBank accountIds={bankIds()} handles={handles()} />
               </Show>
               <Show when={viewMode() === "grid"}>
@@ -1121,6 +1178,7 @@ export default function VoiceChannel(props: Props) {
                   gradeTiles={gradeTiles()}
                   attachGradeTile={attachGradeTile}
                   spotlightId={spotlightId()}
+                  speakingIds={voice.speakingAccountIds()}
                   onToggleSpotlight={(id) =>
                     setSpotlightId((cur) => (cur === id ? null : id))
                   }

@@ -1,65 +1,57 @@
 /* Nocturne — design-system tokens and component classes. This file is the source of truth for the system's look; retune it here and see readme.md. */
 
 :root {
-  --color-bg: #161826;
-  --color-surface: #232532;
-  --color-text: #e9e9ed;
-  --color-accent: #9184d9; /* review round 7 (Barron): the accent moves to
-     the product's blurple — OKLCH hue 289.2, the hue of the app's own Pro
-     accent (#9a8fe0, --om-accent-pro) — at the same lightness the steel
-     accent held (L 0.660, so the documented ratios survive) and chroma
-     in the product blurple's own range (its token sits at C 0.118; the
-     accent takes 0.125, from the old steel's 0.030):
-     the accent now reads as an accent rather than another neutral. */
-  --color-accent-2: #a7a1db; /* the machine-derived stand-in follows: same
-     hue, same L 0.734, chroma at the same 2:3 proportion it held */
-  --color-divider: color-mix(in srgb, #e9e9ed 16%, transparent);
+  /* 095 Mesa à Vela — parchment ink + amber primary + jade secondary.
+     Seeds: bg #14121A, surface #1C1926, text #EDE6DC, amber #D98A3D, jade #5CB394.
+     Ramps: OKLCH shared lightness scale (hue amber≈62, jade≈168, neutral≈75). */
+  --color-bg: #14121a;
+  --color-surface: #1c1926;
+  --color-text: #ede6dc;
+  --color-accent: #d88a3d;
+  --color-accent-2: #5cb394;
+  --color-divider: color-mix(in srgb, #ede6dc 16%, transparent);
 
-  /* Tonal ramps — generated in OKLCH on one shared lightness scale, so the
-     same step of any role matches the others in visual value. */
-  --color-neutral-100: #f3f5fe;
-  --color-neutral-200: #e4e7f5;
-  --color-neutral-300: #cfd3e5;
-  --color-neutral-400: #b2b6ca;
-  --color-neutral-500: #9397ab;
-  --color-neutral-600: #75798c;
-  --color-neutral-700: #595d6c;
-  --color-neutral-800: #3f424d;
-  --color-neutral-900: #292b31;
+  /* Tonal ramps — OKLCH lightness ladder → hex for broad support. */
+  --color-neutral-100: #f1eae0;
+  --color-neutral-200: #d8d0c4;
+  --color-neutral-300: #b2a99d;
+  --color-neutral-400: #877f73;
+  --color-neutral-500: #645c51;
+  --color-neutral-600: #433c32;
+  --color-neutral-700: #2e281f;
+  --color-neutral-800: #201911;
+  --color-neutral-900: #130f08;
 
-  --color-accent-100: #f5f4ff;
-  --color-accent-200: #e7e5fe;
-  --color-accent-300: #d2cefd;
-  --color-accent-400: #b5abfc;
-  --color-accent-500: #968ae0;
-  --color-accent-600: #796cbf;
-  --color-accent-700: #5d5294;
-  --color-accent-800: #423a6a;
-  --color-accent-900: #2b2741;
+  --color-accent-100: #fff2e4;
+  --color-accent-200: #ffe1c7;
+  --color-accent-300: #fbc99e;
+  --color-accent-400: #edaa6e;
+  --color-accent-500: #d98939;
+  --color-accent-600: #c06f0a;
+  --color-accent-700: #9c5400;
+  --color-accent-800: #763c00;
+  --color-accent-900: #522500;
 
-  --color-accent-2-100: #f5f4ff;
-  --color-accent-2-200: #e7e5fe;
-  --color-accent-2-300: #d2cefd;
-  --color-accent-2-400: #b5afe8;
-  --color-accent-2-500: #9690c9;
-  --color-accent-2-600: #7972a9;
-  --color-accent-2-700: #5c5783;
-  --color-accent-2-800: #423e5d;
-  --color-accent-2-900: #2b293a;
+  --color-accent-2-100: #e0f9ee;
+  --color-accent-2-200: #c2eddb;
+  --color-accent-2-300: #9edac2;
+  --color-accent-2-400: #75c4a6;
+  --color-accent-2-500: #5bb293;
+  --color-accent-2-600: #2f9474;
+  --color-accent-2-700: #137b5e;
+  --color-accent-2-800: #02553f;
+  --color-accent-2-900: #013728;
 
-  /* Deck section-divider ground — review round 3: saturation as presence.
-     Dividers take a saturated deep indigo (hue 277, the neutral ramp's own
-     family; C 0.094 — written when the accent held C 0.030, before the
-     round-7 blurple raised it past the ground's) with a lighter bloom and
-     a ghost tint of the same hue, while the slide grounds stay
-     desaturated. Deck-scale fills only — not interface colors. */
+  /* Deck section-divider ground — deck-scale fills only; not product chrome. */
   --color-section: #262a60;
   --color-section-glow: #353b80;
   --color-section-ghost: #4c5397;
 
-  --font-heading: "Inter", system-ui, sans-serif;
+  /* Place (Fraunces) is opt-in via --font-place / .font-place — not --font-heading. */
+  --font-heading: "Manrope", "Inter", system-ui, sans-serif;
   --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", "Fira Mono", monospace;
-  --font-body: "Inter", system-ui, sans-serif;
+  --font-body: "Manrope", "Inter", system-ui, sans-serif;
+  --font-place: "Fraunces", "Manrope", "Inter", Georgia, serif;
   --font-weight-body: 400;
   --font-weight-ui: 500;
   --font-weight-heading: 600;
@@ -76,16 +68,16 @@
   --radius-md: 14px;
   --radius-lg: 22px;
   --radius-pill: 999px; /* action buttons — Mesa / Protótipo v2 */
+  --radius-token: 20px; /* camera seat frames only (095) */
   /* 045: subtle uniform gap between shell chrome cards */
   --shell-gutter: 8px;
 
-  /* Elevation — derived from the ground: soft ink-tinted shadows on a
-     light theme, a hairline edge + ambient darkness on a dark one. */
-  --shadow-sm: 0 0 0 1px #3f424d;
-  --shadow-md: 0 0 0 1px #595d6c, 0 6px 18px rgba(0,0,0,0.55);
-  --shadow-lg: 0 0 0 1px #9397ab, 0 16px 40px rgba(0,0,0,0.65);
+  /* Elevation — parchment-neutral hairlines on dark ground. */
+  --shadow-sm: 0 0 0 1px #433c32;
+  --shadow-md: 0 0 0 1px #645c51, 0 6px 18px rgba(0,0,0,0.55);
+  --shadow-lg: 0 0 0 1px #877f73, 0 16px 40px rgba(0,0,0,0.65);
   /* Floating menus (037) — dark recipe */
-  --shadow-float: 0 0 0 1px color-mix(in srgb, #9397ab 55%, transparent),
+  --shadow-float: 0 0 0 1px color-mix(in srgb, #877f73 55%, transparent),
     0 12px 32px rgba(0, 0, 0, 0.55);
 }
 
@@ -116,6 +108,68 @@
   font-weight: 700;
   font-display: swap;
   src: url("/fonts/Inter-700.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/Manrope-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/Manrope-500.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/Manrope-600.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/Manrope-700.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("/fonts/Manrope-800.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Fraunces";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/Fraunces-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Fraunces";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/Fraunces-500.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Fraunces";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/Fraunces-600.woff2") format("woff2");
+}
+
+.font-place {
+  font-family: var(--font-place);
 }
 
 body {

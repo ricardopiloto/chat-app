@@ -398,6 +398,7 @@ export const ptBR: MessageTree = {
     spotlightOn: "Destacar esta tela",
     spotlightOff: "Remover destaque",
     editScene: "Editar cena",
+    headerMore: "Mais opções do canal",
     stageMode: "Modo palco",
     blurEffect: "Efeito de fundo",
     blurNone: "Nenhum efeito",

@@ -727,7 +727,7 @@ export default function Sidebar(props: Props) {
             <Show
               when={selected() && canOpenServerSettings()}
               fallback={
-                <span class="sidebar-server-name">{selected()?.name ?? t("shell.noServer")}</span>
+                <span class="sidebar-server-name font-place">{selected()?.name ?? t("shell.noServer")}</span>
               }
             >
               <button
@@ -738,7 +738,7 @@ export default function Sidebar(props: Props) {
                 })}
                 onClick={() => openServerSettings()}
               >
-                <span class="sidebar-server-name">{selected()?.name}</span>
+                <span class="sidebar-server-name font-place">{selected()?.name}</span>
               </button>
             </Show>
             <Show when={selected() && canOpenServerSettings()}>
@@ -772,7 +772,12 @@ export default function Sidebar(props: Props) {
           </Show>
           <Show when={selected() && !props.settingsMode}>
             <div class="sidebar-section-row">
-              <div class="sidebar-section">{t("shell.text")}</div>
+              <div class="sidebar-section">
+                <span class="sidebar-section-icon" aria-hidden="true">
+                  #
+                </span>
+                {t("shell.text")}
+              </div>
               <Show when={canCreateChannels()}>
                 <button
                   type="button"
@@ -836,7 +841,12 @@ export default function Sidebar(props: Props) {
             </For>
 
             <div class="sidebar-section-row">
-              <div class="sidebar-section">{t("shell.voiceVideo")}</div>
+              <div class="sidebar-section">
+                <span class="sidebar-section-icon" aria-hidden="true">
+                  <IconVoiceChannel size={14} />
+                </span>
+                {t("shell.voiceVideo")}
+              </div>
               <Show when={canCreateChannels()}>
                 <button
                   type="button"

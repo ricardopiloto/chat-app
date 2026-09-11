@@ -395,6 +395,7 @@ export const en: MessageTree = {
     spotlightOn: "Spotlight this screen",
     spotlightOff: "Clear spotlight",
     editScene: "Edit scene",
+    headerMore: "More channel options",
     stageMode: "Stage mode",
     blurEffect: "Background effect",
     blurNone: "No effect",

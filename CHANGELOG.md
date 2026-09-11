@@ -9,6 +9,13 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-09-11
+
+### Changed
+
+- **Mesa à Vela visual identity**: amber primary + jade security (E2EE) ramps, parchment/ink surfaces, self-hosted Manrope UI + Fraunces place type (voice title, server name, Auth brand only); voice header `⋯` for Editar cena + blur; five camera seat tones + amber speaking (static under reduced motion); pill composer + circular send ([095-mesa-vela-reskin](specs/095-mesa-vela-reskin/)).
+- Voice **Composição / Grade** control restyled as prototype filled pill segment (solid amber active thumb, dark ink label) instead of outline radios.
+
 ## [0.7.1] - 2026-09-11
 
 ### Fixed
@@ -247,7 +254,8 @@ Initial tracked release baseline (features delivered through 006).
 
 - Earlier spikes and phases: see `specs/001-fase-0-spike/` … `specs/005-fase3-ui-corrections/` and `docs/`.
 
-[Unreleased]: https://github.com/ricardosobral/chat-app/compare/v0.7.1...HEAD
+[Unreleased]: https://github.com/ricardosobral/chat-app/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/ricardosobral/chat-app/compare/v0.7.1...v0.8.0
 [0.7.1]: https://github.com/ricardosobral/chat-app/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/ricardosobral/chat-app/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/ricardosobral/chat-app/compare/v0.5.0...v0.6.0

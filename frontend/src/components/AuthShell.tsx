@@ -31,7 +31,7 @@ export default function AuthShell(props: Props) {
                 width={160}
                 height={160}
               />
-              <span class="topbar-name auth-brand-name">Mesa</span>
+              <span class="topbar-name auth-brand-name font-place">Mesa</span>
             </div>
             <p class="auth-tagline">Converse com foco. No seu servidor, do seu jeito.</p>
           </div>

@@ -47,6 +47,18 @@ export function splitSpotlightTiles(
   return { main, strip };
 }
 
+/** 095: stable seat tone class from account id (camera seats only). */
+const SEAT_TONES = ["c-ember", "c-plum", "c-slate", "c-wine", "c-umber"] as const;
+
+export function seatToneClass(accountId: string | null | undefined): string {
+  if (!accountId) return SEAT_TONES[0];
+  let h = 0;
+  for (let i = 0; i < accountId.length; i++) {
+    h = (h * 31 + accountId.charCodeAt(i)) >>> 0;
+  }
+  return SEAT_TONES[h % SEAT_TONES.length] ?? SEAT_TONES[0];
+}
+
 type Props = {
   grid: GridLayout;
   handles: Record<string, string>;
@@ -59,12 +71,15 @@ type Props = {
   attachGradeTile?: (key: string, el: HTMLDivElement) => void;
   spotlightId?: string | null;
   onToggleSpotlight?: (accountId: string) => void;
+  /** 095 / 033: accounts currently speaking. */
+  speakingIds?: ReadonlySet<string>;
 };
 
 function GradeTileView(props: {
   tile: GradeTile;
   handles: Record<string, string>;
   spot: string | null;
+  speaking: boolean;
   onToggleSpotlight?: (accountId: string) => void;
   attachGradeTile?: (key: string, el: HTMLDivElement) => void;
   variant?: "default" | "main" | "strip";
@@ -72,6 +87,7 @@ function GradeTileView(props: {
   const isSpot = () =>
     props.tile.kind === "screen" && props.spot === props.tile.accountId;
   const handle = () => props.handles[props.tile.accountId] ?? props.tile.accountId;
+  const isCamera = () => props.tile.kind === "camera";
   return (
     <div
       class="slot"
@@ -82,10 +98,12 @@ function GradeTileView(props: {
           !!props.spot && props.tile.kind === "screen" && !isSpot(),
         "grade-spotlight-main-slot": props.variant === "main",
         "grade-spotlight-strip-slot": props.variant === "strip",
+        "is-speaking": isCamera() && props.speaking,
+        [seatToneClass(props.tile.accountId)]: isCamera(),
       }}
     >
-      <div class="chip grade-tile-chip">
-        <Show when={props.tile.kind === "screen"} fallback={<span>{handle()}</span>}>
+      <div class={`chip${isCamera() ? " nameplate" : " grade-tile-chip"}`}>
+        <Show when={props.tile.kind === "screen"} fallback={<span class="nm">{handle()}</span>}>
           <span
             class="grade-screen-chip-label"
             aria-label={t("voice.screenTileAria", { handle: handle() })}
@@ -128,6 +146,7 @@ export default function CameraGrid(props: Props) {
   const spot = () => props.spotlightId ?? null;
   const split = () => splitSpotlightTiles(tiles(), spot());
   const spotlightMode = () => useUnified() && split().main != null;
+  const speaking = () => props.speakingIds ?? new Set<string>();
 
   return (
     <Show
@@ -141,23 +160,30 @@ export default function CameraGrid(props: Props) {
           }}
         >
           <Index each={props.grid.slots}>
-            {(slot) => (
-              <div
-                class="slot"
-                style={cellStyle(
-                  (props.grid.layout_key ?? "quad") as LayoutKey,
-                  slot().index,
-                  props.grid.slot_count || props.grid.slots.length || 4,
-                )}
-              >
-                <div class="chip">
-                  <Show when={slot().account_id} fallback={`Slot ${slot().index + 1}`}>
-                    {(id) => props.handles[id()] ?? id()}
-                  </Show>
+            {(slot) => {
+              const aid = () => slot().account_id;
+              return (
+                <div
+                  class="slot"
+                  classList={{
+                    [seatToneClass(aid())]: true,
+                    "is-speaking": !!aid() && speaking().has(aid()!),
+                  }}
+                  style={cellStyle(
+                    (props.grid.layout_key ?? "quad") as LayoutKey,
+                    slot().index,
+                    props.grid.slot_count || props.grid.slots.length || 4,
+                  )}
+                >
+                  <div class="chip nameplate">
+                    <Show when={aid()} fallback={<span class="nm muted">{`Slot ${slot().index + 1}`}</span>}>
+                      {(id) => <span class="nm">{props.handles[id()] ?? id()}</span>}
+                    </Show>
+                  </div>
+                  <div class="slot-media" ref={(el) => props.attachSlot(slot().index, el)} />
                 </div>
-                <div class="slot-media" ref={(el) => props.attachSlot(slot().index, el)} />
-              </div>
-            )}
+              );
+            }}
           </Index>
         </div>
       }
@@ -177,8 +203,16 @@ export default function CameraGrid(props: Props) {
               fallback={
                 <Index each={legacyIds()}>
                   {(id) => (
-                    <div class="slot">
-                      <div class="chip">{props.handles[id()] ?? id()}</div>
+                    <div
+                      class="slot"
+                      classList={{
+                        [seatToneClass(id())]: true,
+                        "is-speaking": speaking().has(id()),
+                      }}
+                    >
+                      <div class="chip nameplate">
+                        <span class="nm">{props.handles[id()] ?? id()}</span>
+                      </div>
                       <div class="slot-media" ref={(el) => props.attachGrade?.(id(), el)} />
                     </div>
                   )}
@@ -191,6 +225,7 @@ export default function CameraGrid(props: Props) {
                     tile={tile()}
                     handles={props.handles}
                     spot={spot()}
+                    speaking={speaking().has(tile().accountId)}
                     onToggleSpotlight={props.onToggleSpotlight}
                     attachGradeTile={props.attachGradeTile}
                   />
@@ -212,6 +247,7 @@ export default function CameraGrid(props: Props) {
                       tile={m()}
                       handles={props.handles}
                       spot={spot()}
+                      speaking={false}
                       onToggleSpotlight={props.onToggleSpotlight}
                       attachGradeTile={props.attachGradeTile}
                       variant="main"
@@ -227,6 +263,7 @@ export default function CameraGrid(props: Props) {
                         tile={tile()}
                         handles={props.handles}
                         spot={spot()}
+                        speaking={speaking().has(tile().accountId)}
                         onToggleSpotlight={props.onToggleSpotlight}
                         attachGradeTile={props.attachGradeTile}
                         variant="strip"
