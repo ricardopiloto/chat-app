@@ -178,6 +178,7 @@ pub async fn register_inner(
                 created_at: Utc::now(),
                 avatar_filename: None,
                 avatar_content_type: None,
+                display_name: None,
             };
             db::account::create(&mut *tx, &record).await?;
 

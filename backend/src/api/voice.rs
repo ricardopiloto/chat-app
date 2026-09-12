@@ -302,7 +302,7 @@ pub async fn join(
         &state.config,
         &account.id.to_string(),
         &channel_id.to_string(),
-        &account.handle,
+        &account.public_label(),
         can_speak,
     )
     .map_err(ApiError::internal)?;

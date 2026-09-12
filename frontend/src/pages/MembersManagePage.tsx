@@ -11,6 +11,7 @@ import {
 import IdentityAvatar from "../components/IdentityAvatar";
 import { t } from "../i18n";
 import { errorMessage } from "../lib/apiError";
+import { publicDisplayLabel } from "../lib/displayName";
 
 export default function MembersManagePage() {
   const params = useParams<{ serverId: string }>();
@@ -120,16 +121,20 @@ export default function MembersManagePage() {
               <IdentityAvatar
                 class="members-avatar"
                 accountId={m.account_id}
-                handle={m.handle}
+                handle={publicDisplayLabel(m.handle, m.display_name)}
                 hasAvatar={!!m.has_avatar}
               />
-              <span class="members-handle">{m.handle}</span>
+              <span class="members-handle">
+                {publicDisplayLabel(m.handle, m.display_name)}
+              </span>
               <Show
                 when={server()?.owner_account_id === m.account_id}
                 fallback={
                   <select
                     class="input members-manage-role"
-                    aria-label={t("settings.roleOf", { handle: m.handle })}
+                    aria-label={t("settings.roleOf", {
+                      handle: publicDisplayLabel(m.handle, m.display_name),
+                    })}
                     disabled={busyId() === m.account_id}
                     value={roleForMember(m.account_id)}
                     onChange={(e) => void onRoleChange(m, e.currentTarget.value)}

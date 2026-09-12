@@ -25,6 +25,7 @@ struct OccupantViewRow {
     cam_on: i64,
     screen_on: i64,
     has_avatar: i64,
+    display_name: Option<String>,
 }
 
 fn map_occupant(row: OccupantRow) -> Result<VoiceOccupant, sqlx::Error> {
@@ -48,6 +49,7 @@ fn map_view(row: OccupantViewRow) -> Result<OccupantView, sqlx::Error> {
         cam_on: row.cam_on != 0,
         screen_on: row.screen_on != 0,
         has_avatar: row.has_avatar != 0,
+        display_name: row.display_name,
     })
 }
 
@@ -193,7 +195,8 @@ pub async fn list_views_for_channel(
 ) -> Result<Vec<OccupantView>, sqlx::Error> {
     let rows = sqlx::query_as::<_, OccupantViewRow>(
         "SELECT o.account_id, a.handle, o.mic_on, o.cam_on, o.screen_on,
-                (a.avatar_filename IS NOT NULL) AS has_avatar
+                (a.avatar_filename IS NOT NULL) AS has_avatar,
+                a.display_name
          FROM voice_occupant o
          JOIN account a ON a.id = o.account_id
          WHERE o.channel_id = ?

@@ -65,6 +65,8 @@ export async function joinLiveRoom(opts: {
   onTrackUnsubscribed?: (track: RemoteTrack, participant: Participant) => void;
   /** 088: wipe screen/cam maps when a remote leaves mid-share. */
   onParticipantDisconnected?: (participant: Participant) => void;
+  /** 096: refresh bank/Grade when someone joins before they publish video. */
+  onParticipantConnected?: (participant: Participant) => void;
   onLocalTrack: (el: HTMLMediaElement, kind: "video" | "audio") => void;
   onDisconnected?: (reason?: unknown) => void;
 }): Promise<LiveSession> {
@@ -94,6 +96,11 @@ export async function joinLiveRoom(opts: {
   if (opts.onParticipantDisconnected) {
     room.on(RoomEvent.ParticipantDisconnected, (participant) => {
       opts.onParticipantDisconnected?.(participant);
+    });
+  }
+  if (opts.onParticipantConnected) {
+    room.on(RoomEvent.ParticipantConnected, (participant) => {
+      opts.onParticipantConnected?.(participant);
     });
   }
   if (opts.onDisconnected) {
@@ -156,6 +163,8 @@ export function attachRemote(track: RemoteTrack, node: HTMLElement) {
       el.playsInline = true;
     } else if (el instanceof HTMLAudioElement) {
       el.autoplay = true;
+      el.muted = false;
+      el.volume = 1;
     }
   }
   if (track.kind === Track.Kind.Video) {
@@ -163,5 +172,10 @@ export function attachRemote(track: RemoteTrack, node: HTMLElement) {
   } else if (el.parentElement !== node) {
     node.appendChild(el);
   }
+  if (el instanceof HTMLAudioElement) {
+    el.muted = false;
+    el.volume = 1;
+  }
+  // 097: ensure screen/mic elements actually start after re-parent
   safePlay(el as HTMLMediaElement);
 }

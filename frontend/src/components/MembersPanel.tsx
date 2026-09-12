@@ -17,6 +17,7 @@ import IdentityAvatar from "./IdentityAvatar";
 import { systemRoleLabel, t } from "../i18n";
 import { errorMessage } from "../lib/apiError";
 import { memberHasCapability } from "../lib/capabilities";
+import { publicDisplayLabel } from "../lib/displayName";
 
 type Props = {
   serverId: string | null;
@@ -274,10 +275,12 @@ export default function MembersPanel(props: Props) {
                         <IdentityAvatar
                           class="members-avatar"
                           accountId={m.account_id}
-                          handle={m.handle}
+                          handle={publicDisplayLabel(m.handle, m.display_name)}
                           hasAvatar={!!m.has_avatar}
                         />
-                        <span class="members-handle">{m.handle}</span>
+                        <span class="members-handle">
+                          {publicDisplayLabel(m.handle, m.display_name)}
+                        </span>
                         <div class="members-actions">
                           <Show when={canMute() && canActOn(m)}>
                             <Show

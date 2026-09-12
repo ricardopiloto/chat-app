@@ -26,6 +26,8 @@ pub struct MemberView {
     pub handle: String,
     pub identity_pubkey: String,
     pub has_avatar: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub display_name: Option<String>,
 }
 
 pub async fn list_roles(
@@ -105,6 +107,7 @@ pub async fn list_members(
                 identity_pubkey: base64::engine::general_purpose::STANDARD
                     .encode(&acc.identity_pubkey),
                 has_avatar: acc.avatar_filename.is_some(),
+                display_name: acc.display_name,
             });
         }
     }

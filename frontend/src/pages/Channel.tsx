@@ -61,6 +61,7 @@ import { showToast } from "../ui/toast";
 import IdentityAvatar from "../components/IdentityAvatar";
 import { t } from "../i18n";
 import { errorMessage } from "../lib/apiError";
+import { publicDisplayLabel } from "../lib/displayName";
 import { keySyncMsg } from "../lib/keySyncCopy";
 import {
   buildTimeline,
@@ -209,7 +210,9 @@ export default function ChannelPage(props: Props) {
   const [error, setError] = createSignal("");
   const [pending, setPending] = createSignal(true);
   const [sending, setSending] = createSignal(false);
-  const [handles, setHandles] = createSignal<Record<string, { handle: string; hasAvatar: boolean }>>({});
+  const [handles, setHandles] = createSignal<
+    Record<string, { handle: string; display_name?: string | null; hasAvatar: boolean }>
+  >({});
   const [catchUpBusy, setCatchUpBusy] = createSignal(false);
   let sawDeliveryDown = false;
 
@@ -219,7 +222,11 @@ export default function ChannelPage(props: Props) {
     deliveryStatus() === "disconnected" ||
     catchUpBusy();
 
-  function identityOf(accountId: string): { handle: string; hasAvatar: boolean } {
+  function identityOf(accountId: string): {
+    handle: string;
+    display_name?: string | null;
+    hasAvatar: boolean;
+  } {
     const known = handles()[accountId];
     if (known) return known;
     // WS message.new / unknown sender: stable initials from the visible id, never an empty circle.
@@ -227,7 +234,9 @@ export default function ChannelPage(props: Props) {
   }
 
   function displayHandle(accountId: string): string {
-    return handles()[accountId]?.handle ?? accountId.slice(0, 8);
+    const known = handles()[accountId];
+    if (!known) return accountId.slice(0, 8);
+    return publicDisplayLabel(known.handle, known.display_name);
   }
 
   function activableMentionHandles(): string[] {
@@ -501,6 +510,18 @@ export default function ChannelPage(props: Props) {
   });
 
   createEffect(() => {
+    const me = props.me;
+    setHandles((prev) => ({
+      ...prev,
+      [me.id]: {
+        handle: me.handle,
+        display_name: me.display_name,
+        hasAvatar: !!me.has_avatar,
+      },
+    }));
+  });
+
+  createEffect(() => {
     const serverId = props.channel.server_id;
     let cancelled = false;
     void (async () => {
@@ -569,16 +590,31 @@ export default function ChannelPage(props: Props) {
         setError("");
         try {
           const members = await api<ServerMember[]>(`/api/servers/${serverId}/members`);
-          const map: Record<string, { handle: string; hasAvatar: boolean }> = {
-            [props.me.id]: { handle: props.me.handle, hasAvatar: !!props.me.has_avatar },
+          const map: Record<
+            string,
+            { handle: string; display_name?: string | null; hasAvatar: boolean }
+          > = {
+            [props.me.id]: {
+              handle: props.me.handle,
+              display_name: props.me.display_name,
+              hasAvatar: !!props.me.has_avatar,
+            },
           };
           for (const m of members) {
-            map[m.account_id] = { handle: m.handle, hasAvatar: !!m.has_avatar };
+            map[m.account_id] = {
+              handle: m.handle,
+              display_name: m.display_name,
+              hasAvatar: !!m.has_avatar,
+            };
           }
           setHandles(map);
         } catch {
           setHandles({
-            [props.me.id]: { handle: props.me.handle, hasAvatar: !!props.me.has_avatar },
+            [props.me.id]: {
+              handle: props.me.handle,
+              display_name: props.me.display_name,
+              hasAvatar: !!props.me.has_avatar,
+            },
           });
         }
         try {
@@ -1269,7 +1305,7 @@ export default function ChannelPage(props: Props) {
                   <IdentityAvatar
                     class="msg-avatar"
                     accountId={g.sender}
-                    handle={identityOf(g.sender).handle}
+                    handle={displayHandle(g.sender)}
                     hasAvatar={identityOf(g.sender).hasAvatar}
                   />
                   <div class="msg-content">

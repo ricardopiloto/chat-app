@@ -111,10 +111,10 @@ async fn announce_member_join_inner(
         .map_err(|e| e.to_string())?
         .ok_or_else(|| "welcome channel missing".to_string())?;
 
-    let handle = db::account::find_by_id(&state.pool, new_member)
+    let label = db::account::find_by_id(&state.pool, new_member)
         .await
         .map_err(|e| e.to_string())?
-        .map(|a| a.handle)
+        .map(|a| a.public_label())
         .unwrap_or_else(|| new_member.to_string());
 
     let template = db::server::get_welcome_settings(&state.pool, invite.server_id)
@@ -122,7 +122,7 @@ async fn announce_member_join_inner(
         .map_err(|e| e.to_string())?
         .and_then(|s| s.welcome_message_template);
 
-    let plaintext = render_welcome_text(template.as_deref(), &handle);
+    let plaintext = render_welcome_text(template.as_deref(), &label);
     let created = db::message::create_system(
         &state.pool,
         Uuid::new_v4(),

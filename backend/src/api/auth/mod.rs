@@ -8,7 +8,7 @@ use axum::Json;
 use axum::extract::{DefaultBodyLimit, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use axum::routing::{get, post, put};
+use axum::routing::{get, patch, post, put};
 use axum::Router;
 use axum_extra::extract::cookie::{Cookie, CookieJar};
 use base64::Engine;
@@ -32,6 +32,7 @@ pub fn router() -> Router<AppState> {
         )
         .route("/auth/identity-vault", put(put_identity_vault))
         .route("/auth/identity", put(put_identity))
+        .route("/auth/display-name", patch(patch_display_name))
 }
 
 async fn logout(
@@ -94,6 +95,26 @@ async fn put_identity(
             }),
         );
     }
+    let updated = db::account::find_by_id(&state.pool, account.id)
+        .await?
+        .ok_or_else(ApiError::unauthorized)?;
+    Ok(Json(updated.auth_view()))
+}
+
+#[derive(Debug, Deserialize)]
+struct PatchDisplayNameBody {
+    /// Null or empty/whitespace clears the display name.
+    display_name: Option<String>,
+}
+
+async fn patch_display_name(
+    State(state): State<AppState>,
+    AuthUser(account): AuthUser,
+    Json(body): Json<PatchDisplayNameBody>,
+) -> Result<Json<crate::domain::account::AuthAccount>, ApiError> {
+    let normalized = crate::domain::account::normalize_display_name(body.display_name.as_deref())
+        .map_err(ApiError::bad_request)?;
+    db::account::set_display_name(&state.pool, account.id, normalized.as_deref()).await?;
     let updated = db::account::find_by_id(&state.pool, account.id)
         .await?
         .ok_or_else(ApiError::unauthorized)?;

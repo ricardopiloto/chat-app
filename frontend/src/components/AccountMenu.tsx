@@ -2,9 +2,11 @@ import { For, Show, createEffect, createSignal, onCleanup } from "solid-js";
 import {
   accountAvatarUrl,
   deleteOwnAvatar,
+  patchDisplayName,
   putOwnAvatar,
   type Account,
 } from "../api/client";
+import { DISPLAY_NAME_MAX_CHARS } from "../lib/displayName";
 import { getLocale, setLocale, SUPPORTED_LOCALES, t, type AppLocale } from "../i18n";
 import Dialog from "./Dialog";
 import ImageUploadDialog from "./ImageUploadDialog";
@@ -25,7 +27,16 @@ const LOCALE_LABEL_KEY: Record<AppLocale, string> = {
 export default function AccountMenu(props: Props) {
   const [confirmOpen, setConfirmOpen] = createSignal(false);
   const [avatarOpen, setAvatarOpen] = createSignal(false);
+  const [displayDraft, setDisplayDraft] = createSignal(props.me.display_name ?? "");
+  const [displayBusy, setDisplayBusy] = createSignal(false);
+  const [displayError, setDisplayError] = createSignal("");
   let panelRef: HTMLDivElement | undefined;
+
+  createEffect(() => {
+    if (!props.open) return;
+    setDisplayDraft(props.me.display_name ?? "");
+    setDisplayError("");
+  });
 
   createEffect(() => {
     if (!props.open) return;
@@ -67,6 +78,25 @@ export default function AccountMenu(props: Props) {
     props.onLogout();
   }
 
+  async function saveDisplayName() {
+    const raw = displayDraft().trim();
+    if (raw.length > DISPLAY_NAME_MAX_CHARS) {
+      setDisplayError(t("account.displayNameTooLong"));
+      return;
+    }
+    setDisplayBusy(true);
+    setDisplayError("");
+    try {
+      const updated = await patchDisplayName(raw.length ? raw : null);
+      props.onAccountPatch?.({ ...props.me, ...updated });
+      setDisplayDraft(updated.display_name ?? "");
+    } catch (e) {
+      setDisplayError(e instanceof Error ? e.message : t("account.displayNameTooLong"));
+    } finally {
+      setDisplayBusy(false);
+    }
+  }
+
   return (
     <>
       <Show when={props.open}>
@@ -77,6 +107,44 @@ export default function AccountMenu(props: Props) {
                 {t("account.signedInAs")}
               </span>
               <code class="members-handle">{props.me.handle}</code>
+            </div>
+            <div class="account-menu-display-name" role="group" aria-label={t("account.displayName")}>
+              <label class="muted" style={{ "font-size": "11px" }} for="account-display-name">
+                {t("account.displayName")}
+              </label>
+              <input
+                id="account-display-name"
+                class="account-menu-display-input"
+                type="text"
+                maxlength={DISPLAY_NAME_MAX_CHARS}
+                placeholder={t("account.displayNamePlaceholder")}
+                value={displayDraft()}
+                disabled={displayBusy()}
+                onInput={(e) => setDisplayDraft(e.currentTarget.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void saveDisplayName();
+                  }
+                }}
+              />
+              <p class="muted" style={{ "font-size": "11px", margin: "4px 0 0" }}>
+                {t("account.displayNameHint")}
+              </p>
+              <Show when={displayError()}>
+                <p class="error" style={{ "font-size": "12px", margin: "4px 0 0" }}>
+                  {displayError()}
+                </p>
+              </Show>
+              <button
+                type="button"
+                class="account-menu-item"
+                role="menuitem"
+                disabled={displayBusy()}
+                onClick={() => void saveDisplayName()}
+              >
+                {t("account.displayNameSave")}
+              </button>
             </div>
             <button
               type="button"

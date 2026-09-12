@@ -6,6 +6,8 @@ export type Account = {
   is_initial_operator: boolean;
   identity_vault?: IdentityVault | null;
   has_avatar?: boolean;
+  /** Optional public presentation name (099). */
+  display_name?: string | null;
 };
 
 export type Server = {
@@ -260,12 +262,14 @@ export type ServerMember = {
   handle: string;
   identity_pubkey: string;
   has_avatar?: boolean;
+  display_name?: string | null;
 };
 
 export type ChannelMentionable = {
   account_id: string;
   handle: string;
   has_avatar?: boolean;
+  display_name?: string | null;
 };
 
 export type VoiceJoin = {
@@ -281,6 +285,7 @@ export type VoiceOccupantView = {
   cam_on: boolean;
   screen_on?: boolean;
   has_avatar?: boolean;
+  display_name?: string | null;
 };
 
 export type VoiceChannelOccupancy = {
@@ -584,6 +589,13 @@ async function putImageBytes<T>(path: string, bytes: Blob | Uint8Array, mediaTyp
 
 export async function putOwnAvatar(bytes: Blob | Uint8Array, mediaType: string): Promise<Account> {
   return putImageBytes<Account>("/api/auth/avatar", bytes, mediaType);
+}
+
+export async function patchDisplayName(displayName: string | null): Promise<Account> {
+  return api<Account>("/api/auth/display-name", {
+    method: "PATCH",
+    body: JSON.stringify({ display_name: displayName }),
+  });
 }
 
 export async function deleteOwnAvatar(): Promise<void> {

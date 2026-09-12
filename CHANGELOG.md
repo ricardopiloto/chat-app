@@ -9,6 +9,19 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-09-11
+
+### Added
+
+- **Display name**: optional public presentation name on accounts (`PATCH /api/auth/display-name`); settings in account menu; peers see it on members, chat, and voice surfaces while username stays under «Ligado como» and in `@mentions` ([099-user-display-name](specs/099-user-display-name/)).
+
+### Fixed
+
+- **Voice call audio**: remote mic playback via session-owned audio host (works with PIP / leaving the channel page); retry play on undeafen; ensure mic publish when preferred on ([096-voice-audio-presence](specs/096-voice-audio-presence/)).
+- **Cam-off call presence**: joiners without camera appear in Composition bank and Grade; roster lists all live occupants; refresh on participant connect / audio subscribe ([096-voice-audio-presence](specs/096-voice-audio-presence/)).
+- **Floating call PiP** no longer paints under the top bar; open top-bar menus still stack above the PiP ([098-pip-above-topbar](specs/098-pip-above-topbar/)).
+- **Peer screen share**: remote Grade screen tiles get live video (attach-before-clear + layout burst on host/list changes); share/system audio re-attaches on the session host; channel remount uses `dispatchTrack` ([097-fix-peer-screen-share](specs/097-fix-peer-screen-share/)).
+
 ## [0.8.0.1] - 2026-09-11
 
 ### Changed
@@ -264,7 +277,8 @@ Initial tracked release baseline (features delivered through 006).
 
 - Earlier spikes and phases: see `specs/001-fase-0-spike/` … `specs/005-fase3-ui-corrections/` and `docs/`.
 
-[Unreleased]: https://github.com/ricardosobral/chat-app/compare/v0.8.0.1...HEAD
+[Unreleased]: https://github.com/ricardosobral/chat-app/compare/v0.8.1...HEAD
+[0.8.1]: https://github.com/ricardosobral/chat-app/compare/v0.8.0.1...v0.8.1
 [0.8.0.1]: https://github.com/ricardosobral/chat-app/compare/v0.8.0...v0.8.0.1
 [0.8.0]: https://github.com/ricardosobral/chat-app/compare/v0.7.1...v0.8.0
 [0.7.1]: https://github.com/ricardosobral/chat-app/compare/v0.7.0...v0.7.1

@@ -51,6 +51,7 @@ import { IconMicOff, IconMicOn } from "../components/icons/IconMic";
 import { useVoiceSession } from "../voice/VoiceSession";
 import { t } from "../i18n";
 import { errorMessage } from "../lib/apiError";
+import { publicDisplayLabel } from "../lib/displayName";
 import { canManageChannel, memberHasCapability } from "../lib/capabilities";
 import {
   buildSettingsNav,
@@ -246,9 +247,9 @@ export default function Sidebar(props: Props) {
     onCleanup(() => window.removeEventListener("mesa:roles-changed", onRolesChanged));
   });
 
-  /** Nested roster: only occupants with mic or camera on (028). Avatar is decorative. */
+  /** Nested roster: all live call occupants (096 — cam-off must still appear). */
   function transmitting(channelId: string) {
-    return (occupancy()[channelId]?.occupants ?? []).filter((o) => o.mic_on || o.cam_on);
+    return occupancy()[channelId]?.occupants ?? [];
   }
 
   function channelHasScreenShare(channelId: string) {
@@ -943,21 +944,22 @@ export default function Sidebar(props: Props) {
                           if (o.account_id === props.me.id && !voice.micOn()) return false;
                           return voice.speakingAccountIds().has(o.account_id);
                         };
+                        const label = () => publicDisplayLabel(o.handle, o.display_name);
                         const rowLabel = () =>
-                          speaking() ? `${o.handle}, ${t("shell.speaking")}` : o.handle;
+                          speaking() ? `${label()}, ${t("shell.speaking")}` : label();
                         return (
                           <li
                             class="voice-roster-item"
-                            title={o.handle}
+                            title={label()}
                             aria-label={rowLabel()}
                           >
                             <IdentityAvatar
                               class="voice-roster-avatar"
                               accountId={o.account_id}
-                              handle={o.handle}
+                              handle={label()}
                               hasAvatar={!!o.has_avatar}
                             />
-                            <span class="voice-roster-handle">{o.handle}</span>
+                            <span class="voice-roster-handle">{label()}</span>
                             <span class="voice-roster-media" aria-hidden={false}>
                               <span
                                 class="voice-roster-media-icon"

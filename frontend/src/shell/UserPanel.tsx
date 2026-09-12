@@ -18,6 +18,7 @@ import {
 } from "../components/icons/IconScreenShare";
 import IconSettings from "../components/icons/IconSettings";
 import { t } from "../i18n";
+import { publicDisplayLabel } from "../lib/displayName";
 import { readViewMode, subscribeViewMode, type ViewMode } from "../preferences/uiPrefs";
 import { useVoiceSession } from "../voice/VoiceSession";
 
@@ -64,6 +65,8 @@ export default function UserPanel(props: Props): JSX.Element {
   function openAccount() {
     setAccountOpen(true);
   }
+
+  const label = () => publicDisplayLabel(props.me.handle, props.me.display_name);
 
   return (
     <div
@@ -176,13 +179,13 @@ export default function UserPanel(props: Props): JSX.Element {
             onClick={openAccount}
             aria-expanded={accountOpen()}
             aria-haspopup="menu"
-            aria-label={`${t("account.menu")}: ${props.me.handle}`}
+            aria-label={`${t("account.menu")}: ${label()}`}
           >
             <span class="user-panel-avatar-wrap">
               <IdentityAvatar
                 class="user-panel-avatar"
                 accountId={props.me.id}
-                handle={props.me.handle}
+                handle={label()}
                 hasAvatar={!!props.me.has_avatar}
               />
               <span
@@ -192,7 +195,7 @@ export default function UserPanel(props: Props): JSX.Element {
               />
             </span>
             <span class="user-panel-text">
-              <span class="user-panel-handle">{props.me.handle}</span>
+              <span class="user-panel-handle">{label()}</span>
               <span class="user-panel-status">{t("common.online")}</span>
             </span>
           </button>

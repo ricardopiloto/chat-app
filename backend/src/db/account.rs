@@ -14,6 +14,7 @@ struct Row {
     created_at: String,
     avatar_filename: Option<String>,
     avatar_content_type: Option<String>,
+    display_name: Option<String>,
 }
 
 fn map_row(row: Row) -> Result<AccountRecord, sqlx::Error> {
@@ -29,11 +30,12 @@ fn map_row(row: Row) -> Result<AccountRecord, sqlx::Error> {
             .with_timezone(&Utc),
         avatar_filename: row.avatar_filename,
         avatar_content_type: row.avatar_content_type,
+        display_name: row.display_name,
     })
 }
 
 const COLS: &str =
-    "id, handle, password_hash, identity_pubkey, identity_vault, is_initial_operator, created_at, avatar_filename, avatar_content_type";
+    "id, handle, password_hash, identity_pubkey, identity_vault, is_initial_operator, created_at, avatar_filename, avatar_content_type, display_name";
 
 pub async fn count<'e, E>(executor: E) -> Result<i64, sqlx::Error>
 where
@@ -74,8 +76,8 @@ where
     E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
 {
     sqlx::query(
-        "INSERT INTO account (id, handle, password_hash, identity_pubkey, identity_vault, is_initial_operator, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO account (id, handle, password_hash, identity_pubkey, identity_vault, is_initial_operator, created_at, display_name)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(record.id.to_string())
     .bind(&record.handle)
@@ -84,6 +86,7 @@ where
     .bind(&record.identity_vault)
     .bind(i64::from(record.is_initial_operator))
     .bind(record.created_at.to_rfc3339())
+    .bind(&record.display_name)
     .execute(executor)
     .await?;
     Ok(())
@@ -126,6 +129,19 @@ pub async fn set_avatar(
     sqlx::query("UPDATE account SET avatar_filename = ?, avatar_content_type = ? WHERE id = ?")
         .bind(filename)
         .bind(content_type)
+        .bind(account_id.to_string())
+        .execute(pool)
+        .await?;
+    Ok(())
+}
+
+pub async fn set_display_name(
+    pool: &SqlitePool,
+    account_id: Uuid,
+    display_name: Option<&str>,
+) -> Result<(), sqlx::Error> {
+    sqlx::query("UPDATE account SET display_name = ? WHERE id = ?")
+        .bind(display_name)
         .bind(account_id.to_string())
         .execute(pool)
         .await?;

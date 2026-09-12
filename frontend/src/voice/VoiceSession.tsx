@@ -19,12 +19,15 @@ import {
 import type { WsEnvelope } from "../api/ws";
 import { readBlurMode } from "../blur/blurPreference";
 import type { LiveSession } from "../video/liveClient";
+import { attachRemote } from "../video/liveClient";
+import { resumeMediaUnder } from "../lib/safeMedia";
 import type {
   LocalVideoTrack,
   Participant,
   RemoteParticipant,
   RemoteTrack,
 } from "livekit-client";
+import { Track } from "livekit-client";
 import { loadVoiceRuntime } from "./loadRuntime";
 import { DEFAULT_CORNER, type Corner } from "./pipCorner";
 
@@ -47,6 +50,8 @@ export type VoiceTrackHandlers = {
   /** 088: remove remote screen/cam tracks from Grade maps when unsubscribed. */
   onTrackUnsubscribed?: (track: RemoteTrack, participant: Participant) => void;
   onParticipantDisconnected?: (participant: Participant) => void;
+  /** 096: bank/Grade refresh when a remote joins (often before video). */
+  onParticipantConnected?: (participant: Participant) => void;
   onLocalTrack: (el: HTMLMediaElement, kind: "video" | "audio") => void;
   onDisconnected: (reason?: unknown) => void;
 };
@@ -105,6 +110,7 @@ export type VoiceSessionValue = {
   dispatchTrack: (track: RemoteTrack, participant: Participant) => void;
   dispatchTrackUnsubscribed: (track: RemoteTrack, participant: Participant) => void;
   dispatchParticipantDisconnected: (participant: Participant) => void;
+  dispatchParticipantConnected: (participant: Participant) => void;
   dispatchLocalTrack: (el: HTMLMediaElement, kind: "video" | "audio") => void;
 };
 
@@ -139,7 +145,6 @@ export function VoiceSessionProvider(props: {
   let session: LiveSession | null = null;
   let localCamTrack: LocalVideoTrack | null = null;
   let localVideoEl: HTMLMediaElement | null = null;
-  let localScreenVideoEl: HTMLMediaElement | null = null;
   let screenTrackEndedHandler: ((this: MediaStreamTrack, ev: Event) => void) | null = null;
   let screenMediaTrack: MediaStreamTrack | null = null;
   let handlers: VoiceTrackHandlers | null = null;
@@ -149,6 +154,33 @@ export function VoiceSessionProvider(props: {
   let detachSpeakers: (() => void) | null = null;
   let speakDebounce: number | undefined;
   let detachDeafenGuard: (() => void) | null = null;
+  /** 096: session-owned remote mic sink (survives VoiceChannel unmount / PIP). */
+  let remoteAudioHost: HTMLDivElement | null = null;
+  const sessionRemoteAudio = new Set<RemoteTrack>();
+  /** 097: reactive so Grade layout rebinds when local screen preview attaches. */
+  const [localScreenVideoEl, setLocalScreenVideoEl] = createSignal<HTMLMediaElement | null>(null);
+
+  function attachSessionRemoteAudio(track: RemoteTrack) {
+    if (track.kind !== Track.Kind.Audio) return;
+    sessionRemoteAudio.add(track);
+    if (remoteAudioHost) {
+      attachRemote(track, remoteAudioHost);
+      if (!deafened()) resumeMediaUnder(remoteAudioHost);
+    }
+  }
+
+  function detachSessionRemoteAudio(track: RemoteTrack) {
+    sessionRemoteAudio.delete(track);
+  }
+
+  function clearSessionRemoteAudio() {
+    sessionRemoteAudio.clear();
+    if (remoteAudioHost) remoteAudioHost.replaceChildren();
+  }
+
+  function resumeSessionRemoteAudio() {
+    resumeMediaUnder(remoteAudioHost);
+  }
 
   function applyRemoteVolumes(volume: number) {
     const room = session?.room;
@@ -198,14 +230,15 @@ export function VoiceSessionProvider(props: {
     }
     screenMediaTrack = null;
     screenTrackEndedHandler = null;
-    if (localScreenVideoEl) {
+    const el = localScreenVideoEl();
+    if (el) {
       try {
-        localScreenVideoEl.remove();
+        el.remove();
       } catch {
         /* ignore */
       }
     }
-    localScreenVideoEl = null;
+    setLocalScreenVideoEl(null);
   }
 
   async function stopScreenShare() {
@@ -228,6 +261,7 @@ export function VoiceSessionProvider(props: {
     try {
       await session.room.localParticipant.setScreenShareEnabled(true, {
         audio: true,
+        contentHint: "detail",
       });
     } catch {
       // User cancelled picker or browser denied — no server start
@@ -251,7 +285,7 @@ export function VoiceSessionProvider(props: {
         mt.addEventListener("ended", screenTrackEndedHandler);
       }
       const el = pub.track.attach();
-      localScreenVideoEl = el;
+      setLocalScreenVideoEl(el);
       if (el instanceof HTMLVideoElement) {
         el.muted = true;
         el.autoplay = true;
@@ -351,6 +385,7 @@ export function VoiceSessionProvider(props: {
     const { releaseLocalCapture } = await loadVoiceRuntime();
     await releaseLocalCapture({ localCamTrack: cam, session: s });
     localVideoEl = null;
+    clearSessionRemoteAudio();
     setLive(false);
     queueMicrotask(() => {
       intentionalLeave = false;
@@ -375,6 +410,7 @@ export function VoiceSessionProvider(props: {
     await releaseLocalCapture({ localCamTrack: cam, session: s });
     if (id) await leaveVoice(id).catch(() => undefined);
     localVideoEl = null;
+    clearSessionRemoteAudio();
     setLive(false);
     setChannelId(null);
     setServerId(null);
@@ -404,6 +440,7 @@ export function VoiceSessionProvider(props: {
     }
     applyRemoteVolumes(1);
     setDeafenedSignal(false);
+    resumeSessionRemoteAudio();
   }
 
   async function toggleDeafen() {
@@ -423,6 +460,7 @@ export function VoiceSessionProvider(props: {
     if (next && deafened()) {
       applyRemoteVolumes(1);
       setDeafenedSignal(false);
+      resumeSessionRemoteAudio();
     }
     await session.room.localParticipant.setMicrophoneEnabled(next);
     await reportMedia(next, camOn());
@@ -524,7 +562,7 @@ export function VoiceSessionProvider(props: {
     session: () => session,
     localCamTrack: () => localCamTrack,
     localVideoEl: () => localVideoEl,
-    localScreenVideoEl: () => localScreenVideoEl,
+    localScreenVideoEl,
     setMicOn,
     setCamOn,
     setLocalCamTrack: (track) => {
@@ -565,10 +603,22 @@ export function VoiceSessionProvider(props: {
       startHeartbeat(channel.id);
       if (!mic) {
         await next.room.localParticipant.setMicrophoneEnabled(false).catch(() => undefined);
+      } else {
+        // 096: ensure send path when preferred mic is on (publish or enable)
+        await next.room.localParticipant.setMicrophoneEnabled(true).catch(() => undefined);
+      }
+      // 096: attach any remote audio already present in the room
+      for (const p of next.room.remoteParticipants.values()) {
+        for (const pub of p.trackPublications.values()) {
+          const track = pub.track as RemoteTrack | undefined;
+          if (track) attachSessionRemoteAudio(track);
+        }
       }
       await patchVoiceMedia(channel.id, { mic_on: mic, cam_on: cam }).catch(() => undefined);
       if (preferDeafen) {
         await setDeafened(true);
+      } else {
+        resumeSessionRemoteAudio();
       }
       await refreshCallStarted(channel.id, channel.server_id);
       if (!pageHideBound) {
@@ -594,6 +644,7 @@ export function VoiceSessionProvider(props: {
       const { releaseLocalCapture } = await loadVoiceRuntime();
       await releaseLocalCapture({ localCamTrack: cam, session: s });
       localVideoEl = null;
+      clearSessionRemoteAudio();
       setLive(false);
       if (id) await leaveVoice(id).catch(() => undefined);
       setChannelId(null);
@@ -610,13 +661,19 @@ export function VoiceSessionProvider(props: {
     toggleDeafen,
     consumeIntentionalLeave: () => intentionalLeave,
     dispatchTrack: (track, participant) => {
+      // 096: attach remote mic at session host before page handlers (PIP-safe)
+      attachSessionRemoteAudio(track);
       handlers?.onTrack(track, participant);
     },
     dispatchTrackUnsubscribed: (track, participant) => {
+      detachSessionRemoteAudio(track);
       handlers?.onTrackUnsubscribed?.(track, participant);
     },
     dispatchParticipantDisconnected: (participant) => {
       handlers?.onParticipantDisconnected?.(participant);
+    },
+    dispatchParticipantConnected: (participant) => {
+      handlers?.onParticipantConnected?.(participant);
     },
     dispatchLocalTrack: (el, kind) => {
       handlers?.onLocalTrack(el, kind);
@@ -630,7 +687,22 @@ export function VoiceSessionProvider(props: {
     if (session) void hangup();
   });
 
-  return <VoiceSessionContext.Provider value={value}>{props.children}</VoiceSessionContext.Provider>;
+  return (
+    <VoiceSessionContext.Provider value={value}>
+      <div
+        class="voice-audio-host voice-audio-host--session"
+        aria-hidden="true"
+        ref={(el) => {
+          remoteAudioHost = el;
+          for (const track of sessionRemoteAudio) {
+            attachRemote(track, el);
+          }
+          if (!deafened()) resumeMediaUnder(el);
+        }}
+      />
+      {props.children}
+    </VoiceSessionContext.Provider>
+  );
 }
 
 export function voiceDurationLabel(startedAt: string | null, nowMs: number): string | null {

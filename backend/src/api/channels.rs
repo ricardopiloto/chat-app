@@ -357,6 +357,8 @@ pub struct MentionableView {
     pub account_id: Uuid,
     pub handle: String,
     pub has_avatar: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub display_name: Option<String>,
 }
 
 /// Members with channel view access, excluding the caller (for @ mention picker / resolve).
@@ -383,6 +385,7 @@ pub async fn list_mentionables(
             account_id: acc.id,
             handle: acc.handle,
             has_avatar: acc.avatar_filename.is_some(),
+            display_name: acc.display_name,
         });
     }
     out.sort_by(|a, b| {

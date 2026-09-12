@@ -25,6 +25,8 @@ pub struct OccupantView {
     pub cam_on: bool,
     pub screen_on: bool,
     pub has_avatar: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub display_name: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]

@@ -36,6 +36,7 @@ import { categorizeJoinError, joinErrorMessage } from "../voice/joinErrors";
 import { loadVoiceRuntime, type VoiceRuntime } from "../voice/loadRuntime";
 import { t } from "../i18n";
 import { errorMessage } from "../lib/apiError";
+import { publicDisplayLabel } from "../lib/displayName";
 import { keySyncMsg, keySyncShort } from "../lib/keySyncCopy";
 import { safePlay } from "../lib/safeMedia";
 import {
@@ -45,6 +46,7 @@ import {
 } from "../voice/voiceLoadState";
 import { useVoiceSession, voiceDurationLabel } from "../voice/VoiceSession";
 import type { LocalVideoTrack, Participant, RemoteTrack } from "livekit-client";
+import { Track } from "livekit-client";
 import { useNavigate } from "@solidjs/router";
 
 type Props = {
@@ -97,7 +99,7 @@ export default function VoiceChannel(props: Props) {
   const remotesCam = new Map<string, RemoteTrack[]>();
   const remotesScreen = new Map<string, RemoteTrack[]>();
   const remotesAudio: RemoteTrack[] = [];
-  let audioHost: HTMLDivElement | null = null;
+  // 096: remote mic sink lives on VoiceSession `.voice-audio-host--session`
   let localVideoEl: HTMLMediaElement | null = null;
   let session: LiveSession | null = null;
   let localCamTrack: LocalVideoTrack | null = null;
@@ -212,6 +214,14 @@ export default function VoiceChannel(props: Props) {
     requestAnimationFrame(() => queueMicrotask(layoutMedia));
   }
 
+  /** 097: remote screen hosts often mount after placeTrack — rebind across a few frames. */
+  function scheduleLayoutBurst() {
+    scheduleLayout();
+    window.setTimeout(() => scheduleLayout(), 50);
+    window.setTimeout(() => scheduleLayout(), 150);
+    window.setTimeout(() => scheduleLayout(), 300);
+  }
+
   function attachSlot(index: number, el: HTMLDivElement) {
     slotEls.set(index, el);
     scheduleLayout();
@@ -219,7 +229,8 @@ export default function VoiceChannel(props: Props) {
 
   function attachGradeTile(key: string, el: HTMLDivElement) {
     gradeTileEls.set(key, el);
-    scheduleLayout();
+    // 097: host just mounted — burst so remotesScreen videos bind into this node
+    scheduleLayoutBurst();
   }
 
   /** 091: session-owned preview is canonical; keep page cache in sync. */
@@ -302,25 +313,22 @@ export default function VoiceChannel(props: Props) {
     if (!current || !rt) return;
     const localCam = resolveLocalCamEl();
 
-    // Always keep remote audio (incl. screen-share audio) playing
-    if (audioHost) {
-      for (const track of remotesAudio) rt.attachRemote(track, audioHost);
-    }
+    // 096: remote mic plays on VoiceSession session host — do not re-parent onto page host
 
     if (viewMode() === "grid") {
       const validKeys = new Set(gradeTiles().map((t) => t.key));
       pruneGradeHosts(validKeys);
       const localScreen = voice.localScreenVideoEl();
-      for (const [key, node] of gradeTileEls) {
-        if (key.startsWith("screen:")) clearOrphanVideos(node, localScreen);
-        else clearOrphanVideos(node, localCam);
-      }
-
+      // 097: attach screen videos BEFORE orphan sweep so a layout pass that
+      // lacks a host cannot leave a wiped tile; attachRemote replaceChildren
+      // owns the active remote <video>.
       for (const [identity, tracks] of remotesScreen) {
         const node = gradeTileEls.get(screenTileKey(identity));
         if (!node) continue;
         for (const track of tracks) {
-          if (track.kind === "video") rt.attachRemote(track, node);
+          if (track.kind === Track.Kind.Video) {
+            rt.attachRemote(track, node);
+          }
         }
       }
       if (localScreen) {
@@ -328,12 +336,26 @@ export default function VoiceChannel(props: Props) {
         if (node && localScreen.parentElement !== node) node.appendChild(localScreen);
         safePlay(localScreen);
       }
+      for (const [key, node] of gradeTileEls) {
+        if (key.startsWith("screen:")) {
+          const id = key.slice("screen:".length);
+          const keep =
+            id === props.me.id
+              ? localScreen
+              : (node.querySelector("video") as HTMLMediaElement | null);
+          clearOrphanVideos(node, keep);
+        } else {
+          clearOrphanVideos(node, localCam);
+        }
+      }
 
       for (const [identity, tracks] of remotesCam) {
         const node = gradeTileEls.get(camTileKey(identity));
         if (!node) continue;
         for (const track of tracks) {
-          if (track.kind === "video") rt.attachRemote(track, node);
+          if (track.kind === Track.Kind.Video) {
+            rt.attachRemote(track, node);
+          }
         }
       }
       if (localCam) {
@@ -353,7 +375,7 @@ export default function VoiceChannel(props: Props) {
       const node = slotEls.get(idx);
       if (!node) continue;
       for (const track of tracks) {
-        if (track.kind === "video") rt.attachRemote(track, node);
+        if (track.kind === Track.Kind.Video) rt.attachRemote(track, node);
       }
     }
     if (localCam) {
@@ -366,21 +388,26 @@ export default function VoiceChannel(props: Props) {
 
   async function placeTrack(track: RemoteTrack, participant: Participant) {
     const runtime = rt ?? (await ensureRuntime());
-    const { Track } = runtime;
-    if (track.kind === Track.Kind.Audio) {
+    const { Track: Tk } = runtime;
+    if (track.kind === Tk.Kind.Audio) {
+      // 096: session VoiceSession attaches mic sink; page only refreshes presence
       if (!remotesAudio.includes(track)) remotesAudio.push(track);
-      if (audioHost) runtime.attachRemote(track, audioHost);
+      refreshGradeLists();
+      scheduleLayout();
       return;
     }
-    if (track.source === Track.Source.ScreenShare) {
+    if (track.source === Tk.Source.ScreenShare) {
       const list = remotesScreen.get(participant.identity) ?? [];
       if (!list.includes(track)) list.push(track);
       remotesScreen.set(participant.identity, list);
-    } else {
-      const list = remotesCam.get(participant.identity) ?? [];
-      if (!list.includes(track)) list.push(track);
-      remotesCam.set(participant.identity, list);
+      refreshGradeLists();
+      // 097: tile hosts mount after setGradeScreenIds — burst rebind
+      scheduleLayoutBurst();
+      return;
     }
+    const list = remotesCam.get(participant.identity) ?? [];
+    if (!list.includes(track)) list.push(track);
+    remotesCam.set(participant.identity, list);
     refreshGradeLists();
     scheduleLayout();
   }
@@ -392,6 +419,7 @@ export default function VoiceChannel(props: Props) {
     if (track.kind === Track.Kind.Audio) {
       const idx = remotesAudio.indexOf(track);
       if (idx >= 0) remotesAudio.splice(idx, 1);
+      refreshGradeLists();
       scheduleLayout();
       return;
     }
@@ -399,6 +427,8 @@ export default function VoiceChannel(props: Props) {
       const list = (remotesScreen.get(participant.identity) ?? []).filter((t) => t !== track);
       if (list.length) remotesScreen.set(participant.identity, list);
       else remotesScreen.delete(participant.identity);
+      // 097/088: clear blank leftover immediately for peers
+      scrubMediaForIdentity(participant.identity);
     } else {
       const list = (remotesCam.get(participant.identity) ?? []).filter((t) => t !== track);
       if (list.length) remotesCam.set(participant.identity, list);
@@ -407,7 +437,7 @@ export default function VoiceChannel(props: Props) {
       scrubMediaForIdentity(participant.identity);
     }
     refreshGradeLists();
-    scheduleLayout();
+    scheduleLayoutBurst();
   }
 
   function clearRemoteParticipantMedia(identity: string) {
@@ -591,6 +621,8 @@ export default function VoiceChannel(props: Props) {
           voice.dispatchTrackUnsubscribed(track, participant),
         onParticipantDisconnected: (participant) =>
           voice.dispatchParticipantDisconnected(participant),
+        onParticipantConnected: (participant) =>
+          voice.dispatchParticipantConnected(participant),
         onDisconnected: (reason) => {
           session = null;
           setLive(false);
@@ -800,6 +832,10 @@ export default function VoiceChannel(props: Props) {
     voice.setHandlers({
       onTrack: placeTrack,
       onTrackUnsubscribed: removeTrack,
+      onParticipantConnected: () => {
+        // 096: cam-off joiners appear in bank/Grade before they publish video
+        refreshGradeLists();
+      },
       onParticipantDisconnected: (participant) => {
         clearRemoteParticipantMedia(participant.identity);
       },
@@ -837,13 +873,20 @@ export default function VoiceChannel(props: Props) {
   });
 
   createEffect(() => {
+    // 097: remote screen ids change → remount tiles → burst rebind (not only local screenOn)
+    gradeScreenIds();
+    scheduleLayoutBurst();
+  });
+
+  createEffect(() => {
     voice.screenOn();
     voice.camOn();
+    voice.localScreenVideoEl();
     // 091: sync page cache from session when cam toggles (localVideoEl is not a signal).
     const sessionEl = voice.localVideoEl();
     if (sessionEl) localVideoEl = sessionEl;
     refreshGradeLists();
-    scheduleLayout();
+    scheduleLayoutBurst();
   });
 
   createEffect(() => {
@@ -869,12 +912,13 @@ export default function VoiceChannel(props: Props) {
             for (const p of room.remoteParticipants.values()) {
               for (const pub of p.trackPublications.values()) {
                 const track = pub.track;
-                if (track) placeTrack(track as RemoteTrack, p);
+                // 097: dispatchTrack re-attaches share/mic audio on session host + placeTrack
+                if (track) voice.dispatchTrack(track as RemoteTrack, p);
               }
             }
           }
           requestStageMode(false);
-          queueMicrotask(layoutMedia);
+          scheduleLayoutBurst();
         });
       });
       return;
@@ -909,8 +953,12 @@ export default function VoiceChannel(props: Props) {
   const activeScene = () =>
     scenes().find((s) => s.id === activeSceneId()) ?? scenes().find((s) => s.is_active);
   const handles = () => {
-    const map: Record<string, string> = { [props.me.id]: props.me.handle };
-    for (const m of members()) map[m.account_id] = m.handle;
+    const map: Record<string, string> = {
+      [props.me.id]: publicDisplayLabel(props.me.handle, props.me.display_name),
+    };
+    for (const m of members()) {
+      map[m.account_id] = publicDisplayLabel(m.handle, m.display_name);
+    }
     return map;
   };
   const occupied = () => (grid()?.slots.filter((s) => s.account_id).length ?? 0);
@@ -961,14 +1009,6 @@ export default function VoiceChannel(props: Props) {
 
   return (
     <div class={`pane voice-pane${editing() ? " voice-pane-editing" : ""}`}>
-      <div
-        class="voice-audio-host"
-        aria-hidden="true"
-        ref={(el) => {
-          audioHost = el;
-          queueMicrotask(layoutMedia);
-        }}
-      />
       <Show when={!e2eeEnabled()}>
         <div class="e2ee-banner" role="status">
           <IconLockWarning size={22} />
