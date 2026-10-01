@@ -26,3 +26,10 @@ O sistema SHALL ter, em ambos os catálogos (pt-BR e en), uma tradução para 10
 #### Scenario: Nenhuma chave em falta
 - **WHEN** o catálogo de cada idioma é comparado com o conjunto de chaves realmente usadas pela aplicação
 - **THEN** não existe nenhuma chave usada pela aplicação que esteja ausente de algum dos dois catálogos
+
+### Requirement: Fidelidade preservada em modo claro e em viewport móvel
+O sistema SHALL manter, em modo claro e em viewport <768px, a estrutura e a hierarquia de elementos das telas classificadas **Fiel** em modo escuro; correcções de tema ou de responsividade SHALL NOT remover elementos obrigatórios das checklists nem reintroduzir elementos excluídos.
+
+#### Scenario: Revisão de fidelidade nas variantes
+- **WHEN** uma tela Fiel em modo escuro é revista em modo claro e em viewport móvel
+- **THEN** mantém os elementos obrigatórios da sua checklist, adaptados ao contexto, sem elementos fora de escopo

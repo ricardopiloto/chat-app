@@ -8,13 +8,17 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host",
     "lint": "eslint src",
-    "format": "prettier --write src"
+    "format": "prettier --write src",
+    "check:v1-overlap": "node scripts/check-v1-overlap.mjs",
+    "test:contracts": "node scripts/contracts/run.mjs"
   },
   "dependencies": {
+    "@livekit/track-processors": "^0.7.2",
     "@noble/hashes": "^1.8.0",
     "@solidjs/router": "^0.15.3",
     "@tanstack/solid-query": "^5.66.0",
     "hash-wasm": "^4.12.0",
+    "livekit-client": "^2.22.3",
     "solid-js": "^1.9.9",
     "tweetnacl": "^1.0.3"
   },

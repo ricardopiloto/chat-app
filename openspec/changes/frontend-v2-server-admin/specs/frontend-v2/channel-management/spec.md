@@ -60,3 +60,24 @@ O sistema SHALL permitir, a quem tem a permissão correspondente, silenciar um m
 #### Scenario: Dessilenciar antes do fim
 - **WHEN** o utilizador confirma dessilenciar um membro antes do tempo expirar
 - **THEN** o silenciamento é removido imediatamente e o membro recupera a permissão de falar/escrever nesse canal
+
+### Requirement: Criação e permissões de canal fiéis aos mockups
+O diálogo de criar canal SHALL ter controlo segmentado Texto/Voz, cartões de visibilidade e bloco de custódia (voz); o painel de permissões SHALL ter abas Políticas/Inspecionar acesso, construtor em quatro passos e lista de regras activas; o inspector SHALL mostrar veredito e matriz por precedência.
+
+#### Scenario: Comparação de fidelidade
+- **WHEN** a tela é comparada lado a lado com `mesa_modal_criar_canal_de_voz_cust_dia_e2ee, mesa_di_logo_permiss_es_de_canal_acl_inspecionar_acesso e mesa_di_logo_inspecionar_acesso_efetivo_fator_a_fator` no mesmo estado, em tema escuro
+- **THEN** todos os elementos obrigatórios da checklist de `design.md` D4 estão presentes, nenhum elemento excluído foi implementado, e a classificação é **Fiel**
+
+### Requirement: Silenciar e apagar canal fiéis ao mockup
+Os diálogos SHALL seguir a estrutura visual do mockup com as durações de silenciamento da aplicação actual e confirmação de apagar digitando o nome do canal; escopo "em todo o reino", motivo de auditoria e estatísticas SHALL NOT ser implementados.
+
+#### Scenario: Comparação de fidelidade
+- **WHEN** a tela é comparada lado a lado com `mesa_modais_de_gest_ao_de_canal` no mesmo estado, em tema escuro
+- **THEN** todos os elementos obrigatórios da checklist de `design.md` D4 estão presentes, nenhum elemento excluído foi implementado, e a classificação é **Fiel**
+
+### Requirement: Paridade funcional da gestão de canal
+O sistema SHALL manter todas as funcionalidades existentes desta área: criar texto/voz, renomear inline, apagar com protecção do último canal do tipo, ACL com regras de membro/cargo/todos, inspector de acesso, silenciar e dessilenciar com tempo restante.
+
+#### Scenario: Funcionalidades existentes
+- **WHEN** cada item desta área de `docs/v2/parity-checklist.md` é exercido na v2
+- **THEN** produz o mesmo resultado de produto que na aplicação anterior, contra o mesmo backend

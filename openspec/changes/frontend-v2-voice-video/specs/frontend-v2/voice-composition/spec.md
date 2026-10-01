@@ -34,3 +34,17 @@ O sistema SHALL editar apenas a cena actualmente activa de cada canal de voz —
 #### Scenario: Ausência de lista de cenas
 - **WHEN** o utilizador abre o menu de opções do canal de voz
 - **THEN** não existe nenhuma opção de "Cenas" com uma lista de várias cenas nomeadas — só "Editar cena" para a cena única activa
+
+### Requirement: Palco e editor de cenas fiéis aos mockups
+O palco SHALL ter cabeçalho com AO VIVO, duração e segmentos, tiles com selo de fala, avatar e chips, e faixa "No banco"; o editor SHALL ter cabeçalho com modo de edição, palco com slots, painel lateral de posições/layout/banco e confirmação de alterações. O inspector de slot SHALL NOT ser implementado.
+
+#### Scenario: Comparação de fidelidade
+- **WHEN** a tela é comparada lado a lado com `mesa_palco_de_voz_v_deo_composi_o_de_c_meras, mesa_editor_de_cenas_de_composi_o_1 e mesa_editor_de_cenas_de_composi_o_2` no mesmo estado, em tema escuro
+- **THEN** todos os elementos obrigatórios da checklist de `design.md` D7 estão presentes, nenhum elemento excluído foi implementado, e a classificação é **Fiel**
+
+### Requirement: Paridade funcional da composição
+O sistema SHALL manter todas as funcionalidades existentes desta área: três layouts nomeados, 2 a 8 posições, banco, editor de cena (atribuir, devolver, escolha de remoção ao reduzir, confirmação de alterações), cena única por canal e preservação da disposição ao alternar para Grade.
+
+#### Scenario: Funcionalidades existentes
+- **WHEN** cada item desta área de `docs/v2/parity-checklist.md` é exercido na v2
+- **THEN** produz o mesmo resultado de produto que na aplicação anterior, contra o mesmo backend

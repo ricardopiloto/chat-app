@@ -1,25 +1,6 @@
-import { For, Show, createSignal, onCleanup, onMount, type JSX } from "solid-js";
-import "../../styles.css";
-
-export function Icon(props: { name: string; label?: string; class?: string }) { return <span class={`material-symbols-outlined ${props.class ?? ""}`} aria-hidden={props.label ? undefined : "true"} aria-label={props.label}>{props.name}</span>; }
-export function Button(props: { variant?: "primary" | "secondary" | "danger" | "icon"; children?: JSX.Element; onClick?: JSX.EventHandlerUnion<HTMLButtonElement, MouseEvent>; disabled?: boolean; title?: string; type?: "button" | "submit" }) { return <button type={props.type ?? "button"} title={props.title} disabled={props.disabled} onClick={props.onClick} class={`ui-button ${props.variant ?? "secondary"}`}>{props.children}</button>; }
-export function TextField(props: { label: string; value?: string; placeholder?: string; error?: string; disabled?: boolean; type?: string; onInput?: JSX.EventHandlerUnion<HTMLInputElement, InputEvent> }) { return <label class="field"><span>{props.label}</span><input type={props.type ?? "text"} value={props.value} placeholder={props.placeholder} disabled={props.disabled} aria-invalid={!!props.error} onInput={props.onInput}/><Show when={props.error}><small class="field-error">{props.error}</small></Show></label>; }
-export function Radio(props: { name: string; value: string; checked?: boolean; disabled?: boolean; error?: string; children: JSX.Element }) { return <label class="choice"><input type="radio" name={props.name} value={props.value} checked={props.checked} disabled={props.disabled} aria-invalid={!!props.error}/><span>{props.children}</span><Show when={props.error}><small class="field-error">{props.error}</small></Show></label>; }
-export function Checkbox(props: { children: JSX.Element; checked?: boolean; disabled?: boolean; error?: string }) { return <label class="choice"><input type="checkbox" checked={props.checked} disabled={props.disabled} aria-invalid={!!props.error}/><span>{props.children}</span><Show when={props.error}><small class="field-error">{props.error}</small></Show></label>; }
-export function Switch(props: { label: string; checked?: boolean; disabled?: boolean; error?: string; onChange?: JSX.EventHandlerUnion<HTMLInputElement, Event> }) { return <label class="switch"><input type="checkbox" role="switch" checked={props.checked} disabled={props.disabled} aria-invalid={!!props.error} onChange={props.onChange}/><span class="switch-track"/><span>{props.label}</span><Show when={props.error}><small class="field-error">{props.error}</small></Show></label>; }
-export function Select(props: { label: string; children: JSX.Element; disabled?: boolean; error?: string }) { return <label class="field"><span>{props.label}</span><select disabled={props.disabled} aria-invalid={!!props.error}>{props.children}</select><Show when={props.error}><small class="field-error">{props.error}</small></Show></label>; }
-export function Dialog(props: { open: boolean; title: string; onClose: () => void; children: JSX.Element }) {
-  const onKey = (event: KeyboardEvent) => { if (event.key === "Escape" && props.open) props.onClose(); };
-  onMount(() => window.addEventListener("keydown", onKey)); onCleanup(() => window.removeEventListener("keydown", onKey));
-  return <Show when={props.open}><div class="dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) props.onClose(); }}><section class="dialog" role="dialog" aria-modal="true" aria-label={props.title}><header><h2>{props.title}</h2><Button variant="icon" title="Close" onClick={props.onClose}><Icon name="close"/></Button></header>{props.children}</section></div></Show>;
-}
-export function Toast(props: { message: string; show: boolean }) { return <Show when={props.show}><div class="toast" role="status"><Icon name="check_circle"/>{props.message}</div></Show>; }
-export function ContextMenu(props: { children: JSX.Element; items: { label: string; danger?: boolean; action: () => void }[] }) {
-  const [point, setPoint] = createSignal<{ x: number; y: number } | null>(null); let timer: number | undefined;
-  const open = (x: number, y: number) => { setPoint({ x: Math.min(x, window.innerWidth - 190), y: Math.min(y, window.innerHeight - props.items.length * 42 - 12) }); };
-  const stop = () => { if (timer !== undefined) window.clearTimeout(timer); };
-  return <div class="context-target" onContextMenu={(event) => { event.preventDefault(); open(event.clientX, event.clientY); }} onTouchStart={(event) => { const touch = event.touches[0]; if (touch) timer = window.setTimeout(() => open(touch.clientX, touch.clientY), 500); }} onTouchEnd={stop} onTouchMove={stop} onClick={() => setPoint(null)}>{props.children}<Show when={point()}>{(p) => <div class="context-menu" style={{ left: `${p().x}px`, top: `${p().y}px` }} onContextMenu={(e) => e.preventDefault()}><For each={props.items}>{(item) => <button class={item.danger ? "danger" : ""} onClick={(e) => { e.stopPropagation(); item.action(); setPoint(null); }}>{item.label}</button>}</For></div>}</Show></div>;
-}
-export function Avatar(props: { name: string; src?: string; online?: boolean }) { return <span class="avatar-wrap"><span class="avatar">{props.src ? <img src={props.src} alt={props.name}/> : props.name.slice(0, 1).toUpperCase()}</span><span class={`presence ${props.online ? "online" : "offline"}`} aria-label={props.online ? "online" : "offline"}/></span>; }
-export function Badge(props: { children: JSX.Element; tone?: "primary" | "secure" | "danger" }) { return <span class={`badge ${props.tone ?? "primary"}`}>{props.children}</span>; }
-export function Tooltip(props: { text: string; children: JSX.Element }) { return <span class="tooltip-wrap">{props.children}<span role="tooltip">{props.text}</span></span>; }
+export { Icon } from "./Icon";
+export { Button, type ButtonVariant } from "./Button";
+export { TextField, Select, Radio, Checkbox, Switch, Segmented } from "./Form";
+export { Dialog, Toast, ContextMenu, type MenuItem } from "./Overlay";
+export { Avatar, Badge, MonoLabel, Tooltip, Card, type BadgeTone } from "./Display";
+export { Logo } from "./Logo";

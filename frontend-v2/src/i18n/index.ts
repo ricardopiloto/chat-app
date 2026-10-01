@@ -1,22 +1,45 @@
 import { createSignal } from "solid-js";
 import { en } from "./catalogs/en";
 import { ptBR } from "./catalogs/pt-BR";
-import { detectLocale, parseStoredLocale } from "./detect";
-import { SUPPORTED_LOCALES, type AppLocale, type MessageTree } from "./types";
-export { SUPPORTED_LOCALES, detectLocale, type AppLocale };
-const catalogs: Record<AppLocale, MessageTree> = { "pt-BR": ptBR, en };
-function readStoredLocale() {
-  try { return typeof localStorage === "undefined" ? null : parseStoredLocale(localStorage.getItem("mesa.locale")); } catch { return null; }
+import { en as legacyEn } from "./catalogs/legacy/en";
+import { ptBR as legacyPtBR } from "./catalogs/legacy/pt-BR";
+import { DEFAULT_LOCALE, LOCALES, isAppLocale, type AppLocale } from "./locales";
+import { interpolate, merge, type FlatMessages } from "./messages";
+import { negotiateLocale, saveLocale, savedLocale } from "./negotiate";
+
+export { LOCALES, type AppLocale };
+export const SUPPORTED_LOCALES = LOCALES.map((l) => l.code);
+
+// The legacy catalogs hold text for screens that have not been rebuilt yet; entries in the
+// current catalogs win. Each phase moves the keys it rebuilds out of legacy.
+const messages: Record<AppLocale, FlatMessages> = {
+  "pt-BR": merge(legacyPtBR, ptBR),
+  en: merge(legacyEn, en),
+};
+
+const [active, setActive] = createSignal<AppLocale>(savedLocale() ?? negotiateLocale());
+const reflectInDocument = (locale: AppLocale) => {
+  if (typeof document !== "undefined") document.documentElement.lang = locale;
+};
+reflectInDocument(active());
+
+export const getLocale = (): AppLocale => active();
+
+export function setLocale(next: AppLocale): void {
+  if (!isAppLocale(next)) return;
+  setActive(next);
+  saveLocale(next);
+  reflectInDocument(next);
 }
-const stored = readStoredLocale();
-const initialLocale = stored ?? detectLocale();
-const [locale, setLocaleSignal] = createSignal<AppLocale>(initialLocale);
-if (!stored) {
-  try { if (typeof localStorage !== "undefined") localStorage.setItem("mesa.locale", initialLocale); } catch { /* storage may be unavailable */ }
+
+/**
+ * Looks a key up in the active language, then in the default language, then falls back to the key
+ * itself, so a missing translation shows a recognisable placeholder instead of breaking the screen.
+ */
+export function t(key: string, values?: Record<string, string | number>): string {
+  const text = messages[active()].get(key) ?? messages[DEFAULT_LOCALE].get(key) ?? key;
+  return interpolate(text, values);
 }
-function applyDocumentLocale(value: AppLocale) { if (typeof document !== "undefined") document.documentElement.lang = value; }
-applyDocumentLocale(locale());
-export function getLocale() { return locale(); }
-export function setLocale(value: AppLocale) { if (!SUPPORTED_LOCALES.includes(value)) return; setLocaleSignal(value); try { if (typeof localStorage !== "undefined") localStorage.setItem("mesa.locale", value); } catch { /* storage may be unavailable */ } applyDocumentLocale(value); }
-function lookup(tree: MessageTree, parts: string[]): string | undefined { let current: string | MessageTree | undefined = tree; for (const key of parts) { if (!current || typeof current === "string") return; current = current[key]; } return typeof current === "string" ? current : undefined; }
-export function t(key: string) { const parts = key.split(".").filter(Boolean); return lookup(catalogs[locale()], parts) ?? lookup(catalogs["pt-BR"], parts) ?? key; }
+
+/** True when the key has a translation in the language itself (used by the parity checks). */
+export const hasMessage = (key: string, locale: AppLocale = active()): boolean => messages[locale].has(key);

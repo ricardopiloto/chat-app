@@ -1,31 +1,50 @@
 import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { defineConfig, createLogger } from "vite";
-import solid from "vite-plugin-solid";
+import { createLogger, defineConfig, type Logger } from "vite";
 import basicSsl from "@vitejs/plugin-basic-ssl";
+import solid from "vite-plugin-solid";
 
-const pkg = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "package.json"), "utf-8")) as { version: string };
-function mesaDevLogger() {
-  const logger = createLogger();
-  const error = logger.error.bind(logger);
-  logger.error = (msg, options) => {
-    const text = typeof msg === "string" ? msg : String(msg);
-    const errMsg = options?.error instanceof Error ? options.error.message : typeof options?.error === "string" ? options.error : "";
-    if (text.includes("ws proxy error") && errMsg.includes("This socket has been ended by the other party")) return;
-    error(msg, options);
+const BACKEND_HTTP = "http://127.0.0.1:8080";
+const BACKEND_WS = "ws://127.0.0.1:8080";
+const LIVEKIT_HTTP = "http://127.0.0.1:7880";
+const DEV_PORT = 1421;
+
+const manifest = JSON.parse(
+  readFileSync(fileURLToPath(new URL("./package.json", import.meta.url)), "utf8"),
+) as { version: string };
+
+// The dev proxy prints an error whenever a peer closes a websocket first (LiveKit signalling does
+// this on every leave). That one message is harmless noise; every other proxy error stays visible.
+function loggerWithoutWsCloseNoise(): Logger {
+  const base = createLogger();
+  const original = base.error.bind(base);
+  const harmless = "This socket has been ended by the other party";
+  base.error = (message, options) => {
+    const reason = options?.error;
+    const detail = reason instanceof Error ? reason.message : String(reason ?? "");
+    if (message.includes("ws proxy error") && detail.includes(harmless)) return;
+    original(message, options);
   };
-  return logger;
+  return base;
 }
+
+const proxyTo = (target: string, ws = false) => ({ target, changeOrigin: true, ws });
+
 export default defineConfig({
   plugins: [solid(), basicSsl()],
   clearScreen: false,
-  customLogger: mesaDevLogger(),
-  define: { __APP_VERSION__: JSON.stringify(pkg.version) },
-  server: { https: {}, port: 1421, strictPort: true, host: true, proxy: {
-    "/api": { target: "http://127.0.0.1:8080", changeOrigin: true },
-    "/health": { target: "http://127.0.0.1:8080", changeOrigin: true },
-    "/ws": { target: "ws://127.0.0.1:8080", ws: true, changeOrigin: true },
-    "/rtc": { target: "http://127.0.0.1:7880", ws: true, changeOrigin: true }
-  } }
+  customLogger: loggerWithoutWsCloseNoise(),
+  define: { __APP_VERSION__: JSON.stringify(manifest.version) },
+  server: {
+    https: {},
+    host: true,
+    port: DEV_PORT,
+    strictPort: true,
+    proxy: {
+      "/api": proxyTo(BACKEND_HTTP),
+      "/health": proxyTo(BACKEND_HTTP),
+      "/ws": proxyTo(BACKEND_WS, true),
+      "/rtc": proxyTo(LIVEKIT_HTTP, true),
+    },
+  },
 });
