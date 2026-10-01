@@ -1,28 +1,14 @@
 import { Show, createEffect, createSignal } from "solid-js";
-import {
-  createChannel,
-  patchChannel,
-  type Channel,
-  type CreateChannelBody,
-} from "../api/client";
-import {
-  channelKeyDisplay,
-  generateChannelKey,
-  rememberChannelKey,
-  sealChannelKeyForSelf,
-} from "../crypto/channelKey";
+import { Button, Dialog, Icon, Radio, Segmented } from "../components/ui";
+import { channelKeyDisplay, generateChannelKey, rememberChannelKey, sealChannelKeyForSelf } from "../crypto/channelKey";
 import type { Identity } from "../crypto/identity";
-import { Button, Dialog, TextField } from "../components/ui";
+import { channels, type Channel, type ChannelKind, type ChannelVisibility } from "../api";
 import { t } from "../i18n";
-import {
-  normalizeChannelNameDraft,
-  validateChannelName,
-} from "../lib/channelName";
-import { createCopy } from "../lib/copy";
 import { errorText } from "../lib/errors";
+import { CHANNEL_NAME_MAX, normalizeChannelNameDraft, validateChannelName } from "../lib/channelName";
+import { KeyCustody } from "./KeyCustody";
 
-type ChannelKind = "text" | "voice_video";
-
+// "Create channel": text or voice, public or private, and — for voice only — the key custody step.
 export function CreateChannelDialog(props: {
   open: boolean;
   serverId: string;
@@ -33,186 +19,133 @@ export function CreateChannelDialog(props: {
 }) {
   const [kind, setKind] = createSignal<ChannelKind>("text");
   const [name, setName] = createSignal("");
-  const [visibility, setVisibility] = createSignal<"public" | "private">(
-    "public",
-  );
-  const [visibleToNew, setVisibleToNew] = createSignal(true);
-  const [key, setKey] = createSignal<Uint8Array | null>(null);
-  const [ack, setAck] = createSignal(false);
+  const [visibility, setVisibility] = createSignal<ChannelVisibility>("public");
+  const [listed, setListed] = createSignal(true);
+  const [key, setKey] = createSignal(generateChannelKey());
+  const [acknowledged, setAcknowledged] = createSignal(false);
   const [busy, setBusy] = createSignal(false);
   const [error, setError] = createSignal("");
-  const { copied, copy } = createCopy();
+
   createEffect(() => {
     if (!props.open) return;
     setKind(props.initialType);
     setName("");
     setVisibility("public");
-    setVisibleToNew(true);
-    setAck(false);
+    setListed(true);
+    setKey(generateChannelKey());
+    setAcknowledged(false);
     setError("");
+    setBusy(false);
   });
-  createEffect(() => {
-    if (!props.open) return;
-    setAck(false);
-    setKey(kind() === "voice_video" ? generateChannelKey() : null);
-  });
-  const blocked = () => busy() || (kind() === "voice_video" && !ack());
+
+  const check = () => validateChannelName(name());
+  const nameProblem = () => {
+    const result = check();
+    if (result.ok || name() === "") return "";
+    return t(result.reason === "empty" ? "mgmt.createChannel.nameEmpty" : "mgmt.createChannel.nameHyphens");
+  };
+  const voice = () => kind() === "voice_video";
+  const ready = () => check().ok && (!voice() || acknowledged()) && !busy();
+
   async function submit(event: Event) {
     event.preventDefault();
-    if (blocked()) return;
-    const checked = validateChannelName(
-      name().trim()
-        ? name()
-        : kind() === "text"
-          ? t("admin.channel.defaultText")
-          : t("admin.channel.defaultVoice"),
-    );
-    if (!checked.ok) {
-      setError(
-        t(
-          checked.reason === "empty"
-            ? "admin.channel.nameEmpty"
-            : "admin.channel.nameHyphens",
-        ),
-      );
-      return;
-    }
+    const result = check();
+    if (!result.ok || !ready()) return;
     setBusy(true);
     setError("");
     try {
-      const body: CreateChannelBody = {
-        name: checked.name,
+      let created = await channels.create(props.serverId, {
+        name: result.name,
         type: kind(),
         visibility: visibility(),
-      };
-      const voiceKey = key();
-      if (kind() === "voice_video" && voiceKey) {
-        body.custody_ack = true;
-        body.channel_key_sealed = sealChannelKeyForSelf(
-          voiceKey,
-          props.identity,
-        );
+        ...(voice() ? { custody_ack: true, channel_key_sealed: sealChannelKeyForSelf(key(), props.identity) } : {}),
+      });
+      if (voice()) rememberChannelKey(created.id, key());
+      // The listing flag is not part of the create call; it is set right after when it differs from the default.
+      if (visibility() === "public" && listed() !== created.visible_to_new_members) {
+        created = await channels.update(created.id, { visible_to_new_members: listed() });
       }
-      let channel = await createChannel(props.serverId, body);
-      if (channel.visibility === "public" && !visibleToNew()) {
-        channel = await patchChannel(channel.id, {
-          visible_to_new_members: false,
-        });
-      }
-      if (voiceKey) rememberChannelKey(channel.id, voiceKey);
-      props.onCreated(channel);
-    } catch (err) {
-      setError(errorText(err));
-    } finally {
+      props.onCreated(created);
+    } catch (failure) {
+      setError(errorText(failure, "mgmt.error"));
       setBusy(false);
     }
   }
+
   return (
-    <Dialog
-      open={props.open}
-      title={t("admin.channel.createTitle")}
-      onClose={props.onClose}
-    >
-      <form class="admin-form" onSubmit={(e) => void submit(e)}>
-        <div
-          class="segmented"
-          role="group"
-          aria-label={t("admin.channel.type")}
-        >
-          <button
-            type="button"
-            classList={{ active: kind() === "text" }}
-            aria-pressed={kind() === "text"}
-            onClick={() => setKind("text")}
-          >
-            {t("admin.channel.text")}
-          </button>
-          <button
-            type="button"
-            classList={{ active: kind() === "voice_video" }}
-            aria-pressed={kind() === "voice_video"}
-            onClick={() => setKind("voice_video")}
-          >
-            {t("admin.channel.voice")}
-          </button>
+    <Dialog open={props.open} title={t("mgmt.createChannel.title")} icon="add_circle" accent wide onClose={props.onClose}>
+      <form class="mg-form" onSubmit={submit}>
+        <p class="mg-lead">{t("mgmt.createChannel.lead")}</p>
+
+        <div class="mg-block">
+          <span class="mg-label">{t("mgmt.createChannel.kind")}</span>
+          <Segmented
+            fill
+            label={t("mgmt.createChannel.kind")}
+            value={kind()}
+            onChange={setKind}
+            options={[
+              { value: "text", icon: "tag", label: t("mgmt.createChannel.text") },
+              { value: "voice_video", icon: "headset_mic", label: t("mgmt.createChannel.voice") },
+            ]}
+          />
         </div>
-        <TextField
-          label={t("admin.name")}
-          value={name()}
-          placeholder={
-            kind() === "text"
-              ? t("admin.channel.defaultText")
-              : t("admin.channel.defaultVoice")
-          }
-          onInput={(e) => {
-            const next = normalizeChannelNameDraft(e.currentTarget.value);
-            setName(next);
-            e.currentTarget.value = next;
-          }}
-        />
-        <fieldset class="admin-fieldset">
-          <legend>{t("admin.channel.visibility")}</legend>
-          <label class="choice">
+
+        <label class="mg-block mg-channel-name">
+          <span class="mg-label">{t("mgmt.createChannel.name")}</span>
+          <span class="mg-input-row" classList={{ invalid: !!nameProblem() }}>
+            <span class="mg-input-icon"><Icon name={voice() ? "mic" : "tag"} /></span>
             <input
-              type="radio"
-              name="create-visibility"
-              checked={visibility() === "public"}
-              onChange={() => setVisibility("public")}
+              value={name()}
+              maxLength={CHANNEL_NAME_MAX}
+              placeholder={t("mgmt.createChannel.namePlaceholder")}
+              aria-invalid={!!nameProblem()}
+              onInput={(event) => {
+                const normalized = normalizeChannelNameDraft(event.currentTarget.value);
+                event.currentTarget.value = normalized;
+                setName(normalized);
+              }}
+              data-autofocus
             />
-            <span>{t("admin.channel.public")}</span>
-          </label>
-          <label class="choice">
-            <input
-              type="radio"
-              name="create-visibility"
-              checked={visibility() === "private"}
-              onChange={() => setVisibility("private")}
-            />
-            <span>{t("admin.channel.private")}</span>
+            <Show when={check().ok}><Icon name="check_circle" class="mg-valid" /></Show>
+          </span>
+          <small classList={{ "mg-error": !!nameProblem() }}>{nameProblem() || t("mgmt.createChannel.nameHint")}</small>
+        </label>
+
+        <fieldset class="mg-block mg-visibility">
+          <legend class="mg-label">{t("mgmt.createChannel.visibility")}</legend>
+          <Radio name="visibility" value="public" checked={visibility() === "public"} onChange={() => setVisibility("public")}>
+            <span class="mg-option"><Icon name="public" /><strong>{t("mgmt.createChannel.public")}</strong><small>{t("mgmt.createChannel.publicText")}</small></span>
+          </Radio>
+          <Radio name="visibility" value="private" checked={visibility() === "private"} onChange={() => setVisibility("private")}>
+            <span class="mg-option"><Icon name="lock" /><strong>{t("mgmt.createChannel.private")}</strong><small>{t("mgmt.createChannel.privateText")}</small></span>
+          </Radio>
+          <label class="choice mg-listed" classList={{ off: visibility() === "private" }}>
+            <input type="checkbox" checked={listed()} disabled={visibility() === "private"} onChange={(event) => setListed(event.currentTarget.checked)} />
+            <span>{t("mgmt.createChannel.listed")}</span>
           </label>
         </fieldset>
-        <Show when={visibility() === "public"}>
-          <label class="choice">
-            <input
-              type="checkbox"
-              checked={visibleToNew()}
-              onChange={(e) => setVisibleToNew(e.currentTarget.checked)}
-            />
-            <span>{t("admin.channel.visibleToNew")}</span>
-          </label>
+
+        <Show when={voice()}>
+          <KeyCustody
+            icon="shield_lock"
+            title={t("mgmt.createChannel.custodyTitle")}
+            text={t("mgmt.createChannel.custodyText")}
+            value={channelKeyDisplay(key())}
+            copyLabel={t("mgmt.copy")}
+            acknowledged={acknowledged()}
+            onAcknowledge={setAcknowledged}
+            acknowledgement={t("mgmt.createChannel.custody")}
+          />
         </Show>
-        <Show when={kind() === "voice_video" && key()}>
-          {(value) => (
-            <div class="custody-block">
-              <p>{t("admin.channel.custodyHint")}</p>
-              <div class="key-row">
-                <code class="key-display">{channelKeyDisplay(value())}</code>
-                <Button onClick={() => void copy(channelKeyDisplay(value()))}>
-                  {copied() ? t("admin.copied") : t("admin.copy")}
-                </Button>
-              </div>
-              <label class="choice">
-                <input
-                  type="checkbox"
-                  checked={ack()}
-                  onChange={(e) => setAck(e.currentTarget.checked)}
-                />
-                <span>{t("admin.custodyAck")}</span>
-              </label>
-            </div>
-          )}
-        </Show>
+
         <Show when={error()}>
-          <p class="form-error" role="alert">
-            {error()}
-          </p>
+          <p class="mg-error" role="alert">{error()}</p>
         </Show>
-        <div class="dialog-actions">
-          <Button onClick={props.onClose}>{t("admin.cancel")}</Button>
-          <Button variant="primary" type="submit" disabled={blocked()}>
-            {t("admin.create")}
-          </Button>
-        </div>
+        <footer class="mg-actions">
+          <Button variant="icon" class="mg-cancel" onClick={props.onClose}>{t("mgmt.cancel")}</Button>
+          <Button variant="primary" type="submit" disabled={!ready()}>{t("mgmt.createChannel.submit")}</Button>
+        </footer>
       </form>
     </Dialog>
   );

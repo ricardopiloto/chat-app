@@ -6,6 +6,7 @@ import { Content } from "./Content";
 import { Hosts } from "./Hosts";
 import { MembersPanel } from "./MembersPanel";
 import { ServerRail } from "./ServerRail";
+import { SettingsSidebar } from "../admin/settings/SettingsSidebar";
 import { Sidebar } from "./Sidebar";
 import { createShellState, ShellProvider, useShell } from "./state";
 import { Topbar } from "./Topbar";
@@ -41,7 +42,9 @@ function Frame() {
         >
           <ServerRail />
           <Show when={shell.route().page !== "account"}>
-            <Sidebar />
+            <Show when={shell.route().settings && shell.server()} fallback={<Sidebar />}>
+              <SettingsSidebar />
+            </Show>
           </Show>
         </div>
         <Content />

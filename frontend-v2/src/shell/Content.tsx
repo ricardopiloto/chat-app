@@ -1,7 +1,7 @@
 import { Match, Show, Switch } from "solid-js";
 import { useLocation } from "@solidjs/router";
 import { Logo } from "../components/ui";
-import { ServerSettings } from "../admin/ServerSettings";
+import { SettingsPage } from "../admin/settings/SettingsPage";
 import { t } from "../i18n";
 import { Account as AccountPage } from "../pages/Account";
 import { ChannelPage } from "../pages/Channel";
@@ -38,18 +38,7 @@ export function Content() {
           <AccountPage />
         </Match>
         <Match when={shell.route().settings && shell.server()}>
-          <ServerSettings
-            server={shell.server()!}
-            meId={shell.meId()}
-            section={shell.route().settings as "overview" | "members" | "roles"}
-            onNavigate={(section) => shell.go(`/servers/${shell.serverId()}/settings${section === "overview" ? "" : `/${section}`}`)}
-            onServersChanged={() => void shell.refreshServers()}
-            onRolesChanged={() => void shell.refreshRoles()}
-            onDeleted={() => {
-              void shell.refreshServers();
-              shell.go("/");
-            }}
-          />
+          <SettingsPage server={shell.server()!} />
         </Match>
         <Match when={shell.route().channelId}>
           <Show when={shell.channel()} fallback={<p class="p-6 text-on-surface-variant">{t("shell.loadingChannel")}</p>}>
