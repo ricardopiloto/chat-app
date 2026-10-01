@@ -28,6 +28,12 @@ O corte é uma alteração de configuração (`root /opt/mesa/frontend/dist;` �
 ### D3 — `frontend/` (v1) não é apagada nesta fase, só deixa de ser servida
 Depois do corte, `frontend/` permanece no repositório (não apagada) durante um período de rollback disponível (ver requisito "Caminho de rollback disponível"). A decisão de quando efectivamente remover `frontend/` do repositório fica registada como pergunta em aberto (ver Open Questions) — não é tomada nesta fase.
 
+### D4 — Fecho com três portões: paridade, fidelidade e independência
+O corte só é elegível quando os três portões passam: (1) **paridade funcional** — todos os itens de `docs/v2/parity-checklist.md` verificados contra a aplicação anterior; (2) **fidelidade visual** — as 31 entradas de `docs/v2/AUDIT-fidelity.md` §4 reavaliadas e todas as telas em escopo **Fiel** (ausentes só se excluídas por escopo); (3) **independência** — `check-v1-overlap` sobre todo `frontend-v2/src` dentro dos limiares, com excepções justificadas. Nenhum dos portões é negociável por prazo: uma tela abaixo de Fiel regressa à fase que a entregou.
+
+### D5 — Reconciliação do backend
+Antes do corte lista-se tudo o que mudou no backend durante a reescrita. Cada alteração tem de ser aditiva e retrocompatível com a v1 enquanto o rollback existir, estar em `docs/v2/contracts/` e ter testes (`cargo test`) a passar. Alterações não retrocompatíveis obrigam a rever o caminho de rollback antes do corte.
+
 ## Risks / Trade-offs
 
 - **[Risco] Auditoria de conjunto pode encontrar mais defeitos do que o esperado**, já que nenhuma fase anterior teve uma revisão de modo claro/mobile área-a-área — só pontual em 2 casos (Fase 1 shell, Fase 4 E2EE-desligada/layouts) → **Mitigação**: orçamentar esta fase com expectativa de correcções, não só verificação; o checklist de `docs/design-system/stitch-prompt.md` §3 dá uma lista fechada e finita de áreas a percorrer, não um escopo aberto.
@@ -42,6 +48,8 @@ Depois do corte, `frontend/` permanece no repositório (não apagada) durante um
 5. Verificar manualmente uma sessão de utilizador existente (criada antes do corte) continua válida depois do corte.
 6. Manter `frontend/` disponível no servidor (não apagar os ficheiros de build antigos) durante o período de rollback definido.
 7. Rollback, se necessário: reverter a configuração Nginx para `frontend/dist`, sem qualquer alteração de backend.
+
+- **[Risco] Reabrir telas que não chegam a Fiel pode atrasar o corte** → **Mitigação**: o portão de fidelidade corre também no fecho de cada fase anterior, para que esta fase encontre poucas surpresas.
 
 ## Open Questions
 

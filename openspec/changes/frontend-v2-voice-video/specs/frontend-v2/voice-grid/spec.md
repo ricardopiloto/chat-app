@@ -26,3 +26,17 @@ O sistema SHALL permitir promover uma partilha de ecrã activa a um palco princi
 #### Scenario: Promover uma partilha a destaque
 - **WHEN** o utilizador activa o destaque numa partilha de ecrã
 - **THEN** essa partilha passa a ocupar o palco principal e as restantes câmaras/partilhas passam para uma faixa lateral, sem interromper nenhuma transmissão em curso
+
+### Requirement: Grade e partilha fiéis aos mockups
+A Grade SHALL ter barra com "Compartilhar tela" e "Convidar", tiles com glow e selo de fala e rodapé "Na escuta"; com destaque, a partilha SHALL ocupar o palco principal e as câmaras SHALL ficar numa coluna lateral direita. Zoom, laser e ferramentas de tabuleiro SHALL NOT ser implementados.
+
+#### Scenario: Comparação de fidelidade
+- **WHEN** a tela é comparada lado a lado com `mesa_visualiza_o_por_grade_1/_2 e mesa_grade_com_compartilhamento_de_tela_1/_2` no mesmo estado, em tema escuro
+- **THEN** todos os elementos obrigatórios da checklist de `design.md` D7 estão presentes, nenhum elemento excluído foi implementado, e a classificação é **Fiel**
+
+### Requirement: Paridade funcional da Grade
+O sistema SHALL manter todas as funcionalidades existentes desta área: grelha unificada de câmaras e partilhas, partilha de ecrã só em Grade com indicador, destaque de uma partilha sem interromper transmissões.
+
+#### Scenario: Funcionalidades existentes
+- **WHEN** cada item desta área de `docs/v2/parity-checklist.md` é exercido na v2
+- **THEN** produz o mesmo resultado de produto que na aplicação anterior, contra o mesmo backend

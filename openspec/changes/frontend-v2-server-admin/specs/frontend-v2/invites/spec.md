@@ -34,3 +34,17 @@ O sistema SHALL permitir, a um visitante sem conta, preencher handle e password 
 #### Scenario: Visitante já autenticado
 - **WHEN** um utilizador já autenticado abre um link de convite
 - **THEN** o sistema permite aceitar o convite directamente com a conta já autenticada, sem apresentar os campos de registo
+
+### Requirement: Convite e onboarding fiéis aos mockups
+O diálogo de convite SHALL ter indicador de passos, cartões de canal de boas-vindas, opção de histórico e URL copiável com feedback; o onboarding SHALL ter cartão do servidor convidante, handle com disponibilidade, nome de exibição, senha com barra de força e checkbox de cofre. QR e expiração configurável SHALL NOT ser implementados.
+
+#### Scenario: Comparação de fidelidade
+- **WHEN** a tela é comparada lado a lado com `mesa_di_logo_de_convidar_fluxo_encadeado_de_2_passos e mesa_convite_onboarding_de_convidado` no mesmo estado, em tema escuro
+- **THEN** todos os elementos obrigatórios da checklist de `design.md` D4 estão presentes, nenhum elemento excluído foi implementado, e a classificação é **Fiel**
+
+### Requirement: Paridade funcional dos convites
+O sistema SHALL manter todas as funcionalidades existentes desta área: criar em dois passos (ou directo quando já há canal de boas-vindas), pré-visualizar sem sessão, aceitar com registo inline ou com sessão existente, mensagens específicas para convite inválido/expirado, e publicação da mensagem de boas-vindas ao entrar.
+
+#### Scenario: Funcionalidades existentes
+- **WHEN** cada item desta área de `docs/v2/parity-checklist.md` é exercido na v2
+- **THEN** produz o mesmo resultado de produto que na aplicação anterior, contra o mesmo backend

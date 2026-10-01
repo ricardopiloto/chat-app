@@ -36,3 +36,20 @@
 
 - [ ] 6.1 Percorrer o ciclo completo: criar servidor → criar canal de texto e de voz → convidar um segundo utilizador de teste → configurar um cargo com permissões restritas e atribuí-lo ao convidado → confirmar via "Inspecionar acesso" que a restrição é aplicada corretamente
 - [ ] 6.2 Confirmar que nenhuma alteração foi feita a `frontend/` durante esta fase (`git status frontend/` sem alterações)
+
+## 7. Fidelidade visual (critério de aceite por tela)
+
+- [ ] 7.1 Criar servidor: verificar a checklist de D4 contra `mesa_modal_criar_servidor_cust_dia_e2ee` (checkbox desmarcada, botão bloqueado) e registar a classificação em `verification.md`; só **Fiel** fecha a tarefa
+- [ ] 7.2 Criar canal (texto e voz) contra `mesa_modal_criar_canal_de_voz_cust_dia_e2ee`
+- [ ] 7.3 Shell das definições (sidebar própria, cabeçalho, chips) e Visão geral contra `mesa_defini_es_do_servidor_vis_o_geral_e_boas_vindas`
+- [ ] 7.4 Membros contra `mesa_defini_es_do_servidor_membros`; Cargos contra `mesa_defini_es_do_servidor_cargos_e_permiss_es` (interruptores, barra de alterações, matriz de membros; sem cor de cargo)
+- [ ] 7.5 Permissões de canal e Inspecionar acesso contra `mesa_di_logo_permiss_es_de_canal_acl_inspecionar_acesso` e `mesa_di_logo_inspecionar_acesso_efetivo_fator_a_fator`
+- [ ] 7.6 Silenciar e apagar canal contra `mesa_modais_de_gest_ao_de_canal`
+- [ ] 7.7 Diálogo de convite contra `mesa_di_logo_de_convidar_fluxo_encadeado_de_2_passos` e onboarding contra `mesa_convite_onboarding_de_convidado`
+- [ ] 7.8 Confirmar a ausência dos itens excluídos em D4 (cor de cargo, QR, escopo/motivo de silenciamento, assinatura da guilda, métricas)
+
+## 8. Paridade funcional e independência
+
+- [ ] 8.1 Verificar cada item desta área de `docs/v2/parity-checklist.md` (D5 do design.md) contra o comportamento da v1 em execução e registar o resultado
+- [ ] 8.2 Executar `check-v1-overlap` sobre os ficheiros desta fase e confirmar os limiares ou justificar excepções
+- [ ] 8.3 Registar quaisquer alterações de backend necessárias como tarefas próprias (regra 4 da revisão); se nenhuma for necessária, registar "nenhuma"

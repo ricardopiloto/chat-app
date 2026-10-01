@@ -77,3 +77,24 @@ O sistema SHALL apresentar uma pill "Saltar para o presente" com uma contagem qu
 #### Scenario: Mensagens novas fora da vista
 - **WHEN** o utilizador está a ler mensagens antigas (scroll para cima) e chega uma mensagem nova
 - **THEN** a pill de saltar para o presente aparece com a contagem de mensagens novas acumuladas
+
+### Requirement: Canal de texto fiel ao mockup
+O canal de texto SHALL apresentar cabeçalho de canal com chip E2EE, busca e alternância do painel de Membros, cartão de boas-vindas, banner de canal cifrado, mensagens com badge de cargo e legenda de anexo, e composer com rodapé de ajuda. Reações por hover, cartões de rolagem de dados e spans de feitiço SHALL NOT ser implementados.
+
+#### Scenario: Comparação de fidelidade
+- **WHEN** a tela é comparada lado a lado com `mesa_shell_da_aplica_o_chat_de_texto` no mesmo estado, em tema escuro
+- **THEN** todos os elementos obrigatórios da checklist de `design.md` D5 estão presentes, nenhum elemento excluído foi implementado, e a classificação é **Fiel**
+
+### Requirement: Lightbox fiel ao mockup
+O lightbox SHALL ter barra superior com metadados e controlos de zoom/enquadrar/1:1/descarregar/fechar, setas de navegação e faixa de miniaturas com contagem.
+
+#### Scenario: Comparação de fidelidade
+- **WHEN** a tela é comparada lado a lado com `mesa_lightbox_de_anexos_de_imagem_no_chat_geral` no mesmo estado, em tema escuro
+- **THEN** todos os elementos obrigatórios da checklist de `design.md` D5 estão presentes, nenhum elemento excluído foi implementado, e a classificação é **Fiel**
+
+### Requirement: Paridade funcional do chat de texto
+O sistema SHALL manter todas as funcionalidades existentes desta área: enviar, ler, agrupar, separar por dia, responder, apagar por permissão, menções, anexos com cifra e lightbox, pré-visualização de links, autocompletar de menção e emoji, estados somente leitura e silenciado, e saltar para o presente.
+
+#### Scenario: Funcionalidades existentes
+- **WHEN** cada item desta área de `docs/v2/parity-checklist.md` é exercido na v2
+- **THEN** produz o mesmo resultado de produto que na aplicação anterior, contra o mesmo backend

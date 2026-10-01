@@ -31,7 +31,7 @@
 
 ## 6. Dropdown de notificações
 
-- [ ] 6.1 Implementar as duas secções fixas (Menções/Respostas persistente; Canais com novidade efémero, D4 do design.md — não as abas do mockup) ligadas ao ponto de entrada já existente na topbar (Fase 1); verificar que uma notificação de menção persiste entre recarregamentos até a mensagem ser vista
+- [ ] 6.1 Implementar as duas secções fixas (Menções/Respostas persistente; Canais com novidade efémero, D4 do design.md — abas do mockup mapeadas às categorias existentes) ligadas ao ponto de entrada já existente na topbar (Fase 1); verificar que uma notificação de menção persiste entre recarregamentos até a mensagem ser vista
 - [ ] 6.2 Implementar o deep-link de uma notificação para a mensagem correspondente (navegação + scroll até à mensagem); verificar a partir de pelo menos uma notificação de cada secção
 - [ ] 6.3 Verificar que o indicador de novidade no ícone de notificações da topbar (já implementado na Fase 1) reflecte correctamente a existência e ausência de notificações não vistas
 
@@ -39,3 +39,16 @@
 
 - [ ] 7.1 Percorrer o ciclo completo: enviar mensagem com anexo e link de dois utilizadores de teste diferentes → responder e apagar mensagens → mencionar o outro utilizador e confirmar que recebe notificação → pesquisar por uma palavra da conversa → confirmar resultado correcto
 - [ ] 7.2 Confirmar que nenhuma alteração foi feita a `frontend/` durante esta fase (`git status frontend/` sem alterações)
+
+## 8. Fidelidade visual (critério de aceite por tela)
+
+- [ ] 8.1 Canal de texto: verificar a checklist de D5 contra `mesa_shell_da_aplica_o_chat_de_texto` (cabeçalho, cartão de boas-vindas, banner, badges de cargo, legenda de anexo, composer) e registar a classificação em `verification.md`; só **Fiel** fecha a tarefa
+- [ ] 8.2 Pesquisa e notificações contra `mesa_dropdown_de_notifica_es_e_busca_global` (abas por categoria existente, acções por cartão)
+- [ ] 8.3 Lightbox contra `mesa_lightbox_de_anexos_de_imagem_no_chat_geral` (barra de metadados, zoom/enquadrar/1:1, faixa de miniaturas)
+- [ ] 8.4 Confirmar a ausência dos itens excluídos em D5 (reações, dados, feitiços, telemetria, fixar, hash de chave)
+
+## 9. Paridade funcional e independência
+
+- [ ] 9.1 Verificar cada item desta área de `docs/v2/parity-checklist.md` (D6 do design.md) contra o comportamento da v1 em execução e registar o resultado
+- [ ] 9.2 Executar `check-v1-overlap` sobre os ficheiros desta fase e confirmar os limiares ou justificar excepções
+- [ ] 9.3 Registar quaisquer alterações de backend necessárias como tarefas próprias (regra 4 da revisão); se nenhuma for necessária, registar "nenhuma"

@@ -24,9 +24,17 @@
 
 ## 4. Checklist de paridade funcional
 
-- [ ] 4.1 Percorrer `docs/design-system/stitch-prompt.md` §3 item a item, marcando cada tela/fluxo como verificado presente e funcional em `frontend-v2`, ou como uma lacuna a resolver antes do corte
+- [ ] 4.1 Percorrer `docs/v2/parity-checklist.md` e `docs/design-system/stitch-prompt.md` §3 item a item, marcando cada funcionalidade como verificada presente e funcional em `frontend-v2` contra a aplicação anterior, ou como uma lacuna a resolver antes do corte
 - [ ] 4.2 Resolver qualquer lacuna encontrada em 4.1 antes de prosseguir para o corte
 - [ ] 4.3 Confirmar que nada do escopo excluído (`docs/backlog/backlog.md`, MLS/multi-dispositivo/Passkeys do TR §7) foi introduzido acidentalmente em nenhuma fase
+
+## 4A. Fidelidade, independência e backend
+
+- [ ] 4A.1 Reavaliar as 31 entradas de `docs/v2/AUDIT-fidelity.md` §4 com o protocolo de `docs/v2/fidelity-protocol.md` e actualizar a tabela; qualquer tela em escopo abaixo de **Fiel** regressa à fase de origem e bloqueia o corte
+- [ ] 4A.2 Verificar a presença do logo oficial e da camada tipográfica mono em todas as superfícies e a ausência de elementos excluídos (AUDIT §6)
+- [ ] 4A.3 Executar `check-v1-overlap` sobre todo `frontend-v2/src`, anexar o relatório e justificar cada excepção; verificar que nenhum ficheiro referencia `frontend/`
+- [ ] 4A.4 Listar as alterações de backend feitas durante a reescrita, confirmar que são aditivas, documentadas em `docs/v2/contracts/` e cobertas por `cargo test`, e que o rollback para `frontend/dist` continua válido com elas
+- [ ] 4A.5 Confirmar que a fidelidade se mantém em modo claro e em viewport <768px nas telas Fiel (requisito de fidelidade preservada)
 
 ## 5. Corte de produção
 

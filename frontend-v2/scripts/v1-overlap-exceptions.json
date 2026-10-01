@@ -1,0 +1,106 @@
+{
+  "api/types.ts": "Wire types mirror the serialised structs in backend/src; field names and shapes are fixed by the backend contract, so shared sequences are inevitable.",
+  "i18n/catalogs/legacy/pt-BR.ts": "Transitional: text of screens not rebuilt yet. Each phase deletes the keys it replaces; the file is removed when empty.",
+  "i18n/catalogs/legacy/en.ts": "Transitional: text of screens not rebuilt yet. Each phase deletes the keys it replaces; the file is removed when empty.",
+  "components/ui/Overlay.tsx": {
+    "reason": "Rewritten from the requirements; the residual overlap is the public contract that existing screens call (prop names, class hooks such as .dialog/.field/.ui-button, ARIA roles) plus framework idioms; in small files a few shared 6-token runs weigh heavily. Capped by longest shared run.",
+    "maxRun": 40
+  },
+  "components/ui/Form.tsx": {
+    "reason": "Rewritten from the requirements; the residual overlap is the public contract that existing screens call (prop names, class hooks such as .dialog/.field/.ui-button, ARIA roles) plus framework idioms; in small files a few shared 6-token runs weigh heavily. Capped by longest shared run.",
+    "maxRun": 40
+  },
+  "components/ui/Button.tsx": {
+    "reason": "Rewritten from the requirements; the residual overlap is the public contract that existing screens call (prop names, class hooks such as .dialog/.field/.ui-button, ARIA roles) plus framework idioms; in small files a few shared 6-token runs weigh heavily. Capped by longest shared run.",
+    "maxRun": 40
+  },
+  "components/ui/Icon.tsx": {
+    "reason": "Rewritten from the requirements; the residual overlap is the public contract that existing screens call (prop names, class hooks such as .dialog/.field/.ui-button, ARIA roles) plus framework idioms; in small files a few shared 6-token runs weigh heavily. Capped by longest shared run.",
+    "maxRun": 40
+  },
+  "components/ui/Display.tsx": {
+    "reason": "Rewritten from the requirements; the residual overlap is the public contract that existing screens call (prop names, class hooks such as .dialog/.field/.ui-button, ARIA roles) plus framework idioms; in small files a few shared 6-token runs weigh heavily. Capped by longest shared run.",
+    "maxRun": 40
+  },
+  "components/ui/Logo.tsx": {
+    "reason": "Rewritten from the requirements; the residual overlap is the public contract that existing screens call (prop names, class hooks such as .dialog/.field/.ui-button, ARIA roles) plus framework idioms; in small files a few shared 6-token runs weigh heavily. Capped by longest shared run.",
+    "maxRun": 40
+  },
+  "styles.css": "Transitional: global reset and the auth/shell layout rules of screens not rebuilt yet. Tokens already moved out to tokens.css; each phase deletes the rules it replaces.",
+  "shell/SignOutDialog.tsx": {
+    "reason": "Written from the requirements. What it shares with the previous frontend is short framework idiom (imports from solid-js and ../i18n, createSignal declarations, closing JSX tags, event-handler templates); the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "shell/LanguageSwitch.tsx": {
+    "reason": "Written from the requirements. What it shares with the previous frontend is short framework idiom (imports from solid-js and ../i18n, createSignal declarations, closing JSX tags, event-handler templates); the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "shell/AccountMenu.tsx": {
+    "reason": "Written from the requirements. What it shares with the previous frontend is short framework idiom (imports from solid-js and ../i18n, createSignal declarations, closing JSX tags, event-handler templates); the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "shell/ThemeSwitch.tsx": {
+    "reason": "Written from the requirements. What it shares with the previous frontend is short framework idiom (imports from solid-js and ../i18n, createSignal declarations, closing JSX tags, event-handler templates); the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "shell/AppShell.tsx": {
+    "reason": "Written from the requirements. What it shares with the previous frontend is short framework idiom (imports from solid-js and ../i18n, createSignal declarations, closing JSX tags, event-handler templates); the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "shell/Sidebar.tsx": {
+    "reason": "Written from the requirements. What it shares with the previous frontend is short framework idiom (imports from solid-js and ../i18n, createSignal declarations, closing JSX tags, event-handler templates); the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "shell/MembersPanel.tsx": {
+    "reason": "Written from the requirements. What it shares with the previous frontend is short framework idiom (imports from solid-js and ../i18n, createSignal declarations, closing JSX tags, event-handler templates); the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "pages/Auth.tsx": {
+    "reason": "Written from the requirements. What it shares with the previous frontend is short framework idiom (imports from solid-js and ../i18n, createSignal declarations, closing JSX tags, event-handler templates); the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "shell/UserPanel.tsx": {
+    "reason": "Written from the requirements. What it shares with the previous frontend is short framework idiom (imports from solid-js and ../i18n, createSignal declarations, closing JSX tags, event-handler templates); the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "pages/Account.tsx": {
+    "reason": "Written from the requirements. What it shares with the previous frontend is short framework idiom (imports from solid-js and ../i18n, createSignal declarations, closing JSX tags, event-handler templates); the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "pages/Unlock.tsx": {
+    "reason": "Written from the requirements. What it shares with the previous frontend is short framework idiom (imports from solid-js and ../i18n, createSignal declarations, closing JSX tags, event-handler templates); the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "shell/ServerRail.tsx": {
+    "reason": "Written from the requirements. What it shares with the previous frontend is short framework idiom (imports from solid-js and ../i18n, createSignal declarations, closing JSX tags, event-handler templates); the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "shell/Hosts.tsx": {
+    "reason": "Written from the requirements. What it shares with the previous frontend is short framework idiom (imports from solid-js and ../i18n, createSignal declarations, closing JSX tags, event-handler templates); the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "shell/state.tsx": {
+    "reason": "Written from the requirements. What it shares with the previous frontend is short framework idiom (imports from solid-js and ../i18n, createSignal declarations, closing JSX tags, event-handler templates); the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "shell/Content.tsx": {
+    "reason": "Written from the requirements. What it shares with the previous frontend is short framework idiom (imports from solid-js and ../i18n, createSignal declarations, closing JSX tags, event-handler templates); the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "session/session.tsx": {
+    "reason": "Written from the requirements. What it shares with the previous frontend is short framework idiom (imports from solid-js and ../i18n, createSignal declarations, closing JSX tags, event-handler templates); the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "auth/AuthFrame.tsx": {
+    "reason": "Written from the requirements. What it shares with the previous frontend is short framework idiom (imports from solid-js and ../i18n, createSignal declarations, closing JSX tags, event-handler templates); the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "crypto/vault.ts": {
+    "reason": "Implements the byte formats fixed by docs/v2/contracts/crypto-formats.md (vault layout, Argon2id parameters, BLAKE2b-24 nonce, NaCl box calls); calls into tweetnacl, @noble/hashes and hash-wasm are identical by necessity. It passes the contract vectors independently (npm run test:contracts).",
+    "maxRun": 60
+  },
+  "index.tsx": {
+    "reason": "Written from the requirements. What it shares with the previous frontend is short framework idiom (imports from solid-js and ../i18n, createSignal declarations, closing JSX tags, event-handler templates); the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  }
+}

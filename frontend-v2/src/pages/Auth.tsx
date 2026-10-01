@@ -1,294 +1,160 @@
+import { Show, createSignal } from "solid-js";
 import { useLocation } from "@solidjs/router";
-import { createSignal, Show } from "solid-js";
-import { api, ApiError, type Account } from "../api/client";
-import {
-  b64,
-  generateIdentity,
-  IdentityUnlockError,
-  persistIdentity,
-  wrapIdentity,
-  type Identity,
-} from "../crypto/identity";
+import { ApiError } from "../api";
+import { AuthField, AuthFrame, bindValue } from "../auth/AuthFrame";
+import { Button, Icon, Segmented } from "../components/ui";
 import { t } from "../i18n";
+import { useSession } from "../session/session";
 
-export function Auth(props: {
-  session?: Account | null;
-  onAuthed: (
-    account: Account,
-    password: string,
-    identity?: Identity,
-  ) => Promise<void>;
-  onRecover: (account: Account, password: string) => Promise<void>;
-  onSwitch: () => Promise<void>;
-}) {
-  const location = useLocation();
-  const initialInvite =
-    new URLSearchParams(location.search).get("invite") ??
-    (location.pathname.startsWith("/invite/")
-      ? decodeURIComponent(location.pathname.split("/")[2] ?? "")
-      : "");
-  const [inviteCode, setInviteCode] = createSignal(initialInvite);
-  const [recoverOpen, setRecoverOpen] = createSignal(false);
-  const [mode, setMode] = createSignal<"login" | "register">(
-    initialInvite ? "register" : "login",
-  );
-  const [pendingSession, setPendingSession] = createSignal<Account | null>(
-    null,
-  );
+type Mode = "login" | "register";
+
+const MIN_PASSWORD = 8;
+
+/** An invitation can arrive as /invite/<code> or ?invite=<code>. */
+function inviteFromLocation(path: string, search: string): string {
+  const fromPath = /^\/invite\/([^/]+)/.exec(path)?.[1];
+  return fromPath ? decodeURIComponent(fromPath) : (new URLSearchParams(search).get("invite") ?? "");
+}
+
+function failureText(error: unknown, mode: Mode): string {
+  if (!(error instanceof ApiError)) return t("auth.genericError");
+  if (error.status === 401) return t("auth.invalidCredentials");
+  if (error.status === 403 && mode === "register") return t("auth.inviteError");
+  if (error.status === 409) return t("auth.handleTaken");
+  if (error.status === 429) return t("auth.tooMany");
+  return t("auth.genericError");
+}
+
+export function Auth() {
+  const session = useSession();
+  const where = useLocation();
+  const presetInvite = inviteFromLocation(where.pathname, where.search);
+
+  const [mode, setMode] = createSignal<Mode>(presetInvite ? "register" : "login");
   const [handle, setHandle] = createSignal("");
   const [password, setPassword] = createSignal("");
-  const [visible, setVisible] = createSignal(false);
+  const [invite, setInvite] = createSignal(presetInvite);
+  const [revealed, setRevealed] = createSignal(false);
+  const [vaultHelp, setVaultHelp] = createSignal(false);
   const [busy, setBusy] = createSignal(false);
-  const [error, setError] = createSignal("");
-  const [missing, setMissing] = createSignal(false);
-  const session = () => props.session ?? pendingSession();
+  const [problem, setProblem] = createSignal("");
+
   async function submit(event: SubmitEvent) {
     event.preventDefault();
     if (busy()) return;
-    setBusy(true);
-    setError("");
-    setMissing(false);
-    try {
-      if (session()) {
-        await props.onAuthed(session()!, password());
-        return;
-      }
-      if (mode() === "register") {
-        const id = generateIdentity();
-        const vault = await wrapIdentity(id, password());
-        const me = await api<Account>("/api/auth/register", {
-          method: "POST",
-          body: JSON.stringify({
-            handle: handle().trim(),
-            password: password(),
-            identity_pubkey: b64(id.publicKey),
-            identity_vault: vault,
-            invite_code: inviteCode().trim() || undefined,
-          }),
-        });
-        setPendingSession(me);
-        await persistIdentity(me.id, id, password());
-        await props.onAuthed(me, password(), id);
-      } else {
-        const me = await api<Account>("/api/auth/login", {
-          method: "POST",
-          body: JSON.stringify({
-            handle: handle().trim(),
-            password: password(),
-          }),
-        });
-        setPendingSession(me);
-        await props.onAuthed(me, password());
-      }
-    } catch (err) {
-      if (err instanceof IdentityUnlockError && err.reason === "missing_vault")
-        setMissing(true);
-      setError(
-        err instanceof IdentityUnlockError
-          ? err.reason === "missing_vault"
-            ? t("auth.missingVault")
-            : t("auth.badPassword")
-          : err instanceof ApiError &&
-              err.status === 403 &&
-              mode() === "register"
-            ? t("auth.inviteError")
-            : err instanceof ApiError && err.status === 401
-              ? t("auth.invalidCredentials")
-              : err instanceof Error
-                ? err.message
-                : t("auth.genericError"),
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
-  async function recover() {
-    if (password().length < 8) {
-      setError(t("auth.passwordRequired"));
+    setProblem("");
+    if (mode() === "register" && password().length < MIN_PASSWORD) {
+      setProblem(t("auth.passwordShort"));
       return;
     }
-    const me = session();
-    if (!me) return;
     setBusy(true);
-    setError("");
     try {
-      await props.onRecover(me, password());
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("auth.recoverError"));
+      const credentials = { handle: handle().trim().replace(/^@/, ""), password: password() };
+      if (mode() === "register") await session.register({ ...credentials, inviteCode: invite().trim() });
+      else await session.login(credentials);
+    } catch (error) {
+      setProblem(failureText(error, mode()));
     } finally {
       setBusy(false);
     }
   }
+
+  const registering = () => mode() === "register";
+
   return (
-    <main class="auth-page">
-      <section class="auth-card">
-        <div class="brand-mark">M</div>
-        <p class="eyebrow">{t("auth.brand")}</p>
-        <Show when={!session()}>
-          <div class="auth-tabs">
-            <button
-              classList={{ selected: mode() === "login" }}
-              onClick={() => setMode("login")}
-            >
-              {t("auth.login")}
+    <AuthFrame
+      headline={t("auth.headline")}
+      text={t("auth.pitch")}
+      features={[
+        { icon: "shield_lock", title: t("auth.featureE2ee"), text: t("auth.featureE2eeText") },
+        { icon: "videocam", title: t("auth.featureStudio"), text: t("auth.featureStudioText") },
+        { icon: "dns", title: t("auth.featureSelfHosted"), text: t("auth.featureSelfHostedText") },
+      ]}
+    >
+      <form class="flex flex-col gap-5" onSubmit={submit} noValidate>
+        <Segmented
+          fill
+          label={t("auth.mode")}
+          value={mode()}
+          options={[
+            { value: "login", label: t("auth.login") },
+            { value: "register", label: t("auth.register") },
+          ]}
+          onChange={(next) => {
+            setMode(next);
+            setProblem("");
+          }}
+        />
+
+        <AuthField label={t("auth.handle")} aside={<span class="font-code text-label-code-sm text-on-surface-variant">{t("auth.handleExample")}</span>} lead="@" hint={t("auth.handleHint")}>
+          <input name="handle" autocomplete="username" autocapitalize="none" spellcheck={false} required placeholder={t("auth.handlePlaceholder")} {...bindValue(handle, setHandle)} />
+        </AuthField>
+
+        <AuthField
+          label={t("auth.password")}
+          aside={
+            <Show when={!registering()}>
+              <button type="button" class="text-body-sm text-primary hover:underline" aria-expanded={vaultHelp()} onClick={() => setVaultHelp(!vaultHelp())}>
+                {t("auth.forgotVault")}
+              </button>
+            </Show>
+          }
+          lead={<Icon name="key" class="text-[18px]" />}
+          trail={
+            <button type="button" class="grid h-8 w-8 place-items-center rounded-full text-on-surface-variant hover:text-on-surface" title={revealed() ? t("auth.hidePassword") : t("auth.showPassword")} aria-label={revealed() ? t("auth.hidePassword") : t("auth.showPassword")} aria-pressed={revealed()} onClick={() => setRevealed(!revealed())}>
+              <Icon name={revealed() ? "visibility_off" : "visibility"} class="text-[20px]" />
             </button>
-            <button
-              classList={{ selected: mode() === "register" }}
-              onClick={() => setMode("register")}
-            >
-              {t("auth.register")}
-            </button>
-          </div>
+          }
+          hint={t("auth.passwordHint")}
+        >
+          <input name="password" type={revealed() ? "text" : "password"} autocomplete={registering() ? "new-password" : "current-password"} required {...bindValue(password, setPassword)} />
+        </AuthField>
+
+        <Show when={vaultHelp() && !registering()}>
+          <p class="rounded-md bg-surface-container p-3 text-body-sm text-on-surface-variant">{t("auth.forgotVaultHelp")}</p>
         </Show>
-        <h1>
-          {session()
-            ? t("auth.unlock")
-            : mode() === "login"
-              ? t("auth.welcome")
-              : t("auth.createTitle")}
-        </h1>
-        <p class="muted">
-          {session() ? (
-            <>
-              {t("auth.unlockHint")} <b>@{session()!.handle}</b>{" "}
-              {t("auth.unlockSuffix")}
-            </>
-          ) : (
-            t("auth.tagline")
-          )}
-        </p>
-        <form onSubmit={submit} class="auth-form">
-          <Show when={!session()}>
-            <label>
-              {t("auth.handle")}
-              <input
-                required
-                minLength={3}
-                maxLength={32}
-                autocomplete="username"
-                value={handle()}
-                onInput={(e) => setHandle(e.currentTarget.value)}
-                placeholder={t("auth.handlePlaceholder")}
-              />
-            </label>
-          </Show>
-          <Show when={!session() && mode() === "register"}>
-            <label>
-              {t("auth.inviteCode")}
-              <input
-                value={inviteCode()}
-                onInput={(e) => setInviteCode(e.currentTarget.value)}
-                autocomplete="off"
-                placeholder={t("auth.invitePlaceholder")}
-              />
-            </label>
-            <p class="muted">{t("auth.inviteHint")}</p>
-          </Show>
-          <label>
-            {t("auth.password")}
-            <span class="password-control">
-              <input
-                required
-                minLength={8}
-                type={visible() ? "text" : "password"}
-                autocomplete={
-                  mode() === "login" ? "current-password" : "new-password"
-                }
-                value={password()}
-                onInput={(e) => setPassword(e.currentTarget.value)}
-                placeholder={t("auth.passwordPlaceholder")}
-              />
-              <button
-                type="button"
-                aria-label={
-                  visible() ? t("auth.hidePassword") : t("auth.showPassword")
-                }
-                onClick={() => setVisible(!visible())}
-              >
-                {visible() ? t("auth.hide") : t("auth.show")}
-              </button>
-            </span>
-          </label>
-          <Show when={missing()}>
-            <p class="notice">{t("auth.missingVault")}</p>
-          </Show>
-          <Show when={error()}>
-            <p class="form-error" role="alert">
-              {error()}
-            </p>
-          </Show>
-          <button class="primary-action" type="submit" disabled={busy()}>
-            {busy()
-              ? t("auth.waiting")
-              : session()
-                ? t("auth.unlockButton")
-                : mode() === "login"
-                  ? t("auth.login")
-                  : t("auth.createButton")}
-          </button>
-        </form>
-        <Show when={session()}>
-          <div class="auth-extra">
-            <button
-              type="button"
-              class="text-action"
-              disabled={busy()}
-              onClick={() => setRecoverOpen(true)}
-            >
-              {t("auth.recover")}
-            </button>
-            <button
-              type="button"
-              class="text-action"
-              disabled={busy()}
-              onClick={async () => {
-                setBusy(true);
-                try {
-                  await props.onSwitch();
-                  setPendingSession(null);
-                  setError("");
-                  setMissing(false);
-                  setPassword("");
-                } catch {
-                  setError(t("auth.genericError"));
-                } finally {
-                  setBusy(false);
-                }
-              }}
-            >
-              {t("auth.switchAccount")}
-            </button>
-          </div>
+
+        <Show when={registering()}>
+          <AuthField label={t("auth.inviteCode")} lead={<Icon name="confirmation_number" class="text-[18px]" />} hint={t("auth.inviteHint")}>
+            <input name="invite" autocomplete="off" spellcheck={false} placeholder={t("auth.invitePlaceholder")} {...bindValue(invite, setInvite)} />
+          </AuthField>
         </Show>
-      </section>
-      <Show when={recoverOpen()}>
-        <div class="modal-backdrop">
-          <section
-            class="confirm-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="recovery-title"
-          >
-            <h2 id="recovery-title">{t("auth.recover")}</h2>
-            <p>{t("auth.recoveryWarning")}</p>
-            <div>
-              <button disabled={busy()} onClick={() => setRecoverOpen(false)}>
-                {t("shell.cancel")}
-              </button>
-              <button
-                class="primary-action"
-                disabled={busy()}
-                onClick={async () => {
-                  setRecoverOpen(false);
-                  await recover();
-                }}
-              >
-                {t("auth.generateKeys")}
-              </button>
-            </div>
-          </section>
+
+        <Show when={problem()}>
+          <p class="notice error" role="alert">
+            {problem()}
+          </p>
+        </Show>
+
+        <Button variant="primary" type="submit" disabled={busy()} class="!py-3.5 text-body-lg">
+          <Icon name={registering() ? "person_add" : "login"} />
+          {busy() ? t("auth.waiting") : registering() ? t("auth.createButton") : t("auth.loginButton")}
+        </Button>
+
+        <div class="flex items-center gap-4 font-code text-label-code-sm text-on-surface-variant" aria-hidden="true">
+          <span class="h-px flex-1 bg-outline-variant" />
+          {t("auth.or")}
+          <span class="h-px flex-1 bg-outline-variant" />
         </div>
-      </Show>
-    </main>
+
+        <Button
+          class="!py-3.5"
+          onClick={() => {
+            setMode(registering() ? "login" : "register");
+            setProblem("");
+          }}
+        >
+          {registering() ? t("auth.haveAccount") : t("auth.newAccount")}
+        </Button>
+
+        <p class="flex items-center justify-between gap-3 font-code text-label-code-sm text-on-surface-variant">
+          <span class="flex items-center gap-1.5">
+            <Icon name="verified_user" class="text-[14px] text-secondary" />
+            {t("auth.protocol")}
+          </span>
+          <span>{t("auth.cipher")}</span>
+        </p>
+      </form>
+    </AuthFrame>
   );
 }

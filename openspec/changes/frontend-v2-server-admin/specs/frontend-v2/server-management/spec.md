@@ -68,3 +68,24 @@ O sistema SHALL apresentar uma página de "Visão Geral" que agrega imagem, boas
 #### Scenario: Entrar em definições sem sub-secção escolhida
 - **WHEN** o utilizador abre as definições do servidor sem ter seleccionado Membros ou Cargos
 - **THEN** a página de Visão Geral é apresentada por omissão, já populada com os dados actuais do servidor (não um estado vazio)
+
+### Requirement: Criação de servidor fiel ao mockup
+O diálogo de criar servidor SHALL apresentar selector de sigilo/ícone, nome com contador, bloco de chave com Copiar, checkbox de custódia inicialmente desmarcada e nota da configuração padrão.
+
+#### Scenario: Comparação de fidelidade
+- **WHEN** a tela é comparada lado a lado com `mesa_modal_criar_servidor_cust_dia_e2ee` no mesmo estado, em tema escuro
+- **THEN** todos os elementos obrigatórios da checklist de `design.md` D4 estão presentes, nenhum elemento excluído foi implementado, e a classificação é **Fiel**
+
+### Requirement: Definições do servidor fiéis aos mockups
+As definições SHALL ter navegação lateral própria (Servidor, Papéis, Pessoas, Zona crítica), a lista de membros SHALL ser uma tabela com cartões Total/Online, filtros e paginação, e os cargos SHALL usar interruptores agrupados com contador, barra de alterações por guardar e matriz de membros. Cor de cargo e métricas de D20/armazenamento SHALL NOT ser implementadas.
+
+#### Scenario: Comparação de fidelidade
+- **WHEN** a tela é comparada lado a lado com `mesa_defini_es_do_servidor_vis_o_geral_e_boas_vindas, mesa_defini_es_do_servidor_membros e mesa_defini_es_do_servidor_cargos_e_permiss_es` no mesmo estado, em tema escuro
+- **THEN** todos os elementos obrigatórios da checklist de `design.md` D4 estão presentes, nenhum elemento excluído foi implementado, e a classificação é **Fiel**
+
+### Requirement: Paridade funcional da administração de servidor
+O sistema SHALL manter todas as funcionalidades existentes desta área: criar servidor com bootstrap e custódia, membros (pesquisa, cargo, remover, dono protegido), cargos (criar, reordenar, apagar com aviso, permissões por grupo, cargo de sistema só-leitura), imagem do servidor, boas-vindas e apagar servidor por nome.
+
+#### Scenario: Funcionalidades existentes
+- **WHEN** cada item desta área de `docs/v2/parity-checklist.md` é exercido na v2
+- **THEN** produz o mesmo resultado de produto que na aplicação anterior, contra o mesmo backend

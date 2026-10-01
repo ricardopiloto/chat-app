@@ -7,7 +7,7 @@ Permite entrar e permanecer numa chamada de voz/vídeo de um canal, controlar a 
 ## ADDED Requirements
 
 ### Requirement: Pré-entrada com escolha de participação
-O sistema SHALL apresentar, antes de entrar numa chamada, três acções: "Entrar" (com câmara/microfone conforme a preferência guardada do utilizador), "Testar vídeo" (entra usando uma faixa de vídeo sintética/padrão de teste em vez da câmara real), e "Entrar (ouvir)" para utilizadores cuja permissão no canal é apenas ouvir.
+O sistema SHALL apresentar, antes de entrar numa chamada, uma pré-visualização (câmara real quando o utilizador a liga, com selector de blur, alternadores de câmara e microfone e medidor de nível do microfone), a lista de quem está no canal e três acções: "Entrar" (com câmara/microfone conforme a preferência guardada do utilizador), "Testar vídeo" (entra usando uma faixa de vídeo sintética/padrão de teste em vez da câmara real), e "Entrar (ouvir)" para utilizadores cuja permissão no canal é apenas ouvir.
 
 #### Scenario: Testar vídeo sem expor a câmara real
 - **WHEN** o utilizador escolhe "Testar vídeo"
@@ -66,3 +66,17 @@ O sistema SHALL NOT apresentar nenhum botão, diálogo ou faixa relacionados com
 #### Scenario: Ausência confirmada
 - **WHEN** um utilizador percorre o cabeçalho e os menus do canal de voz
 - **THEN** em nenhum momento é apresentada uma opção de "Gravar" ou equivalente
+
+### Requirement: Pré-entrada e roster fiéis aos mockups
+A pré-entrada SHALL cumprir a checklist de D7 (cabeçalho, pré-visualização com blur e medidor, calibração de dispositivos, três ações em cartões, "No canal agora"). Telemetria, codec, ruído neural, eco e AGC SHALL NOT ser implementados.
+
+#### Scenario: Comparação de fidelidade
+- **WHEN** a tela é comparada lado a lado com `mesa_pr_entrada_na_chamada_green_room_testar_v_deo` no mesmo estado, em tema escuro
+- **THEN** todos os elementos obrigatórios da checklist de `design.md` D7 estão presentes, nenhum elemento excluído foi implementado, e a classificação é **Fiel**
+
+### Requirement: Paridade funcional da sessão de voz
+O sistema SHALL manter todas as funcionalidades existentes desta área: entrar com câmara e microfone conforme a preferência, Testar vídeo, Entrar (ouvir), entrada só áudio se a câmara falhar, libertação do hardware ao sair, mudança de canal, controlos de chamada, blur em três níveis, indicadores de fala, roster na sidebar, duração, E2EE desligada com faixa e Religar, saída por canal ou servidor apagado, e áudio remoto contínuo ao navegar.
+
+#### Scenario: Funcionalidades existentes
+- **WHEN** cada item desta área de `docs/v2/parity-checklist.md` é exercido na v2
+- **THEN** produz o mesmo resultado de produto que na aplicação anterior, contra o mesmo backend

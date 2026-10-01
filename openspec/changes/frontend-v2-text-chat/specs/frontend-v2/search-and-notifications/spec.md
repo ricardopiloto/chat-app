@@ -29,7 +29,7 @@ O sistema SHALL abrir o painel de pesquisa com um atalho de teclado global (Ctrl
 - **THEN** o painel de pesquisa abre com a consulta já preenchida com `#<canal-actual> `
 
 ### Requirement: Notificações de menções, respostas e canais com novidade
-O sistema SHALL manter duas categorias de notificação: menções/respostas (que permanecem até a mensagem-alvo ser vista) e canais com novidade (efémeras, da sessão actual), apresentadas num painel a partir do ponto de entrada da topbar, cada uma navegando directamente para a mensagem correspondente.
+O sistema SHALL manter duas categorias de notificação: menções/respostas (que permanecem até a mensagem-alvo ser vista) e canais com novidade (efémeras, da sessão actual), apresentadas num painel com abas (Todas, Menções e respostas, Canais com novidade) a partir do ponto de entrada da topbar, cada notificação com acções "Responder" e "Ver canal" e navegando directamente para a mensagem correspondente.
 
 #### Scenario: Notificação de menção persiste até ser vista
 - **WHEN** o utilizador é mencionado numa mensagem e ainda não visitou essa mensagem
@@ -42,3 +42,17 @@ O sistema SHALL manter duas categorias de notificação: menções/respostas (qu
 #### Scenario: Indicador de novidade sincronizado
 - **WHEN** existe pelo menos uma notificação não vista
 - **THEN** o indicador visual no ícone de notificações da topbar (já existente desde a Fase 1) reflecte essa condição, e desaparece quando todas as notificações são vistas
+
+### Requirement: Pesquisa e notificações fiéis ao mockup
+A pesquisa SHALL ter campo com chip de canal, resultados com avatar, handle, canal, hora e termo destacado, rodapé com contagem e dicas de teclado; as notificações SHALL ter cabeçalho com contador, abas e cartões com acções. A aba "Cripto & Sessões" e "Marcar todas como lidas" SHALL NOT existir.
+
+#### Scenario: Comparação de fidelidade
+- **WHEN** a tela é comparada lado a lado com `mesa_dropdown_de_notifica_es_e_busca_global` no mesmo estado, em tema escuro
+- **THEN** todos os elementos obrigatórios da checklist de `design.md` D5 estão presentes, nenhum elemento excluído foi implementado, e a classificação é **Fiel**
+
+### Requirement: Paridade funcional da pesquisa e notificações
+O sistema SHALL manter todas as funcionalidades existentes desta área: pesquisa livre e por canal com estados vazios diferenciados, atalho de teclado, notificações persistentes e efémeras com deep-link e indicador na topbar.
+
+#### Scenario: Funcionalidades existentes
+- **WHEN** cada item desta área de `docs/v2/parity-checklist.md` é exercido na v2
+- **THEN** produz o mesmo resultado de produto que na aplicação anterior, contra o mesmo backend
