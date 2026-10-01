@@ -2,19 +2,19 @@
 
 ## 1. Criar servidor e criar canal
 
-- [ ] 1.1 Implementar o diálogo de criar servidor seguindo `mesa_modal_criar_servidor_cust_dia_e2ee` (nome, chave gerada copiável, checkbox de custódia obrigatória gating o botão) consumindo `POST /api/servers`; verificar que o botão fica bloqueado sem a checkbox marcada e desbloqueado com ela
-- [ ] 1.2 Implementar o diálogo de criar canal seguindo `mesa_modal_criar_canal_de_voz_cust_dia_e2ee` para voz e a mesma estrutura sem o bloco de custódia para texto, com alternância Texto/Voz funcional (o mockup tem essa alternância estática — implementar como interactiva); verificar ambos os tipos de canal
-- [ ] 1.3 Verificar visibilidade Público/Privado + "visível para novos membros" em ambos os diálogos contra `GET /api/servers/{id}/channels` reflectindo o valor correcto após criação
+- [x] 1.1 Implementar o diálogo de criar servidor seguindo `mesa_modal_criar_servidor_cust_dia_e2ee` (nome, chave gerada copiável, checkbox de custódia obrigatória gating o botão) consumindo `POST /api/servers`; verificar que o botão fica bloqueado sem a checkbox marcada e desbloqueado com ela
+- [x] 1.2 Implementar o diálogo de criar canal seguindo `mesa_modal_criar_canal_de_voz_cust_dia_e2ee` para voz e a mesma estrutura sem o bloco de custódia para texto, com alternância Texto/Voz funcional (o mockup tem essa alternância estática — implementar como interactiva); verificar ambos os tipos de canal
+- [x] 1.3 Verificar visibilidade Público/Privado + "visível para novos membros" em ambos os diálogos contra `GET /api/servers/{id}/channels` reflectindo o valor correcto após criação
 
 ## 2. Definições de servidor — Membros e Cargos
 
 - [ ] 2.1 Implementar a página de Membros seguindo `mesa_defini_es_do_servidor_membros` (pesquisa, selector de cargo por linha, remover) consumindo `GET /api/servers/{id}/members`; verificar que a linha do dono não tem selector nem botão de remover
-- [ ] 2.2 Implementar a página de Cargos seguindo `mesa_defini_es_do_servidor_cargos_e_permiss_es` (criar, reordenar ↑/↓, apagar, edição de permissões inline conforme D1 do design.md) com os três grupos de permissão exactos (Geral/Texto/Voz); verificar que um cargo de sistema aparece só-leitura sem reordenar/apagar
+- [x] 2.2 Implementar a página de Cargos seguindo `mesa_defini_es_do_servidor_cargos_e_permiss_es` (criar, reordenar ↑/↓, apagar, edição de permissões inline conforme D1 do design.md) com os três grupos de permissão exactos (Geral/Texto/Voz); verificar que um cargo de sistema aparece só-leitura sem reordenar/apagar
 - [ ] 2.3 Verificar o aviso ao apagar um cargo com membros associados, e que a alteração de uma permissão afecta o acesso real de um membro de teste com esse cargo
 
 ## 3. Definições de servidor — Visão Geral, Boas-vindas e Apagar
 
-- [ ] 3.1 Implementar a página "Visão Geral" agregada seguindo `mesa_defini_es_do_servidor_vis_o_geral_e_boas_vindas` (imagem, boas-vindas, apagar) como landing de definições por omissão; verificar upload/remoção de imagem com validação de tipo/tamanho (JPEG/PNG/WebP, ≤1 MiB)
+- [x] 3.1 Implementar a página "Visão Geral" agregada seguindo `mesa_defini_es_do_servidor_vis_o_geral_e_boas_vindas` (imagem, boas-vindas, apagar) como landing de definições por omissão; verificar upload/remoção de imagem com validação de tipo/tamanho (JPEG/PNG/WebP, ≤1 MiB)
 - [ ] 3.2 Implementar a configuração de boas-vindas (selector de canal + template) e verificar que uma mensagem de boas-vindas é publicada no canal escolhido quando um membro novo entra (depende da Tarefa 6.x de convites estar funcional para testar ponta a ponta)
 - [ ] 3.3 Implementar a confirmação de apagar servidor com exigência de digitar o nome exacto antes do botão destrutivo activar; verificar com um servidor de teste descartável
 

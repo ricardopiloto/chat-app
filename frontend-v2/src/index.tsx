@@ -14,6 +14,7 @@ import "./styles.css";
 import "./components/ui.css";
 import "./admin.css";
 import "./voice.css";
+import "./mgmt.css";
 
 applyTheme(themeMode());
 

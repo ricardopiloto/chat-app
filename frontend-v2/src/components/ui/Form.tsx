@@ -1,4 +1,5 @@
 import { Show, type JSX } from "solid-js";
+import { Icon } from "./Icon";
 
 const FieldError = (props: { text?: string }) => (
   <Show when={props.text}>
@@ -129,7 +130,7 @@ export function Switch(props: {
 export function Segmented<T extends string>(props: {
   label: string;
   value: T;
-  options: { value: T; label: string }[];
+  options: { value: T; label: string; icon?: string }[];
   onChange: (value: T) => void;
   /** Stretch the options across the full width. */
   fill?: boolean;
@@ -143,6 +144,7 @@ export function Segmented<T extends string>(props: {
           aria-checked={props.value === option.value}
           onClick={() => props.onChange(option.value)}
         >
+          <Show when={option.icon}>{(name) => <Icon name={name()} />}</Show>
           {option.label}
         </button>
       ))}

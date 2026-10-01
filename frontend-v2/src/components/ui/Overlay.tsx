@@ -25,6 +25,10 @@ export function Dialog(props: {
   icon?: string;
   /** Colour band along the top edge, for confirmations that need weight. */
   accent?: boolean;
+  /** Wider panel for dialogs that carry forms with several blocks. */
+  wide?: boolean;
+  /** Small mono caption above the title. */
+  eyebrow?: string;
 }) {
   let panel: HTMLElement | undefined;
   useEscape(() => props.open, () => props.onClose());
@@ -49,10 +53,13 @@ export function Dialog(props: {
           class="dialog-backdrop"
           onPointerDown={(event) => event.target === event.currentTarget && props.onClose()}
         >
-          <section ref={panel} class="dialog" classList={{ accent: props.accent }} role="dialog" aria-modal="true" aria-label={props.title}>
+          <section ref={panel} class="dialog" classList={{ accent: props.accent, wide: props.wide }} role="dialog" aria-modal="true" aria-label={props.title}>
             <header>
               <Show when={props.icon}>{(name) => <span class="dialog-icon"><Icon name={name()} /></span>}</Show>
-              <h2>{props.title}</h2>
+              <div class="dialog-title">
+                <Show when={props.eyebrow}>{(text) => <span class="dialog-eyebrow">{text()}</span>}</Show>
+                <h2>{props.title}</h2>
+              </div>
               <Button variant="icon" title={t("ui.close")} onClick={() => props.onClose()}>
                 <Icon name="close" />
               </Button>

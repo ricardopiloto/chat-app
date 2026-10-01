@@ -1,19 +1,18 @@
 import { Show, createEffect, createSignal } from "solid-js";
-import { api, type Channel, type CreateServerResult } from "../api/client";
-import {
-  channelKeyDisplay,
-  generateChannelKey,
-  rememberChannelKey,
-  sealChannelKeyForSelf,
-} from "../crypto/channelKey";
+import { Button, Dialog, Icon } from "../components/ui";
+import { channelKeyDisplay, generateChannelKey, rememberChannelKey, sealChannelKeyForSelf } from "../crypto/channelKey";
 import type { Identity } from "../crypto/identity";
 import { publishOwnEnvelope } from "../crypto/keyHandoff";
-import { generateServerKey } from "../crypto/serverKey";
-import { Button, Dialog, TextField } from "../components/ui";
+import { channels, servers } from "../api";
+import { MAX_IMAGE_BYTES, PROFILE_IMAGE_MEDIA_TYPES } from "../api/limits";
 import { t } from "../i18n";
-import { createCopy } from "../lib/copy";
 import { errorText } from "../lib/errors";
+import { KeyCustody } from "./KeyCustody";
 
+const NAME_MAX = 32;
+
+// "Create server": a name, an optional image, and the master key the owner must take custody of
+// before anything is created. The same key protects the first voice channel the server starts with.
 export function CreateServerDialog(props: {
   open: boolean;
   accountId: string;
@@ -22,97 +21,122 @@ export function CreateServerDialog(props: {
   onCreated: (serverId: string) => void;
 }) {
   const [name, setName] = createSignal("");
-  const [key, setKey] = createSignal<Uint8Array | null>(null);
-  const [ack, setAck] = createSignal(false);
+  const [key, setKey] = createSignal(generateChannelKey());
+  const [acknowledged, setAcknowledged] = createSignal(false);
+  const [image, setImage] = createSignal<File | null>(null);
+  const [preview, setPreview] = createSignal<string>();
   const [busy, setBusy] = createSignal(false);
   const [error, setError] = createSignal("");
-  const { copied, copy } = createCopy();
+
+  // Every opening starts clean, with a freshly generated key.
   createEffect(() => {
     if (!props.open) return;
     setName("");
     setKey(generateChannelKey());
-    setAck(false);
+    setAcknowledged(false);
+    setImage(null);
     setError("");
+    setBusy(false);
   });
+  createEffect(() => {
+    const file = image();
+    if (!file) return setPreview(undefined);
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  });
+
+  const valid = () => name().trim().length > 0 && name().length <= NAME_MAX;
+
+  function pickImage(file: File | undefined) {
+    if (!file) return;
+    if (!PROFILE_IMAGE_MEDIA_TYPES.has(file.type) || file.size > MAX_IMAGE_BYTES) {
+      setError(t("mgmt.createServer.imageError"));
+      return;
+    }
+    setError("");
+    setImage(file);
+  }
+
   async function submit(event: Event) {
     event.preventDefault();
-    const voiceKey = key();
-    if (!voiceKey || !ack() || busy()) return;
+    if (!valid() || !acknowledged() || busy()) return;
     setBusy(true);
     setError("");
     try {
-      const result = await api<CreateServerResult>("/api/servers", {
-        method: "POST",
-        body: JSON.stringify({
-          name: name().trim() || t("admin.server.defaultName"),
-          custody_ack: true,
-          channel_key_sealed: sealChannelKeyForSelf(voiceKey, props.identity),
-        }),
+      const created = await servers.create({
+        name: name().trim(),
+        custody_ack: true,
+        channel_key_sealed: sealChannelKeyForSelf(key(), props.identity),
       });
-      await publishOwnEnvelope(
-        result.id,
-        props.accountId,
-        props.identity,
-        generateServerKey(),
-      );
-      let voiceId = result.channels?.find((c) => c.type === "voice_video")?.id;
-      if (!voiceId) {
-        const list = await api<Channel[]>(`/api/servers/${result.id}/channels`);
-        voiceId = list.find((c) => c.type === "voice_video")?.id;
+      await publishOwnEnvelope(created.id, props.accountId, props.identity, key());
+      // The backend starts the server with a text and a voice channel; the voice one is sealed with this key.
+      for (const channel of await channels.listForServer(created.id)) {
+        if (channel.type === "voice_video") rememberChannelKey(channel.id, key());
       }
-      if (voiceId) rememberChannelKey(voiceId, voiceKey);
-      props.onCreated(result.id);
-    } catch (err) {
-      setError(errorText(err));
-    } finally {
+      const file = image();
+      if (file) await servers.setImage(created.id, file, file.type).catch(() => undefined);
+      props.onCreated(created.id);
+    } catch (failure) {
+      setError(errorText(failure, "mgmt.error"));
       setBusy(false);
     }
   }
+
   return (
-    <Dialog
-      open={props.open}
-      title={t("admin.server.createTitle")}
-      onClose={props.onClose}
-    >
-      <form class="admin-form" onSubmit={(e) => void submit(e)}>
-        <TextField
-          label={t("admin.name")}
-          value={name()}
-          placeholder={t("admin.server.defaultName")}
-          onInput={(e) => setName(e.currentTarget.value)}
-        />
-        <Show when={key()}>
-          {(value) => (
-            <div class="custody-block">
-              <p>{t("admin.server.custodyHint")}</p>
-              <div class="key-row">
-                <code class="key-display">{channelKeyDisplay(value())}</code>
-                <Button onClick={() => void copy(channelKeyDisplay(value()))}>
-                  {copied() ? t("admin.copied") : t("admin.copy")}
-                </Button>
-              </div>
-              <label class="choice">
-                <input
-                  type="checkbox"
-                  checked={ack()}
-                  onChange={(e) => setAck(e.currentTarget.checked)}
-                />
-                <span>{t("admin.custodyAck")}</span>
-              </label>
-            </div>
-          )}
-        </Show>
-        <Show when={error()}>
-          <p class="form-error" role="alert">
-            {error()}
-          </p>
-        </Show>
-        <div class="dialog-actions">
-          <Button onClick={props.onClose}>{t("admin.cancel")}</Button>
-          <Button variant="primary" type="submit" disabled={!ack() || busy()}>
-            {t("admin.create")}
-          </Button>
+    <Dialog open={props.open} title={t("mgmt.createServer.title")} onClose={props.onClose} accent wide eyebrow={t("mgmt.createServer.eyebrow")} icon="add_circle">
+      <form class="mg-form" onSubmit={submit}>
+        <p class="mg-lead">{t("mgmt.createServer.lead", { text: "#geral" })}</p>
+
+        <div class="mg-identity">
+          <div class="mg-sigil-field">
+            <span class="mg-label">{t("mgmt.createServer.sigil")}</span>
+            <label class="mg-sigil" title={t("mgmt.createServer.sigilEdit")}>
+              <Show when={preview()} fallback={<Icon name="shield_person" />}>
+                {(src) => <img src={src()} alt="" />}
+              </Show>
+              <span><Icon name="photo_camera" />{t("mgmt.createServer.sigilEdit")}</span>
+              <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => pickImage(event.currentTarget.files?.[0])} />
+            </label>
+          </div>
+          <label class="mg-name">
+            <span class="mg-label">
+              {t("mgmt.createServer.name")}
+              <output>{name().length} / {NAME_MAX}</output>
+            </span>
+            <input
+              value={name()}
+              maxLength={NAME_MAX}
+              placeholder={t("mgmt.createServer.namePlaceholder")}
+              onInput={(event) => setName(event.currentTarget.value)}
+              data-autofocus
+            />
+            <small>{t("mgmt.createServer.nameHint")}</small>
+          </label>
         </div>
+
+        <KeyCustody
+          icon="lock"
+          title={t("mgmt.createServer.keyTitle")}
+          text={t("mgmt.createServer.keyText")}
+          value={channelKeyDisplay(key())}
+          copyLabel={t("mgmt.key.copyKey")}
+          acknowledged={acknowledged()}
+          onAcknowledge={setAcknowledged}
+          acknowledgement={t("mgmt.createServer.custody")}
+          detail={t("mgmt.createServer.custodyText")}
+        />
+
+        <Show when={error()}>
+          <p class="mg-error" role="alert">{error()}</p>
+        </Show>
+        <footer class="mg-actions">
+          <Button variant="icon" class="mg-cancel" onClick={props.onClose}>{t("mgmt.cancel")}</Button>
+          <Button variant="primary" type="submit" disabled={!valid() || !acknowledged() || busy()}>
+            {t("mgmt.createServer.submit")}<Icon name="arrow_forward" />
+          </Button>
+        </footer>
+        <p class="mg-note"><Icon name="auto_awesome" />{t("mgmt.createServer.defaults", { text: "#geral", voice: "mesa" })}</p>
       </form>
     </Dialog>
   );
