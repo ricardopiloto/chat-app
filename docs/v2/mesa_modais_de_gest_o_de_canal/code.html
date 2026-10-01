@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"on-error-container":"#ffdad6","on-tertiary":"#3c0090","on-background":"#e0e2ef","tertiary-container":"#a680fd","secondary":"#6bdc96","surface-tint":"#ffb4a1","secondary-fixed":"#88f9b0","inverse-surface":"#e0e2ef","on-primary-fixed-variant":"#7c2e19","on-primary-container":"#5b1604","surface-bright":"#363943","surface-variant":"#32343e","tertiary-fixed-dim":"#d1bcff","tertiary":"#d1bcff","outline":"#a38b86","on-secondary-container":"#003118","background":"#10131c","on-tertiary-fixed-variant":"#5429a6","on-primary":"#5d1805","inverse-on-surface":"#2d303a","surface-container-high":"#272a33","surface-container-highest":"#32343e","secondary-fixed-dim":"#6bdc96","outline-variant":"#55423e","inverse-primary":"#9a442d","error":"#ffb4ab","surface-container-lowest":"#0b0e17","on-secondary-fixed":"#00210f","on-error":"#690005","surface":"#10131c","on-tertiary-container":"#3b008c","primary-fixed":"#ffdbd2","primary-container":"#e07a5f","surface-container-low":"#181b24","on-surface-variant":"#dbc1ba","surface-dim":"#10131c","on-surface":"#e0e2ef","on-secondary":"#00391d","primary-fixed-dim":"#ffb4a1","surface-container":"#1c1f29","primary":"#ffb4a1","error-container":"#93000a","secondary-container":"#2ca464","on-secondary-fixed-variant":"#00522c","on-primary-fixed":"#3c0800","tertiary-fixed":"#eaddff","on-tertiary-fixed":"#24005b"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"margin-desktop":"2rem","space-lg":"1.5rem","margin":"1rem","space-xl":"2.5rem","space-md":"1rem","space-xs":"0.25rem","space-sm":"0.5rem","gutter-desktop":"1.5rem","gutter":"1rem"},"fontFamily":{"label-code-sm":["JetBrains Mono"],"headline-md":["Plus Jakarta Sans"],"headline-sm":["Plus Jakarta Sans"],"headline-lg":["Plus Jakarta Sans"],"display-lg-mobile":["Plus Jakarta Sans"],"label-ui":["Inter"],"label-code-md":["JetBrains Mono"],"display-lg":["Plus Jakarta Sans"],"body-lg":["Inter"],"body-md":["Inter"],"body-sm":["Inter"]},"fontSize":{"label-code-sm":["11px",{"lineHeight":"16px","fontWeight":"500"}],"headline-md":["20px",{"lineHeight":"28px","fontWeight":"600"}],"headline-sm":["16px",{"lineHeight":"24px","fontWeight":"600"}],"headline-lg":["24px",{"lineHeight":"32px","fontWeight":"600"}],"display-lg-mobile":["28px",{"lineHeight":"36px","fontWeight":"700"}],"label-ui":["12px",{"lineHeight":"16px","fontWeight":"600"}],"label-code-md":["13px",{"lineHeight":"18px","fontWeight":"500"}],"display-lg":["36px",{"lineHeight":"44px","fontWeight":"700"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"body-sm":["12px",{"lineHeight":"18px","fontWeight":"400"}]}}}}</script></head><body class="bg-background text-on-surface font-body-md text-body-md min-h-screen selection:bg-primary selection:text-on-primary"><aside class="fixed left-0 top-0 bottom-0 w-[72px] bg-surface-container-lowest z-50 flex flex-col items-center py-space-md justify-between shadow-[0_4px_20px_-2px_rgba(0,0,0,0.5)]"><div class="flex flex-col items-center gap-space-sm w-full"><button aria-label="Active Realm" class="w-12 h-12 rounded-xl bg-primary-container text-on-primary-container flex items-center justify-center transition-all hover:rounded-lg shadow-[0_0_12px_rgba(224,122,95,0.3)]"><span class="material-symbols-outlined text-[24px]">shield</span></button><div class="w-8 h-[2px] bg-surface-container rounded-full my-space-xs"></div><button aria-label="Dragonspire Hub" class="w-12 h-12 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-all hover:rounded-xl"><span class="material-symbols-outlined text-[20px]">token</span></button><button aria-label="Curse of Strahd Session" class="w-12 h-12 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-all hover:rounded-xl"><span class="material-symbols-outlined text-[20px]">castle</span></button><button aria-label="Add Realm Server" class="w-12 h-12 rounded-full bg-surface-container hover:bg-secondary-container text-secondary hover:text-on-secondary-container flex items-center justify-center transition-all"><span class="material-symbols-outlined text-[22px]">add</span></button></div><div class="flex flex-col items-center gap-space-sm"><div class="w-10 h-10 rounded-full bg-surface-container-low flex items-center justify-center text-secondary relative" title="Node Connected E2EE"><span class="material-symbols-outlined text-[18px]">lock</span><span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-secondary ring-2 ring-surface-container-lowest"></span></div></div></aside><aside class="fixed left-[72px] top-0 bottom-0 w-[240px] bg-surface-container-low z-40 flex flex-col justify-between shadow-[0_4px_20px_-2px_rgba(0,0,0,0.4)]"><div class="flex flex-col flex-1 overflow-hidden"><div class="h-16 px-space-md flex items-center justify-between bg-surface-container-low/60 backdrop-blur-xl"><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-on-surface truncate">Valenforge Keep</span><span class="font-label-code-sm text-label-code-sm text-secondary flex items-center gap-space-xs"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span><span>mls::epoch-24</span></span></div><span class="material-symbols-outlined text-on-surface-variant text-[20px]">expand_more</span></div><div class="flex-1 overflow-y-auto px-space-sm pt-space-sm pb-space-md"><div class="px-space-sm py-space-xs text-[11px] font-label-code-sm uppercase tracking-wider text-on-surface-variant/70">Encrypted Channels</div><nav class="flex flex-col gap-0.5 my-space-xs" data-active-classes="bg-surface-container-high text-on-surface font-semibold rounded-lg"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="mesa-dropdown-de-notificacoes-e-busca-global" href="#"><span>Geral &amp; Notificações</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="mesa-modais-de-gestao-de-canal" href="#"><span>Gestão de Canal</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="campaign-briefing" href="#"><span>campaign-briefing</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="tactical-map" href="#"><span>tactical-map</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="lore-and-secrets" href="#"><span>lore-and-secrets</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="dice-and-log" href="#"><span>dice-and-log</span></a></nav><div class="mt-space-md px-space-sm py-space-xs text-[11px] font-label-code-sm uppercase tracking-wider text-on-surface-variant/70">Voice &amp; Table Stages</div><nav class="flex flex-col gap-0.5 my-space-xs" data-active-classes="bg-surface-container-high text-on-surface font-semibold rounded-lg"><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="campfire-voice" href="#"><span>Campfire Stage</span><span class="font-label-code-sm text-label-code-sm text-on-surface-variant bg-surface-container px-1.5 py-0.5 rounded">4/6</span></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="dm-antechamber" href="#"><span>DM Sanctum</span><span class="font-label-code-sm text-label-code-sm text-on-surface-variant bg-surface-container px-1.5 py-0.5 rounded">1/2</span></a></nav><div class="mt-space-md px-space-sm py-space-xs text-[11px] font-label-code-sm uppercase tracking-wider text-on-surface-variant/70">System Tools</div><nav class="flex flex-col gap-0.5 my-space-xs" data-active-classes="bg-surface-container-high text-on-surface font-semibold rounded-lg"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="mesa-modais-de-gestao-de-canal" href="#"><span>Moderação MLS</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="cryptographic-keys" href="#"><span>Key Inspection</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="host-telemetry" href="#"><span>Node Telemetry</span></a></nav></div></div><div class="h-16 bg-surface-container px-space-sm flex items-center justify-between shadow-[0_-2px_10px_rgba(0,0,0,0.2)]"><div class="flex items-center gap-space-sm truncate mr-space-xs"><div class="relative flex-shrink-0"><div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-on-primary font-bold"><span class="material-symbols-outlined text-[18px]">shield_person</span></div><span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-secondary ring-2 ring-surface-container"></span></div><div class="flex flex-col truncate"><span class="font-label-ui text-label-ui text-on-surface truncate">CinderKeeper (DM)</span><span class="font-label-code-sm text-[10px] text-secondary truncate">mls::key-ratchet-ok</span></div></div><div class="flex items-center gap-0.5"><button aria-label="Microphone settings" class="p-1.5 rounded hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface"><span class="material-symbols-outlined text-[18px]">mic</span></button><button aria-label="Deafen audio" class="p-1.5 rounded hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface"><span class="material-symbols-outlined text-[18px]">headphones</span></button><a aria-label="User preferences" class="p-1.5 rounded hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface flex items-center justify-center" data-path="user-settings" href="#"><span class="material-symbols-outlined text-[18px]">settings</span></a></div></div></aside><div class="pl-[312px]"><header class="fixed top-0 left-[312px] right-0 h-16 bg-surface-container-low/80 backdrop-blur-xl z-30 flex items-center justify-between px-space-lg shadow-[0_1px_8px_rgba(0,0,0,0.25)]"><div class="flex items-center gap-space-md"><img alt="Geometric minimalist emblem logo for 'Mesa', a self-hosted encrypted chat and tabletop voice/video platform. Icon shows an abstracted round game table combined with subtle interlocking protective cryptographic shield or circle rings, warm terracotta coral and warm ivory tones on a sleek dark badge background, modern flat vector design, clean SVG silhouette.. Design context: - Primary color: #e07a5f - Font: plusJakartaSans - Mode: dark - Roundness: rounded-md . The logo should be visually consistent with these brand tokens." class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Wu6JPFAgZCyVeUFfgF2Kw0tDR-hsarUUfylK14HYlLwAvvLQCMU2yFj9S9B1Q71Fq6zapDK3Irg2Zx3iMoLWvt5oI4ddFcNATCLKLLVNiGVWqORn8REKU_XDfAo6kzvp9H8bl2WpVm1hnyVH6oiUeJ6ldFclk2C5YFAzLugzQ4b3hq3royoiQ-7WRiEWXxpZNjUqQ8_iyE-6cBPASSapis3gp1Pn8ONomgG9Rap9nRDBJ_5ZY22pvfcGTv"/><div class="flex items-center gap-space-xs font-label-ui text-label-ui"><span class="font-headline-sm text-headline-sm text-primary font-bold tracking-tight">MESA</span><span class="text-outline">/</span><span class="text-on-surface-variant">Valenforge</span><span class="text-outline">/</span><span class="text-on-surface">Segurança &amp; Canais</span></div></div><nav class="hidden xl:flex items-center gap-space-lg" data-active-classes="text-on-surface font-semibold"><a class="text-on-surface-variant hover:text-on-surface font-body-sm text-body-sm transition-colors" data-path="mesa-modais-de-gestao-de-canal" href="#">Gestão de Canal</a><a class="text-on-surface-variant hover:text-on-surface font-body-sm text-body-sm transition-colors" data-path="mesa-dropdown-de-notificacoes-e-busca-global" href="#">Notificações &amp; Busca</a><a class="text-on-surface-variant hover:text-on-surface font-body-sm text-body-sm transition-colors" data-path="tactical-map" href="#">Tabletop View</a><a class="text-on-surface-variant hover:text-on-surface font-body-sm text-body-sm transition-colors" data-path="cryptographic-keys" href="#">Verificação de Chaves MLS</a></nav><div class="flex items-center gap-space-md"><div class="hidden md:flex items-center gap-space-xs bg-surface-container-highest px-space-sm py-1 rounded-full text-secondary font-label-code-sm text-label-code-sm shadow-inner"><span class="material-symbols-outlined text-[14px]">verified_user</span><span>MLS E2EE • Epoch #24</span></div><button aria-label="Inspect Session Key" class="p-2 rounded-lg hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors" title="MLS Key Status: Active Ratchet"><span class="material-symbols-outlined text-[20px]">shield_lock</span></button><button aria-label="Notifications" class="p-2 rounded-lg hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[20px]">notifications</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></header><main class="w-full pt-16 bg-surface min-h-screen"><div class="flex flex-col w-full relative min-h-[calc(100vh-4rem)] overflow-hidden bg-background">
+<!-- AMBIENT CRYPTO BACKGROUND WITH FAINT ILLUMINATION -->
+<div class="absolute inset-0 pointer-events-none opacity-40">
+<div class="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-container/10 rounded-full blur-3xl"></div>
+<div class="absolute bottom-1/3 right-1/4 w-[30rem] h-[30rem] bg-error-container/15 rounded-full blur-3xl"></div>
+</div>
+<!-- BACKDROP CONTEXT: UNDERLYING CHANNEL VIEW (#tactical-briefing) -->
+<div class="w-full flex flex-col filter blur-[2px] opacity-40 select-none pointer-events-none transition-all duration-300">
+<!-- Channel Sub-Header -->
+<div class="h-14 bg-surface-container-low px-space-lg flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-space-xs text-primary font-headline-sm">
+<span class="material-symbols-outlined text-[20px]">tag</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">tactical-briefing</span>
+</div>
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+<span class="text-body-sm text-on-surface-variant italic truncate max-w-md">Planeamento da descida à Cripta de Valenforge</span>
+<div class="flex items-center gap-1 bg-surface-container px-2 py-0.5 rounded-full text-secondary font-label-code-sm">
+<span class="material-symbols-outlined text-[13px]">lock</span>
+<span>Ratchet Epoch #24</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm text-on-surface-variant font-label-code-sm">
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-secondary"></span> 6 Peers Online</span>
+</div>
+</div>
+<!-- Simulated Chat Canvas -->
+<div class="p-space-lg flex flex-col gap-space-md max-w-5xl mx-auto w-full">
+<div class="flex items-start gap-space-md p-space-sm rounded-lg bg-surface-container/60">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold">DM</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-headline-sm text-headline-sm text-on-surface">CinderKeeper</span>
+<span class="text-body-sm text-on-surface-variant">Ontem às 21:42</span>
+</div>
+<p class="text-body-md text-on-surface-variant mt-1">Os guardas da abóbada inferior portam tochas de fogo alquímico. Rogues necessitam rolar Furtividade com desvantagem se entrarem pelo pátio central.</p>
+</div>
+</div>
+<div class="flex items-start gap-space-md p-space-sm rounded-lg bg-surface-container/80">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest text-secondary flex items-center justify-center font-bold">KT</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-headline-sm text-headline-sm text-on-surface">Rogue_Thief (Kaelen)</span>
+<span class="text-body-sm text-on-surface-variant">Ontem às 21:44</span>
+</div>
+<p class="text-body-md text-on-surface mt-1 font-label-code-sm bg-surface-container-lowest p-2 rounded">/roll 1d20+9 (Furtividade) ➔ [18] + 9 = 27 (Sucesso Crítico na Penumbra)</p>
+</div>
+</div>
+</div>
+</div>
+<!-- OVERLAY CONTAINER FOR THE TWO BESPOKE MODALS -->
+<div class="absolute inset-0 bg-surface-container-lowest/70 backdrop-blur-md flex items-center justify-center p-space-md lg:p-space-lg overflow-y-auto">
+<div class="w-full max-w-7xl grid grid-cols-1 xl:grid-cols-2 gap-space-lg my-auto items-stretch">
+<!-- ======================================================================= -->
+<!-- MODAL 1: SILENCIAR MEMBRO NO CANAL (TIMEOUT MLS ACL)                   -->
+<!-- ======================================================================= -->
+<section class="bg-surface-container-low rounded-xl shadow-xl flex flex-col justify-between overflow-hidden relative">
+<div class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-primary-container via-primary to-secondary"></div>
+<!-- Header -->
+<div class="p-space-lg pb-space-md flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-lg bg-surface-container-highest flex items-center justify-center text-primary shadow-sm">
+<span class="material-symbols-outlined text-[24px]">volume_off</span>
+</div>
+<div class="flex flex-col">
+<h2 class="font-headline-md text-headline-md text-on-surface tracking-tight">Silenciar Membro</h2>
+<span class="text-body-sm text-on-surface-variant">Aplicação de restrição temporária via ACL MLS</span>
+</div>
+</div>
+<span class="whitespace-nowrap px-space-sm py-1 rounded-full bg-surface-container-highest text-secondary font-label-code-sm text-label-code-sm flex items-center gap-1 shadow-inner">
+<span class="material-symbols-outlined text-[14px]">gavel</span>
+              MLS ACL • Ephemeral
+            </span>
+</div>
+<!-- Target Member Identity Card -->
+<div class="mt-space-md p-space-md bg-surface-container rounded-lg flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-space-md">
+<div class="relative">
+<img class="w-12 h-12 rounded-full object-cover shadow-md" data-alt="Dark fantasy character portrait of Kaelen the rogue, wearing leather armor with a hooded cowl, shadowy face illuminated by dim campfire glow, high detail digital tabletop token portrait in warm muted tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCP_zsi3fxMDoNqtRB8pEE7Ss9p_vYyCci2n1nm5J-OODvOBSC0xMLCkt27JGBig5LHjzttUWktOjdoGi80Mkou1eduko7GqIU5ffyPyw9clkC2ZwHYucPYtw4xfMbThzfb_OrrZR6xPEOvDg-Kwx9goq6rmjxhaZG88TrKtAxf80GFINz8o-NZghumxxgyS4CyVqNsaBTcgpZUFu9TEShZo5jIIoSDgNsHXFQNFDIEWXZAel9AGMPrYw"/>
+<span class="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-secondary"></span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="font-headline-sm text-headline-sm text-on-surface font-bold">Rogue_Thief</span>
+<span class="text-body-sm text-on-surface-variant font-medium">(Kaelen)</span>
+</div>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="px-2 py-0.5 rounded text-[10px] font-label-code-sm bg-surface-container-high text-primary uppercase tracking-wider font-semibold">Aventureiro</span>
+<span class="text-on-surface-variant text-[11px] font-label-code-sm">mls::node-0x7F12</span>
+</div>
+</div>
+</div>
+<div class="text-right hidden sm:flex flex-col items-end">
+<span class="text-body-sm text-on-surface-variant">Penalidades prévias</span>
+<span class="font-label-code-sm text-label-code-sm text-secondary font-semibold">0 Advertências</span>
+</div>
+</div>
+</div>
+<!-- Body Configuration Form -->
+<div class="px-space-lg flex flex-col gap-space-md flex-1">
+<!-- Scope Switcher -->
+<div class="flex flex-col gap-space-xs">
+<label class="text-body-sm font-semibold text-on-surface">Escopo do Silenciamento</label>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm">
+<button class="flex items-center gap-space-sm p-space-sm rounded-lg bg-surface-container text-left transition-all hover:bg-surface-container-high text-on-surface shadow-sm" type="button">
+<span class="material-symbols-outlined text-primary text-[20px]">radio_button_checked</span>
+<div class="flex flex-col">
+<span class="font-label-ui text-label-ui font-semibold">Apenas neste canal</span>
+<span class="text-[11px] text-on-surface-variant">#tactical-briefing</span>
+</div>
+</button>
+<button class="flex items-center gap-space-sm p-space-sm rounded-lg bg-surface-container-lowest text-left transition-all hover:bg-surface-container text-on-surface-variant" type="button">
+<span class="material-symbols-outlined text-outline text-[20px]">radio_button_unchecked</span>
+<div class="flex flex-col">
+<span class="font-label-ui text-label-ui font-semibold">Em todo o Reino</span>
+<span class="text-[11px] text-on-surface-variant">Todos os canais de texto e voz</span>
+</div>
+</button>
+</div>
+</div>
+<!-- Duration Pill Selector -->
+<div class="flex flex-col gap-space-xs">
+<div class="flex justify-between items-center">
+<label class="text-body-sm font-semibold text-on-surface">Duração do Timeout</label>
+<span class="text-body-sm text-primary font-medium">Expira às 22:45</span>
+</div>
+<div class="grid grid-cols-3 sm:grid-cols-6 gap-space-xs">
+<button class="py-2 px-1 rounded-lg text-center font-label-ui text-body-sm bg-surface-container hover:bg-surface-container-high text-on-surface-variant transition-colors" type="button">5 min</button>
+<button class="py-2 px-1 rounded-lg text-center font-label-ui text-body-sm bg-surface-container hover:bg-surface-container-high text-on-surface-variant transition-colors" type="button">15 min</button>
+<button class="py-2 px-1 rounded-lg text-center font-label-ui text-body-sm bg-primary-container text-on-primary-container font-bold shadow-md shadow-primary-container/20" type="button">1 hora</button>
+<button class="py-2 px-1 rounded-lg text-center font-label-ui text-body-sm bg-surface-container hover:bg-surface-container-high text-on-surface-variant transition-colors" type="button">24 horas</button>
+<button class="py-2 px-1 rounded-lg text-center font-label-ui text-body-sm bg-surface-container hover:bg-surface-container-high text-on-surface-variant transition-colors" type="button">1 sem</button>
+<button class="py-2 px-1 rounded-lg text-center font-label-ui text-body-sm bg-surface-container hover:bg-surface-container-high text-on-surface-variant transition-colors" type="button">Custom...</button>
+</div>
+</div>
+<!-- Reason & Notification -->
+<div class="flex flex-col gap-space-xs">
+<label class="text-body-sm font-semibold text-on-surface" for="mute-reason">Motivo da Ação (Audit Log do Servidor)</label>
+<div class="relative">
+<input class="w-full bg-surface-container px-space-md py-2.5 rounded-lg text-body-md text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:bg-surface-container-high shadow-inner" id="mute-reason" type="text" value="Spam de rolagem de dados durante narrativa do Mestre"/>
+<span class="absolute right-3 top-2.5 text-on-surface-variant text-[18px] material-symbols-outlined">edit_note</span>
+</div>
+<label class="flex items-center gap-space-sm mt-1 cursor-pointer">
+<input checked="" class="w-4 h-4 rounded bg-surface-container-high accent-primary-container" type="checkbox"/>
+<span class="text-body-sm text-on-surface-variant">Notificar membro com aviso assinado privadamente via ratchet efêmero</span>
+</label>
+</div>
+<!-- Cryptographic Context Notes -->
+<div class="p-space-sm rounded-lg bg-surface-container-lowest/80 flex flex-col gap-1.5 text-body-sm">
+<div class="flex items-center gap-2 text-secondary font-label-code-sm">
+<span class="material-symbols-outlined text-[16px]">verified</span>
+<span>Propagação Criptográfica Imediata:</span>
+</div>
+<ul class="text-[12px] text-on-surface-variant space-y-1 list-inside pl-1">
+<li class="flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                Impede o envio de mensagens de texto ou pacotes de dados neste canal
+              </li>
+<li class="flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                Revoga o token de transmissão RTP no palco de voz associado
+              </li>
+<li class="flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                A chave de época MLS (#24) é mantida; apenas o flag de permissão é emitido
+              </li>
+</ul>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="p-space-lg pt-space-md mt-space-md bg-surface-container/40 flex items-center justify-between">
+<button class="px-space-md py-2.5 rounded-lg font-label-ui text-body-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" type="button">
+            Cancelar (Esc)
+          </button>
+<button class="px-space-lg py-2.5 rounded-lg font-label-ui text-body-md bg-primary-container text-on-primary-container font-bold hover:brightness-110 active:brightness-95 transition-all shadow-lg shadow-primary-container/25 flex items-center gap-space-sm" type="button">
+<span class="material-symbols-outlined text-[18px]">timer</span>
+<span>Confirmar Silenciamento (1h)</span>
+</button>
+</div>
+</section>
+<!-- ======================================================================= -->
+<!-- MODAL 2: APAGAR CANAL CRIPTOGRAFADO (ZONA DE PERIGO / EXPURGO MLS)     -->
+<!-- ======================================================================= -->
+<section class="bg-surface-container-low rounded-xl shadow-xl flex flex-col justify-between overflow-hidden relative">
+<div class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-error via-error-container to-primary-container"></div>
+<!-- Header -->
+<div class="p-space-lg pb-space-md flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-lg bg-error-container/30 flex items-center justify-center text-error shadow-sm">
+<span class="material-symbols-outlined text-[24px]">local_fire_department</span>
+</div>
+<div class="flex flex-col">
+<h2 class="font-headline-md text-headline-md text-error tracking-tight">Apagar Canal Criptografado?</h2>
+<span class="text-body-sm text-on-surface-variant">Expurgo permanente de chaves de cifra e histórico</span>
+</div>
+</div>
+<span class="whitespace-nowrap px-space-sm py-1 rounded-full bg-error-container text-on-error-container font-label-code-sm text-label-code-sm flex items-center gap-1 font-semibold">
+<span class="material-symbols-outlined text-[14px]">warning</span>
+              Zona Crítica
+            </span>
+</div>
+<!-- Channel Target Info Card -->
+<div class="mt-space-md p-space-md bg-surface-container rounded-lg flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-space-md">
+<div class="w-12 h-12 rounded-lg bg-surface-container-highest flex items-center justify-center text-primary-fixed-dim">
+<span class="material-symbols-outlined text-[26px]">key_off</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5 font-headline-sm text-headline-sm text-on-surface">
+<span class="material-symbols-outlined text-[18px] text-outline">lock</span>
+<span class="font-bold"># lore-and-secrets</span>
+</div>
+<span class="text-body-sm text-on-surface-variant">Criado há 42 dias • Valenforge Main Hub</span>
+</div>
+</div>
+<div class="flex items-center gap-space-md">
+<div class="flex flex-col text-right">
+<span class="font-label-code-md text-label-code-md text-on-surface font-semibold">1.420</span>
+<span class="text-[11px] text-on-surface-variant">Mensagens</span>
+</div>
+<div class="w-px h-8 bg-surface-container-highest hidden sm:block"></div>
+<div class="flex flex-col text-right">
+<span class="font-label-code-md text-label-code-md text-primary font-semibold">84</span>
+<span class="text-[11px] text-on-surface-variant">Mapas/Anexos</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Warning Callout Box -->
+<div class="px-space-lg flex flex-col gap-space-md flex-1">
+<div class="p-space-md rounded-lg bg-error-container/20 text-on-surface flex flex-col gap-space-xs shadow-sm">
+<div class="flex items-center gap-space-sm text-error font-headline-sm text-headline-sm font-bold">
+<span class="material-symbols-outlined text-[20px]">shield_with_heart</span>
+<span>DESTRUIÇÃO IRREVERSÍVEL DE CHAVES &amp; HISTÓRICO</span>
+</div>
+<p class="text-body-sm text-on-surface-variant leading-relaxed">
+              Esta ação é permanente e irreversível. O nó destruirá o segredo da raiz da árvore de chaves MLS (TreeKEM) e expurgará todos os blobs de mensagens locais e da malha P2P. Ninguém, nem mesmo o anfitrião do servidor, conseguirá recuperar as mensagens passadas.
+            </p>
+</div>
+<!-- Type Verification Form Input -->
+<div class="flex flex-col gap-space-xs">
+<label class="text-body-sm font-semibold text-on-surface" for="confirm-channel-name">
+              Para confirmar a destruição perpétua, digite o nome exato do canal:
+            </label>
+<div class="relative">
+<input class="w-full bg-surface-container px-space-md py-2.5 rounded-lg text-body-md text-secondary font-label-code-md tracking-wide focus:outline-none shadow-inner" id="confirm-channel-name" type="text" value="lore-and-secrets"/>
+<div class="absolute right-3 top-2.5 flex items-center gap-1 text-secondary font-label-code-sm">
+<span class="material-symbols-outlined text-[18px]">check_circle</span>
+<span>Correspondência válida</span>
+</div>
+</div>
+</div>
+<!-- Checkbox Confirmation -->
+<div class="flex flex-col gap-space-sm mt-1">
+<label class="flex items-start gap-space-sm cursor-pointer select-none">
+<input checked="" class="mt-0.5 w-4 h-4 rounded bg-surface-container-high accent-error" type="checkbox"/>
+<span class="text-body-sm text-on-surface-variant">
+                Compreendo que todos os <strong class="text-on-surface">84 mapas táticos e documentos</strong> anexados a este canal serão permanentemente desindexados do cofre local de cada jogador.
+              </span>
+</label>
+</div>
+<!-- Cryptographic Digest Status -->
+<div class="flex items-center justify-between p-space-sm rounded-lg bg-surface-container-lowest text-label-code-sm text-on-surface-variant">
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[15px] text-error">fingerprint</span>
+              MLS Ratchet Group ID:
+            </span>
+<span class="text-secondary font-semibold">0x8B32..99EF</span>
+</div>
+</div>
+<!-- Danger Footer Actions -->
+<div class="p-space-lg pt-space-md mt-space-md bg-surface-container/40 flex items-center justify-between">
+<button class="px-space-md py-2.5 rounded-lg font-label-ui text-body-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" type="button">
+            Cancelar (Esc)
+          </button>
+<button class="px-space-lg py-2.5 rounded-lg font-label-ui text-body-md bg-error text-on-error font-bold hover:brightness-110 active:brightness-95 transition-all shadow-lg shadow-error/25 flex items-center gap-space-sm" type="button">
+<span class="material-symbols-outlined text-[20px]">delete_forever</span>
+<span>Destruir Canal e Expurgar Chaves</span>
+</button>
+</div>
+</section>
+</div>
+</div>
+</div></main></div></body></html>

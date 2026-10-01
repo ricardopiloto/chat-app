@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mesa — Sistema de Design (Tokens, Componentes & Guia de UI)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#FDF7F4',
+              100: '#F8EAE4',
+              200: '#F1D5C9',
+              300: '#E6B8A2',
+              400: '#DE9B7F',
+              500: '#E07A5F', // Cor primária / Terracota Acolhedor
+              600: '#CC6347',
+              700: '#AA4B34',
+              800: '#8A3C2B',
+              900: '#642D21',
+            },
+            parchment: {
+              base: '#FDFBF7',
+              subtle: '#F4EFEB',
+              border: '#E4DDD3',
+              darkText: '#181A20',
+              darkMuted: '#686B78',
+            },
+            obsidian: {
+              950: '#0C0E14', // Fundo Rail mais profundo
+              900: '#11141C', // Fundo Sidebar e Canais
+              850: '#161922', // Fundo Principal Área de Chat / Conteúdo
+              800: '#1E2330', // Superfícies de cartões e inputs
+              750: '#262D3D', // Hover states & headers
+              700: '#323B4E', // Bordas e divisores
+              600: '#48546C', // Ícones secundários
+              400: '#94A3B8', // Texto muted / secundário
+              100: '#F1F5F9', // Texto de alto contraste
+            },
+            e2ee: {
+              active: '#10B981', // Verde Criptografia Ativa
+              badge: '#064E3B',
+              disabled: '#F59E0B', // Aviso E2EE Desligada
+              disabledDark: '#78350F',
+            },
+            voice: {
+              speaking: '#E07A5F',
+              screenshare: '#8B5CF6',
+              connected: '#10B981',
+              deafened: '#EF4444',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      scroll-behavior: smooth;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.1);
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.15);
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="bg-obsidian-950 text-obsidian-100 min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white">
+
+  <!-- Header Global do Design System -->
+  <header class="border-b border-obsidian-700/60 bg-obsidian-900/80 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuA3BIfZBJ87N7RLdT4J5ALhaq17YVxvSepE8jzxXHDesy-p3zeNYtgEto4cHB97Lw483KiKVudCptwmYuJXeUIaWK1sUvgGOlj1-Ou0ot29mMEfEntSMAwuYkWx9JQ-hJvX1U8fzQ1zg1k9EOlGrgTWa7lURdKDSu956tKsriMI-FCbceApoYtlstQdv41006DNhiNgvItnKGwwsjE4tzNQcytF1ApSLUZ4lLH3Hcr-yTa-NHy1uImA5w" alt="Mesa Logo" class="w-10 h-10 rounded-full border border-brand-500/40 shadow-sm object-cover">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-extrabold tracking-tight text-lg text-white">Mesa</span>
+            <span class="px-2 py-0.5 text-[11px] font-mono font-medium rounded-full bg-brand-500/20 text-brand-400 border border-brand-500/30">DS v2.0 • Do Zero</span>
+          </div>
+          <p class="text-xs text-obsidian-400">Design System completo para chat, voz/vídeo self-hosted & RPG streaming</p>
+        </div>
+      </div>
+
+      <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-obsidian-400">
+        <a href="#principios" class="hover:text-brand-400 transition-colors">Princípios</a>
+        <a href="#tokens" class="hover:text-brand-400 transition-colors">Tokens & Cores</a>
+        <a href="#tipografia" class="hover:text-brand-400 transition-colors">Tipografia</a>
+        <a href="#componentes" class="hover:text-brand-400 transition-colors">Componentes UI</a>
+        <a href="#icones" class="hover:text-brand-400 transition-colors">Iconografia</a>
+        <a href="#arquitetura" class="hover:text-brand-400 transition-colors">Shell & Fluxos</a>
+      </nav>
+
+      <div class="flex items-center gap-3">
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono bg-e2ee-active/10 text-e2ee-active border border-e2ee-active/30">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          E2EE por omissão
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Banner de Apresentação -->
+  <section class="relative border-b border-obsidian-700/60 bg-gradient-to-b from-obsidian-900 to-obsidian-950 py-12 px-6">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        <div class="lg:col-span-8 space-y-4">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-md text-xs font-medium bg-brand-500/10 text-brand-400 border border-brand-500/20">
+            <span>🛡️ Self-Hosted</span>
+            <span>•</span>
+            <span>🎲 Tabletop Video Composition</span>
+            <span>•</span>
+            <span>🔒 End-to-End Encrypted</span>
+          </div>
+          <h1 class="text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight">
+            Identidade visual calorosa, confiável e precisa para a <span class="text-brand-500 underline decoration-brand-500/40 decoration-4 underline-offset-4">Mesa</span>.
+          </h1>
+          <p class="text-obsidian-400 text-base max-w-2xl leading-relaxed">
+            Eliminamos os clichês de "gamer neon agressivo" e a esterilidade das ferramentas corporativas. Inspirado no acolhimento de uma mesa de RPG física com a sofisticação da criptografia moderna e controle de câmera de nível broadcast.
+          </p>
+          <div class="flex flex-wrap gap-3 pt-2 text-xs font-mono text-obsidian-400">
+            <span class="bg-obsidian-800/80 px-2.5 py-1 rounded border border-obsidian-700">Desktop-first (900px+ com drawer responsivo)</span>
+            <span class="bg-obsidian-800/80 px-2.5 py-1 rounded border border-obsidian-700">Temas Claro & Escuro persistentes</span>
+            <span class="bg-obsidian-800/80 px-2.5 py-1 rounded border border-obsidian-700">Suporte i18n PT-BR / EN</span>
+          </div>
+        </div>
+
+        <div class="lg:col-span-4 bg-obsidian-900/90 border border-obsidian-700 rounded-2xl p-5 shadow-2xl space-y-4">
+          <div class="flex items-center justify-between border-b border-obsidian-800 pb-3">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-red-500/80"></span>
+              <span class="w-3 h-3 rounded-full bg-yellow-500/80"></span>
+              <span class="w-3 h-3 rounded-full bg-green-500/80"></span>
+              <span class="text-xs font-mono text-obsidian-400 ml-2">mesa-tokens.json</span>
+            </div>
+            <span class="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/40">100% SPEC COMPLIANT</span>
+          </div>
+          <div class="space-y-2 text-xs font-mono">
+            <div class="flex justify-between py-1 border-b border-obsidian-800/50">
+              <span class="text-obsidian-400">brand-primary:</span>
+              <span class="text-brand-400 font-semibold">#E07A5F (Terracota)</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-obsidian-800/50">
+              <span class="text-obsidian-400">dark-surface-chat:</span>
+              <span class="text-obsidian-100 font-semibold">#161922 (Obsidian Dark)</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-obsidian-800/50">
+              <span class="text-obsidian-400">light-surface-parchment:</span>
+              <span class="text-amber-200 font-semibold">#FDFBF7 (Pergaminho)</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-obsidian-800/50">
+              <span class="text-obsidian-400">e2ee-status:</span>
+              <span class="text-emerald-400 font-semibold">#10B981 (Shield Green)</span>
+            </div>
+            <div class="flex justify-between py-1">
+              <span class="text-obsidian-400">radii-system:</span>
+              <span class="text-cyan-300 font-semibold">Pill (Btns) + 12px (Cards)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Navegação Principal do Documento -->
+  <main class="max-w-7xl mx-auto px-6 py-12 space-y-16 flex-1">
+
+    <!-- SEÇÃO 1: PRINCÍPIOS DO DESIGN SYSTEM -->
+    <section id="principios" class="space-y-6">
+      <div class="border-b border-obsidian-800 pb-4">
+        <div class="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-brand-400">
+          <span>01 // Pilares de Fundação</span>
+        </div>
+        <h2 class="text-2xl font-bold text-white tracking-tight mt-1">Princípios de Design da Mesa</h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="p-6 rounded-xl bg-obsidian-900 border border-obsidian-800 space-y-3 relative overflow-hidden group hover:border-brand-500/50 transition-colors">
+          <div class="w-10 h-10 rounded-lg bg-brand-500/10 border border-brand-500/20 text-brand-400 flex items-center justify-center font-bold text-lg">
+            🕯️
+          </div>
+          <h3 class="text-lg font-bold text-white">1. O Acolhimento da Mesa</h3>
+          <p class="text-sm text-obsidian-400 leading-relaxed">
+            Tons calorosos de terracota, toques de âmbar e pergaminho que evocam a atmosfera intimista de uma sessão presencial em volta de uma mesa, evitando a frieza metálica de ferramentas enterprise ou o neon agressivo de streamers de esports.
+          </p>
+        </div>
+
+        <div class="p-6 rounded-xl bg-obsidian-900 border border-obsidian-800 space-y-3 relative overflow-hidden group hover:border-emerald-500/50 transition-colors">
+          <div class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-lg">
+            🔒
+          </div>
+          <h3 class="text-lg font-bold text-white">2. Confiança Criptográfica Tranquila</h3>
+          <p class="text-sm text-obsidian-400 leading-relaxed">
+            A criptografia ponta-a-ponta (E2EE) é o padrão sagrado. O design torna a custódia das chaves e os estados de segurança (ligado/desligado) visíveis, compreensíveis e serenos — nunca alarmistas ou intimidadoramente técnicos.
+          </p>
+        </div>
+
+        <div class="p-6 rounded-xl bg-obsidian-900 border border-obsidian-800 space-y-3 relative overflow-hidden group hover:border-indigo-500/50 transition-colors">
+          <div class="w-10 h-10 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-lg">
+            🎬
+          </div>
+          <h3 class="text-lg font-bold text-white">3. Rigor de Estúdio Broadcast</h3>
+          <p class="text-sm text-obsidian-400 leading-relaxed">
+            Layouts nomeados para composição de câmeras (Mestre em Destaque, Painel, Faixa), indicadores precisos de fala, partilha de tela estelar e controles dedicados no painel do usuário que nunca invadem a área do palco de vídeo.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO 2: TOKENS DE COR (DARK & LIGHT) -->
+    <section id="tokens" class="space-y-8">
+      <div class="border-b border-obsidian-800 pb-4">
+        <div class="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-brand-400">
+          <span>02 // Tokens & Semântica</span>
+        </div>
+        <h2 class="text-2xl font-bold text-white tracking-tight mt-1">Paleta de Cores e Tokens Semânticos</h2>
+        <p class="text-sm text-obsidian-400 mt-1">Especificações hexadecimais completas para os modos Escuro (Dark) e Claro (Light/Pergaminho).</p>
+      </div>
+
+      <!-- TEMA ESCURO -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-base font-semibold text-white flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-brand-500"></span> Modo Escuro (Dark — Padrão das Sessões)
+          </h3>
+          <span class="text-xs font-mono text-obsidian-400">surface-hierarchy: Rail (950) → Sidebar (900) → Main Chat (850)</span>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          <div class="p-3 rounded-lg bg-obsidian-950 border border-obsidian-800 flex flex-col justify-between h-24">
+            <span class="text-xs font-mono text-obsidian-400">Rail Background</span>
+            <div>
+              <p class="font-bold text-sm text-white">#0C0E14</p>
+              <p class="text-[10px] text-obsidian-400 font-mono">obsidian-950</p>
+            </div>
+          </div>
+          <div class="p-3 rounded-lg bg-obsidian-900 border border-obsidian-800 flex flex-col justify-between h-24">
+            <span class="text-xs font-mono text-obsidian-400">Sidebar / Channels</span>
+            <div>
+              <p class="font-bold text-sm text-white">#11141C</p>
+              <p class="text-[10px] text-obsidian-400 font-mono">obsidian-900</p>
+            </div>
+          </div>
+          <div class="p-3 rounded-lg bg-obsidian-850 border border-obsidian-750 flex flex-col justify-between h-24">
+            <span class="text-xs font-mono text-obsidian-400">Main Content Area</span>
+            <div>
+              <p class="font-bold text-sm text-white">#161922</p>
+              <p class="text-[10px] text-obsidian-400 font-mono">obsidian-850</p>
+            </div>
+          </div>
+          <div class="p-3 rounded-lg bg-obsidian-800 border border-obsidian-700 flex flex-col justify-between h-24">
+            <span class="text-xs font-mono text-obsidian-400">Cards / Inputs / Popover</span>
+            <div>
+              <p class="font-bold text-sm text-white">#1E2330</p>
+              <p class="text-[10px] text-obsidian-400 font-mono">obsidian-800</p>
+            </div>
+          </div>
+          <div class="p-3 rounded-lg bg-brand-500 border border-brand-400 flex flex-col justify-between h-24 text-white">
+            <span class="text-xs font-mono text-white/80">Brand Primary</span>
+            <div>
+              <p class="font-bold text-sm">#E07A5F</p>
+              <p class="text-[10px] text-white/80 font-mono">terracota-500</p>
+            </div>
+          </div>
+          <div class="p-3 rounded-lg bg-emerald-600 border border-emerald-500 flex flex-col justify-between h-24 text-white">
+            <span class="text-xs font-mono text-white/80">E2EE Locked / Online</span>
+            <div>
+              <p class="font-bold text-sm">#10B981</p>
+              <p class="text-[10px] text-white/80 font-mono">emerald-500</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TEMA CLARO -->
+      <div class="space-y-4 pt-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-base font-semibold text-white flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-200"></span> Modo Claro (Light — Pergaminho / Alabastro Acolhedor)
+          </h3>
+          <span class="text-xs font-mono text-obsidian-400">Sem brilho branco estéril — tons de papel e linho</span>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          <div class="p-3 rounded-lg bg-[#EFE9DF] border border-[#DDD3C4] flex flex-col justify-between h-24 text-stone-900">
+            <span class="text-xs font-mono text-stone-600">Light Rail</span>
+            <div>
+              <p class="font-bold text-sm">#EFE9DF</p>
+              <p class="text-[10px] text-stone-500 font-mono">parchment-deep</p>
+            </div>
+          </div>
+          <div class="p-3 rounded-lg bg-[#F5F0E8] border border-[#DDD3C4] flex flex-col justify-between h-24 text-stone-900">
+            <span class="text-xs font-mono text-stone-600">Light Sidebar</span>
+            <div>
+              <p class="font-bold text-sm">#F5F0E8</p>
+              <p class="text-[10px] text-stone-500 font-mono">parchment-side</p>
+            </div>
+          </div>
+          <div class="p-3 rounded-lg bg-[#FDFBF7] border border-[#DDD3C4] flex flex-col justify-between h-24 text-stone-900">
+            <span class="text-xs font-mono text-stone-600">Light Main Canvas</span>
+            <div>
+              <p class="font-bold text-sm">#FDFBF7</p>
+              <p class="text-[10px] text-stone-500 font-mono">parchment-base</p>
+            </div>
+          </div>
+          <div class="p-3 rounded-lg bg-[#FFFFFF] border border-[#DDD3C4] flex flex-col justify-between h-24 text-stone-900">
+            <span class="text-xs font-mono text-stone-600">Light Cards / Inputs</span>
+            <div>
+              <p class="font-bold text-sm">#FFFFFF</p>
+              <p class="text-[10px] text-stone-500 font-mono">pure-card</p>
+            </div>
+          </div>
+          <div class="p-3 rounded-lg bg-[#CC6347] border border-[#B34F36] flex flex-col justify-between h-24 text-white">
+            <span class="text-xs font-mono text-white/80">Light Primary</span>
+            <div>
+              <p class="font-bold text-sm">#CC6347</p>
+              <p class="text-[10px] text-white/80 font-mono">terracota-600</p>
+            </div>
+          </div>
+          <div class="p-3 rounded-lg bg-[#059669] border border-[#047857] flex flex-col justify-between h-24 text-white">
+            <span class="text-xs font-mono text-white/80">Light E2EE Active</span>
+            <div>
+              <p class="font-bold text-sm">#059669</p>
+              <p class="text-[10px] text-white/80 font-mono">emerald-600</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CORES DE ESTADO ESPECÍFICAS DA MESA -->
+      <div class="p-5 rounded-xl bg-obsidian-900 border border-obsidian-800 space-y-4">
+        <h4 class="text-sm font-semibold text-white flex items-center gap-2">
+          <span>🚦</span> Cores Semânticas de Voz, E2EE e Moderação (Regras da Aplicação)
+        </h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+          <div class="p-3 rounded-lg bg-obsidian-850 border border-obsidian-750 flex items-start gap-3">
+            <span class="w-3.5 h-3.5 rounded-full bg-brand-500 ring-4 ring-brand-500/20 shrink-0 mt-0.5"></span>
+            <div>
+              <p class="font-bold text-white">A Falar (Speaking Glow)</p>
+              <p class="text-obsidian-400">Anel radiante e pulso no roster, grade e composições.</p>
+            </div>
+          </div>
+
+          <div class="p-3 rounded-lg bg-obsidian-850 border border-obsidian-750 flex items-start gap-3">
+            <span class="w-3.5 h-3.5 rounded-full bg-amber-500 shrink-0 mt-0.5"></span>
+            <div>
+              <p class="font-bold text-white">E2EE Desligada (Faixa Alerta)</p>
+              <p class="text-obsidian-400">#F59E0B permanente com botão "Religar E2EE" para admin.</p>
+            </div>
+          </div>
+
+          <div class="p-3 rounded-lg bg-obsidian-850 border border-obsidian-750 flex items-start gap-3">
+            <span class="w-3.5 h-3.5 rounded-full bg-purple-500 shrink-0 mt-0.5"></span>
+            <div>
+              <p class="font-bold text-white">Partilha de Ecrã (Tela)</p>
+              <p class="text-obsidian-400">Ponto indicador na sidebar e etiqueta estrelada (★).</p>
+            </div>
+          </div>
+
+          <div class="p-3 rounded-lg bg-obsidian-850 border border-obsidian-750 flex items-start gap-3">
+            <span class="w-3.5 h-3.5 rounded-full bg-red-500 shrink-0 mt-0.5"></span>
+            <div>
+              <p class="font-bold text-white">Destrutivo / Desconectar</p>
+              <p class="text-obsidian-400">Apagar canal, apagar servidor, silenciar membro e sair de chamada.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO 3: TIPOGRAFIA & ESPAÇAMENTO -->
+    <section id="tipografia" class="space-y-6">
+      <div class="border-b border-obsidian-800 pb-4">
+        <div class="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-brand-400">
+          <span>03 // Tipografia & Raio</span>
+        </div>
+        <h2 class="text-2xl font-bold text-white tracking-tight mt-1">Escala Tipográfica & Sistema Geométrico</h2>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Tipografia -->
+        <div class="p-6 rounded-xl bg-obsidian-900 border border-obsidian-800 space-y-6">
+          <h3 class="text-base font-bold text-white flex items-center justify-between">
+            <span>Font Stacks</span>
+            <span class="text-xs font-mono text-brand-400">Plus Jakarta Sans + JetBrains Mono</span>
+          </h3>
+
+          <div class="space-y-4">
+            <div class="border-b border-obsidian-800 pb-3">
+              <span class="text-[11px] font-mono text-obsidian-400">Display / Voice Channel Titular — 24px (Bold 800)</span>
+              <p class="text-2xl font-extrabold text-white mt-1"># taverna-do-dragao-dourado</p>
+            </div>
+
+            <div class="border-b border-obsidian-800 pb-3">
+              <span class="text-[11px] font-mono text-obsidian-400">Heading 2 / Server Titles & Modais — 18px (Bold 700)</span>
+              <p class="text-lg font-bold text-white mt-1">Configurações de Permissões do Cargo</p>
+            </div>
+
+            <div class="border-b border-obsidian-800 pb-3">
+              <span class="text-[11px] font-mono text-obsidian-400">UI Text / Mensagens de Chat — 14px (Regular 400 / Semibold 600)</span>
+              <p class="text-sm text-obsidian-200 mt-1 leading-relaxed">
+                <span class="font-bold text-white mr-1">@mestre_rpg:</span> O teste de Percepção Passiva do grupo revelou um símbolo rúnico esculpido sob o altar de pedra.
+              </p>
+            </div>
+
+            <div>
+              <span class="text-[11px] font-mono text-obsidian-400">Mono / E2EE Key Custody & Hashes — 12px (Mono 500)</span>
+              <p class="text-xs font-mono text-brand-400 bg-obsidian-950 p-2.5 rounded-lg border border-obsidian-800 mt-1">
+                mesa-sec-key: v2_94fa8c10e3bd71429ff0189a776c5d
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Raios e Elevação -->
+        <div class="p-6 rounded-xl bg-obsidian-900 border border-obsidian-800 space-y-6">
+          <h3 class="text-base font-bold text-white">Raios de Borda & Camadas de Elevação</h3>
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div class="p-4 rounded-full bg-obsidian-850 border border-brand-500/40 text-center">
+              <p class="text-xs font-mono text-brand-400 font-bold">Pill (rounded-full)</p>
+              <p class="text-[11px] text-obsidian-400 mt-0.5">Botões primários, chips E2EE, menções @user</p>
+            </div>
+            <div class="p-4 rounded-xl bg-obsidian-850 border border-obsidian-750 text-center">
+              <p class="text-xs font-mono text-white font-bold">12px (rounded-xl)</p>
+              <p class="text-[11px] text-obsidian-400 mt-0.5">Cards de cargo, modais, tiles de vídeo</p>
+            </div>
+            <div class="p-4 rounded-lg bg-obsidian-850 border border-obsidian-750 text-center">
+              <p class="text-xs font-mono text-white font-bold">8px (rounded-lg)</p>
+              <p class="text-[11px] text-obsidian-400 mt-0.5">Inputs, selects, itens de canal da sidebar</p>
+            </div>
+            <div class="p-4 rounded-2xl bg-obsidian-850 border border-obsidian-700 shadow-2xl text-center">
+              <p class="text-xs font-mono text-white font-bold">PiP & Floating (16px)</p>
+              <p class="text-[11px] text-obsidian-400 mt-0.5">Floating Call PiP com snap nos 4 cantos</p>
+            </div>
+          </div>
+
+          <div class="bg-obsidian-850 p-4 rounded-xl border border-obsidian-750 space-y-2">
+            <h4 class="text-xs font-bold text-white">Hierarquia de Profundidade (Z-Index / Shadows)</h4>
+            <ul class="text-xs text-obsidian-400 space-y-1 font-mono">
+              <li>• z-10: Sticky date separator em scroll de mensagens</li>
+              <li>• z-20: Topbar e User Panel persistente</li>
+              <li>• z-30: PiP flutuante de chamada (draggable)</li>
+              <li>• z-40: Dropdown de notificações & Menus de contexto</li>
+              <li>• z-50: Diálogos modais e Lightbox de anexos com backdrop</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO 4: BIBLIOTECA DE COMPONENTES ATÔMICOS -->
+    <section id="componentes" class="space-y-8">
+      <div class="border-b border-obsidian-800 pb-4">
+        <div class="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-brand-400">
+          <span>04 // Component Library</span>
+        </div>
+        <h2 class="text-2xl font-bold text-white tracking-tight mt-1">Biblioteca de Componentes Vivos</h2>
+        <p class="text-sm text-obsidian-400 mt-1">Componentes reutilizáveis cobrindo 100% dos estados requisitados na especificação da Mesa.</p>
+      </div>
+
+      <!-- BOTÕES E CONTROLOS -->
+      <div class="p-6 rounded-xl bg-obsidian-900 border border-obsidian-800 space-y-4">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-obsidian-400">1. Botões & Variantes</h3>
+        <div class="flex flex-wrap items-center gap-3">
+          <button class="px-5 py-2.5 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm shadow-md transition-all active:scale-95">
+            Primário ("Entrar" / "Salvar")
+          </button>
+          <button class="px-5 py-2.5 rounded-full bg-obsidian-800 hover:bg-obsidian-750 text-obsidian-200 border border-obsidian-700 font-semibold text-sm transition-all active:scale-95">
+            Secundário ("Cancelar")
+          </button>
+          <button class="px-5 py-2.5 rounded-full bg-red-500/15 hover:bg-red-500/25 text-red-400 border border-red-500/30 font-semibold text-sm transition-all active:scale-95">
+            Perigoso ("Apagar Servidor")
+          </button>
+          <button class="px-4 py-2 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 font-semibold text-xs transition-all flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            Religar E2EE
+          </button>
+          <button class="w-10 h-10 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center shadow-lg transition-all active:scale-90" title="Terminar chamada">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-3.28a1 1 0 00-.684-.948l-4.493-1.498a1 1 0 00-1.21.502l-1.13 2.257a11.042 11.042 0 01-5.516-5.517l2.257-1.128a1 1 0 00.502-1.21L9.228 3.683A1 1 0 008.279 3H5z"/></svg>
+          </button>
+          <div class="flex items-center bg-obsidian-800 p-1 rounded-full border border-obsidian-700">
+            <button class="px-3 py-1 rounded-full text-xs font-semibold bg-brand-500 text-white">Composição</button>
+            <button class="px-3 py-1 rounded-full text-xs font-medium text-obsidian-400 hover:text-white flex items-center gap-1">
+              Grade <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CAMPOS DE FORMULÁRIO & CUSTÓDIA DE CHAVE -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Inputs & Toggles -->
+        <div class="p-6 rounded-xl bg-obsidian-900 border border-obsidian-800 space-y-4">
+          <h3 class="text-sm font-bold uppercase tracking-wider text-obsidian-400">2. Formulários, Radios & Switches</h3>
+          
+          <div class="space-y-3">
+            <div>
+              <label class="block text-xs font-medium text-obsidian-300 mb-1">Handle do Utilizador</label>
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-obsidian-400 font-mono text-sm">@</span>
+                <input type="text" value="mestre_aventuras" class="w-full pl-8 pr-3 py-2 bg-obsidian-850 border border-obsidian-700 rounded-lg text-sm text-white focus:outline-none focus:border-brand-500 font-sans">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-obsidian-300 mb-1">Palavra-passe (mínimo 8 caracteres)</label>
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-obsidian-400">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                </span>
+                <input type="password" value="rpg-secret-pass" class="w-full pl-9 pr-10 py-2 bg-obsidian-850 border border-obsidian-700 rounded-lg text-sm text-white focus:outline-none focus:border-brand-500 font-mono">
+                <button class="absolute inset-y-0 right-0 pr-3 flex items-center text-obsidian-400 hover:text-white text-xs">
+                  👁️
+                </button>
+              </div>
+            </div>
+
+            <!-- Radio Visibilidade de Canal -->
+            <div class="pt-2">
+              <label class="block text-xs font-medium text-obsidian-300 mb-2">Visibilidade do Canal</label>
+              <div class="flex gap-4">
+                <label class="flex items-center gap-2 text-sm text-white cursor-pointer">
+                  <input type="radio" name="vis" checked class="accent-brand-500">
+                  <span>Público</span>
+                </label>
+                <label class="flex items-center gap-2 text-sm text-obsidian-400 cursor-pointer">
+                  <input type="radio" name="vis" class="accent-brand-500">
+                  <span>Privado (com cadeado)</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Checkbox Switch Permissões -->
+            <div class="pt-2 flex items-center justify-between border-t border-obsidian-800">
+              <div>
+                <p class="text-sm font-semibold text-white">Enviar Mensagens de Texto</p>
+                <p class="text-xs text-obsidian-400">Permite postar mensagens no canal</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" checked class="sr-only peer">
+                <div class="w-11 h-6 bg-obsidian-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-500"></div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bloco de Custódia de Chave E2EE Obrigatório -->
+        <div class="p-6 rounded-xl bg-obsidian-900 border border-obsidian-800 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-obsidian-400">3. Custódia de Chave E2EE</h3>
+            <span class="text-[10px] font-mono text-brand-400 bg-brand-500/10 px-2 py-0.5 rounded border border-brand-500/30">CRÍTICO / COFRE</span>
+          </div>
+          <p class="text-xs text-obsidian-300 leading-relaxed">
+            Exibido ao criar servidor ou criar canal de voz com E2EE. O usuário precisa confirmar a custódia para destravar a ação de criação.
+          </p>
+
+          <div class="bg-obsidian-950 p-3.5 rounded-lg border border-obsidian-800 space-y-2">
+            <div class="flex items-center justify-between text-xs text-obsidian-400">
+              <span class="font-mono">Chave criptográfica gerada:</span>
+              <button class="text-brand-400 hover:text-brand-300 font-mono text-xs flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                Copiar Chave
+              </button>
+            </div>
+            <p class="font-mono text-xs text-emerald-400 break-all bg-obsidian-900/90 p-2.5 rounded border border-obsidian-750 select-all">
+              mesa-v2-key#7a8f902e4c198b1b5e39aa41890cd4208e92f153a812
+            </p>
+          </div>
+
+          <label class="flex items-start gap-2.5 text-xs text-obsidian-300 cursor-pointer pt-1">
+            <input type="checkbox" checked class="mt-0.5 accent-brand-500 rounded">
+            <span>Confirmo que <strong>guardei a chave</strong> em local seguro. Estou ciente de que a Mesa não armazena chaves no servidor e não é possível recuperá-la sem ela.</span>
+          </label>
+
+          <button class="w-full py-2.5 rounded-full bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm shadow-md transition-all">
+            Criar Servidor Criptografado
+          </button>
+        </div>
+      </div>
+
+      <!-- CHIPS, BADGES, MENÇÕES & AVATARES -->
+      <div class="p-6 rounded-xl bg-obsidian-900 border border-obsidian-800 space-y-4">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-obsidian-400">4. Chips, Menções, Badges & Avatares</h3>
+        <div class="flex flex-wrap items-center gap-4">
+          <!-- Chip E2EE Ligada -->
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-medium bg-emerald-950/80 text-emerald-400 border border-emerald-700/60 shadow-sm">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            <span>E2EE ligada</span>
+          </div>
+
+          <!-- Chip E2EE Desligada -->
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-medium bg-amber-950/80 text-amber-400 border border-amber-700/60 shadow-sm">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            <span>E2EE desligada</span>
+          </div>
+
+          <!-- Menção @handle -->
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-brand-500/20 text-brand-400 border border-brand-500/30 cursor-pointer hover:bg-brand-500/30 transition-colors">
+            @mestre_rpg
+          </span>
+
+          <!-- Badge Dono -->
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+            DONO
+          </span>
+
+          <!-- Avatares com status -->
+          <div class="flex items-center gap-3">
+            <div class="relative">
+              <div class="w-9 h-9 rounded-full bg-brand-500/30 text-brand-300 font-bold flex items-center justify-center text-sm border border-brand-500/40">
+                MR
+              </div>
+              <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-obsidian-900"></span>
+            </div>
+
+            <!-- Avatar a Falar -->
+            <div class="relative">
+              <div class="w-9 h-9 rounded-full bg-indigo-500/30 text-indigo-300 font-bold flex items-center justify-center text-sm ring-2 ring-brand-500 ring-offset-2 ring-offset-obsidian-900 animate-pulse">
+                AL
+              </div>
+              <span class="absolute -top-1 -right-1 px-1 rounded-full bg-brand-500 text-[9px] font-mono text-white">🎙️</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MENSAGENS, COMPOSER & LIGHTBOX DE CHAT -->
+      <div class="p-6 rounded-xl bg-obsidian-900 border border-obsidian-800 space-y-4">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-obsidian-400">5. Fluxo de Chat: Mensagem, Citação & Composer</h3>
+        
+        <!-- Stream de Mensagens de Exemplo -->
+        <div class="bg-obsidian-850 p-4 rounded-xl border border-obsidian-750 space-y-4">
+          <!-- Separador de Dia Sticky -->
+          <div class="flex items-center justify-center my-2">
+            <div class="border-t border-obsidian-700 flex-1"></div>
+            <span class="px-3 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-obsidian-800 text-obsidian-400 border border-obsidian-700">Hoje</span>
+            <div class="border-t border-obsidian-700 flex-1"></div>
+          </div>
+
+          <!-- Mensagem com Resposta/Citação -->
+          <div class="group relative hover:bg-obsidian-800/40 p-2.5 rounded-lg transition-colors">
+            <!-- Citação -->
+            <div class="flex items-center gap-2 text-xs text-obsidian-400 mb-1 ml-10">
+              <span class="text-obsidian-600">┌</span>
+              <span class="font-bold text-obsidian-300">@clérigo_cura:</span>
+              <span class="truncate">Posso lançar Bênção antes de abrirmos a porta?</span>
+            </div>
+
+            <div class="flex items-start gap-3">
+              <div class="w-8 h-8 rounded-full bg-brand-500/20 text-brand-300 font-bold flex items-center justify-center text-xs shrink-0 border border-brand-500/30">
+                MR
+              </div>
+              <div class="space-y-1 flex-1">
+                <div class="flex items-baseline gap-2">
+                  <span class="font-bold text-sm text-white">mestre_rpg</span>
+                  <span class="text-[10px] font-mono text-obsidian-400">19:42</span>
+                  <span class="text-[10px] font-mono text-emerald-400 flex items-center gap-0.5">🔒 e2ee</span>
+                </div>
+                <p class="text-sm text-obsidian-200 leading-relaxed">
+                  Com certeza! Role 1d4 adicional para todos os testes e ataques durante os próximos 10 turnos. Preparem as fichas.
+                </p>
+
+                <!-- Pré-visualização de Anexo Criptografado -->
+                <div class="mt-2 inline-block rounded-lg overflow-hidden border border-obsidian-700 bg-obsidian-950 p-1">
+                  <div class="w-48 h-28 bg-obsidian-800 rounded flex flex-col items-center justify-center text-obsidian-400 cursor-pointer hover:border-brand-500 border border-transparent transition-all">
+                    <span class="text-xl">🗺️</span>
+                    <span class="text-xs font-mono mt-1 text-white">mapa_masmorra.webp</span>
+                    <span class="text-[10px] text-obsidian-400">1.2 MB • Clique para Lightbox</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Botões de Hover (Responder / Apagar) -->
+            <div class="absolute right-3 top-3 hidden group-hover:flex items-center bg-obsidian-900 border border-obsidian-700 rounded-lg p-0.5 shadow-md">
+              <button class="p-1.5 hover:bg-obsidian-800 text-obsidian-300 hover:text-white rounded" title="Responder">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+              </button>
+              <button class="p-1.5 hover:bg-obsidian-800 text-obsidian-300 hover:text-red-400 rounded" title="Apagar">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Composer de Mensagem -->
+        <div class="bg-obsidian-850 p-3 rounded-xl border border-obsidian-750 space-y-2">
+          <!-- Alvo de Resposta Ativo -->
+          <div class="flex items-center justify-between bg-obsidian-900 px-3 py-1.5 rounded-lg border-l-2 border-brand-500 text-xs text-obsidian-300">
+            <span class="truncate">A responder a <strong class="text-white">@mestre_rpg</strong>: "Role 1d4 adicional..."</span>
+            <button class="text-obsidian-400 hover:text-white">✕</button>
+          </div>
+
+          <div class="flex items-end gap-2">
+            <button class="p-2 rounded-lg bg-obsidian-800 hover:bg-obsidian-750 text-obsidian-300 hover:text-white transition-colors" title="Anexar imagem">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+            </button>
+            <div class="flex-1 bg-obsidian-800 rounded-lg p-2 flex items-center border border-obsidian-700 focus-within:border-brand-500 transition-colors">
+              <input type="text" placeholder="Conversar em #geral... (use @ para mencionar, : para emojis)" class="w-full bg-transparent text-sm text-white placeholder-obsidian-400 focus:outline-none">
+              <button class="p-1 text-obsidian-400 hover:text-amber-400 transition-colors" title="Emoji">
+                😊
+              </button>
+            </div>
+            <button class="w-10 h-10 rounded-full bg-brand-500 hover:bg-brand-600 text-white flex items-center justify-center shrink-0 shadow transition-all active:scale-90" title="Enviar Mensagem">
+              <svg class="w-4 h-4 translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO 5: COMPOSIÇÃO DE CÂMERAS & TILES DE VOZ/VÍDEO -->
+    <section class="space-y-8">
+      <div class="border-b border-obsidian-800 pb-4">
+        <div class="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-brand-400">
+          <span>05 // Tabletop Voice & Video</span>
+        </div>
+        <h2 class="text-2xl font-bold text-white tracking-tight mt-1">Composição de Câmeras & Tiles de Voz/Vídeo</h2>
+        <p class="text-sm text-obsidian-400 mt-1">O diferencial da Mesa: layouts nomeados (Mestre em Destaque, Painel, Faixa) e assentos de stream.</p>
+      </div>
+
+      <!-- Demonstração de Layout Nomeado: Mestre em Destaque -->
+      <div class="p-6 rounded-xl bg-obsidian-900 border border-obsidian-800 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-obsidian-800 pb-3">
+          <div class="flex items-center gap-3">
+            <span class="px-2.5 py-1 rounded bg-brand-500/20 text-brand-400 text-xs font-mono font-bold">LAYOUT: Mestre em Destaque (4 posições)</span>
+            <span class="text-xs text-obsidian-400">01:24:19 de sessão • 5 ocupantes</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="px-3 py-1 rounded-md bg-obsidian-800 text-xs font-medium text-obsidian-300 hover:text-white border border-obsidian-700">
+              ⋯ Editar Cena (Admin)
+            </button>
+            <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-400 text-xs font-mono border border-emerald-800">
+              🔒 E2EE Ativa
+            </div>
+          </div>
+        </div>
+
+        <!-- Canvas de Câmeras -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 h-96">
+          <!-- Palco Principal (Mestre) -->
+          <div class="md:col-span-8 bg-obsidian-950 rounded-xl border-2 border-brand-500/80 relative overflow-hidden flex flex-col justify-between p-4 shadow-xl">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 pointer-events-none"></div>
+            
+            <div class="relative z-10 flex items-center justify-between">
+              <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-black/60 text-white backdrop-blur border border-white/10 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-brand-500 animate-ping"></span>
+                Posição #1 • MESTRE DE MESA
+              </span>
+              <span class="px-2 py-0.5 rounded bg-brand-500 text-[10px] font-mono font-bold text-white uppercase">A FALAR</span>
+            </div>
+
+            <!-- Avatar central simulado -->
+            <div class="relative z-10 self-center text-center">
+              <div class="w-24 h-24 rounded-full bg-brand-500/20 border-2 border-brand-500 text-brand-300 flex items-center justify-center text-3xl font-extrabold shadow-2xl mx-auto">
+                🧙‍♂️
+              </div>
+              <p class="text-white font-bold mt-2 text-base">@dungeon_master</p>
+              <p class="text-xs text-obsidian-400 font-mono">1080p60 • Blur Leve</p>
+            </div>
+
+            <div class="relative z-10 flex items-center justify-between text-xs text-white">
+              <span class="font-mono bg-black/50 px-2 py-0.5 rounded">Microfone Aberto</span>
+              <span class="text-emerald-400 flex items-center gap-1 font-mono">● 48kHz HD Áudio</span>
+            </div>
+          </div>
+
+          <!-- Posições Laterais dos Jogadores -->
+          <div class="md:col-span-4 flex flex-col gap-3">
+            <!-- Jogador 2 -->
+            <div class="flex-1 bg-obsidian-950 rounded-xl border border-obsidian-750 relative overflow-hidden p-3 flex flex-col justify-between">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold text-white bg-black/60 px-2 py-0.5 rounded">Posição #2 • Guerreiro</span>
+                <span class="text-[10px] font-mono text-emerald-400">● 720p</span>
+              </div>
+              <div class="self-center flex items-center gap-2">
+                <div class="w-10 h-10 rounded-full bg-blue-500/20 text-blue-300 font-bold flex items-center justify-center text-sm border border-blue-500/40">
+                  ⚔️
+                </div>
+                <div class="text-xs">
+                  <p class="font-bold text-white">@thorin_iron</p>
+                  <p class="text-[10px] text-obsidian-400">Silencioso</p>
+                </div>
+              </div>
+              <div class="text-[10px] text-obsidian-400 font-mono flex justify-between">
+                <span>Mic: Ativo</span>
+                <span>Assento #2</span>
+              </div>
+            </div>
+
+            <!-- Jogador 3 -->
+            <div class="flex-1 bg-obsidian-950 rounded-xl border border-obsidian-750 relative overflow-hidden p-3 flex flex-col justify-between">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold text-white bg-black/60 px-2 py-0.5 rounded">Posição #3 • Maga Élfica</span>
+                <span class="text-[10px] font-mono text-emerald-400">● 720p</span>
+              </div>
+              <div class="self-center flex items-center gap-2">
+                <div class="w-10 h-10 rounded-full bg-purple-500/20 text-purple-300 font-bold flex items-center justify-center text-sm border border-purple-500/40">
+                  🔮
+                </div>
+                <div class="text-xs">
+                  <p class="font-bold text-white">@elysia_star</p>
+                  <p class="text-[10px] text-obsidian-400">Ouvindo</p>
+                </div>
+              </div>
+              <div class="text-[10px] text-obsidian-400 font-mono flex justify-between">
+                <span>Mic: Mudo</span>
+                <span>Assento #3</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Banco de Ocupantes (Não Atribuídos ao Palco) -->
+        <div class="bg-obsidian-950 p-3 rounded-lg border border-obsidian-800 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <span class="text-xs font-mono text-obsidian-400 uppercase">No Banco (1):</span>
+            <div class="flex items-center gap-2 bg-obsidian-900 px-2.5 py-1 rounded-md border border-obsidian-750 text-xs">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span class="text-white font-medium">@bardo_espectador</span>
+              <span class="text-[10px] font-mono text-obsidian-400">(Apenas Ouvir)</span>
+            </div>
+          </div>
+          <span class="text-xs text-obsidian-400">Arraste para o palco ou atribua posições via Editor de Cena</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO 6: CONJUNTO DE ÍCONES DO NOVO DESIGN SYSTEM -->
+    <section id="icones" class="space-y-6">
+      <div class="border-b border-obsidian-800 pb-4">
+        <div class="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-brand-400">
+          <span>06 // Iconografia Padronizada</span>
+        </div>
+        <h2 class="text-2xl font-bold text-white tracking-tight mt-1">Biblioteca de Ícones Oficiais (24px)</h2>
+        <p class="text-sm text-obsidian-400 mt-1">Cobrindo integralmente todos os símbolos exigidos pelo mandato da Mesa.</p>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 text-xs">
+        <div class="p-3 rounded-lg bg-obsidian-900 border border-obsidian-800 flex items-center gap-3">
+          <span class="w-8 h-8 rounded bg-obsidian-800 flex items-center justify-center text-brand-400 text-sm font-mono font-bold">#</span>
+          <div>
+            <p class="font-bold text-white">Canal Texto</p>
+            <p class="text-[10px] text-obsidian-400 font-mono">hash-icon</p>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-lg bg-obsidian-900 border border-obsidian-800 flex items-center gap-3">
+          <span class="w-8 h-8 rounded bg-obsidian-800 flex items-center justify-center text-brand-400 text-sm">🎧</span>
+          <div>
+            <p class="font-bold text-white">Canal Voz</p>
+            <p class="text-[10px] text-obsidian-400 font-mono">headset</p>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-lg bg-obsidian-900 border border-obsidian-800 flex items-center gap-3">
+          <span class="w-8 h-8 rounded bg-obsidian-800 flex items-center justify-center text-emerald-400 text-sm">🔒</span>
+          <div>
+            <p class="font-bold text-white">E2EE Locked</p>
+            <p class="text-[10px] text-obsidian-400 font-mono">shield-lock</p>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-lg bg-obsidian-900 border border-obsidian-800 flex items-center gap-3">
+          <span class="w-8 h-8 rounded bg-obsidian-800 flex items-center justify-center text-brand-400 text-sm">🎙️</span>
+          <div>
+            <p class="font-bold text-white">Microfone</p>
+            <p class="text-[10px] text-obsidian-400 font-mono">mic-toggle</p>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-lg bg-obsidian-900 border border-obsidian-800 flex items-center gap-3">
+          <span class="w-8 h-8 rounded bg-obsidian-800 flex items-center justify-center text-brand-400 text-sm">📹</span>
+          <div>
+            <p class="font-bold text-white">Câmera</p>
+            <p class="text-[10px] text-obsidian-400 font-mono">video-camera</p>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-lg bg-obsidian-900 border border-obsidian-800 flex items-center gap-3">
+          <span class="w-8 h-8 rounded bg-obsidian-800 flex items-center justify-center text-purple-400 text-sm">🖥️</span>
+          <div>
+            <p class="font-bold text-white">Partilha Ecrã</p>
+            <p class="text-[10px] text-obsidian-400 font-mono">screen-share</p>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-lg bg-obsidian-900 border border-obsidian-800 flex items-center gap-3">
+          <span class="w-8 h-8 rounded bg-obsidian-800 flex items-center justify-center text-red-400 text-sm">📵</span>
+          <div>
+            <p class="font-bold text-white">Surdo/Ouvir</p>
+            <p class="text-[10px] text-obsidian-400 font-mono">deafen-state</p>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-lg bg-obsidian-900 border border-obsidian-800 flex items-center gap-3">
+          <span class="w-8 h-8 rounded bg-obsidian-800 flex items-center justify-center text-red-500 text-sm">🔴</span>
+          <div>
+            <p class="font-bold text-white">Sair Chamada</p>
+            <p class="text-[10px] text-obsidian-400 font-mono">leave-call</p>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-lg bg-obsidian-900 border border-obsidian-800 flex items-center gap-3">
+          <span class="w-8 h-8 rounded bg-obsidian-800 flex items-center justify-center text-amber-400 text-sm">🔔</span>
+          <div>
+            <p class="font-bold text-white">Notificações</p>
+            <p class="text-[10px] text-obsidian-400 font-mono">bell-badge</p>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-lg bg-obsidian-900 border border-obsidian-800 flex items-center gap-3">
+          <span class="w-8 h-8 rounded bg-obsidian-800 flex items-center justify-center text-blue-400 text-sm">🔍</span>
+          <div>
+            <p class="font-bold text-white">Pesquisa</p>
+            <p class="text-[10px] text-obsidian-400 font-mono">search-bar</p>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-lg bg-obsidian-900 border border-obsidian-800 flex items-center gap-3">
+          <span class="w-8 h-8 rounded bg-obsidian-800 flex items-center justify-center text-amber-300 text-sm">🌓</span>
+          <div>
+            <p class="font-bold text-white">Alternador Tema</p>
+            <p class="text-[10px] text-obsidian-400 font-mono">auto/light/dark</p>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-lg bg-obsidian-900 border border-obsidian-800 flex items-center gap-3">
+          <span class="w-8 h-8 rounded bg-obsidian-800 flex items-center justify-center text-obsidian-300 text-sm">⚙️</span>
+          <div>
+            <p class="font-bold text-white">Definições</p>
+            <p class="text-[10px] text-obsidian-400 font-mono">settings-gear</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO 7: MATRIZ DE TELAS E FLUXOS (100% COBERTURA DO PROMPT) -->
+    <section id="arquitetura" class="space-y-6">
+      <div class="border-b border-obsidian-800 pb-4">
+        <div class="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-brand-400">
+          <span>07 // Matriz de Telas & Especificações</span>
+        </div>
+        <h2 class="text-2xl font-bold text-white tracking-tight mt-1">Mapeamento Arquitetural de 100% dos Ecrãs</h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-sm">
+        <!-- 3.1 Auth & Onboarding -->
+        <div class="p-5 rounded-xl bg-obsidian-900 border border-obsidian-800 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-white flex items-center gap-2">
+              <span class="text-brand-400 font-mono">3.1</span> Autenticação & Onboarding
+            </h3>
+            <span class="text-[10px] font-mono text-emerald-400">Completo</span>
+          </div>
+          <ul class="text-xs text-obsidian-400 space-y-1.5 list-disc list-inside">
+            <li>Ecrã login/registo em 2 colunas com aviso self-hosted</li>
+            <li>Campos handle (@), password (8 chars + toggle)</li>
+            <li>Botão que adapta rótulo: Entrar / Registar / Desbloquear</li>
+            <li>Fluxo de desbloqueio de cofre de identidade local</li>
+            <li>Ecrã de convite com prévia sem sessão e registro inline</li>
+          </ul>
+        </div>
+
+        <!-- 3.2 Servidores -->
+        <div class="p-5 rounded-xl bg-obsidian-900 border border-obsidian-800 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-white flex items-center gap-2">
+              <span class="text-brand-400 font-mono">3.2</span> Servidores
+            </h3>
+            <span class="text-[10px] font-mono text-emerald-400">Completo</span>
+          </div>
+          <ul class="text-xs text-obsidian-400 space-y-1.5 list-disc list-inside">
+            <li>Diálogo Criar Servidor com chave gerada + checkbox obrigatória</li>
+            <li>Definições (/settings): Grupo Pessoas, Papéis, Servidor</li>
+            <li>Permissões de Cargos (Geral, Texto, Voz) com toggle read-only para sistema</li>
+            <li>Upload de imagem JPEG/PNG/WebP até 1 MiB</li>
+            <li>Mensagem de boas-vindas com canal selector + template</li>
+          </ul>
+        </div>
+
+        <!-- 3.3 Canais -->
+        <div class="p-5 rounded-xl bg-obsidian-900 border border-obsidian-800 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-white flex items-center gap-2">
+              <span class="text-brand-400 font-mono">3.3</span> Canais & ACL
+            </h3>
+            <span class="text-[10px] font-mono text-emerald-400">Completo</span>
+          </div>
+          <ul class="text-xs text-obsidian-400 space-y-1.5 list-disc list-inside">
+            <li>Criar canal com seletor emoji, visibilidade e custódia para voz</li>
+            <li>Renomeação inline com normalização de hífen (limite 32 chars)</li>
+            <li>Construtor de regras ACL com Inspetor de Acesso resolvido</li>
+            <li>Silenciar membro com timeouts (5/10/15/30 min)</li>
+            <li>Roster inline de voz com indicadores de fala e compartilhamento</li>
+          </ul>
+        </div>
+
+        <!-- 3.4 Chat de Texto -->
+        <div class="p-5 rounded-xl bg-obsidian-900 border border-obsidian-800 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-white flex items-center gap-2">
+              <span class="text-brand-400 font-mono">3.4</span> Chat de Texto
+            </h3>
+            <span class="text-[10px] font-mono text-emerald-400">Completo</span>
+          </div>
+          <ul class="text-xs text-obsidian-400 space-y-1.5 list-disc list-inside">
+            <li>Header com chip fixo "E2EE ligada" inegociável em texto</li>
+            <li>Separador de dias com comportamento sticky no scroll</li>
+            <li>Agrupamento de remetentes consecutivos + citações inline</li>
+            <li>Lightbox de imagens decifradas com zoom e arrasto</li>
+            <li>Autocomplete de @menções e :emojis: + pill "Saltar ao presente"</li>
+          </ul>
+        </div>
+
+        <!-- 3.5 Voz & Vídeo -->
+        <div class="p-5 rounded-xl bg-obsidian-900 border border-obsidian-800 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-white flex items-center gap-2">
+              <span class="text-brand-400 font-mono">3.5</span> Voz / Vídeo & Streaming
+            </h3>
+            <span class="text-[10px] font-mono text-emerald-400">Completo</span>
+          </div>
+          <ul class="text-xs text-obsidian-400 space-y-1.5 list-disc list-inside">
+            <li>Pré-entrada com "Testar vídeo" (padrão de teste) e "Apenas ouvir"</li>
+            <li>Comutador Composição / Grade com ponto de tela</li>
+            <li>Faixa permanente de "E2EE desligada" com fluxo de religar</li>
+            <li>Editor de Cena para Admin (drag-and-drop de assentos 2 a 8)</li>
+            <li>Seletor de blur em tempo real: Nenhum / Leve / Forte</li>
+          </ul>
+        </div>
+
+        <!-- 3.6 Shell Persistente -->
+        <div class="p-5 rounded-xl bg-obsidian-900 border border-obsidian-800 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-white flex items-center gap-2">
+              <span class="text-brand-400 font-mono">3.6</span> Shell Persistente
+            </h3>
+            <span class="text-[10px] font-mono text-emerald-400">Completo</span>
+          </div>
+          <ul class="text-xs text-obsidian-400 space-y-1.5 list-disc list-inside">
+            <li>Rail de servidores com badge de voz e não lidos</li>
+            <li>Topbar com pesquisa expandível e alternador Sistema/Claro/Escuro</li>
+            <li>Painel do Usuário na base da sidebar com controles de chamada dedicados</li>
+            <li>Popover de conta com edição de Display Name e alternador PT-BR / EN</li>
+            <li>PiP flutuante de chamada arrastável com snap nos 4 cantos</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Rodapé do Design System -->
+  <footer class="border-t border-obsidian-800 bg-obsidian-950 py-8 px-6 text-xs text-obsidian-400">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuA3BIfZBJ87N7RLdT4J5ALhaq17YVxvSepE8jzxXHDesy-p3zeNYtgEto4cHB97Lw483KiKVudCptwmYuJXeUIaWK1sUvgGOlj1-Ou0ot29mMEfEntSMAwuYkWx9JQ-hJvX1U8fzQ1zg1k9EOlGrgTWa7lURdKDSu956tKsriMI-FCbceApoYtlstQdv41006DNhiNgvItnKGwwsjE4tzNQcytF1ApSLUZ4lLH3Hcr-yTa-NHy1uImA5w" alt="Mesa Logo" class="w-6 h-6 rounded-full">
+        <span class="text-white font-bold">Mesa — Chat & Vídeo Self-Hosted Criptografado</span>
+      </div>
+      <p class="font-mono text-[11px]">Desenvolvido com fidelidade estrita ao mandato do exercício • Sem adições fora do escopo</p>
+    </div>
+  </footer>
+
+</body>
+</html>

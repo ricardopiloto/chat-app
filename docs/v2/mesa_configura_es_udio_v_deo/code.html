@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "on-primary-container": "#5b1604", "secondary-fixed-dim": "#6bdc96", "on-tertiary": "#3c0090", "surface-container-highest": "#32343e", "on-surface-variant": "#dbc1ba", "primary-fixed": "#ffdbd2", "tertiary-container": "#a680fd", "on-secondary": "#00391d", "on-error": "#690005", "primary-container": "#e07a5f", "on-primary-fixed-variant": "#7c2e19", "surface-container-lowest": "#0b0e17", "on-tertiary-fixed-variant": "#5429a6", "on-secondary-container": "#003118", "background": "#10131c", "surface-bright": "#363943", "on-primary-fixed": "#3c0800", "on-background": "#e0e2ef", "outline-variant": "#55423e", "on-surface": "#e0e2ef", "surface-container-low": "#181b24", "error-container": "#93000a", "secondary-fixed": "#88f9b0", "secondary-container": "#2ca464", "on-tertiary-fixed": "#24005b", "on-error-container": "#ffdad6", "tertiary-fixed": "#eaddff", "secondary": "#6bdc96", "surface-container-high": "#272a33", "on-primary": "#5d1805", "surface-variant": "#32343e", "surface-container": "#1c1f29", "primary": "#ffb4a1", "on-secondary-fixed": "#00210f", "on-tertiary-container": "#3b008c", "outline": "#a38b86", "surface": "#10131c", "error": "#ffb4ab", "primary-fixed-dim": "#ffb4a1", "inverse-on-surface": "#2d303a", "tertiary-fixed-dim": "#d1bcff", "on-secondary-fixed-variant": "#00522c", "inverse-surface": "#e0e2ef", "surface-tint": "#ffb4a1", "surface-dim": "#10131c", "tertiary": "#d1bcff", "inverse-primary": "#9a442d" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-xl": "2.5rem", "margin": "1rem", "space-md": "1rem", "space-xs": "0.25rem", "space-lg": "1.5rem", "gutter": "1rem", "space-sm": "0.5rem", "margin-desktop": "2rem", "gutter-desktop": "1.5rem" }, "fontFamily": { "body-md": ["Inter"], "body-sm": ["Inter"], "display-lg-mobile": ["Plus Jakarta Sans"], "label-ui": ["Inter"], "headline-lg": ["Plus Jakarta Sans"], "body-lg": ["Inter"], "headline-sm": ["Plus Jakarta Sans"], "display-lg": ["Plus Jakarta Sans"], "label-code-sm": ["JetBrains Mono"], "headline-md": ["Plus Jakarta Sans"], "label-code-md": ["JetBrains Mono"] }, "fontSize": { "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }], "body-sm": ["12px", { "lineHeight": "18px", "fontWeight": "400" }], "display-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "700" }], "label-ui": ["12px", { "lineHeight": "16px", "fontWeight": "600" }], "headline-lg": ["24px", { "lineHeight": "32px", "fontWeight": "600" }], "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }], "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }], "display-lg": ["36px", { "lineHeight": "44px", "fontWeight": "700" }], "label-code-sm": ["11px", { "lineHeight": "16px", "fontWeight": "500" }], "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }], "label-code-md": ["13px", { "lineHeight": "18px", "fontWeight": "500" }] } } } };</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-[72px] bg-surface-container-lowest flex flex-col items-center py-space-md gap-space-sm z-50 shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-primary hover:bg-surface-container-high transition-colors cursor-pointer mb-space-xs"><span class="material-symbols-outlined text-[24px]">local_fire_department</span></div><div class="w-8 h-[2px] bg-outline-variant/30 rounded-full mb-space-xs"></div><div class="w-12 h-12 rounded-xl bg-surface-container-high flex items-center justify-center text-on-surface hover:bg-surface-container-highest transition-colors cursor-pointer"><span class="material-symbols-outlined text-[22px]">shield</span></div><div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface transition-colors cursor-pointer"><span class="material-symbols-outlined text-[22px]">casino</span></div><div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface transition-colors cursor-pointer"><span class="material-symbols-outlined text-[22px]">hub</span></div><div class="mt-auto flex flex-col items-center gap-space-sm"><div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface transition-colors cursor-pointer"><span class="material-symbols-outlined text-[22px]">explore</span></div><div class="w-12 h-12 rounded-xl bg-primary-container text-on-primary-container flex items-center justify-center shadow-sm cursor-pointer"><span class="material-symbols-outlined text-[22px]">settings</span></div></div></aside><aside class="fixed left-[72px] top-0 h-full w-60 bg-surface-container-low flex flex-col z-40 shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 px-space-md flex items-center gap-space-sm"><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight">Ajustes do Sistema</span></div><div class="flex-1 overflow-y-auto px-space-sm py-space-xs"><div class="px-space-sm pt-space-sm pb-space-xs font-label-ui text-label-ui tracking-wider text-outline uppercase">Identidade &amp; Cripto</div><nav class="flex flex-col gap-space-xs mb-space-md" data-active-classes="bg-primary-container text-on-primary-container font-semibold rounded-lg"><a class="flex items-center gap-space-sm px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface font-body-sm text-body-sm transition-colors" data-path="minha-conta" href="#"><span class="material-symbols-outlined text-[18px]">badge</span>Minha Conta</a><a class="flex items-center gap-space-sm px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface font-body-sm text-body-sm transition-colors" data-path="cofre-de-chaves-e2ee" href="#"><span class="material-symbols-outlined text-[18px]">vpn_key</span>Cofre de Chaves E2EE</a><a class="flex items-center gap-space-sm px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface font-body-sm text-body-sm transition-colors" data-path="dispositivos-e-sessoes" href="#"><span class="material-symbols-outlined text-[18px]">devices</span>Dispositivos &amp; Sessões</a></nav><div class="px-space-sm pt-space-sm pb-space-xs font-label-ui text-label-ui tracking-wider text-outline uppercase">Experiência Mesa</div><nav class="flex flex-col gap-space-xs mb-space-md" data-active-classes="bg-primary-container text-on-primary-container font-semibold rounded-lg"><a aria-current="page" class="flex items-center gap-space-sm px-space-sm py-space-xs transition-colors bg-primary-container text-on-primary-container font-semibold rounded-lg" data-path="audio-e-video" href="#"><span class="material-symbols-outlined text-[18px]">graphic_eq</span>Áudio &amp; Vídeo</a><a class="flex items-center gap-space-sm px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface font-body-sm text-body-sm transition-colors" data-path="aparencia" href="#"><span class="material-symbols-outlined text-[18px]">palette</span>Aparência</a><a class="flex items-center gap-space-sm px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface font-body-sm text-body-sm transition-colors" data-path="notificacoes" href="#"><span class="material-symbols-outlined text-[18px]">notifications</span>Notificações</a></nav><div class="px-space-sm pt-space-sm pb-space-xs font-label-ui text-label-ui tracking-wider text-outline uppercase">Avançado &amp; Rede</div><nav class="flex flex-col gap-space-xs" data-active-classes="bg-primary-container text-on-primary-container font-semibold rounded-lg"><a class="flex items-center gap-space-sm px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface font-body-sm text-body-sm transition-colors" data-path="nos-p2p-e-relays" href="#"><span class="material-symbols-outlined text-[18px]">router</span>Nós P2P &amp; Relays</a><a class="flex items-center gap-space-sm px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface font-body-sm text-body-sm transition-colors" data-path="logs-e-auditoria" href="#"><span class="material-symbols-outlined text-[18px]">terminal</span>Logs &amp; Auditoria</a></nav></div></aside><div class="pl-[312px]"><header class="fixed top-0 left-[312px] right-0 h-16 bg-surface/80 backdrop-blur-xl z-30 shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 w-full px-margin-desktop flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-md"><img alt="Geometric minimalist emblem logo for 'Mesa', a self-hosted encrypted chat and tabletop voice/video platform. Icon shows an abstracted round game table combined with subtle interlocking protective cryptographic shield or circle rings, warm terracotta coral and warm ivory tones on a sleek dark badge background, modern flat vector design, clean SVG silhouette.. Design context: - Primary color: #e07a5f
+- Font: plusJakartaSans
+- Mode: dark
+- Roundness: rounded-md
+. The logo should be visually consistent with these brand tokens." class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Wu6JPFAgZCyVeUFfgF2Kw0tDR-hsarUUfylK14HYlLwAvvLQCMU2yFj9S9B1Q71Fq6zapDK3Irg2Zx3iMoLWvt5oI4ddFcNATCLKLLVNiGVWqORn8REKU_XDfAo6kzvp9H8bl2WpVm1hnyVH6oiUeJ6ldFclk2C5YFAzLugzQ4b3hq3royoiQ-7WRiEWXxpZNjUqQ8_iyE-6cBPASSapis3gp1Pn8ONomgG9Rap9nRDBJ_5ZY22pvfcGTv"/><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight">Mesa</span><div class="hidden lg:flex items-center gap-space-xs px-space-sm py-1 rounded-full bg-surface-container font-label-code-sm text-label-code-sm text-secondary"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>camp-br-04.mesa.mesh • 14ms</div><div class="hidden xl:flex items-center gap-space-xs px-space-sm py-1 rounded-full bg-surface-container font-label-code-sm text-label-code-sm text-on-surface-variant"><span class="material-symbols-outlined text-secondary text-[14px]">verified_user</span>Opus 48kHz / SRTP Blindado</div></div><div class="flex items-center gap-space-md"><button class="flex items-center gap-space-xs px-space-sm py-1.5 rounded-lg bg-surface-container-high text-on-surface hover:bg-surface-container-highest transition-colors font-label-ui text-label-ui" type="button"><kbd class="px-1.5 py-0.5 rounded bg-surface-container-lowest text-outline font-label-code-sm text-label-code-sm">ESC</kbd><span>Voltar à Mesa</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-16 bg-surface min-h-screen"><div class="flex flex-col w-full">
+<div class="w-full max-w-7xl mx-auto px-margin md:px-margin-desktop py-space-lg flex flex-col gap-space-xl">
+<!-- Header Section -->
+<header class="flex flex-col gap-space-md">
+<div class="flex flex-wrap items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-xs font-label-code-sm text-label-code-sm text-outline tracking-wider uppercase">
+<span>MESA_NODE_MEDIA</span>
+<span class="text-outline-variant">/</span>
+<span>HARDWARE_PREFERENCES</span>
+<span class="text-outline-variant">/</span>
+<span class="text-primary font-semibold">AUDIO_VIDEO</span>
+</div>
+<div class="flex flex-wrap items-center gap-space-xs">
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary/10 text-secondary font-label-code-sm text-label-code-sm">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+            Pipeline WebRTC / SRTP Seguro
+          </div>
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary-container/20 text-primary font-label-code-sm text-label-code-sm">
+<span class="material-symbols-outlined text-[14px]">bolt</span>
+            Codec Opus 48kHz Stereo
+          </div>
+</div>
+</div>
+<div class="flex flex-col lg:flex-row lg:items-end justify-between gap-space-lg">
+<div class="flex flex-col gap-space-xs max-w-3xl">
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Áudio &amp; Vídeo</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">
+            Configure dispositivos de captura de voz, cancelamento de ruído neural em hardware local, aceleração de GPU para câmeras WebRTC e calibragem de latência para mesas táticas.
+          </p>
+</div>
+<div class="flex items-center gap-space-sm shrink-0">
+<button class="flex items-center gap-space-xs px-space-md py-2.5 rounded-lg bg-surface-container-high text-on-surface hover:bg-surface-container-highest transition-colors font-label-ui text-label-ui shadow-sm" type="button">
+<span class="material-symbols-outlined text-[18px]">restart_alt</span>
+<span>Restaurar Padrões</span>
+</button>
+<button class="flex items-center gap-space-xs px-space-md py-2.5 rounded-lg bg-primary-container text-on-primary-container hover:brightness-110 active:scale-[0.99] transition-all font-label-ui text-label-ui shadow-md" id="btn-loopback-test" type="button">
+<span class="material-symbols-outlined text-[18px]">mic</span>
+<span>Testar Microfone (Loopback)</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Section 1: Dispositivos de Áudio & Medição em Tempo Real -->
+<section class="flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[20px]">graphic_eq</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">Dispositivos de Entrada &amp; Saída</h2>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-outline">HARDWARE_I/O_V2</span>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-space-md">
+<!-- Input Device (Microphone) -->
+<div class="flex flex-col gap-space-md p-space-lg rounded-xl bg-surface-container-low shadow-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs text-on-surface">
+<span class="material-symbols-outlined text-primary text-[20px]">mic</span>
+<span class="font-headline-sm text-headline-sm">Dispositivo de Entrada</span>
+</div>
+<span class="px-2 py-0.5 rounded bg-surface-container font-label-code-sm text-label-code-sm text-secondary">Detectado</span>
+</div>
+<!-- Select Input -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-ui text-label-ui text-on-surface-variant">Microfone Padrão</label>
+<div class="relative">
+<select class="w-full bg-surface-container-high text-on-surface px-space-md py-2.5 rounded-lg font-body-sm text-body-sm appearance-none cursor-pointer focus:outline-none focus:bg-surface-bright">
+<option selected="">Shure SM7B via Scarlett 2i2 USB (0x1234)</option>
+<option>Rode NT-USB Mini (CoreAudio)</option>
+<option>Microfone Embutido (MacBook Pro)</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-2.5 text-on-surface-variant pointer-events-none text-[20px]">expand_more</span>
+</div>
+</div>
+<!-- Input Volume Slider -->
+<div class="flex flex-col gap-2">
+<div class="flex items-center justify-between font-label-ui text-label-ui">
+<span class="text-on-surface-variant">Volume de Entrada</span>
+<span class="font-label-code-sm text-label-code-sm text-primary font-bold" id="input-vol-label">88%</span>
+</div>
+<input class="w-full h-1.5 bg-surface-container-highest rounded-lg appearance-none cursor-pointer accent-primary-container" id="input-vol-slider" max="100" min="0" type="range" value="88"/>
+<div class="flex justify-between font-label-code-sm text-label-code-sm text-outline">
+<span>-60 dB</span>
+<span>-36 dB</span>
+<span>-18 dB</span>
+<span>0 dB</span>
+</div>
+</div>
+<!-- Live VU Meter -->
+<div class="flex flex-col gap-1.5 p-space-sm rounded-lg bg-surface-container-lowest">
+<div class="flex items-center justify-between font-label-ui text-label-ui">
+<span class="text-on-surface-variant text-[11px] uppercase tracking-wider">Medidor de Sensibilidade em Tempo Real</span>
+<span class="font-label-code-sm text-label-code-sm text-secondary">-21.4 dBFS</span>
+</div>
+<!-- Segmented Level Bar -->
+<div class="relative w-full h-4 bg-surface-container rounded overflow-hidden flex gap-0.5 p-0.5">
+<!-- VU Segments simulated via flex items -->
+<div class="h-full flex-1 bg-secondary rounded-[1px]"></div>
+<div class="h-full flex-1 bg-secondary rounded-[1px]"></div>
+<div class="h-full flex-1 bg-secondary rounded-[1px]"></div>
+<div class="h-full flex-1 bg-secondary rounded-[1px]"></div>
+<div class="h-full flex-1 bg-secondary rounded-[1px]"></div>
+<div class="h-full flex-1 bg-secondary rounded-[1px]"></div>
+<div class="h-full flex-1 bg-secondary rounded-[1px]"></div>
+<div class="h-full flex-1 bg-secondary rounded-[1px]"></div>
+<div class="h-full flex-1 bg-secondary/80 rounded-[1px]"></div>
+<div class="h-full flex-1 bg-secondary/80 rounded-[1px]"></div>
+<div class="h-full flex-1 bg-primary rounded-[1px]"></div>
+<div class="h-full flex-1 bg-primary rounded-[1px]"></div>
+<div class="h-full flex-1 bg-primary/70 rounded-[1px]"></div>
+<div class="h-full flex-1 bg-surface-container-highest rounded-[1px]"></div>
+<div class="h-full flex-1 bg-surface-container-highest rounded-[1px]"></div>
+<div class="h-full flex-1 bg-surface-container-highest rounded-[1px]"></div>
+<div class="h-full flex-1 bg-surface-container-highest rounded-[1px]"></div>
+<div class="h-full flex-1 bg-surface-container-highest rounded-[1px]"></div>
+<div class="h-full flex-1 bg-surface-container-highest rounded-[1px]"></div>
+<div class="h-full flex-1 bg-surface-container-highest rounded-[1px]"></div>
+<!-- Threshold Marker -->
+<div class="absolute top-0 bottom-0 left-[62%] w-0.5 bg-primary shadow-[0_0_6px_rgba(224,122,95,0.8)] z-10" title="Gate de Ativação (-24dB)"></div>
+</div>
+<div class="flex items-center justify-between text-[10px] text-outline font-label-code-sm">
+<span>Mudo</span>
+<span class="text-primary font-semibold">▲ Limiar de Ativação (-24 dB)</span>
+<span>Pico</span>
+</div>
+</div>
+<!-- Input Mode Tabs -->
+<div class="flex flex-col gap-2 pt-2">
+<label class="font-label-ui text-label-ui text-on-surface-variant">Modo de Captura</label>
+<div class="grid grid-cols-2 p-1 bg-surface-container rounded-lg gap-1">
+<button class="py-2 rounded-md font-label-ui text-label-ui text-center transition-all bg-primary-container text-on-primary-container font-semibold shadow-sm" id="mode-voice-btn" type="button">
+                Ativação por Voz
+              </button>
+<button class="py-2 rounded-md font-label-ui text-label-ui text-center transition-all text-on-surface-variant hover:text-on-surface" id="mode-ptt-btn" type="button">
+                Push-to-Talk (Premir)
+              </button>
+</div>
+<!-- Auto Sensitivity Sub-row -->
+<div class="flex items-center justify-between px-space-xs py-1.5">
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm text-on-surface">Sensibilidade Automática Inteligente</span>
+<span class="font-label-code-sm text-label-code-sm text-outline">Ajusta o limiar dinamicamente aos ruídos de fundo</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-10 h-5 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-on-primary-container after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-secondary"></div>
+</label>
+</div>
+<!-- PTT Keybind Info (Conditional) -->
+<div class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-outline text-[18px]">keyboard</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Tecla Push-to-Talk:</span>
+<kbd class="px-2 py-0.5 rounded bg-surface-container-highest font-label-code-sm text-label-code-sm text-primary font-bold">CapsLock</kbd>
+</div>
+<button class="font-label-ui text-label-ui text-primary hover:text-primary-fixed transition-colors" type="button">
+                Editar Atalho
+              </button>
+</div>
+</div>
+</div>
+<!-- Output Device (Headphones/Speakers) -->
+<div class="flex flex-col gap-space-md p-space-lg rounded-xl bg-surface-container-low shadow-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs text-on-surface">
+<span class="material-symbols-outlined text-secondary text-[20px]">headphones</span>
+<span class="font-headline-sm text-headline-sm">Dispositivo de Saída</span>
+</div>
+<span class="px-2 py-0.5 rounded bg-surface-container font-label-code-sm text-label-code-sm text-secondary">32-bit / 48kHz</span>
+</div>
+<!-- Select Output -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-ui text-label-ui text-on-surface-variant">Dispositivo de Reprodução</label>
+<div class="relative">
+<select class="w-full bg-surface-container-high text-on-surface px-space-md py-2.5 rounded-lg font-body-sm text-body-sm appearance-none cursor-pointer focus:outline-none focus:bg-surface-bright">
+<option selected="">Beyerdynamic DT 990 Pro (Interface Scarlett 2i2)</option>
+<option>Altifalantes Integrados (Monitor LG UltraWide)</option>
+<option>Fones de Ouvido Sem Fios (Sony WH-1000XM4)</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-2.5 text-on-surface-variant pointer-events-none text-[20px]">expand_more</span>
+</div>
+</div>
+<!-- Output Volume Slider & Test Button -->
+<div class="flex flex-col gap-2">
+<div class="flex items-center justify-between font-label-ui text-label-ui">
+<span class="text-on-surface-variant">Volume de Saída Geral</span>
+<span class="font-label-code-sm text-label-code-sm text-secondary font-bold" id="output-vol-label">75%</span>
+</div>
+<input class="w-full h-1.5 bg-surface-container-highest rounded-lg appearance-none cursor-pointer accent-secondary" id="output-vol-slider" max="100" min="0" type="range" value="75"/>
+</div>
+<!-- Sound Test Button -->
+<button class="flex items-center justify-center gap-space-xs w-full py-2.5 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-label-ui text-label-ui transition-colors" id="btn-sound-test" type="button">
+<span class="material-symbols-outlined text-secondary text-[20px]">volume_up</span>
+<span id="sound-test-text">Testar Som de Notificação</span>
+</button>
+<!-- Stereo Panning Slider -->
+<div class="flex flex-col gap-2 pt-2">
+<div class="flex items-center justify-between font-label-ui text-label-ui">
+<span class="text-on-surface-variant">Balanço Panorâmico Estéreo</span>
+<span class="font-label-code-sm text-label-code-sm text-on-surface">0 (Neutro Central)</span>
+</div>
+<div class="relative flex items-center">
+<input class="w-full h-1.5 bg-surface-container-highest rounded-lg appearance-none cursor-pointer accent-primary-container" max="50" min="-50" type="range" value="0"/>
+<div class="absolute left-1/2 -top-1 w-0.5 h-3.5 bg-outline pointer-events-none"></div>
+</div>
+<div class="flex justify-between font-label-code-sm text-label-code-sm text-outline">
+<span>L (100% Esquerdo)</span>
+<span>Centro</span>
+<span>R (100% Direito)</span>
+</div>
+</div>
+<!-- Spatial Voice Tip Card -->
+<div class="flex items-start gap-space-sm p-space-sm rounded-lg bg-surface-container mt-auto">
+<span class="material-symbols-outlined text-primary text-[20px] shrink-0 mt-0.5">surround_sound</span>
+<div class="flex flex-col gap-0.5">
+<span class="font-label-ui text-label-ui text-on-surface">Áudio Posicional 3D para RPG</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                Na Mesa de Jogo, as vozes dos jogadores são atenuadas pelo espaço virtual do mapa tático (VTT).
+              </p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 2: Processamento de Voz Neural & Supressão de Ruído -->
+<section class="flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[20px]">psychology</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">Processamento de Voz Neural &amp; DSP Local</h2>
+</div>
+<div class="flex items-center gap-1 font-label-code-sm text-label-code-sm text-secondary">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+          Isolamento Zero-Cloud (Execução em WASM/WebGPU)
+        </div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-md">
+<!-- Feature Card 1: Noise Suppression -->
+<div class="flex flex-col gap-space-sm p-space-md rounded-xl bg-surface-container-low shadow-sm justify-between">
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[20px]">noise_control_off</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Supressão de Ruído</span>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+              Filtra cliques de dados, ruído de ar-condicionado e digitação mecânica sem distorcer sussurros dramáticos.
+            </p>
+</div>
+<!-- Selection Pills -->
+<div class="flex flex-col gap-1.5 pt-2">
+<label class="flex items-center justify-between p-2 rounded-lg bg-surface-container-high cursor-pointer hover:bg-surface-container-highest transition-colors">
+<div class="flex items-center gap-2">
+<input checked="" class="accent-primary-container" name="noise_filter" type="radio"/>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">RNNoise Neural</span>
+</div>
+<span class="px-1.5 py-0.5 rounded bg-secondary/10 font-label-code-sm text-label-code-sm text-secondary">Recomendado</span>
+</label>
+<label class="flex items-center justify-between p-2 rounded-lg bg-surface-container cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-2">
+<input class="accent-primary-container" name="noise_filter" type="radio"/>
+<span class="font-body-sm text-body-sm text-on-surface">Krisp ML Local</span>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-outline">Baixo Consumo</span>
+</label>
+<label class="flex items-center justify-between p-2 rounded-lg bg-surface-container cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-2">
+<input class="accent-primary-container" name="noise_filter" type="radio"/>
+<span class="font-body-sm text-body-sm text-on-surface">Desativado</span>
+</div>
+</label>
+</div>
+<!-- Intensity Slider -->
+<div class="flex flex-col gap-1.5 pt-1">
+<div class="flex justify-between font-label-ui text-label-ui">
+<span class="text-on-surface-variant">Intensidade do Filtro</span>
+<span class="font-label-code-sm text-label-code-sm text-primary">Agressivo (85%)</span>
+</div>
+<input class="w-full h-1 bg-surface-container-highest rounded-lg appearance-none cursor-pointer accent-primary-container" max="100" min="0" type="range" value="85"/>
+</div>
+</div>
+<!-- Feature Card 2: Acoustic Echo Cancellation -->
+<div class="flex flex-col gap-space-sm p-space-md rounded-xl bg-surface-container-low shadow-sm justify-between">
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-[20px]">hearing</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Cancelamento de Eco</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-10 h-5 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-on-primary-container after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-secondary"></div>
+</label>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+              Algoritmo adaptativo AEC-3 que anula reverberação da sala e som vindo de caixas acopladas ou fones abertos.
+            </p>
+</div>
+<div class="p-3 rounded-lg bg-surface-container flex flex-col gap-2">
+<div class="flex items-center justify-between text-body-sm">
+<span class="text-on-surface-variant">Modo de Supressão:</span>
+<span class="font-label-code-sm text-label-code-sm text-on-surface font-semibold">Duplex Completo</span>
+</div>
+<div class="flex items-center justify-between text-body-sm">
+<span class="text-on-surface-variant">Atraso Estimado:</span>
+<span class="font-label-code-sm text-label-code-sm text-secondary">0.4 ms</span>
+</div>
+</div>
+<div class="font-label-code-sm text-label-code-sm text-outline">
+            ✓ Previne microfonia durante sessões longas de narrativa.
+          </div>
+</div>
+<!-- Feature Card 3: AGC & Noise Gate -->
+<div class="flex flex-col gap-space-sm p-space-md rounded-xl bg-surface-container-low shadow-sm justify-between">
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[20px]">equalizer</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Ganho Automático (AGC)</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-10 h-5 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-on-primary-container after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-secondary"></div>
+</label>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+              Mantém volume sonoro homogêneo e linear, evitando picos de distorção ao narrar combates ou clímax dramáticos.
+            </p>
+</div>
+<div class="p-3 rounded-lg bg-surface-container flex flex-col gap-2">
+<div class="flex items-center justify-between text-body-sm">
+<span class="text-on-surface-variant">Compressor Limiter:</span>
+<span class="font-label-code-sm text-label-code-sm text-secondary">Ativo (-1 dBFS)</span>
+</div>
+<div class="flex items-center justify-between text-body-sm">
+<span class="text-on-surface-variant">Ataque / Release:</span>
+<span class="font-label-code-sm text-label-code-sm text-on-surface">15ms / 120ms</span>
+</div>
+</div>
+<div class="font-label-code-sm text-label-code-sm text-outline">
+            ✓ Otimizado para diálogos expressivos e roleplay.
+          </div>
+</div>
+</div>
+</section>
+<!-- Section 3: Dispositivos de Vídeo & Pré-visualização da Câmara -->
+<section class="flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[20px]">videocam</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">Transmissão de Vídeo &amp; Câmera WebRTC</h2>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-outline">WEBRTC_MEDIA_STREAM</span>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-md items-start">
+<!-- Video Controls (Left Column) -->
+<div class="lg:col-span-5 flex flex-col gap-space-md p-space-lg rounded-xl bg-surface-container-low shadow-sm">
+<!-- Select Camera -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-ui text-label-ui text-on-surface-variant">Câmera de Transmissão</label>
+<div class="relative">
+<select class="w-full bg-surface-container-high text-on-surface px-space-md py-2.5 rounded-lg font-body-sm text-body-sm appearance-none cursor-pointer focus:outline-none focus:bg-surface-bright">
+<option selected="">Sony Alpha a6400 (Elgato Cam Link 4K)</option>
+<option>Logitech Brio Ultra HD Pro</option>
+<option>FaceTime HD Camera (Integrada)</option>
+<option>OBS Virtual Camera (Sinal de Mesa/Cartas)</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-2.5 text-on-surface-variant pointer-events-none text-[20px]">expand_more</span>
+</div>
+</div>
+<!-- Select Resolution -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-ui text-label-ui text-on-surface-variant">Resolução &amp; Taxa de Quadros</label>
+<div class="relative">
+<select class="w-full bg-surface-container-high text-on-surface px-space-md py-2.5 rounded-lg font-body-sm text-body-sm appearance-none cursor-pointer focus:outline-none focus:bg-surface-bright">
+<option selected="">1080p60 Full HD (Baixa Latência)</option>
+<option>1440p30 2K Crisp (Modo Miniaturas/Mapas)</option>
+<option>720p60 HD Fluido (Modo Economia de Banda)</option>
+<option>480p30 Baixo Tráfego P2P</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-2.5 text-on-surface-variant pointer-events-none text-[20px]">expand_more</span>
+</div>
+</div>
+<!-- Video Codec Selection Pills -->
+<div class="flex flex-col gap-2">
+<label class="font-label-ui text-label-ui text-on-surface-variant">Codec de Vídeo P2P E2EE</label>
+<div class="grid grid-cols-3 gap-2">
+<button class="flex flex-col items-center justify-center p-2 rounded-lg bg-primary-container text-on-primary-container font-semibold transition-all shadow-sm" type="button">
+<span class="font-label-code-sm text-label-code-sm">AV1 Next-Gen</span>
+<span class="text-[10px] opacity-80">GPU Acelerado</span>
+</button>
+<button class="flex flex-col items-center justify-center p-2 rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high transition-all" type="button">
+<span class="font-label-code-sm text-label-code-sm">VP9 Google</span>
+<span class="text-[10px] text-outline">Eficiente</span>
+</button>
+<button class="flex flex-col items-center justify-center p-2 rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high transition-all" type="button">
+<span class="font-label-code-sm text-label-code-sm">H.264 Base</span>
+<span class="text-[10px] text-outline">Legado</span>
+</button>
+</div>
+</div>
+<!-- GPU Acceleration Toggle -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-surface-container">
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-secondary text-[18px]">developer_board</span>
+<span class="font-body-sm text-body-sm text-on-surface font-semibold">Aceleração de Hardware GPU</span>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-outline">NVIDIA NVENC / VA-API v4.9 detectado</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-10 h-5 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-on-primary-container after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-secondary"></div>
+</label>
+</div>
+<!-- Camera Mirroring Toggle -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-surface-container">
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm text-on-surface">Efeito Espelho da Minha Câmera</span>
+<span class="font-label-code-sm text-label-code-sm text-outline">Inverte horizontalmente a sua própria prévia</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-10 h-5 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-on-primary-container after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-secondary"></div>
+</label>
+</div>
+</div>
+<!-- Video Live Preview Feed (Right Column) -->
+<div class="lg:col-span-7 flex flex-col gap-space-sm">
+<div class="relative w-full aspect-video rounded-xl overflow-hidden bg-surface-container-lowest shadow-2xl flex flex-col justify-between">
+<!-- Simulated Video Canvas with Rich Studio Image -->
+<img class="absolute inset-0 w-full h-full object-cover" data-alt="Warm atmospheric tabletop RPG studio room with soft campfire ember lighting, dark oak wooden shelves with antique leather books, cozy ambient orange and terracotta bokeh lights in background, professional streamer microphone on boom arm and subtle dice on desk, cinematic depth of field." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDND52PkQjpbTRa1cRLGQYd4QPwyNJk7XClVStPvagefDIEhbVvhQnljZbmj4RfsN73ecvJhjLVHKHnLkOfQ0K1fEwxQpxiTFbPxvdyFCh4JZZ7ho5NOOvvH6GEyVCU9d4TT-DuVkgXhYTlkK-chJfKfobbkufs_Fqt1QaFJrS9x1k8AplAi1szJa4nxDEuIR2HmVwq5clewR4BBwsIgSm5vHuVKzksrkvsoN_5GJxhrD8vMcnFlKcJbg"/>
+<!-- Vignette & HUD Gradient Scrim -->
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-transparent to-surface-container-lowest/70 pointer-events-none"></div>
+<!-- Top Overlaid Badges -->
+<div class="relative z-10 p-space-md flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface-container-lowest/80 backdrop-blur-md text-error font-label-code-sm text-label-code-sm uppercase tracking-wider font-bold">
+<span class="w-2 h-2 rounded-full bg-error animate-ping"></span>
+                  AO VIVO • 1080p @ 60fps
+                </span>
+<span class="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded bg-surface-container-lowest/80 backdrop-blur-md text-secondary font-label-code-sm text-label-code-sm">
+<span class="material-symbols-outlined text-[14px]">lock</span>
+                  SRTP AES-128-GCM
+                </span>
+</div>
+<button class="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-surface-container-high/90 hover:bg-surface-container-highest backdrop-blur-md text-on-surface font-label-ui text-label-ui transition-colors" type="button">
+<span class="material-symbols-outlined text-primary text-[16px]">blur_on</span>
+<span>Fundo Desfocado</span>
+</button>
+</div>
+<!-- Focus Targeting Reticle Graphic (Center) -->
+<div class="relative z-10 flex items-center justify-center pointer-events-none opacity-40">
+<svg class="text-primary" fill="none" height="64" viewbox="0 0 64 64" width="64">
+<path d="M4 20V8C4 5.79086 5.79086 4 8 4H20" stroke="currentColor" stroke-linecap="round" stroke-width="2"></path>
+<path d="M44 4H56C58.2091 4 60 5.79086 60 8V20" stroke="currentColor" stroke-linecap="round" stroke-width="2"></path>
+<path d="M60 44V56C60 58.2091 58.2091 60 56 60H44" stroke="currentColor" stroke-linecap="round" stroke-width="2"></path>
+<path d="M20 60H8C5.79086 60 4 58.2091 4 56V44" stroke="currentColor" stroke-linecap="round" stroke-width="2"></path>
+<circle cx="32" cy="32" fill="currentColor" r="3"></circle>
+</svg>
+</div>
+<!-- Bottom Video Toolbar inside Preview -->
+<div class="relative z-10 p-space-md flex flex-wrap items-center justify-between gap-space-sm bg-gradient-to-t from-surface-container-lowest to-transparent pt-6">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[20px]">videocam</span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium truncate max-w-[200px]">Sony a6400 (Cam Link 4K)</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-surface-container-high/90 hover:bg-surface-container-highest backdrop-blur-md text-on-surface font-label-ui text-label-ui transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">photo_camera</span>
+<span>Capturar Frame</span>
+</button>
+<button class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-surface-container-high/90 hover:bg-surface-container-highest backdrop-blur-md text-on-surface font-label-ui text-label-ui transition-colors" type="button">
+<span class="material-symbols-outlined text-error text-[16px]">videocam_off</span>
+<span>Desligar Teste</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Video Calibration Metadata Sub-card -->
+<div class="flex flex-wrap items-center justify-between p-3 rounded-lg bg-surface-container-low font-label-code-sm text-label-code-sm text-outline">
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-secondary">memory</span>
+              Buffer de Renderização: 16.6ms • VSync Ativo
+            </span>
+<span class="text-on-surface-variant">Taxa de Bits: 4.800 kbps Constante (CBR)</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 4: Diagnóstico de Latência & Qualidade de Rede -->
+<section class="flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[20px]">speed</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">Telemetria de Rede &amp; Desempenho P2P</h2>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-outline">MESA_MESH_METRICS</span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
+<!-- Metric 1: RTT Latency -->
+<div class="flex flex-col justify-between p-space-md rounded-xl bg-surface-container-low shadow-sm">
+<div class="flex items-center justify-between text-outline">
+<span class="font-label-ui text-label-ui uppercase tracking-wider">Latência RTT (P2P)</span>
+<span class="material-symbols-outlined text-secondary text-[20px]">network_ping</span>
+</div>
+<div class="flex items-baseline gap-2 my-2">
+<span class="font-display-lg text-display-lg text-secondary font-bold">12</span>
+<span class="font-label-code-md text-label-code-md text-outline">ms</span>
+</div>
+<div class="flex items-center gap-1 font-label-code-sm text-label-code-sm text-secondary">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+            Excelente para VTT &amp; Dados
+          </div>
+</div>
+<!-- Metric 2: Jitter -->
+<div class="flex flex-col justify-between p-space-md rounded-xl bg-surface-container-low shadow-sm">
+<div class="flex items-center justify-between text-outline">
+<span class="font-label-ui text-label-ui uppercase tracking-wider">Jitter de Pacotes</span>
+<span class="material-symbols-outlined text-secondary text-[20px]">swap_vert</span>
+</div>
+<div class="flex items-baseline gap-2 my-2">
+<span class="font-display-lg text-display-lg text-on-surface font-bold">1.2</span>
+<span class="font-label-code-md text-label-code-md text-outline">ms</span>
+</div>
+<div class="flex items-center gap-1 font-label-code-sm text-label-code-sm text-secondary">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+            Estabilidade Máxima
+          </div>
+</div>
+<!-- Metric 3: Packet Loss -->
+<div class="flex flex-col justify-between p-space-md rounded-xl bg-surface-container-low shadow-sm">
+<div class="flex items-center justify-between text-outline">
+<span class="font-label-ui text-label-ui uppercase tracking-wider">Perda de Pacotes</span>
+<span class="material-symbols-outlined text-secondary text-[20px]">check_circle</span>
+</div>
+<div class="flex items-baseline gap-2 my-2">
+<span class="font-display-lg text-display-lg text-secondary font-bold">0.00</span>
+<span class="font-label-code-md text-label-code-md text-outline">%</span>
+</div>
+<div class="flex items-center gap-1 font-label-code-sm text-label-code-sm text-secondary">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+            Zero Perdas em Trânsito
+          </div>
+</div>
+<!-- Metric 4: Audio Sampling -->
+<div class="flex flex-col justify-between p-space-md rounded-xl bg-surface-container-low shadow-sm">
+<div class="flex items-center justify-between text-outline">
+<span class="font-label-ui text-label-ui uppercase tracking-wider">Pipeline de Áudio</span>
+<span class="material-symbols-outlined text-primary text-[20px]">tune</span>
+</div>
+<div class="flex flex-col my-2">
+<span class="font-headline-sm text-headline-sm text-on-surface font-bold">Opus 48.000 Hz</span>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">2 Canais • 128 kbps FBR</span>
+</div>
+<div class="flex items-center gap-1 font-label-code-sm text-label-code-sm text-primary">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+            Taxa de Amostragem de Estúdio
+          </div>
+</div>
+</div>
+</section>
+<!-- Section 5: Zona de Segurança & Permissões do Sistema Operacional -->
+<section class="flex flex-col sm:flex-row items-center justify-between gap-space-md p-space-lg rounded-xl bg-surface-container-low shadow-sm">
+<div class="flex items-start gap-space-md">
+<div class="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[24px]">verified_user</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-headline-sm text-headline-sm text-on-surface">Isolamento Sandbox &amp; Chaves de Sessão</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant max-w-3xl">
+            Dispositivos geridos sob isolamento de sandbox local. Nenhuma stream de microfone ou câmera é gravada ou retransmitida para servidores externos sem o seu consentimento explícito e chave efêmera de sessão.
+          </p>
+</div>
+</div>
+<button class="shrink-0 flex items-center gap-space-xs px-space-md py-2.5 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-label-ui text-label-ui transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">security</span>
+<span>Verificar Permissões do SO</span>
+</button>
+</section>
+</div>
+</div>
+<script>
+  // Micro-interactions for interactive feedback
+  const inputSlider = document.getElementById('input-vol-slider');
+  const inputLabel = document.getElementById('input-vol-label');
+  if (inputSlider && inputLabel) {
+    inputSlider.addEventListener('input', (e) => {
+      inputLabel.textContent = e.target.value + '%';
+    });
+  }
+
+  const outputSlider = document.getElementById('output-vol-slider');
+  const outputLabel = document.getElementById('output-vol-label');
+  if (outputSlider && outputLabel) {
+    outputSlider.addEventListener('input', (e) => {
+      outputLabel.textContent = e.target.value + '%';
+    });
+  }
+
+  // Push-to-Talk and Voice Activation Mode Switchers
+  const voiceBtn = document.getElementById('mode-voice-btn');
+  const pttBtn = document.getElementById('mode-ptt-btn');
+  if (voiceBtn && pttBtn) {
+    voiceBtn.addEventListener('click', () => {
+      voiceBtn.className = "py-2 rounded-md font-label-ui text-label-ui text-center transition-all bg-primary-container text-on-primary-container font-semibold shadow-sm";
+      pttBtn.className = "py-2 rounded-md font-label-ui text-label-ui text-center transition-all text-on-surface-variant hover:text-on-surface";
+    });
+    pttBtn.addEventListener('click', () => {
+      pttBtn.className = "py-2 rounded-md font-label-ui text-label-ui text-center transition-all bg-primary-container text-on-primary-container font-semibold shadow-sm";
+      voiceBtn.className = "py-2 rounded-md font-label-ui text-label-ui text-center transition-all text-on-surface-variant hover:text-on-surface";
+    });
+  }
+
+  // Sound Test Chime Button Feedback
+  const soundTestBtn = document.getElementById('btn-sound-test');
+  const soundTestText = document.getElementById('sound-test-text');
+  if (soundTestBtn && soundTestText) {
+    soundTestBtn.addEventListener('click', () => {
+      const originalText = soundTestText.textContent;
+      soundTestText.textContent = "Reproduzindo Chime 48kHz...";
+      soundTestBtn.classList.add('bg-secondary-container', 'text-on-secondary-container');
+      setTimeout(() => {
+        soundTestText.textContent = originalText;
+        soundTestBtn.classList.remove('bg-secondary-container', 'text-on-secondary-container');
+      }, 1500);
+    });
+  }
+
+  // Loopback test microphone simulation button
+  const loopbackBtn = document.getElementById('btn-loopback-test');
+  if (loopbackBtn) {
+    let testing = false;
+    loopbackBtn.addEventListener('click', () => {
+      testing = !testing;
+      if (testing) {
+        loopbackBtn.classList.remove('bg-primary-container', 'text-on-primary-container');
+        loopbackBtn.classList.add('bg-error', 'text-on-error');
+        loopbackBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]">stop_circle</span><span>Encerrar Teste</span>`;
+      } else {
+        loopbackBtn.classList.remove('bg-error', 'text-on-error');
+        loopbackBtn.classList.add('bg-primary-container', 'text-on-primary-container');
+        loopbackBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]">mic</span><span>Testar Microfone (Loopback)</span>`;
+      }
+    });
+  }
+</script></main></div></body></html>

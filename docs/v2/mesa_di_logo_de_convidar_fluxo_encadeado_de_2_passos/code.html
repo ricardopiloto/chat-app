@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"primary-fixed-dim":"#ffb4a1","background":"#10131c","surface-container-lowest":"#0b0e17","primary-container":"#e07a5f","on-primary-fixed-variant":"#7c2e19","tertiary-fixed-dim":"#d1bcff","error":"#ffb4ab","on-surface":"#e0e2ef","on-surface-variant":"#dbc1ba","tertiary-fixed":"#eaddff","primary":"#ffb4a1","inverse-surface":"#e0e2ef","outline-variant":"#55423e","on-tertiary-container":"#3b008c","surface-container-high":"#272a33","secondary":"#6bdc96","on-tertiary-fixed-variant":"#5429a6","error-container":"#93000a","on-tertiary-fixed":"#24005b","surface-dim":"#10131c","on-secondary":"#00391d","on-background":"#e0e2ef","on-secondary-fixed":"#00210f","surface-bright":"#363943","inverse-on-surface":"#2d303a","on-tertiary":"#3c0090","surface":"#10131c","surface-variant":"#32343e","outline":"#a38b86","secondary-fixed":"#88f9b0","surface-container":"#1c1f29","surface-tint":"#ffb4a1","on-secondary-container":"#003118","on-error":"#690005","secondary-container":"#2ca464","on-primary-fixed":"#3c0800","surface-container-highest":"#32343e","tertiary-container":"#a680fd","secondary-fixed-dim":"#6bdc96","on-error-container":"#ffdad6","on-primary":"#5d1805","on-primary-container":"#5b1604","on-secondary-fixed-variant":"#00522c","surface-container-low":"#181b24","primary-fixed":"#ffdbd2","inverse-primary":"#9a442d","tertiary":"#d1bcff"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"margin-desktop":"2rem","gutter-desktop":"1.5rem","space-lg":"1.5rem","space-sm":"0.5rem","gutter":"1rem","space-xl":"2.5rem","space-xs":"0.25rem","space-md":"1rem","margin":"1rem"},"fontFamily":{"headline-md":["Plus Jakarta Sans"],"body-lg":["Inter"],"headline-sm":["Plus Jakarta Sans"],"label-ui":["Inter"],"display-lg-mobile":["Plus Jakarta Sans"],"display-lg":["Plus Jakarta Sans"],"label-code-md":["JetBrains Mono"],"headline-lg":["Plus Jakarta Sans"],"body-md":["Inter"],"label-code-sm":["JetBrains Mono"],"body-sm":["Inter"]},"fontSize":{"headline-md":["20px",{"lineHeight":"28px","fontWeight":"600"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"headline-sm":["16px",{"lineHeight":"24px","fontWeight":"600"}],"label-ui":["12px",{"lineHeight":"16px","fontWeight":"600"}],"display-lg-mobile":["28px",{"lineHeight":"36px","fontWeight":"700"}],"display-lg":["36px",{"lineHeight":"44px","fontWeight":"700"}],"label-code-md":["13px",{"lineHeight":"18px","fontWeight":"500"}],"headline-lg":["24px",{"lineHeight":"32px","fontWeight":"600"}],"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"label-code-sm":["11px",{"lineHeight":"16px","fontWeight":"500"}],"body-sm":["12px",{"lineHeight":"18px","fontWeight":"400"}]}}}}</script></head><body class="bg-background font-body-md text-body-md text-on-surface select-none antialiased"><aside class="fixed left-0 top-0 bottom-0 w-[72px] bg-surface-container-lowest z-50 flex flex-col items-center py-space-sm gap-space-xs"><div class="w-12 h-12 rounded-xl bg-primary-container flex items-center justify-center text-on-primary-container shadow-[0_4px_20px_-2px_rgba(0,0,0,0.5)] cursor-pointer"><span class="material-symbols-outlined text-[26px]">fireplace</span></div><div class="w-8 h-[2px] bg-surface-variant my-space-xs rounded-full"></div><div class="flex-1 flex flex-col gap-space-xs w-full items-center"><div class="w-12 h-12 rounded-xl bg-surface-container-high flex items-center justify-center text-on-surface hover:bg-surface-bright transition-colors cursor-pointer"><span class="material-symbols-outlined text-[22px]">castle</span></div><div class="w-12 h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors cursor-pointer"><span class="material-symbols-outlined text-[22px]">swords</span></div><div class="w-12 h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors cursor-pointer"><span class="material-symbols-outlined text-[22px]">shield_with_heart</span></div><div class="w-12 h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-secondary hover:bg-surface-container transition-colors cursor-pointer"><span class="material-symbols-outlined text-[22px]">add</span></div></div><div class="flex flex-col gap-space-xs w-full items-center pb-space-xs"><div class="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer"><span class="material-symbols-outlined text-[20px]">dns</span></div><div class="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer"><span class="material-symbols-outlined text-[20px]">settings</span></div></div></aside><aside class="fixed left-[72px] top-0 bottom-0 w-60 bg-surface-container-low z-40 flex flex-col"><div class="h-14 px-space-md flex items-center justify-between bg-surface-container-low shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="flex items-center gap-space-xs min-w-0"><span class="material-symbols-outlined text-primary text-[18px]">fort</span><span class="font-headline-sm text-headline-sm text-on-surface truncate">Wayfarer's Hearth</span></div><button class="p-space-xs rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[20px]">keyboard_arrow_down</span></button></div><div class="px-space-md py-space-xs flex items-center justify-between text-on-surface-variant"><span class="font-label-code-sm text-label-code-sm tracking-wider uppercase">Channels &amp; Halls</span><button class="p-space-xs rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface"><span class="material-symbols-outlined text-[16px]">add</span></button></div><nav class="flex-1 px-space-sm overflow-y-auto space-y-space-xs" data-active-classes="bg-surface-container text-on-surface font-headline-sm"><a aria-current="page" class="flex items-center gap-space-xs px-space-sm py-space-xs rounded-lg transition-colors bg-surface-container text-on-surface font-headline-sm" data-path="chat-stream" href="#"><span class="material-symbols-outlined text-[18px]">tag</span><span class="font-body-md text-body-md truncate">general-tavern</span></a><a class="flex items-center gap-space-xs px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="encrypted-whispers" href="#"><span class="material-symbols-outlined text-[18px]">lock</span><span class="font-body-md text-body-md truncate">cryptic-logs</span></a><div class="pt-space-xs pb-space-xs px-space-sm"><span class="font-label-code-sm text-label-code-sm text-on-surface-variant tracking-wider uppercase">Campfire Voice</span></div><a class="flex items-center justify-between px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="tactical-tabletop" href="#"><div class="flex items-center gap-space-xs min-w-0"><span class="material-symbols-outlined text-[18px]">volume_up</span><span class="font-body-md text-body-md truncate">Campaign Table</span></div><span class="material-symbols-outlined text-secondary text-[16px]">encrypted</span></a><a class="flex items-center justify-between px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="voice-hall" href="#"><div class="flex items-center gap-space-xs min-w-0"><span class="material-symbols-outlined text-[18px]">volume_up</span><span class="font-body-md text-body-md truncate">Quiet Nook</span></div><span class="font-label-code-sm text-label-code-sm text-on-surface-variant">2/4</span></a></nav><div class="p-space-sm bg-surface-container-lowest"><div class="p-space-xs rounded-lg bg-surface-container flex items-center justify-between"><div class="flex items-center gap-space-xs min-w-0"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="min-w-0"><div class="font-headline-sm text-headline-sm text-on-surface truncate leading-tight">Gilead_Ranger</div><div class="font-label-code-sm text-label-code-sm text-secondary truncate flex items-center gap-space-xs"><span class="w-1.5 h-1.5 rounded-full bg-secondary inline-block"></span>0x7F29...E4</div></div></div><div class="flex items-center"><button class="p-space-xs rounded hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface"><span class="material-symbols-outlined text-[18px]">mic</span></button><button class="p-space-xs rounded hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface"><span class="material-symbols-outlined text-[18px]">headphones</span></button></div></div></div></aside><div class="pl-[312px]"><header class="fixed top-0 left-[312px] right-0 h-14 bg-surface/80 backdrop-blur-xl z-30 shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-14 w-full px-space-md flex items-center justify-between"><div class="flex items-center gap-space-md min-w-0"><img alt="Geometric minimalist emblem logo for 'Mesa', a self-hosted encrypted chat and tabletop voice/video platform. Icon shows an abstracted round game table combined with subtle interlocking protective cryptographic shield or circle rings, warm terracotta coral and warm ivory tones on a sleek dark badge background, modern flat vector design, clean SVG silhouette.. Design context: - Primary color: #e07a5f
+- Font: plusJakartaSans
+- Mode: dark
+- Roundness: rounded-md
+. The logo should be visually consistent with these brand tokens." class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Wu6JPFAgZCyVeUFfgF2Kw0tDR-hsarUUfylK14HYlLwAvvLQCMU2yFj9S9B1Q71Fq6zapDK3Irg2Zx3iMoLWvt5oI4ddFcNATCLKLLVNiGVWqORn8REKU_XDfAo6kzvp9H8bl2WpVm1hnyVH6oiUeJ6ldFclk2C5YFAzLugzQ4b3hq3royoiQ-7WRiEWXxpZNjUqQ8_iyE-6cBPASSapis3gp1Pn8ONomgG9Rap9nRDBJ_5ZY22pvfcGTv"/><div class="flex items-center gap-space-xs"><span class="font-headline-sm text-headline-sm text-on-surface font-bold">Mesa</span><span class="font-label-code-sm text-label-code-sm text-on-surface-variant px-space-xs py-0.5 rounded bg-surface-container-high">node-alpha.lan</span></div><div class="hidden md:flex items-center gap-space-xs px-space-sm py-1 rounded-full bg-surface-container-low text-secondary"><span class="material-symbols-outlined text-[14px]">verified_user</span><span class="font-label-code-sm text-label-code-sm">E2EE Ratchet Verified</span></div></div><div class="flex items-center gap-space-sm"><nav class="hidden lg:flex items-center gap-space-md mr-space-md" data-active-classes="text-primary font-bold"><a class="font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface transition-colors" data-path="tactical-tabletop" href="#">Tabletop Stage</a><a aria-current="page" class="transition-colors text-primary font-bold" data-path="chat-stream" href="#">Scroll Feed</a><a class="font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface transition-colors" data-path="peer-roster" href="#">Guild Roster</a><a class="font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface transition-colors" data-path="node-telemetry" href="#">Node Status</a></nav><div class="flex items-center gap-space-xs"><button class="p-space-xs rounded-lg hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[20px]">search</span></button><button class="p-space-xs rounded-lg hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[20px]">share</span></button><button class="p-space-xs rounded-lg hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[20px]">view_sidebar</span></button></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="relative pt-14 w-full bg-surface min-h-screen"><div class="flex flex-col w-full relative">
+<!-- Backdrop Simulated Mesa Room Context (Dimmed & Frosted Workspace) -->
+<div class="absolute inset-0 pointer-events-none opacity-25 overflow-hidden z-0 select-none">
+<div class="p-space-lg max-w-7xl mx-auto grid grid-cols-12 gap-space-md">
+<!-- Simulated Chat stream in background -->
+<div class="col-span-8 flex flex-col gap-space-md">
+<div class="p-space-md rounded-xl bg-surface-container-high/40 backdrop-blur-sm">
+<div class="flex items-center gap-space-sm mb-space-xs">
+<div class="w-7 h-7 rounded-full bg-primary-container/60"></div>
+<span class="font-headline-sm text-headline-sm text-on-surface">Mestre_Kaelen</span>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">Ontem às 21:44</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">Reunião marcada para as Ruínas de Kar-Drakor. Tragam tochas e fichas de atributo atualizadas.</p>
+</div>
+<div class="p-space-md rounded-xl bg-surface-container-high/30 backdrop-blur-sm">
+<div class="flex items-center gap-space-sm mb-space-xs">
+<div class="w-7 h-7 rounded-full bg-secondary-container/60"></div>
+<span class="font-headline-sm text-headline-sm text-on-surface">Lyra_Barda</span>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">Ontem às 22:02</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">Preparei a rolagem dos dados táteis e a trilha atmosférica no canal de voz.</p>
+</div>
+</div>
+<div class="col-span-4 p-space-md rounded-xl bg-surface-container-low/40">
+<div class="h-4 w-24 bg-surface-variant/50 rounded mb-2"></div>
+<div class="h-3 w-40 bg-surface-variant/30 rounded"></div>
+</div>
+</div>
+</div>
+<!-- Primary Modal Stage & Workflow Workspace -->
+<div class="relative z-10 w-full min-h-[calc(100vh-56px)] bg-surface-container-lowest/80 backdrop-blur-xl flex flex-col justify-start items-center px-gutter-desktop py-space-xl">
+<!-- Top Progress Breadcrumb Bar -->
+<div class="w-full max-w-5xl mb-space-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-space-md bg-surface-container-low/90 px-space-lg py-space-md rounded-xl shadow-xl">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-lg bg-primary-container/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">group_add</span>
+</div>
+<div>
+<div class="flex items-center gap-space-xs">
+<span class="font-headline-sm text-headline-sm text-on-surface">Convidar para a Mesa</span>
+<span class="font-label-code-sm text-label-code-sm text-secondary bg-surface-container-high px-2 py-0.5 rounded-full flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary inline-block animate-pulse"></span>
+              Campina dos Aventureiros (Nó #04)
+            </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Fluxo Encadeado de Ingresso Seguro e Derivação Criptográfica MLS</p>
+</div>
+</div>
+<!-- Stepper Indicator Component -->
+<div class="flex items-center gap-space-xs bg-surface-container-lowest px-space-sm py-1.5 rounded-lg">
+<div class="flex items-center gap-1.5 px-space-sm py-1 rounded bg-primary-container text-on-primary-container cursor-pointer transition-all" id="step-pill-1">
+<span class="font-label-code-sm text-label-code-sm font-bold">01</span>
+<span class="font-label-ui text-label-ui">Canal de Entrada</span>
+</div>
+<span class="material-symbols-outlined text-outline-variant text-[14px]">arrow_forward</span>
+<div class="flex items-center gap-1.5 px-space-sm py-1 rounded bg-surface-container-high text-on-surface-variant cursor-pointer transition-all" id="step-pill-2">
+<span class="font-label-code-sm text-label-code-sm font-bold">02</span>
+<span class="font-label-ui text-label-ui">Ligação &amp; Chaves</span>
+</div>
+</div>
+</div>
+<!-- Dual Dialog Layout: Comparative & Interactive Views -->
+<div class="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-space-lg items-start">
+<!-- ================= STEP 1 DIALOG ================= -->
+<section class="flex flex-col bg-surface-container rounded-xl shadow-2xl overflow-hidden transition-all duration-300" id="step-1-card">
+<!-- Dialog Header -->
+<div class="p-space-lg bg-surface-container-high/60 flex items-start justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-xl bg-primary-container/20 text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[22px]">person_add</span>
+</div>
+<div>
+<div class="flex items-center gap-space-xs">
+<span class="font-label-code-sm text-label-code-sm text-primary uppercase tracking-wider font-semibold">Passo 1 de 2</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">Destino</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface mt-0.5">Definir Canal de Boas-vindas</h2>
+</div>
+</div>
+<span class="px-space-xs py-1 rounded bg-surface-container-highest text-on-surface-variant font-label-code-sm text-label-code-sm">MLS-RATCHET</span>
+</div>
+<!-- Dialog Content Body -->
+<div class="p-space-lg flex flex-col gap-space-md">
+<!-- System Alert/Notice Box -->
+<div class="p-space-md rounded-xl bg-surface-container-low flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-primary text-[20px] shrink-0 mt-0.5">lightbulb</span>
+<div class="flex flex-col gap-1">
+<span class="font-headline-sm text-headline-sm text-on-surface">Configuração Inicial do Servidor</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                Este servidor ainda não possui um canal de boas-vindas atribuído. Escolha onde os novos membros desembarcarão após aceitar o convite.
+              </p>
+</div>
+</div>
+<!-- Channel Selection Matrix -->
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-code-sm text-label-code-sm text-on-surface-variant uppercase tracking-wider">
+              Canais de Texto Acessíveis para Desembarque
+            </label>
+<!-- Channel 1: Primary Selection -->
+<label class="group relative flex items-start gap-space-md p-space-md rounded-xl bg-surface-container-high cursor-pointer transition-all hover:bg-surface-bright">
+<input checked="" class="mt-1 w-4 h-4 accent-primary cursor-pointer shrink-0" name="welcome_channel" type="radio" value="geral"/>
+<div class="flex flex-col min-w-0 flex-1">
+<div class="flex items-center gap-space-xs">
+<span class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px] text-primary">tag</span>
+                    geral
+                  </span>
+<span class="font-label-code-sm text-label-code-sm text-secondary bg-surface-container-lowest px-1.5 py-0.5 rounded flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">verified</span>
+                    Canal Principal • E2EE
+                  </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                  Recomendado para receção e regras de campanha. Registro de chaves ratificado.
+                </p>
+</div>
+</label>
+<!-- Channel 2 -->
+<label class="group relative flex items-start gap-space-md p-space-md rounded-xl bg-surface-container-low cursor-pointer transition-all hover:bg-surface-container-high">
+<input class="mt-1 w-4 h-4 accent-primary cursor-pointer shrink-0" name="welcome_channel" type="radio" value="anuncios"/>
+<div class="flex flex-col min-w-0 flex-1">
+<div class="flex items-center gap-space-xs">
+<span class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">campaign</span>
+                    anúncios-e-lore
+                  </span>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant bg-surface-container-highest px-1.5 py-0.5 rounded">
+                    Apenas leitura para convidados
+                  </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                  Apresenta a história do mundo e leis da guilda sem permissão de fala imediata.
+                </p>
+</div>
+</label>
+<!-- Channel 3 -->
+<label class="group relative flex items-start gap-space-md p-space-md rounded-xl bg-surface-container-low cursor-pointer transition-all hover:bg-surface-container-high">
+<input class="mt-1 w-4 h-4 accent-primary cursor-pointer shrink-0" name="welcome_channel" type="radio" value="taverna"/>
+<div class="flex flex-col min-w-0 flex-1">
+<div class="flex items-center gap-space-xs">
+<span class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">forum</span>
+                    taverna-off-topic
+                  </span>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant bg-surface-container-highest px-1.5 py-0.5 rounded">
+                    Canal Secundário
+                  </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                  Espaço recreativo fora de contexto e intercâmbio geral.
+                </p>
+</div>
+</label>
+</div>
+<!-- Cryptographic History Toggle -->
+<div class="p-space-md rounded-xl bg-surface-container-low flex items-start justify-between gap-space-md">
+<div class="flex items-start gap-space-sm min-w-0">
+<span class="material-symbols-outlined text-secondary text-[20px] shrink-0 mt-0.5">enhanced_encryption</span>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface leading-tight">
+                  Conceder histórico de mensagens recente
+                </span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                  Cifrado com ratchet MLS ratificado. Envia as últimas 50 mensagens re-encriptadas sob o envelope da sessão.
+                </span>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-surface peer-checked:bg-secondary-container after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+</label>
+</div>
+</div>
+<!-- Dialog Footer / Actions -->
+<div class="p-space-lg bg-surface-container-lowest flex items-center justify-between gap-space-md mt-auto">
+<button class="px-space-md py-2.5 rounded-lg text-on-surface-variant font-label-ui text-label-ui hover:bg-surface-container-high hover:text-on-surface transition-colors flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[16px]">close</span>
+            Cancelar
+          </button>
+<button class="px-space-lg py-2.5 rounded-lg bg-primary-container hover:bg-primary-fixed transition-all text-on-primary-container font-headline-sm text-headline-sm flex items-center gap-space-xs shadow-lg active:scale-95" id="btn-next-step" type="button">
+<span>Avançar para Gerar Convite</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</section>
+<!-- ================= STEP 2 DIALOG ================= -->
+<section class="flex flex-col bg-surface-container rounded-xl shadow-2xl overflow-hidden transition-all duration-300" id="step-2-card">
+<!-- Dialog Header -->
+<div class="p-space-lg bg-surface-container-high/60 flex items-start justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-xl bg-secondary-container/20 text-secondary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[24px]">vpn_key</span>
+</div>
+<div>
+<div class="flex items-center gap-space-xs">
+<span class="font-label-code-sm text-label-code-sm text-secondary uppercase tracking-wider font-semibold">Passo 2 de 2 • Pronto</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="font-label-code-sm text-label-code-sm text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">check_circle</span>
+                  Cifrado
+                </span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface mt-0.5">Convite Seguro Pronto!</h2>
+</div>
+</div>
+<span class="px-space-xs py-1 rounded bg-surface-container-highest text-secondary font-label-code-sm text-label-code-sm flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+            Nó Ativo
+          </span>
+</div>
+<!-- Dialog Content Body -->
+<div class="p-space-lg flex flex-col gap-space-md">
+<!-- Destination Meta Capsule -->
+<div class="flex items-center justify-between p-space-sm px-space-md bg-surface-container-low rounded-lg">
+<div class="flex items-center gap-space-xs min-w-0">
+<span class="material-symbols-outlined text-secondary text-[18px]">lock</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Destino de Desembarque:</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">#geral</span>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant bg-surface-container-high px-2 py-0.5 rounded">
+              camp-br-04.mesa.mesh
+            </span>
+</div>
+<!-- Subtitle Descriptor -->
+<p class="font-body-md text-body-md text-on-surface-variant">
+            Ligação cifrada de entrada única gerada para sua sessão da guilda. Qualquer novo viajante passará pela confirmação do host.
+          </p>
+<!-- Invite URL Interactive Box with Visual Feedback Section 3.2 -->
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-code-sm text-label-code-sm text-on-surface-variant uppercase tracking-wider flex items-center justify-between">
+<span>Endereço do Convite (MLS Ephemeral Seed)</span>
+<span class="text-secondary font-medium">Auto-expira em 24h</span>
+</label>
+<div class="relative flex items-center bg-surface-container-lowest rounded-xl p-1.5 shadow-inner">
+<div class="pl-space-md pr-space-sm py-2 flex-1 overflow-x-auto select-all">
+<span class="font-label-code-md text-label-code-md text-primary tracking-tight" id="invite-url-text">https://camp-br-04.mesa.mesh/invite/ember-894f-22a1</span>
+</div>
+<!-- Copy Action with Actively Demonstrated Section 3.2 Feedback State -->
+<button class="shrink-0 px-space-md py-2.5 rounded-lg bg-secondary-container hover:bg-secondary transition-all text-on-secondary font-headline-sm text-headline-sm flex items-center gap-space-xs shadow-md" id="btn-copy-action" type="button">
+<span class="material-symbols-outlined text-[18px]" id="copy-icon">done</span>
+<span id="copy-label">✓ Copiado!</span>
+</button>
+</div>
+</div>
+<!-- Security & Enclave Custody Pill -->
+<div class="p-space-md rounded-xl bg-surface-container-low flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-secondary text-[20px] shrink-0 mt-0.5">security</span>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface leading-tight">Custódia Criptográfica do Nó</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                Este convite utiliza derivação efêmera. Novos membros serão validados no enclave do anfitrião ao ingressar, sem emissão de telemetria pública.
+              </p>
+</div>
+</div>
+<!-- Quick Options Bento Grid (QR Code & Expire Badge) -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm pt-space-xs">
+<!-- Quick Option 1: Node status -->
+<div class="p-space-sm bg-surface-container-low rounded-xl flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-[18px]">all_inclusive</span>
+</div>
+<div class="min-w-0">
+<div class="font-headline-sm text-headline-sm text-on-surface text-[14px]">Sem expiração de nó</div>
+<div class="font-label-code-sm text-label-code-sm text-on-surface-variant truncate">Sem acúmulo de logs</div>
+</div>
+</div>
+<!-- Quick Option 2: QR preview -->
+<div class="p-space-sm bg-surface-container-low rounded-xl flex items-center justify-between gap-space-sm group cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-space-sm min-w-0">
+<!-- Inline SVG Minimalist Tactical QR Code Representation -->
+<div class="w-8 h-8 rounded bg-on-surface p-0.5 flex items-center justify-center shrink-0">
+<svg class="w-full h-full text-surface-container-lowest fill-current" viewbox="0 0 24 24">
+<path d="M2 2h8v8H2V2zm2 2v4h4V4H4zm10-2h8v8h-8V2zm2 2v4h4V4h-4zM2 14h8v8H2v-8zm2 2v4h4v-4H4zm12 2h2v2h-2v-2zm-2-2h2v2h-2v-2zm4 4h2v2h-2v-2zm2-2h2v2h-2v-2zm-6-2h2v2h-2v-2zm4-2h2v2h-2v-2z"></path>
+</svg>
+</div>
+<div class="min-w-0">
+<div class="font-headline-sm text-headline-sm text-on-surface text-[14px]">QR Code</div>
+<div class="font-label-code-sm text-label-code-sm text-on-surface-variant">Ingresso móvel tátil</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant group-hover:text-primary transition-colors">open_in_new</span>
+</div>
+</div>
+</div>
+<!-- Dialog Footer / Actions -->
+<div class="p-space-lg bg-surface-container-lowest flex items-center justify-between gap-space-md mt-auto">
+<button class="px-space-md py-2.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors font-label-ui text-label-ui flex items-center gap-space-xs" id="btn-regen-link" type="button">
+<span class="material-symbols-outlined text-[18px]">refresh</span>
+<span>Gerar Outro Convite</span>
+</button>
+<button class="px-space-xl py-2.5 rounded-lg bg-primary-container hover:bg-primary-fixed transition-all text-on-primary-container font-headline-sm text-headline-sm shadow-md active:scale-95 flex items-center gap-1" id="btn-finish-modal" type="button">
+<span>Concluído / Fechar</span>
+<span class="material-symbols-outlined text-[18px]">done_all</span>
+</button>
+</div>
+</section>
+</div>
+<!-- Telemetry Bar Underneath Stepper Workflow -->
+<div class="w-full max-w-5xl mt-space-md flex flex-wrap items-center justify-between px-space-md py-2 text-on-surface-variant font-label-code-sm text-label-code-sm">
+<div class="flex items-center gap-space-md">
+<span class="flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+          Mesh Peer: 192.168.1.140:4432
+        </span>
+<span class="hidden sm:inline-block">•</span>
+<span class="hidden sm:inline-block">MLS Ratchet: Ed25519-SHA512</span>
+</div>
+<div>
+<span>Mesa Daemon v0.8.4 • Criptografia Autônoma de Campanha</span>
+</div>
+</div>
+</div>
+<!-- Interactive Logic for Section 3.2 Stepped Flow & Copy States -->
+<script>
+    (function initInviteFlow() {
+      const step1Card = document.getElementById('step-1-card');
+      const step2Card = document.getElementById('step-2-card');
+      const stepPill1 = document.getElementById('step-pill-1');
+      const stepPill2 = document.getElementById('step-pill-2');
+      const btnNextStep = document.getElementById('btn-next-step');
+      const btnCopyAction = document.getElementById('btn-copy-action');
+      const copyIcon = document.getElementById('copy-icon');
+      const copyLabel = document.getElementById('copy-label');
+      const btnRegenLink = document.getElementById('btn-regen-link');
+      const btnFinish = document.getElementById('btn-finish-modal');
+      const inviteUrlText = document.getElementById('invite-url-text');
+
+      let currentStep = 2; // Show both as interactive comparison, defaulting to active Step 2 highlight
+
+      function updateActiveStyles() {
+        if (currentStep === 1) {
+          step1Card.classList.remove('opacity-60', 'scale-[0.99]');
+          step1Card.classList.add('shadow-2xl');
+          step2Card.classList.add('opacity-70', 'scale-[0.99]');
+          
+          stepPill1.className = "flex items-center gap-1.5 px-space-sm py-1 rounded bg-primary-container text-on-primary-container cursor-pointer transition-all";
+          stepPill2.className = "flex items-center gap-1.5 px-space-sm py-1 rounded bg-surface-container-high text-on-surface-variant cursor-pointer transition-all";
+        } else {
+          step2Card.classList.remove('opacity-70', 'scale-[0.99]');
+          step2Card.classList.add('shadow-2xl');
+          step1Card.classList.add('opacity-70', 'scale-[0.99]');
+
+          stepPill2.className = "flex items-center gap-1.5 px-space-sm py-1 rounded bg-secondary-container text-on-secondary cursor-pointer transition-all";
+          stepPill1.className = "flex items-center gap-1.5 px-space-sm py-1 rounded bg-surface-container-high text-on-surface-variant cursor-pointer transition-all";
+        }
+      }
+
+      stepPill1.addEventListener('click', () => { currentStep = 1; updateActiveStyles(); });
+      stepPill2.addEventListener('click', () => { currentStep = 2; updateActiveStyles(); });
+      btnNextStep.addEventListener('click', () => { currentStep = 2; updateActiveStyles(); });
+
+      // Interactive Toggle for Copy Feedback State
+      let isCopied = true;
+      btnCopyAction.addEventListener('click', () => {
+        isCopied = !isCopied;
+        if (isCopied) {
+          copyIcon.textContent = 'done';
+          copyLabel.textContent = '✓ Copiado!';
+          btnCopyAction.className = 'shrink-0 px-space-md py-2.5 rounded-lg bg-secondary-container hover:bg-secondary transition-all text-on-secondary font-headline-sm text-headline-sm flex items-center gap-space-xs shadow-md ring-2 ring-secondary/40';
+        } else {
+          copyIcon.textContent = 'content_copy';
+          copyLabel.textContent = 'Copiar';
+          btnCopyAction.className = 'shrink-0 px-space-md py-2.5 rounded-lg bg-surface-container-highest hover:bg-surface-bright transition-all text-on-surface font-headline-sm text-headline-sm flex items-center gap-space-xs shadow-md';
+        }
+      });
+
+      // Regenerate Link Demonstration
+      btnRegenLink.addEventListener('click', () => {
+        const randId = Math.random().toString(36).substring(2, 6) + '-' + Math.random().toString(36).substring(2, 6);
+        inviteUrlText.textContent = 'https://camp-br-04.mesa.mesh/invite/ember-' + randId;
+        copyIcon.textContent = 'content_copy';
+        copyLabel.textContent = 'Copiar';
+        btnCopyAction.className = 'shrink-0 px-space-md py-2.5 rounded-lg bg-surface-container-highest hover:bg-surface-bright transition-all text-on-surface font-headline-sm text-headline-sm flex items-center gap-space-xs shadow-md';
+        isCopied = false;
+      });
+
+      btnFinish.addEventListener('click', () => {
+        alert('Convite registrado na malha local. Novos jogadores desembarcarão em #geral.');
+      });
+
+      updateActiveStyles();
+    })();
+  </script>
+</div></main></div></body></html>

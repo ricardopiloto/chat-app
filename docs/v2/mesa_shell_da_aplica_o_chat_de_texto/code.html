@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "on-error-container": "#ffdad6", "secondary": "#6bdc96", "on-surface-variant": "#dbc1ba", "inverse-on-surface": "#2d303a", "secondary-fixed": "#88f9b0", "on-background": "#e0e2ef", "primary-container": "#e07a5f", "on-primary-fixed": "#3c0800", "surface-variant": "#32343e", "on-primary-fixed-variant": "#7c2e19", "tertiary": "#d1bcff", "surface-container-highest": "#32343e", "on-secondary-fixed": "#00210f", "on-secondary-fixed-variant": "#00522c", "on-error": "#690005", "inverse-primary": "#9a442d", "outline-variant": "#55423e", "on-tertiary-container": "#3b008c", "on-tertiary-fixed": "#24005b", "primary": "#ffb4a1", "surface-tint": "#ffb4a1", "surface-container-lowest": "#0b0e17", "primary-fixed-dim": "#ffb4a1", "on-secondary-container": "#003118", "surface-dim": "#10131c", "tertiary-fixed-dim": "#d1bcff", "on-primary": "#5d1805", "error-container": "#93000a", "tertiary-fixed": "#eaddff", "on-secondary": "#00391d", "on-tertiary-fixed-variant": "#5429a6", "surface-bright": "#363943", "surface-container-low": "#181b24", "primary-fixed": "#ffdbd2", "on-surface": "#e0e2ef", "surface-container-high": "#272a33", "outline": "#a38b86", "surface-container": "#1c1f29", "secondary-container": "#2ca464", "surface": "#10131c", "secondary-fixed-dim": "#6bdc96", "tertiary-container": "#a680fd", "on-primary-container": "#5b1604", "on-tertiary": "#3c0090", "inverse-surface": "#e0e2ef", "background": "#10131c", "error": "#ffb4ab" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-md": "1rem", "space-xl": "2.5rem", "margin": "1rem", "space-xs": "0.25rem", "gutter-desktop": "1.5rem", "margin-desktop": "2rem", "space-lg": "1.5rem", "space-sm": "0.5rem", "gutter": "1rem" }, "fontFamily": { "headline-md": [ "Plus Jakarta Sans" ], "display-lg-mobile": [ "Plus Jakarta Sans" ], "headline-lg": [ "Plus Jakarta Sans" ], "headline-sm": [ "Plus Jakarta Sans" ], "body-lg": [ "Inter" ], "body-md": [ "Inter" ], "label-code-sm": [ "JetBrains Mono" ], "display-lg": [ "Plus Jakarta Sans" ], "body-sm": [ "Inter" ], "label-code-md": [ "JetBrains Mono" ], "label-ui": [ "Inter" ] }, "fontSize": { "headline-md": [ "20px", { "lineHeight": "28px", "fontWeight": "600" } ], "display-lg-mobile": [ "28px", { "lineHeight": "36px", "fontWeight": "700" } ], "headline-lg": [ "24px", { "lineHeight": "32px", "fontWeight": "600" } ], "headline-sm": [ "16px", { "lineHeight": "24px", "fontWeight": "600" } ], "body-lg": [ "16px", { "lineHeight": "24px", "fontWeight": "400" } ], "body-md": [ "14px", { "lineHeight": "20px", "fontWeight": "400" } ], "label-code-sm": [ "11px", { "lineHeight": "16px", "fontWeight": "500" } ], "display-lg": [ "36px", { "lineHeight": "44px", "fontWeight": "700" } ], "body-sm": [ "12px", { "lineHeight": "18px", "fontWeight": "400" } ], "label-code-md": [ "13px", { "lineHeight": "18px", "fontWeight": "500" } ], "label-ui": [ "12px", { "lineHeight": "16px", "fontWeight": "600" } ] } } } };</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><header class="fixed top-0 left-0 right-0 h-14 bg-surface-container-lowest/90 backdrop-blur-md z-50 flex items-center justify-between px-space-md shadow-[0_1px_8px_rgba(0,0,0,0.25)]"><div class="flex items-center gap-space-md"><img alt="Mesa App Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Wu6JPFAgZCyVeUFfgF2Kw0tDR-hsarUUfylK14HYlLwAvvLQCMU2yFj9S9B1Q71Fq6zapDK3Irg2Zx3iMoLWvt5oI4ddFcNATCLKLLVNiGVWqORn8REKU_XDfAo6kzvp9H8bl2WpVm1hnyVH6oiUeJ6ldFclk2C5YFAzLugzQ4b3hq3royoiQ-7WRiEWXxpZNjUqQ8_iyE-6cBPASSapis3gp1Pn8ONomgG9Rap9nRDBJ_5ZY22pvfcGTv"/><div class="flex items-center gap-space-xs font-headline-sm text-headline-sm text-on-surface"><span class="text-primary-container font-bold">Mesa</span><span class="text-outline font-normal">·</span><span class="font-label-code-md text-label-code-md text-on-surface-variant font-medium tracking-tight">masmorra.xyz v2.0</span></div><div class="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-secondary-container/20 text-secondary font-label-code-sm text-label-code-sm"><span class="material-symbols-outlined text-[14px]">lock</span><span>E2EE Nativo</span></div></div><div class="flex items-center gap-space-md"><button class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-container-high text-on-surface-variant hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">search</span><span class="font-body-sm text-body-sm">Pesquisar ou pular...</span><kbd class="font-label-code-sm text-label-code-sm px-1.5 py-0.5 rounded bg-surface-container-highest text-on-surface-variant">Ctrl+K</kbd></button><div class="flex items-center gap-1 bg-surface-container-high p-1 rounded-lg"><button class="p-1 rounded text-on-surface-variant hover:text-on-surface transition-colors" title="Tema do Sistema" type="button"><span class="material-symbols-outlined text-[16px]">desktop_windows</span></button><button class="p-1 rounded text-on-surface-variant hover:text-on-surface transition-colors" title="Modo Claro" type="button"><span class="material-symbols-outlined text-[16px]">light_mode</span></button><button class="p-1 rounded bg-surface-container-highest text-primary transition-colors" title="Modo Escuro" type="button"><span class="material-symbols-outlined text-[16px]">dark_mode</span></button></div><button class="relative p-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary-container"></span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></header><div class="fixed left-0 top-14 bottom-0 w-[72px] bg-surface-container-lowest flex flex-col items-center py-space-sm z-40"><div class="relative group flex items-center justify-center w-full py-1.5"><div class="absolute left-0 w-1 h-8 rounded-r-full bg-primary-container"></div><button class="w-12 h-12 rounded-xl bg-primary-container text-on-primary-container flex items-center justify-center font-headline-sm text-headline-sm font-bold shadow-md hover:rounded-lg transition-all" title="Masmorra do Dragão" type="button">MD</button></div><div class="relative group flex items-center justify-center w-full py-1.5"><div class="absolute left-0 w-1 h-2 rounded-r-full bg-on-surface-variant group-hover:h-5 transition-all"></div><button class="relative w-12 h-12 rounded-full bg-surface-container-high hover:bg-surface-container-highest text-on-surface flex items-center justify-center font-headline-sm text-headline-sm font-semibold transition-all" title="Guilda dos Alquimistas" type="button">GA<span class="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-secondary ring-2 ring-surface-container-lowest flex items-center justify-center"><span class="material-symbols-outlined text-[10px] text-on-secondary">volume_up</span></span></button></div><div class="relative group flex items-center justify-center w-full py-1.5"><div class="absolute left-0 w-1 h-2 rounded-r-full bg-on-surface-variant group-hover:h-5 transition-all"></div><button class="relative w-12 h-12 rounded-full bg-surface-container-high hover:bg-surface-container-highest text-on-surface flex items-center justify-center font-headline-sm text-headline-sm font-semibold transition-all" title="Círculo Arcano" type="button">CA<span class="absolute top-0 right-0 w-3 h-3 rounded-full bg-primary-container ring-2 ring-surface-container-lowest"></span></button></div><div class="relative group flex items-center justify-center w-full py-1.5"><button class="w-12 h-12 rounded-full bg-surface-container-high hover:bg-surface-container-highest text-on-surface flex items-center justify-center font-headline-sm text-headline-sm font-semibold transition-all" title="Taverna Central" type="button">TC</button></div><div class="w-8 h-[1px] bg-surface-container-high my-2"></div><div class="flex items-center justify-center w-full py-1.5"><button class="w-12 h-12 rounded-full bg-surface-container-low hover:bg-secondary hover:text-on-secondary text-secondary flex items-center justify-center transition-all group" title="Criar ou Entrar em Servidor" type="button"><span class="material-symbols-outlined text-[24px]">add</span></button></div><div class="mt-auto flex items-center justify-center w-full py-1.5"><button class="w-12 h-12 rounded-full bg-surface-container-low hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-all" title="Explorar Servidores" type="button"><span class="material-symbols-outlined text-[22px]">explore</span></button></div></div><aside class="fixed left-[72px] top-14 bottom-0 w-[248px] bg-surface-container-low flex flex-col z-30 shadow-[1px_0_12px_rgba(0,0,0,0.15)]"><div class="h-12 px-space-md flex items-center justify-between bg-surface-container-low"><div class="flex items-center gap-2 overflow-hidden"><h2 class="font-headline-sm text-headline-sm text-on-surface truncate">Masmorra do Dragão</h2></div><div class="flex items-center gap-1"><button class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="Convidar Membros" type="button"><span class="material-symbols-outlined text-[18px]">person_add</span></button><button class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="Definições do Servidor" type="button"><span class="material-symbols-outlined text-[18px]">settings</span></button></div></div><nav class="flex-1 overflow-y-auto px-2 py-space-sm space-y-4" data-active-classes="bg-surface-container text-primary font-semibold"><div class="space-y-1"><div class="flex items-center justify-between px-2 py-1 text-on-surface-variant"><span class="font-label-ui text-label-ui uppercase tracking-wider">Canais de Texto</span><button class="p-0.5 rounded hover:bg-surface-container-high hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[16px]">add</span></button></div><a aria-current="page" class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg transition-colors bg-surface-container text-primary font-semibold" data-path="canal-geral" href="#"><span class="text-outline font-label-code-md text-label-code-md">#</span><span class="truncate">geral</span></a><a class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="canal-regras-e-fichas" href="#"><span class="text-outline font-label-code-md text-label-code-md">#</span><span class="truncate">regras-e-fichas</span></a><a class="flex items-center justify-between px-2.5 py-1.5 rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="canal-sussurros-segredos" href="#"><div class="flex items-center gap-2 truncate"><span class="text-outline font-label-code-md text-label-code-md">#</span><span class="truncate">sussurros-segredos</span></div><span class="material-symbols-outlined text-[14px] text-secondary">lock</span></a></div><div class="space-y-1"><div class="flex items-center justify-between px-2 py-1 text-on-surface-variant"><span class="font-label-ui text-label-ui uppercase tracking-wider">Voz &amp; Transmissão</span><button class="p-0.5 rounded hover:bg-surface-container-high hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[16px]">add</span></button></div><a class="flex items-center justify-between px-2.5 py-1.5 rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="palco-da-campanha" href="#"><div class="flex items-center gap-2 truncate"><span class="material-symbols-outlined text-[18px]">volume_up</span><span class="truncate">Palco da Campanha</span></div><span class="px-1.5 py-0.2 rounded bg-error-container text-on-error-container font-label-code-sm text-label-code-sm uppercase">Ao Vivo</span></a><div class="pl-6 pr-2 py-1 space-y-1.5"><div class="flex items-center justify-between text-on-surface font-body-sm text-body-sm"><div class="flex items-center gap-2"><div class="relative"><div class="w-5 h-5 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-[10px] ring-2 ring-primary-container animate-pulse">TH</div></div><span>Torvald (Mestre)</span></div><span class="material-symbols-outlined text-[14px] text-secondary">mic</span></div><div class="flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm"><div class="flex items-center gap-2"><div class="w-5 h-5 rounded-full bg-surface-container-highest text-on-surface flex items-center justify-center font-bold text-[10px]">AL</div><span>Alysia</span></div><span class="material-symbols-outlined text-[14px] text-error">mic_off</span></div><div class="flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm"><div class="flex items-center gap-2"><div class="w-5 h-5 rounded-full bg-surface-container-highest text-on-surface flex items-center justify-center font-bold text-[10px]">GR</div><span>Grimm</span></div><span class="material-symbols-outlined text-[14px] text-secondary">mic</span></div></div><a class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="taverna-descanso" href="#"><span class="material-symbols-outlined text-[18px]">headset</span><span class="truncate">Taverna de Descanso</span></a></div><div class="space-y-1"><div class="flex items-center justify-between px-2 py-1 text-on-surface-variant"><span class="font-label-ui text-label-ui uppercase tracking-wider">Ferramentas VTT</span></div><a class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="mesa-tesserae-vtt" href="#"><span class="material-symbols-outlined text-[18px]">grid_view</span><span class="truncate">Tabuleiro Tático</span></a><a class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="rolagem-de-dados" href="#"><span class="material-symbols-outlined text-[18px]">casino</span><span class="truncate">Histórico de Dados</span></a></div></nav><div class="bg-surface-container-lowest p-2 space-y-2"><div class="flex items-center justify-between px-2 py-1 bg-surface-container rounded-lg"><div class="flex items-center gap-1"><button class="p-1.5 rounded hover:bg-surface-container-high text-secondary hover:text-on-surface transition-colors" title="Microfone Ativo" type="button"><span class="material-symbols-outlined text-[18px]">mic</span></button><button class="p-1.5 rounded hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface transition-colors" title="Ensurdecer" type="button"><span class="material-symbols-outlined text-[18px]">headphones</span></button><button class="p-1.5 rounded hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface transition-colors" title="Câmera Ligada" type="button"><span class="material-symbols-outlined text-[18px]">videocam</span></button></div><button class="p-1.5 rounded bg-error-container text-on-error-container hover:bg-error hover:text-on-error transition-colors" title="Desconectar Voz" type="button"><span class="material-symbols-outlined text-[18px]">call_end</span></button></div><div class="flex items-center justify-between px-1.5 py-1"><div class="flex items-center gap-2 min-w-0"><div class="relative"><div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xs">MA</div><span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-secondary ring-2 ring-surface-container-lowest"></span></div><div class="min-w-0"><p class="font-headline-sm text-body-sm text-on-surface truncate leading-tight">Mestre Aventuras</p><p class="font-label-code-sm text-label-code-sm text-on-surface-variant truncate">@mestre_aventuras</p></div></div><button class="p-1.5 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="Definições de Usuário" type="button"><span class="material-symbols-outlined text-[18px]">tune</span></button></div></div></aside><div class="pl-[320px]"><main class="relative pt-14 bg-surface min-h-screen"><div class="flex flex-col w-full">
+<!-- Layout Wrapper: Primary Chat Stream (fluid) + Right Inspector Rail (280px) -->
+<div class="flex w-full min-h-[calc(100vh-3.5rem)]">
+<!-- Central Chat Canvas -->
+<section class="flex flex-col flex-1 min-w-0 bg-surface">
+<!-- Channel Context Header -->
+<header class="h-14 px-space-lg flex items-center justify-between bg-surface-container-low shadow-sm z-10 shrink-0">
+<div class="flex items-center gap-space-md min-w-0">
+<div class="flex items-center gap-2 min-w-0">
+<span class="text-primary-container font-label-code-md text-headline-sm font-semibold select-none">#</span>
+<h1 class="font-headline-sm text-headline-sm text-on-surface truncate">geral</h1>
+</div>
+<div class="hidden md:block w-px h-4 bg-surface-container-highest"></div>
+<p class="hidden md:block font-body-sm text-body-sm text-on-surface-variant truncate">
+            Chat geral da mesa e preparativos da sessão
+          </p>
+<!-- E2EE Pill Badge -->
+<div class="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-secondary-container/20 text-secondary font-label-code-sm text-label-code-sm shrink-0">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+<span class="font-medium tracking-tight">E2EE Ativa</span>
+<span class="text-[10px] text-secondary/60 font-mono hidden xl:inline">· c9f4b12a</span>
+</div>
+</div>
+<!-- Right Quick Actions -->
+<div class="flex items-center gap-1">
+<button class="p-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="Pesquisar mensagens" type="button">
+<span class="material-symbols-outlined text-[19px]">search</span>
+</button>
+<button class="p-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="Notificações do canal" type="button">
+<span class="material-symbols-outlined text-[19px]">notifications</span>
+</button>
+<button class="p-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="Mensagens fixadas" type="button">
+<span class="material-symbols-outlined text-[19px]">push_pin</span>
+</button>
+<div class="w-px h-4 bg-surface-container-highest mx-1"></div>
+<button class="p-2 rounded-lg bg-surface-container-high text-primary hover:bg-surface-container-highest transition-colors" id="toggle-roster-btn" title="Ocultar/Exibir Roster" type="button">
+<span class="material-symbols-outlined text-[19px]">group</span>
+</button>
+</div>
+</header>
+<!-- Message History Scroll Area -->
+<div class="flex-1 overflow-y-auto px-space-lg py-space-md space-y-space-md flex flex-col justify-start" id="chat-scroller">
+<!-- Welcome Hero Capsule in Chat -->
+<div class="p-space-lg rounded-xl bg-surface-container-low max-w-xl my-2 shadow-sm">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-primary-container/20 text-primary-container flex items-center justify-center font-bold text-headline-sm">
+              #
+            </div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Boas-vindas a #geral!</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Início do canal seguro para a campanha Masmorra do Dragão.</p>
+</div>
+</div>
+</div>
+<!-- E2EE Security Statement Card -->
+<div class="p-3 rounded-lg bg-surface-container-low/70 flex items-start gap-3 max-w-2xl shadow-sm">
+<span class="material-symbols-outlined text-secondary text-[20px] shrink-0 mt-0.5" style="font-variation-settings: 'FILL' 1;">shield_lock</span>
+<div class="space-y-0.5">
+<p class="font-body-sm text-body-sm text-on-surface font-medium">Instância Segura Cifrada de Ponta a Ponta</p>
+<p class="font-label-code-sm text-label-code-sm text-on-surface-variant">
+              Todas as mensagens de texto e arquivos multimídia são protegidos pela cifra de duplo ratcheting Mesa. Chave local: <code class="text-secondary/90">ed25519:7e4a-98bb-33f2</code>. Somente os pares autorizados possuem chave de decifragem.
+            </p>
+</div>
+</div>
+<!-- Timeline Separator -->
+<div class="relative flex items-center justify-center my-space-md">
+<div class="absolute inset-0 flex items-center">
+<div class="w-full h-px bg-surface-container-high"></div>
+</div>
+<div class="relative px-3 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-code-sm text-label-code-sm">
+            Hoje · 24 de Outubro
+          </div>
+</div>
+<!-- Message Item 1: Thorin Iron -->
+<article class="group relative flex gap-3.5 p-2 -mx-2 rounded-xl hover:bg-surface-container-low/50 transition-colors">
+<!-- Floating Reaction Trigger on Hover -->
+<div class="absolute right-4 -top-3 hidden group-hover:flex items-center gap-1 bg-surface-container-highest px-2 py-1 rounded-full shadow-md z-10">
+<button class="text-on-surface-variant hover:text-primary transition-colors text-sm px-1" title="Adicionar reação" type="button">🎲</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors text-sm px-1" title="Adicionar reação" type="button">⚔️</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors p-0.5 rounded" title="Mais reações" type="button">
+<span class="material-symbols-outlined text-[16px]">add_reaction</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors p-0.5 rounded" title="Responder" type="button">
+<span class="material-symbols-outlined text-[16px]">reply</span>
+</button>
+</div>
+<!-- Avatar -->
+<div class="relative shrink-0">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center font-headline-sm text-body-sm text-primary font-bold shadow-inner">
+              TI
+            </div>
+<span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-secondary"></span>
+</div>
+<!-- Message Body -->
+<div class="flex-1 min-w-0 space-y-1">
+<div class="flex items-baseline gap-2">
+<span class="font-headline-sm text-body-md text-on-surface font-semibold hover:underline cursor-pointer">@thorin_iron</span>
+<span class="font-label-code-sm text-label-code-sm px-1.5 py-0.2 rounded bg-surface-container-high text-on-surface-variant">Anão Guerreiro Nv. 5</span>
+<time class="font-label-code-sm text-label-code-sm text-outline">19:40</time>
+</div>
+<p class="font-body-md text-body-md text-on-surface leading-relaxed">
+              Alguém já tem a ficha atualizada para a descida nas Catacumbas de Tessera? Comprei três frascos de fogo alquímico na taverna antes de partirmos.
+            </p>
+</div>
+</article>
+<!-- Message Item 2: Dungeon Master with Decrypted Map Attachment -->
+<article class="group relative flex gap-3.5 p-2 -mx-2 rounded-xl hover:bg-surface-container-low/50 transition-colors">
+<div class="absolute right-4 -top-3 hidden group-hover:flex items-center gap-1 bg-surface-container-highest px-2 py-1 rounded-full shadow-md z-10">
+<button class="text-on-surface-variant hover:text-primary transition-colors text-sm px-1" title="Adicionar reação" type="button">🔥</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors text-sm px-1" title="Adicionar reação" type="button">🛡️</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors p-0.5 rounded" title="Mais reações" type="button">
+<span class="material-symbols-outlined text-[16px]">add_reaction</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors p-0.5 rounded" title="Responder" type="button">
+<span class="material-symbols-outlined text-[16px]">reply</span>
+</button>
+</div>
+<!-- Avatar with Host Badge -->
+<div class="relative shrink-0">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-headline-sm text-body-sm font-bold shadow-inner">
+              DM
+            </div>
+<span class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-surface-container-lowest flex items-center justify-center">
+<span class="material-symbols-outlined text-primary-container text-[12px]" style="font-variation-settings: 'FILL' 1;">star</span>
+</span>
+</div>
+<div class="flex-1 min-w-0 space-y-1.5">
+<div class="flex items-baseline gap-2">
+<span class="font-headline-sm text-body-md text-primary font-semibold hover:underline cursor-pointer">@dungeon_master</span>
+<span class="font-label-code-sm text-label-code-sm px-1.5 py-0.2 rounded bg-primary-container/20 text-primary-fixed uppercase tracking-wider font-semibold">Mestre</span>
+<time class="font-label-code-sm text-label-code-sm text-outline">19:42</time>
+</div>
+<p class="font-body-md text-body-md text-on-surface leading-relaxed">
+              Sim! Já importei o mapa tático da masmorra no canal de voz. Lembrem-se que hoje teremos iluminação dinâmica ativa e névoa de guerra progressiva.
+            </p>
+<!-- Decrypted Attachment Card -->
+<div class="mt-2 max-w-md rounded-xl bg-surface-container p-2.5 shadow-md">
+<div class="relative rounded-lg overflow-hidden group/img">
+<img class="w-full h-48 object-cover group-hover/img:scale-105 transition-transform duration-300" data-alt="Top-down high-fantasy RPG battle grid map representing subterranean ancient stone catacombs, glowing obsidian pillars, glowing warm amber torches, intricate floor flagstones with tactical grid overlay, moody atmospheric fog, dark fantasy style matching terracotta and obsidian palette" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGjEr-C5UZGxuszhMbdYdn4KeRZaJsdC7aVU7XJPiquD1mtmXOV5RHzKTIWypHVulrh_mZKKnfOaVNrWEykHfS2uopunxvr_mJZKscA4sYZ-29fG-3KtnM7E2-rpsy2DwOfLkXQrxIahWk5MqWJHHBM1pAB56Z4SVrmvzFk77iD3ieEl4Ye1HCmQ2T971YWJMHtkipMdQS-XVIb7elIbvmQF_yLoWU--KjQa4gYZvR-hD3YwZ5yH25Zg"/>
+<!-- Subtle decrypt badge on top of image -->
+<div class="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-container-lowest/80 backdrop-blur-md font-label-code-sm text-label-code-sm text-secondary">
+<span class="material-symbols-outlined text-[12px]">lock_open_right</span>
+<span>Payload Verificado</span>
+</div>
+<button class="absolute bottom-2 right-2 p-1.5 rounded-lg bg-surface-container-lowest/80 text-on-surface hover:text-primary transition-colors backdrop-blur-md" title="Expandir mapa tático" type="button">
+<span class="material-symbols-outlined text-[18px]">zoom_in</span>
+</button>
+</div>
+<!-- File Meta Strip -->
+<div class="flex items-center justify-between mt-2 pt-1 px-1">
+<div class="flex items-center gap-2 truncate">
+<span class="material-symbols-outlined text-[18px] text-primary-container">map</span>
+<div class="truncate">
+<p class="font-headline-sm text-body-sm text-on-surface truncate">mapa_catacumbas.webp</p>
+<p class="font-label-code-sm text-label-code-sm text-on-surface-variant">1.8 MB · Cifrado no cliente</p>
+</div>
+</div>
+<div class="flex items-center gap-1 shrink-0">
+<button class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors" title="Descarregar ficheiro" type="button">
+<span class="material-symbols-outlined text-[18px]">download</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</article>
+<!-- Message Item 3: Elysia Star with Quote Reply -->
+<article class="group relative flex gap-3.5 p-2 -mx-2 rounded-xl hover:bg-surface-container-low/50 transition-colors">
+<div class="absolute right-4 -top-3 hidden group-hover:flex items-center gap-1 bg-surface-container-highest px-2 py-1 rounded-full shadow-md z-10">
+<button class="text-on-surface-variant hover:text-primary transition-colors text-sm px-1" title="Adicionar reação" type="button">✨</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors text-sm px-1" title="Adicionar reação" type="button">🔮</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors p-0.5 rounded" title="Mais reações" type="button">
+<span class="material-symbols-outlined text-[16px]">add_reaction</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors p-0.5 rounded" title="Responder" type="button">
+<span class="material-symbols-outlined text-[16px]">reply</span>
+</button>
+</div>
+<!-- Avatar -->
+<div class="relative shrink-0">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center font-headline-sm text-body-sm text-tertiary font-bold shadow-inner">
+              ES
+            </div>
+<span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-secondary"></span>
+</div>
+<div class="flex-1 min-w-0 space-y-1">
+<!-- Quoted Message Reference -->
+<div class="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm pl-2 py-0.5 bg-surface-container-low/50 rounded-lg">
+<span class="material-symbols-outlined text-[14px] text-outline">subdirectory_arrow_right</span>
+<span class="font-semibold text-primary">@dungeon_master:</span>
+<span class="truncate">Sim! Já importei o mapa tático da masmorra no canal de voz...</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="font-headline-sm text-body-md text-on-surface font-semibold hover:underline cursor-pointer">@elysia_star</span>
+<span class="font-label-code-sm text-label-code-sm px-1.5 py-0.2 rounded bg-surface-container-high text-on-surface-variant">Maga Elfa Nv. 5</span>
+<time class="font-label-code-sm text-label-code-sm text-outline">19:44</time>
+</div>
+<p class="font-body-md text-body-md text-on-surface leading-relaxed">
+              Perfeito! Já preparei os slots de magia de nível 3 🔮 e selecionei <span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-tertiary font-label-code-sm text-label-code-sm">Bola de Fogo</span> e <span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-tertiary font-label-code-sm text-label-code-sm">Contrafeitiço</span> para garantir o suporte da linha de trás.
+            </p>
+<!-- Inline Reactions List -->
+<div class="flex items-center gap-1.5 pt-1">
+<button class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-container-high text-primary font-label-code-sm text-label-code-sm hover:bg-surface-container-highest transition-colors" type="button">
+<span>🔥</span>
+<span>3</span>
+</button>
+<button class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-code-sm text-label-code-sm hover:bg-surface-container-highest transition-colors" type="button">
+<span>🎲</span>
+<span>2</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Message Item 4: Thorin quick reaction dice roll -->
+<article class="group relative flex gap-3.5 p-2 -mx-2 rounded-xl hover:bg-surface-container-low/50 transition-colors">
+<div class="relative shrink-0">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center font-headline-sm text-body-sm text-primary font-bold shadow-inner">
+              TI
+            </div>
+</div>
+<div class="flex-1 min-w-0 space-y-1">
+<div class="flex items-baseline gap-2">
+<span class="font-headline-sm text-body-md text-on-surface font-semibold hover:underline cursor-pointer">@thorin_iron</span>
+<time class="font-label-code-sm text-label-code-sm text-outline">19:45</time>
+</div>
+<!-- Dice Roll Embedded Card -->
+<div class="inline-flex items-center gap-3 px-3 py-1.5 rounded-lg bg-surface-container shadow-sm">
+<span class="material-symbols-outlined text-primary-container text-[20px]">casino</span>
+<div class="font-label-code-md text-label-code-md">
+<span class="text-on-surface-variant">rolou 1d20 + 4 (Iniciativa):</span>
+<span class="ml-1 text-secondary font-bold text-headline-sm">18</span>
+<span class="text-on-surface-variant text-[11px]">(14 + 4)</span>
+</div>
+</div>
+</div>
+</article>
+</div>
+<!-- Jump to Present Floating Pill -->
+<div class="relative flex justify-end px-space-lg">
+<button class="absolute -top-12 right-space-lg flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container-highest text-on-surface shadow-xl hover:bg-surface-bright transition-all text-body-sm font-body-sm" id="scroll-bottom-btn" type="button">
+<span>Saltar para o presente</span>
+<span class="material-symbols-outlined text-[16px]">arrow_downward</span>
+</button>
+</div>
+<!-- Message Composer -->
+<footer class="p-space-md bg-surface-container-lowest shrink-0">
+<div class="bg-surface-container rounded-xl p-2 shadow-sm focus-within:shadow-md transition-shadow">
+<!-- Textarea / Input wrapper -->
+<div class="flex items-center gap-2 px-2 py-1">
+<button class="p-1.5 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors shrink-0" title="Anexar arquivo cifrado (arraste ou clique)" type="button">
+<span class="material-symbols-outlined text-[20px]">attach_file</span>
+</button>
+<input class="w-full bg-transparent text-on-surface placeholder:text-outline text-body-md font-body-md outline-none" placeholder="Conversar em #geral... (use @ para mencionar, : para emojis)" type="text"/>
+<!-- Extra composer buttons -->
+<button class="p-1.5 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors shrink-0" title="Lançar Dados (VTT)" type="button">
+<span class="material-symbols-outlined text-[20px]">casino</span>
+</button>
+<button class="p-1.5 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors shrink-0" title="Inserir Emoji" type="button">
+<span class="material-symbols-outlined text-[20px]">mood</span>
+</button>
+<button class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center hover:opacity-90 active:scale-95 transition-all shrink-0 shadow-sm" title="Enviar Mensagem Cifrada" type="button">
+<span class="material-symbols-outlined text-[18px]">send</span>
+</button>
+</div>
+<!-- E2EE Monospace status footer bar -->
+<div class="flex items-center justify-between px-2 pt-1 mt-1 border-t-0 text-[11px] font-label-code-sm text-outline select-none">
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span>Canal cifrado via Mesa Vault 256-GCM</span>
+</div>
+<span>Enter para enviar · Shift+Enter para quebra</span>
+</div>
+</div>
+</footer>
+</section>
+<!-- Context / Inspector Rail: Roster of Members (280px) -->
+<aside class="w-[280px] bg-surface-container-low flex flex-col shrink-0 shadow-sm transition-all duration-200" id="roster-rail">
+<!-- Roster Header -->
+<div class="h-14 px-space-md flex items-center justify-between bg-surface-container-low shrink-0">
+<div class="flex items-center gap-2">
+<span class="font-headline-sm text-headline-sm text-on-surface">Membros</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-code-sm text-label-code-sm font-semibold">4 Online</span>
+</div>
+<button class="p-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="Filtrar Membros" type="button">
+<span class="material-symbols-outlined text-[18px]">filter_list</span>
+</button>
+</div>
+<!-- Member Categories Scrollable List -->
+<div class="flex-1 overflow-y-auto px-space-sm py-2 space-y-space-md">
+<!-- Category: Mestre da Sessão -->
+<div class="space-y-1">
+<div class="px-2 py-1 flex items-center justify-between">
+<span class="font-label-ui text-label-ui uppercase tracking-wider text-outline">Mestre da Sessão — 1</span>
+</div>
+<!-- Dungeon Master Card -->
+<div class="group flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-surface-container transition-colors cursor-pointer">
+<div class="relative shrink-0">
+<div class="w-9 h-9 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-headline-sm text-body-sm font-bold shadow-md">
+                DM
+              </div>
+<!-- In Voice Call Active Pulse Ring -->
+<span class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-secondary flex items-center justify-center ring-2 ring-surface-container-low">
+<span class="material-symbols-outlined text-[9px] text-on-secondary" style="font-variation-settings: 'FILL' 1;">mic</span>
+</span>
+</div>
+<div class="min-w-0 flex-1">
+<div class="flex items-center gap-1.5">
+<p class="font-headline-sm text-body-md text-primary truncate font-semibold">@dungeon_master</p>
+<span class="material-symbols-outlined text-primary-container text-[14px]" style="font-variation-settings: 'FILL' 1;" title="Dono da Instância">stars</span>
+</div>
+<p class="font-label-code-sm text-label-code-sm text-secondary truncate flex items-center gap-1">
+<span>Em chamada: Palco</span>
+</p>
+</div>
+</div>
+</div>
+<!-- Category: Aventureiros Online -->
+<div class="space-y-1">
+<div class="px-2 py-1 flex items-center justify-between">
+<span class="font-label-ui text-label-ui uppercase tracking-wider text-outline">Aventureiros — 3</span>
+</div>
+<!-- Member: Thorin -->
+<div class="group flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-surface-container transition-colors cursor-pointer">
+<div class="relative shrink-0">
+<div class="w-9 h-9 rounded-full bg-surface-container-highest text-primary flex items-center justify-center font-headline-sm text-body-sm font-bold">
+                TI
+              </div>
+<span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-secondary ring-2 ring-surface-container-low"></span>
+</div>
+<div class="min-w-0 flex-1">
+<p class="font-headline-sm text-body-md text-on-surface truncate font-semibold">@thorin_iron</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">Guerreiro Anão Nv. 5</p>
+</div>
+</div>
+<!-- Member: Elysia Star -->
+<div class="group flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-surface-container transition-colors cursor-pointer">
+<div class="relative shrink-0">
+<div class="w-9 h-9 rounded-full bg-surface-container-highest text-tertiary flex items-center justify-center font-headline-sm text-body-sm font-bold">
+                ES
+              </div>
+<span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-secondary ring-2 ring-surface-container-low"></span>
+</div>
+<div class="min-w-0 flex-1">
+<p class="font-headline-sm text-body-md text-on-surface truncate font-semibold">@elysia_star</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">Maga Elfa Nv. 5</p>
+</div>
+</div>
+<!-- Member: Current User (Mestre Aventuras) -->
+<div class="group flex items-center gap-3 px-2 py-2 rounded-xl bg-surface-container/60 hover:bg-surface-container transition-colors cursor-pointer">
+<div class="relative shrink-0">
+<div class="w-9 h-9 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-headline-sm text-body-sm font-bold">
+                MA
+              </div>
+<span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-secondary ring-2 ring-surface-container-low"></span>
+</div>
+<div class="min-w-0 flex-1">
+<div class="flex items-center gap-1.5">
+<p class="font-headline-sm text-body-md text-on-surface truncate font-semibold">@mestre_aventuras</p>
+<span class="font-label-code-sm text-label-code-sm px-1 py-0.2 rounded bg-surface-container-highest text-outline">Você</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">Paladino Humano Nv. 4</p>
+</div>
+</div>
+</div>
+<!-- Category: Offline -->
+<div class="space-y-1 opacity-70">
+<div class="px-2 py-1 flex items-center justify-between">
+<span class="font-label-ui text-label-ui uppercase tracking-wider text-outline">Offline — 2</span>
+</div>
+<!-- Offline Member 1 -->
+<div class="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-surface-container/40 transition-colors cursor-pointer">
+<div class="relative shrink-0">
+<div class="w-9 h-9 rounded-full bg-surface-container text-outline flex items-center justify-center font-headline-sm text-body-sm">
+                BE
+              </div>
+<span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-outline ring-2 ring-surface-container-low"></span>
+</div>
+<div class="min-w-0 flex-1">
+<p class="font-headline-sm text-body-md text-on-surface-variant truncate">@bardo_espectador</p>
+<p class="font-body-sm text-body-sm text-outline truncate">Visto há 3h</p>
+</div>
+</div>
+<!-- Offline Member 2 -->
+<div class="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-surface-container/40 transition-colors cursor-pointer">
+<div class="relative shrink-0">
+<div class="w-9 h-9 rounded-full bg-surface-container text-outline flex items-center justify-center font-headline-sm text-body-sm">
+                CC
+              </div>
+<span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-outline ring-2 ring-surface-container-low"></span>
+</div>
+<div class="min-w-0 flex-1">
+<p class="font-headline-sm text-body-md text-on-surface-variant truncate">@clerigo_cura</p>
+<p class="font-body-sm text-body-sm text-outline truncate">Visto ontem</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Session Dice Tool Dock at Bottom of Roster -->
+<div class="p-3 bg-surface-container-lowest shrink-0 space-y-2">
+<div class="flex items-center justify-between">
+<span class="font-label-ui text-label-ui text-on-surface font-semibold">Mesa Rápida D20</span>
+<span class="font-label-code-sm text-label-code-sm text-primary">RNG Seguro</span>
+</div>
+<div class="grid grid-cols-4 gap-1.5">
+<button class="py-1 px-2 rounded-lg bg-surface-container-high hover:bg-primary-container hover:text-on-primary-container text-on-surface font-label-code-sm text-label-code-sm font-semibold transition-colors" type="button">d4</button>
+<button class="py-1 px-2 rounded-lg bg-surface-container-high hover:bg-primary-container hover:text-on-primary-container text-on-surface font-label-code-sm text-label-code-sm font-semibold transition-colors" type="button">d6</button>
+<button class="py-1 px-2 rounded-lg bg-surface-container-high hover:bg-primary-container hover:text-on-primary-container text-on-surface font-label-code-sm text-label-code-sm font-semibold transition-colors" type="button">d8</button>
+<button class="py-1 px-2 rounded-lg bg-surface-container-high hover:bg-primary-container hover:text-on-primary-container text-on-surface font-label-code-sm text-label-code-sm font-semibold transition-colors" type="button">d10</button>
+<button class="py-1 px-2 rounded-lg bg-surface-container-high hover:bg-primary-container hover:text-on-primary-container text-on-surface font-label-code-sm text-label-code-sm font-semibold transition-colors" type="button">d12</button>
+<button class="col-span-3 py-1 px-2 rounded-lg bg-primary-container/20 hover:bg-primary-container text-primary hover:text-on-primary-container font-label-code-sm text-label-code-sm font-bold flex items-center justify-center gap-1 transition-colors" type="button">
+<span class="material-symbols-outlined text-[14px]">casino</span>
+<span>Rolar d20</span>
+</button>
+</div>
+</div>
+</aside>
+</div>
+<!-- Interactive Scripts for Toggle & Present Navigation -->
+<script>
+    (function() {
+      const rosterToggle = document.getElementById('toggle-roster-btn');
+      const rosterRail = document.getElementById('roster-rail');
+      const scroller = document.getElementById('chat-scroller');
+      const scrollBottomBtn = document.getElementById('scroll-bottom-btn');
+
+      if (rosterToggle && rosterRail) {
+        rosterToggle.addEventListener('click', () => {
+          rosterRail.classList.toggle('hidden');
+          rosterToggle.classList.toggle('text-primary');
+          rosterToggle.classList.toggle('text-on-surface-variant');
+        });
+      }
+
+      if (scrollBottomBtn && scroller) {
+        scrollBottomBtn.addEventListener('click', () => {
+          scroller.scrollTo({ top: scroller.scrollHeight, behavior: 'smooth' });
+        });
+      }
+    })();
+  </script>
+</div></main></div></body></html>

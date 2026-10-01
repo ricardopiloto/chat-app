@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "inverse-primary": "#9a442d", "surface-container": "#1c1f29", "surface-dim": "#10131c", "on-primary-fixed-variant": "#7c2e19", "surface-container-lowest": "#0b0e17", "on-primary": "#5d1805", "inverse-surface": "#e0e2ef", "tertiary-container": "#a680fd", "surface": "#10131c", "surface-container-highest": "#32343e", "surface-tint": "#ffb4a1", "on-secondary": "#00391d", "on-surface": "#e0e2ef", "inverse-on-surface": "#2d303a", "on-error-container": "#ffdad6", "tertiary": "#d1bcff", "tertiary-fixed": "#eaddff", "on-surface-variant": "#dbc1ba", "secondary-container": "#2ca464", "error": "#ffb4ab", "on-primary-fixed": "#3c0800", "secondary-fixed-dim": "#6bdc96", "surface-variant": "#32343e", "primary-container": "#e07a5f", "surface-bright": "#363943", "outline": "#a38b86", "primary-fixed-dim": "#ffb4a1", "secondary-fixed": "#88f9b0", "surface-container-high": "#272a33", "on-secondary-fixed": "#00210f", "on-error": "#690005", "on-secondary-container": "#003118", "on-tertiary-container": "#3b008c", "on-background": "#e0e2ef", "primary": "#ffb4a1", "surface-container-low": "#181b24", "secondary": "#6bdc96", "background": "#10131c", "on-tertiary": "#3c0090", "on-tertiary-fixed": "#24005b", "on-tertiary-fixed-variant": "#5429a6", "error-container": "#93000a", "outline-variant": "#55423e", "tertiary-fixed-dim": "#d1bcff", "on-secondary-fixed-variant": "#00522c", "on-primary-container": "#5b1604", "primary-fixed": "#ffdbd2" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "gutter-desktop": "1.5rem", "space-md": "1rem", "margin": "1rem", "space-lg": "1.5rem", "margin-desktop": "2rem", "space-sm": "0.5rem", "space-xl": "2.5rem", "space-xs": "0.25rem", "gutter": "1rem" }, "fontFamily": { "label-code-md": [ "JetBrains Mono" ], "display-lg-mobile": [ "Plus Jakarta Sans" ], "body-md": [ "Inter" ], "display-lg": [ "Plus Jakarta Sans" ], "label-ui": [ "Inter" ], "headline-md": [ "Plus Jakarta Sans" ], "headline-sm": [ "Plus Jakarta Sans" ], "body-lg": [ "Inter" ], "body-sm": [ "Inter" ], "headline-lg": [ "Plus Jakarta Sans" ], "label-code-sm": [ "JetBrains Mono" ] }, "fontSize": { "label-code-md": [ "13px", { "lineHeight": "18px", "fontWeight": "500" } ], "display-lg-mobile": [ "28px", { "lineHeight": "36px", "fontWeight": "700" } ], "body-md": [ "14px", { "lineHeight": "20px", "fontWeight": "400" } ], "display-lg": [ "36px", { "lineHeight": "44px", "fontWeight": "700" } ], "label-ui": [ "12px", { "lineHeight": "16px", "fontWeight": "600" } ], "headline-md": [ "20px", { "lineHeight": "28px", "fontWeight": "600" } ], "headline-sm": [ "16px", { "lineHeight": "24px", "fontWeight": "600" } ], "body-lg": [ "16px", { "lineHeight": "24px", "fontWeight": "400" } ], "body-sm": [ "12px", { "lineHeight": "18px", "fontWeight": "400" } ], "headline-lg": [ "24px", { "lineHeight": "32px", "fontWeight": "600" } ], "label-code-sm": [ "11px", { "lineHeight": "16px", "fontWeight": "500" } ] } } } };</script></head><body class="bg-background font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 bottom-0 w-[72px] bg-surface-container-lowest z-50 flex flex-col items-center py-space-md justify-between shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="flex flex-col items-center gap-space-sm w-full"><button aria-label="Diretório Principal" class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"><span class="material-symbols-outlined text-[24px]">explore</span></button><div class="w-8 h-[2px] bg-surface-container-highest my-space-xs rounded-full"></div><button aria-label="Masmorra do Dragão" class="relative group w-12 h-12 rounded-xl bg-primary-container text-on-primary-container flex items-center justify-center font-headline-sm text-headline-sm font-bold shadow-[0_4px_20px_-2px_rgba(0,0,0,0.5)]"><span class="material-symbols-outlined text-[24px]">shield</span><div class="absolute left-0 w-1 h-8 bg-primary rounded-r-full -translate-x-3"></div></button><button aria-label="Mesa de Cyberpunk" class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all font-headline-sm text-headline-sm font-bold">CP</button><button aria-label="Grimório Arcano" class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all font-headline-sm text-headline-sm font-bold">GA</button></div><div class="flex flex-col items-center gap-space-sm"><button aria-label="Criar ou Adicionar Servidor" class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-secondary hover:bg-secondary-container hover:text-on-secondary-container transition-all"><span class="material-symbols-outlined text-[22px]">add</span></button></div></aside><aside class="fixed left-[72px] top-0 bottom-0 w-[240px] bg-surface-container-low z-40 flex flex-col justify-between shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="flex flex-col"><div class="h-14 px-space-md flex items-center justify-between bg-surface-container-low"><div class="flex items-center gap-space-xs overflow-hidden"><span class="material-symbols-outlined text-[18px] text-primary">settings</span><span class="font-headline-sm text-headline-sm text-on-surface truncate">Configurações</span></div><a aria-label="Voltar para Masmorra do Dragão" class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="retornar-ao-chat" href="#"><span class="material-symbols-outlined text-[20px]">close</span></a></div><div class="px-space-md py-space-xs"><span class="font-label-code-sm text-label-code-sm text-on-surface-variant uppercase tracking-wider block truncate">Masmorra do Dragão</span></div><nav class="flex-1 px-space-sm pt-space-sm space-y-space-md overflow-y-auto" data-active-classes="bg-surface-container-high text-primary font-headline-sm"><div><div class="px-space-sm py-space-xs font-label-ui text-label-ui text-on-surface-variant uppercase tracking-wider">Servidor</div><div class="flex flex-col gap-space-xs mt-space-xs"><a class="flex items-center gap-space-sm px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="geral-imagem" href="#"><span class="material-symbols-outlined text-[18px]">tune</span>Visão Geral</a><a class="flex items-center gap-space-sm px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="boas-vindas" href="#"><span class="material-symbols-outlined text-[18px]">waving_hand</span>Boas-vindas</a></div></div><div><div class="px-space-sm py-space-xs font-label-ui text-label-ui text-on-surface-variant uppercase tracking-wider">Papéis</div><div class="flex flex-col gap-space-xs mt-space-xs"><a class="flex items-center gap-space-sm px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="cargos-permissoes" href="#"><span class="material-symbols-outlined text-[18px]">badge</span>Cargos</a></div></div><div><div class="px-space-sm py-space-xs font-label-ui text-label-ui text-on-surface-variant uppercase tracking-wider">Pessoas</div><div class="flex flex-col gap-space-xs mt-space-xs"><a aria-current="page" class="flex items-center gap-space-sm px-space-sm py-space-xs rounded-lg transition-colors bg-surface-container-high text-primary font-headline-sm" data-path="membros" href="#"><span class="material-symbols-outlined text-[18px]">group</span>Membros</a></div></div><div><div class="px-space-sm py-space-xs font-label-ui text-label-ui text-error uppercase tracking-wider">Zona Crítica</div><div class="flex flex-col gap-space-xs mt-space-xs"><a class="flex items-center gap-space-sm px-space-sm py-space-xs rounded-lg text-error hover:bg-error-container hover:text-on-error-container transition-colors font-body-md text-body-md" data-path="apagar-servidor" href="#"><span class="material-symbols-outlined text-[18px]">delete_forever</span>Apagar Servidor</a></div></div></nav></div><div class="p-space-sm bg-surface-container-lowest m-space-xs rounded-xl flex items-center justify-between"><div class="flex items-center gap-space-sm min-w-0"><div class="relative flex-shrink-0"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-secondary ring-2 ring-surface-container-lowest"></span></div><div class="flex flex-col min-w-0"><span class="font-label-ui text-label-ui text-on-surface truncate">Mestre_Kael</span><span class="font-label-code-sm text-label-code-sm text-on-surface-variant truncate">#0042</span></div></div><div class="flex items-center gap-space-xs"><button aria-label="Mutar Áudio" class="w-7 h-7 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[16px]">mic</span></button><button aria-label="Configurações Pessoais" class="w-7 h-7 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[16px]">tune</span></button></div></div></aside><div class="pl-[312px]"><header class="fixed top-0 left-[312px] right-0 z-30 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-14 w-full px-space-lg flex items-center justify-between"><div class="flex items-center gap-space-md"><img alt="Geometric minimalist emblem logo for 'Mesa', a self-hosted encrypted chat and tabletop voice/video platform. Icon shows an abstracted round game table combined with subtle interlocking protective cryptographic shield or circle rings, warm terracotta coral and warm ivory tones on a sleek dark badge background, modern flat vector design, clean SVG silhouette.. Design context: - Primary color: #e07a5f
+- Font: plusJakartaSans
+- Mode: dark
+- Roundness: rounded-md
+. The logo should be visually consistent with these brand tokens." class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Wu6JPFAgZCyVeUFfgF2Kw0tDR-hsarUUfylK14HYlLwAvvLQCMU2yFj9S9B1Q71Fq6zapDK3Irg2Zx3iMoLWvt5oI4ddFcNATCLKLLVNiGVWqORn8REKU_XDfAo6kzvp9H8bl2WpVm1hnyVH6oiUeJ6ldFclk2C5YFAzLugzQ4b3hq3royoiQ-7WRiEWXxpZNjUqQ8_iyE-6cBPASSapis3gp1Pn8ONomgG9Rap9nRDBJ_5ZY22pvfcGTv"/><div class="flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-surface-container font-label-code-sm text-label-code-sm text-secondary"><span class="material-symbols-outlined text-[14px]">lock</span><span>E2EE :: 0x7E31...B9</span></div></div><nav class="hidden md:flex items-center gap-space-lg" data-active-classes="bg-primary-container text-on-primary-container font-headline-sm"><a class="font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="geral-imagem" href="#">Servidor</a><a class="font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="cargos-permissoes" href="#">Papéis</a><a aria-current="page" class="transition-colors bg-primary-container text-on-primary-container font-headline-sm" data-path="membros" href="#">Pessoas</a><a class="font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="apagar-servidor" href="#">Segurança</a></nav><div class="flex items-center gap-space-sm"><a class="flex items-center gap-space-xs px-space-sm py-space-xs rounded-lg bg-surface-container text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-label-ui text-label-ui" data-path="retornar-ao-chat" href="#"><span class="material-symbols-outlined text-[16px]">close</span><span>ESC</span></a><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="relative w-full pt-14 px-space-lg bg-background min-h-screen"><div class="flex flex-col w-full pb-space-xl">
+<!-- Subtle Ambient Glow Behind Page Context -->
+<div class="relative w-full max-w-7xl mx-auto px-space-md lg:px-space-xl pt-space-lg">
+<div class="absolute -top-16 right-1/4 w-96 h-96 bg-primary-container/10 rounded-full blur-3xl pointer-events-none -z-10"></div>
+<div class="absolute top-40 left-10 w-72 h-72 bg-secondary/5 rounded-full blur-3xl pointer-events-none -z-10"></div>
+<!-- Header & Primary Telemetry -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-space-lg pb-space-lg">
+<div class="space-y-space-xs max-w-2xl">
+<div class="flex items-center gap-space-sm">
+<span class="inline-flex items-center gap-space-xs px-space-sm py-0.5 rounded-full bg-surface-container-high text-primary font-label-code-sm text-label-code-sm tracking-wide uppercase">
+<span class="material-symbols-outlined text-[13px]">groups</span>
+            Gestão de Comunidade
+          </span>
+<span class="text-on-surface-variant font-label-code-sm text-label-code-sm">:: Instância #0442</span>
+</div>
+<h1 class="font-headline-lg md:font-display-lg text-headline-lg md:text-display-lg text-on-surface tracking-tight">
+          Membros do Servidor
+        </h1>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+          Gerencie os participantes, atribua cargos criptografados e administre os privilégios de acesso aos pergaminhos e canais de áudio da <span class="text-on-surface font-headline-sm text-body-md">Masmorra do Dragão</span>.
+        </p>
+</div>
+<!-- Quick Metrics Pill Counter Mosaic -->
+<div class="flex items-center gap-space-sm bg-surface-container-low p-space-xs rounded-xl shadow-sm self-start md:self-auto">
+<div class="px-space-md py-space-xs rounded-lg bg-surface-container flex flex-col items-center min-w-[76px]">
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant uppercase">Total</span>
+<span class="font-headline-md text-headline-md text-on-surface font-bold">14</span>
+</div>
+<div class="px-space-md py-space-xs rounded-lg bg-surface-container flex flex-col items-center min-w-[76px]">
+<span class="font-label-code-sm text-label-code-sm text-secondary uppercase">Online</span>
+<span class="font-headline-md text-headline-md text-secondary font-bold">4</span>
+</div>
+<div class="px-space-md py-space-xs rounded-lg bg-surface-container flex flex-col items-center min-w-[76px]">
+<span class="font-label-code-sm text-label-code-sm text-tertiary uppercase">Chaves</span>
+<span class="font-headline-md text-headline-md text-tertiary font-bold">100%</span>
+</div>
+</div>
+</div>
+<!-- Controls / Action Toolbar -->
+<div class="mt-space-md bg-surface-container p-space-md rounded-xl shadow-md flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-space-md">
+<div class="flex flex-col sm:flex-row items-center gap-space-sm flex-1">
+<!-- Search Input -->
+<div class="relative w-full sm:max-w-md">
+<span class="absolute left-space-md top-1/2 -translate-y-1/2 text-on-surface-variant material-symbols-outlined text-[18px]">
+            search
+          </span>
+<input class="w-full pl-10 pr-space-md py-2.5 rounded-lg bg-surface-container-lowest text-on-surface font-body-md text-body-md placeholder-on-surface-variant/60 focus:bg-surface-container-low focus:outline-none transition-all shadow-inner" id="memberSearchInput" placeholder="Filtrar por @handle ou nome..." type="text"/>
+</div>
+<!-- Role Filter Selector -->
+<div class="relative w-full sm:w-56">
+<select class="w-full appearance-none pl-space-md pr-10 py-2.5 rounded-lg bg-surface-container-lowest text-on-surface font-body-md text-body-md focus:bg-surface-container-low focus:outline-none transition-all cursor-pointer shadow-inner" id="roleFilterSelect">
+<option value="all">Todos os cargos</option>
+<option value="owner">Dono (Proprietário)</option>
+<option value="dm">Mestre da Mesa</option>
+<option value="veteran">Jogador Veterano</option>
+<option value="spectator">Bardo / Espectador</option>
+</select>
+<span class="absolute right-space-md top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant material-symbols-outlined text-[18px]">
+            arrow_drop_down
+          </span>
+</div>
+</div>
+<!-- Invite CTA Button -->
+<div class="flex items-center gap-space-sm justify-end">
+<button class="flex items-center justify-center gap-space-xs px-space-md py-2.5 rounded-lg bg-primary text-on-primary font-headline-sm text-headline-sm hover:opacity-90 active:scale-[0.98] transition-all shadow-md group" id="btnInvite">
+<span class="material-symbols-outlined text-[20px] transition-transform group-hover:rotate-12">person_add</span>
+<span>Convidar Pessoas</span>
+</button>
+</div>
+</div>
+<!-- Active Filter Chips Bar -->
+<div class="flex items-center gap-space-sm mt-space-sm px-space-xs">
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">Listando:</span>
+<span class="inline-flex items-center gap-1.5 px-space-sm py-0.5 rounded-full bg-surface-container-high text-on-surface font-label-ui text-label-ui">
+        Todos os participantes (5 visíveis nesta página)
+      </span>
+<span class="text-on-surface-variant/40">•</span>
+<span class="font-label-code-sm text-label-code-sm text-secondary flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> 14 identidades criptograficamente atestadas
+      </span>
+</div>
+<!-- Main Table Container -->
+<div class="mt-space-md bg-surface-container rounded-xl shadow-lg overflow-hidden">
+<!-- Table Header -->
+<div class="hidden md:grid grid-cols-12 gap-space-md px-space-lg py-space-sm bg-surface-container-high font-label-ui text-label-ui text-on-surface-variant uppercase tracking-wider">
+<div class="col-span-5 flex items-center gap-space-xs">
+<span>Identidade do Membro</span>
+</div>
+<div class="col-span-3 flex items-center gap-space-xs">
+<span>Cargo &amp; Permissão</span>
+</div>
+<div class="col-span-4 flex items-center justify-end">
+<span>Ações &amp; Gestão</span>
+</div>
+</div>
+<!-- Member Rows List -->
+<div class="divide-y-0 flex flex-col" id="membersList">
+<!-- ROW 1: Dono do Servidor (Torvald Valravn) -->
+<div class="member-item grid grid-cols-1 md:grid-cols-12 gap-space-md px-space-lg py-space-md bg-surface-container hover:bg-surface-container-high/60 transition-colors items-center" data-name="Torvald Valravn @torvald_dm" data-role="owner">
+<!-- Identity -->
+<div class="col-span-1 md:col-span-5 flex items-center gap-space-md min-w-0">
+<div class="relative flex-shrink-0">
+<img class="w-11 h-11 rounded-xl object-cover shadow-md" data-alt="Intense rugged Nordic tabletop master with braided salt-and-pepper beard, deep amber eyes, wearing dark leather adventurer mantle lit by ambient warm fireplace light. High-end modern digital portrait art, cinematic realism, dark obsidian charcoal background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDnpxAI-TILRYPGKnw8cz-iD-TDiyyDUNvI0SvkX7lPK3FGf97JEIAkfEgOuriOUGS29pq9Fdx1YE16yA3gRsDUSfT1hUvMKZFd9AfowhT-7e8zCh7uNBONxwpKctFldSV-Z4iVp162Sx0InzuEynbkBkpHO93FVJtB-aF7qc2mntwLV_OGq3FdgqLx2VmvyYvNe-5DfHjpJj_xumkMVBuMCsDdIIb8IKs5AIfooGS0v0tlZQe9ERgeHg"/>
+<!-- Subtle Crown Badge -->
+<span class="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-md ring-2 ring-surface-container" title="Proprietário do Servidor">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+</span>
+<!-- Online Indicator -->
+<span class="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-secondary ring-2 ring-surface-container" title="Online"></span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-space-xs">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Torvald Valravn</span>
+<span class="material-symbols-outlined text-primary text-[16px]" title="Chave Mestra Verificada">verified_user</span>
+</div>
+<div class="flex items-center gap-space-sm">
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant truncate">@torvald_dm</span>
+<span class="inline-flex items-center gap-1 font-label-code-sm text-label-code-sm text-secondary">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span> Online
+                </span>
+</div>
+</div>
+</div>
+<!-- Role Select (LOCKED FOR OWNER) -->
+<div class="col-span-1 md:col-span-3 flex items-center">
+<div class="inline-flex items-center gap-space-xs px-space-md py-1.5 rounded-lg bg-surface-container-highest text-primary font-headline-sm text-body-md shadow-sm" title="O cargo de dono do servidor não pode ser transferido ou modificado aqui.">
+<span class="material-symbols-outlined text-[16px] text-primary">lock</span>
+<span class="truncate">Dono (Proprietário)</span>
+</div>
+</div>
+<!-- Actions (NO REMOVE BUTTON FOR OWNER) -->
+<div class="col-span-1 md:col-span-4 flex items-center justify-start md:justify-end gap-space-sm">
+<span class="inline-flex items-center gap-1 px-space-md py-1.5 rounded-lg bg-surface-container-lowest text-on-surface-variant font-label-code-sm text-label-code-sm">
+<span class="material-symbols-outlined text-[14px] text-primary">shield</span>
+              Criador da Instância
+            </span>
+</div>
+</div>
+<!-- ROW 2: Mestre Aventuras (@mestre_aventuras) -->
+<div class="member-item grid grid-cols-1 md:grid-cols-12 gap-space-md px-space-lg py-space-md bg-surface-container-low/40 hover:bg-surface-container-high/60 transition-colors items-center" data-name="Mestre Aventuras @mestre_aventuras" data-role="dm">
+<!-- Identity -->
+<div class="col-span-1 md:col-span-5 flex items-center gap-space-md min-w-0">
+<div class="relative flex-shrink-0">
+<img class="w-11 h-11 rounded-xl object-cover shadow-md" data-alt="Young charismatic game master with scholarly spectacles and warm smile, holding an illuminated arcane dice, warm campfire terracotta lighting reflections on dark hooded cloak, high-detail digital painting, dark cozy mood." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDZlXdNEhdIjt-aytjDmzlR69CYCpgg_OQbmpDxGdKTKFnsUMO2vCb-fh3v2JKPV_5XFBEsawJ4d0hlnjMP2VGWx00ZbFEeaabuq1ziWqaqo9KsGXjC7mLAIA77dk6CpL8IRoCt0z8PzhZxKfIuCIO_f72QjPnx7Eb_nM-mdMIx3xbUGinKyaOF9rS0vvBi_Ud_rDz6BeDMPRnpUcfMLs9vf_0dIRY2COpOzMbQA9DZ_fzw7gLEByfMGg"/>
+<span class="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-secondary ring-2 ring-surface-container" title="Online"></span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-space-xs">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Mestre Aventuras</span>
+<span class="px-1.5 py-0.2 rounded bg-surface-container text-tertiary font-label-code-sm text-[10px]">E2EE HOST</span>
+</div>
+<div class="flex items-center gap-space-sm">
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant truncate">@mestre_aventuras</span>
+<span class="inline-flex items-center gap-1 font-label-code-sm text-label-code-sm text-secondary">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> Online
+                </span>
+</div>
+</div>
+</div>
+<!-- Role Select Active Dropdown -->
+<div class="col-span-1 md:col-span-3 flex items-center">
+<div class="relative w-full max-w-xs">
+<select class="w-full appearance-none pl-space-md pr-8 py-1.5 rounded-lg bg-surface-container-lowest text-on-surface font-headline-sm text-body-md focus:bg-surface-container-high focus:outline-none transition-all cursor-pointer shadow-inner">
+<option selected="" value="dm">Mestre da Mesa</option>
+<option value="veteran">Jogador Veterano</option>
+<option value="spectator">Espectador</option>
+</select>
+<span class="absolute right-space-sm top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant material-symbols-outlined text-[16px]">
+                unfold_more
+              </span>
+</div>
+</div>
+<!-- Actions -->
+<div class="col-span-1 md:col-span-4 flex items-center justify-start md:justify-end gap-space-xs">
+<!-- Mute Timeout Menu Container -->
+<div class="relative group/mute">
+<button class="flex items-center gap-1 px-space-sm py-1.5 rounded-lg bg-surface-container-lowest text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors font-label-ui text-label-ui" title="Silenciar temporariamente">
+<span class="material-symbols-outlined text-[16px]">volume_off</span>
+<span class="hidden sm:inline">Silenciar</span>
+<span class="material-symbols-outlined text-[14px]">expand_more</span>
+</button>
+<!-- Popover Menu -->
+<div class="absolute right-0 top-full mt-1 hidden group-hover/mute:flex flex-col w-36 bg-surface-container-highest p-1 rounded-lg shadow-xl z-20">
+<span class="px-space-sm py-1 font-label-code-sm text-label-code-sm text-on-surface-variant">Duração:</span>
+<button class="w-full text-left px-space-sm py-1 rounded text-on-surface hover:bg-surface-container font-label-ui text-label-ui" onclick="showToast('Membro silenciado por 5 min')">5 minutos</button>
+<button class="w-full text-left px-space-sm py-1 rounded text-on-surface hover:bg-surface-container font-label-ui text-label-ui" onclick="showToast('Membro silenciado por 10 min')">10 minutos</button>
+<button class="w-full text-left px-space-sm py-1 rounded text-on-surface hover:bg-surface-container font-label-ui text-label-ui" onclick="showToast('Membro silenciado por 15 min')">15 minutos</button>
+<button class="w-full text-left px-space-sm py-1 rounded text-on-surface hover:bg-surface-container font-label-ui text-label-ui" onclick="showToast('Membro silenciado por 30 min')">30 minutos</button>
+</div>
+</div>
+<!-- Remove Button -->
+<button class="flex items-center gap-1 px-space-sm py-1.5 rounded-lg bg-surface-container-lowest text-error/80 hover:text-error hover:bg-error-container hover:text-on-error-container transition-all font-label-ui text-label-ui" onclick="showToast('Ação restrita: Mestre Aventuras possui privilégios de co-anfitrião')" title="Remover participante da mesa">
+<span class="material-symbols-outlined text-[16px]">person_remove</span>
+<span>Remover</span>
+</button>
+</div>
+</div>
+<!-- ROW 3: Thorin Pedraferro (@thorin_iron) -->
+<div class="member-item grid grid-cols-1 md:grid-cols-12 gap-space-md px-space-lg py-space-md bg-surface-container hover:bg-surface-container-high/60 transition-colors items-center" data-name="Thorin Pedraferro @thorin_iron" data-role="veteran">
+<!-- Identity -->
+<div class="col-span-1 md:col-span-5 flex items-center gap-space-md min-w-0">
+<div class="relative flex-shrink-0">
+<img class="w-11 h-11 rounded-xl object-cover shadow-md" data-alt="Fierce dwarf warrior with braided copper beard, engraved runic iron pauldron shoulder armor, warm campfire sparks glowing against dark cavern stone walls, detailed digital RPG character concept." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBd_JKeF_dWuH3nd9GPVBLWLgsJArX3or5bjztBeqxWfAWj145YSGh7GLXVwQP5el9HDyuni5UCY-pM1EruWBnn7umuG7Zzrssjx88b8dQhG711EtbBHr9G1ZH7Oc_RLT_N3a3xR_aONskSdpk1y4-VcIz-sQw2Na7SbKp06BjkE04IXw-_ErLNU83na1YuYxByI199vHDslfB6Kt9DK-lghiHL4Xt7vvCOgsIdK75E4RCrR2Vc_gja5A"/>
+<span class="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-secondary ring-2 ring-surface-container"></span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Thorin Pedraferro</span>
+<div class="flex items-center gap-space-sm">
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant truncate">@thorin_iron</span>
+<span class="inline-flex items-center gap-1 font-label-code-sm text-label-code-sm text-primary">
+<span class="material-symbols-outlined text-[12px]">mic</span>
+<span class="truncate">#palco-da-campanha</span>
+</span>
+</div>
+</div>
+</div>
+<!-- Role Select Active Dropdown -->
+<div class="col-span-1 md:col-span-3 flex items-center">
+<div class="relative w-full max-w-xs">
+<select class="w-full appearance-none pl-space-md pr-8 py-1.5 rounded-lg bg-surface-container-lowest text-on-surface font-headline-sm text-body-md focus:bg-surface-container-high focus:outline-none transition-all cursor-pointer shadow-inner">
+<option value="dm">Mestre da Mesa</option>
+<option selected="" value="veteran">Jogador Veterano</option>
+<option value="spectator">Espectador</option>
+</select>
+<span class="absolute right-space-sm top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant material-symbols-outlined text-[16px]">
+                unfold_more
+              </span>
+</div>
+</div>
+<!-- Actions -->
+<div class="col-span-1 md:col-span-4 flex items-center justify-start md:justify-end gap-space-xs">
+<!-- Mute Quick Toggle -->
+<button class="w-8 h-8 rounded-lg bg-surface-container-lowest text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high flex items-center justify-center transition-colors" onclick="showToast('Thorin silenciado no canal de voz')" title="Silenciar voz">
+<span class="material-symbols-outlined text-[16px]">mic_off</span>
+</button>
+<!-- Remove Button -->
+<button class="flex items-center gap-1 px-space-sm py-1.5 rounded-lg bg-surface-container-lowest text-error/80 hover:text-error hover:bg-error-container hover:text-on-error-container transition-all font-label-ui text-label-ui" onclick="confirmRemoveMember('Thorin Pedraferro')" title="Expulsar da Masmorra">
+<span class="material-symbols-outlined text-[16px]">person_remove</span>
+<span>Remover</span>
+</button>
+</div>
+</div>
+<!-- ROW 4: Elysia Estelar (@elysia_star) -->
+<div class="member-item grid grid-cols-1 md:grid-cols-12 gap-space-md px-space-lg py-space-md bg-surface-container-low/40 hover:bg-surface-container-high/60 transition-colors items-center" data-name="Elysia Estelar @elysia_star" data-role="veteran">
+<!-- Identity -->
+<div class="col-span-1 md:col-span-5 flex items-center gap-space-md min-w-0">
+<div class="relative flex-shrink-0">
+<img class="w-11 h-11 rounded-xl object-cover shadow-md" data-alt="Mystical elf spellcaster with silver-blue hair, glowing celestial circlet, quiet serene expression in a dim star-lit library tower, deep dark slate tones with subtle terracotta and violet highlights." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCPPdHrJsT61GUVyxiaRuSIjQmIH7hlqPGbtocSi64WaXi_olUOO0hPPF7UPJJhA6aQX4z4qIaFwYhyH0H3JBRDAG5wPhW7ePdrd-CjSGbRYn5E9sMQWKOOyEYGgaZEmasAYf4TBGVPVkN-Vvxul_Tg-ONUQLJ5HIWnyeI17ORexaIHuHUajGW3FnTgttsrZiwD6MHNaIP5phfzrrh2EssLKYS42C23rdA9pRNRJsTnBdR5GbkjIMkGjQ"/>
+<span class="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-surface-container-highest ring-2 ring-surface-container" title="Ausente"></span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Elysia Estelar</span>
+<div class="flex items-center gap-space-sm">
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant truncate">@elysia_star</span>
+<span class="inline-flex items-center gap-1 font-label-code-sm text-label-code-sm text-on-surface-variant">
+<span class="w-1.5 h-1.5 rounded-full bg-on-surface-variant/50"></span> Ausente há 15m
+                </span>
+</div>
+</div>
+</div>
+<!-- Role Select Active Dropdown -->
+<div class="col-span-1 md:col-span-3 flex items-center">
+<div class="relative w-full max-w-xs">
+<select class="w-full appearance-none pl-space-md pr-8 py-1.5 rounded-lg bg-surface-container-lowest text-on-surface font-headline-sm text-body-md focus:bg-surface-container-high focus:outline-none transition-all cursor-pointer shadow-inner">
+<option value="dm">Mestre da Mesa</option>
+<option selected="" value="veteran">Jogador Veterano</option>
+<option value="spectator">Espectador</option>
+</select>
+<span class="absolute right-space-sm top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant material-symbols-outlined text-[16px]">
+                unfold_more
+              </span>
+</div>
+</div>
+<!-- Actions -->
+<div class="col-span-1 md:col-span-4 flex items-center justify-start md:justify-end gap-space-xs">
+<button class="flex items-center gap-1 px-space-sm py-1.5 rounded-lg bg-surface-container-lowest text-error/80 hover:text-error hover:bg-error-container hover:text-on-error-container transition-all font-label-ui text-label-ui" onclick="confirmRemoveMember('Elysia Estelar')" title="Expulsar da Masmorra">
+<span class="material-symbols-outlined text-[16px]">person_remove</span>
+<span>Remover</span>
+</button>
+</div>
+</div>
+<!-- ROW 5: Grimm (@grimm_bard) -->
+<div class="member-item grid grid-cols-1 md:grid-cols-12 gap-space-md px-space-lg py-space-md bg-surface-container hover:bg-surface-container-high/60 transition-colors items-center" data-name="Grimm @grimm_bard" data-role="spectator">
+<!-- Identity with Initials -->
+<div class="col-span-1 md:col-span-5 flex items-center gap-space-md min-w-0">
+<div class="relative flex-shrink-0">
+<div class="w-11 h-11 rounded-xl bg-surface-container-highest text-tertiary font-headline-sm text-headline-sm font-bold flex items-center justify-center shadow-md">
+                GR
+              </div>
+<span class="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-surface-variant ring-2 ring-surface-container" title="Offline"></span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Grimm</span>
+<div class="flex items-center gap-space-sm">
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant truncate">@grimm_bard</span>
+<span class="inline-flex items-center gap-1 font-label-code-sm text-label-code-sm text-on-surface-variant/60">
+<span class="w-1.5 h-1.5 rounded-full bg-outline-variant"></span> Offline
+                </span>
+</div>
+</div>
+</div>
+<!-- Role Select Active Dropdown -->
+<div class="col-span-1 md:col-span-3 flex items-center">
+<div class="relative w-full max-w-xs">
+<select class="w-full appearance-none pl-space-md pr-8 py-1.5 rounded-lg bg-surface-container-lowest text-on-surface font-headline-sm text-body-md focus:bg-surface-container-high focus:outline-none transition-all cursor-pointer shadow-inner">
+<option value="dm">Mestre da Mesa</option>
+<option value="veteran">Jogador Veterano</option>
+<option selected="" value="spectator">Espectador</option>
+</select>
+<span class="absolute right-space-sm top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant material-symbols-outlined text-[16px]">
+                unfold_more
+              </span>
+</div>
+</div>
+<!-- Actions -->
+<div class="col-span-1 md:col-span-4 flex items-center justify-start md:justify-end gap-space-xs">
+<button class="flex items-center gap-1 px-space-sm py-1.5 rounded-lg bg-surface-container-lowest text-error/80 hover:text-error hover:bg-error-container hover:text-on-error-container transition-all font-label-ui text-label-ui" onclick="confirmRemoveMember('Grimm')" title="Expulsar da Masmorra">
+<span class="material-symbols-outlined text-[16px]">person_remove</span>
+<span>Remover</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Table Bottom Summary & Pagination strip -->
+<div class="px-space-lg py-space-md bg-surface-container-lowest flex flex-col sm:flex-row items-center justify-between gap-space-md">
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">
+          Exibindo 5 de 14 membros totais cadastrados na guilda
+        </span>
+<div class="flex items-center gap-space-xs">
+<button class="w-8 h-8 rounded-lg bg-surface-container text-on-surface-variant/40 flex items-center justify-center cursor-not-allowed" disabled="">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span>
+</button>
+<span class="px-space-md py-1 rounded-lg bg-surface-container-high font-label-code-sm text-label-code-sm text-primary font-bold">1</span>
+<button class="w-8 h-8 rounded-lg bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high flex items-center justify-center transition-colors" onclick="showToast('Carregando página 2...')">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Security & E2EE Cryptographic Footer Banner -->
+<div class="mt-space-lg p-space-md rounded-xl bg-surface-container-low flex flex-col sm:flex-row items-start sm:items-center justify-between gap-space-md shadow-sm">
+<div class="flex items-center gap-space-md">
+<div class="w-10 h-10 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[22px]">enhanced_encryption</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">Arquitetura de Conhecimento Zero (E2EE)</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+            Os membros só decifram histórico de canais aos quais têm chave de acesso concedida. Ao revogar ou remover um participante, novas chaves de grupo (Ratchet Tree) são giradas instantaneamente.
+          </p>
+</div>
+</div>
+<div class="flex items-center gap-space-sm self-end sm:self-auto flex-shrink-0">
+<span class="font-label-code-sm text-label-code-sm text-secondary px-space-sm py-1 rounded-md bg-surface-container">
+          mls-protocol::v1.0.4-verified
+        </span>
+</div>
+</div>
+</div>
+<!-- Toast Notification System (Interactive feedback) -->
+<div class="fixed bottom-6 right-6 max-w-sm bg-surface-container-highest text-on-surface px-space-md py-space-sm rounded-xl shadow-2xl z-50 transform translate-y-20 opacity-0 transition-all duration-300 flex items-center gap-space-sm pointer-events-none" id="toastNotification">
+<span class="material-symbols-outlined text-primary text-[20px]" id="toastIcon">info</span>
+<span class="font-body-md text-body-md" id="toastMessage">Operação realizada</span>
+</div>
+<!-- Modal Convidar Pessoas (Micro-interaction) -->
+<div class="fixed inset-0 bg-surface-dim/80 backdrop-blur-sm z-50 hidden items-center justify-center p-space-md" id="inviteModal">
+<div class="bg-surface-container p-space-lg rounded-xl max-w-md w-full shadow-2xl relative space-y-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[22px]">person_add</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">Convidar para a Masmorra</h2>
+</div>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors" id="closeInviteModal">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">
+        Compartilhe este elo de convite seguro com novos aventureiros. As sessões requerem validação biométrica ou de chave única na primeira conexão.
+      </p>
+<div class="flex flex-col gap-space-xs">
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant uppercase">Link de Convite Encriptado</span>
+<div class="flex items-center gap-space-xs">
+<input class="flex-1 px-space-sm py-2 rounded-lg bg-surface-container-lowest text-primary font-label-code-sm text-label-code-sm focus:outline-none shadow-inner" readonly="" type="text" value="https://mesa.app/invite/0x91F2_dragao_valravn"/>
+<button class="px-space-md py-2 rounded-lg bg-primary text-on-primary font-headline-sm text-headline-sm hover:opacity-90 transition-opacity flex items-center gap-1" onclick="copyInviteLink()">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+<span>Copiar</span>
+</button>
+</div>
+</div>
+<div class="pt-space-xs flex items-center justify-between text-on-surface-variant font-label-code-sm text-label-code-sm">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">timer</span> Expira em 7 dias
+        </span>
+<span>Máx: 20 utilizações</span>
+</div>
+</div>
+</div>
+</div>
+<script>
+  // Simple Micro-Interactions Script
+  function showToast(message, icon = 'info') {
+    const toast = document.getElementById('toastNotification');
+    const toastMsg = document.getElementById('toastMessage');
+    const toastIcon = document.getElementById('toastIcon');
+    
+    if (toast && toastMsg && toastIcon) {
+      toastMsg.textContent = message;
+      toastIcon.textContent = icon;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+      }, 3200);
+    }
+  }
+
+  function confirmRemoveMember(memberName) {
+    if (confirm(`Tem certeza de que deseja revogar o acesso e as chaves de ${memberName}?`)) {
+      showToast(`${memberName} foi expulso da Masmorra. Novas chaves distribuídas.`, 'security_update_good');
+    }
+  }
+
+  function copyInviteLink() {
+    navigator.clipboard?.writeText("https://mesa.app/invite/0x91F2_dragao_valravn");
+    showToast("Link criptografado copiado para a área de transferência!", "check_circle");
+  }
+
+  // Invite Modal toggles
+  const inviteBtn = document.getElementById('btnInvite');
+  const inviteModal = document.getElementById('inviteModal');
+  const closeInviteModal = document.getElementById('closeInviteModal');
+
+  if (inviteBtn && inviteModal && closeInviteModal) {
+    inviteBtn.addEventListener('click', () => {
+      inviteModal.classList.remove('hidden');
+      inviteModal.classList.add('flex');
+    });
+    closeInviteModal.addEventListener('click', () => {
+      inviteModal.classList.add('hidden');
+      inviteModal.classList.remove('flex');
+    });
+  }
+
+  // Member Search Filter
+  const memberSearchInput = document.getElementById('memberSearchInput');
+  const roleFilterSelect = document.getElementById('roleFilterSelect');
+  const memberItems = document.querySelectorAll('.member-item');
+
+  function filterMembers() {
+    const term = (memberSearchInput?.value || '').toLowerCase().trim();
+    const role = roleFilterSelect?.value || 'all';
+
+    memberItems.forEach(item => {
+      const nameData = item.getAttribute('data-name')?.toLowerCase() || '';
+      const roleData = item.getAttribute('data-role') || '';
+
+      const matchesTerm = nameData.includes(term);
+      const matchesRole = (role === 'all') || (roleData === role);
+
+      if (matchesTerm && matchesRole) {
+        item.style.display = 'grid';
+      } else {
+        item.style.display = 'none';
+      }
+    });
+  }
+
+  memberSearchInput?.addEventListener('input', filterMembers);
+  roleFilterSelect?.addEventListener('change', filterMembers);
+</script></main></div></body></html>

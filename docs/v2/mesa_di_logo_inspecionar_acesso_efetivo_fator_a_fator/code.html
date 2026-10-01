@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"on-error":"#690005","tertiary":"#d1bcff","surface-container-highest":"#32343e","surface-bright":"#363943","on-surface-variant":"#dbc1ba","secondary":"#6bdc96","surface-tint":"#ffb4a1","secondary-fixed":"#88f9b0","inverse-primary":"#9a442d","on-primary-fixed":"#3c0800","surface-dim":"#10131c","surface-container-lowest":"#0b0e17","on-primary-container":"#5b1604","on-secondary":"#00391d","primary":"#ffb4a1","on-tertiary":"#3c0090","secondary-fixed-dim":"#6bdc96","primary-fixed":"#ffdbd2","tertiary-fixed":"#eaddff","tertiary-fixed-dim":"#d1bcff","on-tertiary-fixed":"#24005b","on-tertiary-container":"#3b008c","surface-container-high":"#272a33","primary-fixed-dim":"#ffb4a1","tertiary-container":"#a680fd","on-surface":"#e0e2ef","inverse-on-surface":"#2d303a","secondary-container":"#2ca464","surface-variant":"#32343e","outline-variant":"#55423e","inverse-surface":"#e0e2ef","on-background":"#e0e2ef","outline":"#a38b86","on-secondary-fixed-variant":"#00522c","background":"#10131c","surface-container-low":"#181b24","on-tertiary-fixed-variant":"#5429a6","surface":"#10131c","surface-container":"#1c1f29","on-error-container":"#ffdad6","on-secondary-container":"#003118","primary-container":"#e07a5f","on-primary-fixed-variant":"#7c2e19","error":"#ffb4ab","on-secondary-fixed":"#00210f","on-primary":"#5d1805","error-container":"#93000a"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"space-lg":"1.5rem","space-xl":"2.5rem","margin":"1rem","gutter-desktop":"1.5rem","space-md":"1rem","margin-desktop":"2rem","gutter":"1rem","space-xs":"0.25rem","space-sm":"0.5rem"},"fontFamily":{"label-ui":["Inter"],"display-lg":["Plus Jakarta Sans"],"headline-sm":["Plus Jakarta Sans"],"body-sm":["Inter"],"body-lg":["Inter"],"headline-md":["Plus Jakarta Sans"],"display-lg-mobile":["Plus Jakarta Sans"],"headline-lg":["Plus Jakarta Sans"],"body-md":["Inter"],"label-code-md":["JetBrains Mono"],"label-code-sm":["JetBrains Mono"]},"fontSize":{"label-ui":["12px",{"lineHeight":"16px","fontWeight":"600"}],"display-lg":["36px",{"lineHeight":"44px","fontWeight":"700"}],"headline-sm":["16px",{"lineHeight":"24px","fontWeight":"600"}],"body-sm":["12px",{"lineHeight":"18px","fontWeight":"400"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"headline-md":["20px",{"lineHeight":"28px","fontWeight":"600"}],"display-lg-mobile":["28px",{"lineHeight":"36px","fontWeight":"700"}],"headline-lg":["24px",{"lineHeight":"32px","fontWeight":"600"}],"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"label-code-md":["13px",{"lineHeight":"18px","fontWeight":"500"}],"label-code-sm":["11px",{"lineHeight":"16px","fontWeight":"500"}]}}}}</script></head><body class="bg-background text-on-surface font-body-md text-body-md"><aside class="fixed left-0 top-0 h-full w-[72px] bg-surface-container-lowest z-50 flex flex-col items-center py-space-md justify-between shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="flex flex-col items-center gap-space-sm w-full"><a class="w-12 h-12 rounded-xl bg-primary-container flex items-center justify-center text-on-primary-container shadow-md transition-transform hover:scale-105" data-path="overview" href="#"><span class="material-symbols-outlined text-[24px]">shield</span></a><div class="w-8 h-[2px] bg-surface-container-highest rounded-full my-space-xs"></div><div class="flex flex-col items-center gap-space-sm w-full"><button class="w-12 h-12 rounded-xl bg-surface-container hover:bg-surface-container-high text-primary flex items-center justify-center transition-all"><span class="material-symbols-outlined text-[22px]">castle</span></button><button class="w-12 h-12 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-all"><span class="material-symbols-outlined text-[22px]">local_fire_department</span></button><button class="w-12 h-12 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-all"><span class="material-symbols-outlined text-[22px]">casino</span></button></div></div><div class="flex flex-col items-center gap-space-sm w-full"><button class="w-12 h-12 rounded-xl bg-surface-container-low hover:bg-surface-container text-secondary flex items-center justify-center transition-all"><span class="material-symbols-outlined text-[20px]">add</span></button><button class="w-12 h-12 rounded-xl bg-surface-container-low hover:bg-surface-container text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-all"><span class="material-symbols-outlined text-[20px]">explore</span></button></div></aside><aside class="fixed left-[72px] top-0 h-full w-60 bg-surface-container-low z-40 flex flex-col justify-between shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="flex flex-col h-full"><div class="h-16 px-space-md flex items-center justify-between bg-surface-container-low"><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight font-semibold">Emberhold Realm</span><span class="font-label-code-sm text-label-code-sm text-secondary flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-secondary inline-block"></span>E2EE Node active</span></div><span class="material-symbols-outlined text-on-surface-variant text-[18px]">expand_more</span></div><div class="px-space-md pt-space-md pb-space-xs"><span class="font-label-ui text-label-ui text-outline uppercase tracking-wider">Chronicles &amp; Tactical</span></div><nav class="flex flex-col px-space-sm gap-1" data-active-classes="bg-surface-container text-primary font-semibold"><a class="flex items-center px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors gap-2" data-path="session-log" href="#"><span class="font-label-code-md text-label-code-md text-outline">#</span><span class="font-body-md text-body-md">session-log</span></a><a class="flex items-center px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors gap-2" data-path="tactical-maps" href="#"><span class="font-label-code-md text-label-code-md text-outline">#</span><span class="font-body-md text-body-md">tactical-maps</span></a><a class="flex items-center px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors gap-2" data-path="lore-compendium" href="#"><span class="font-label-code-md text-label-code-md text-outline">#</span><span class="font-body-md text-body-md">lore-compendium</span></a></nav><div class="px-space-md pt-space-lg pb-space-xs"><span class="font-label-ui text-label-ui text-outline uppercase tracking-wider">Voice Gathering</span></div><nav class="flex flex-col px-space-sm gap-1" data-active-classes="bg-surface-container text-secondary font-semibold"><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="tabletop-stage" href="#"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[18px] text-secondary">volume_up</span><span class="font-body-md text-body-md">Tabletop Stage</span></div><span class="font-label-code-sm text-label-code-sm px-1.5 py-0.5 rounded bg-surface-container-highest text-secondary">5/8</span></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="hearthside-whispers" href="#"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[18px] text-outline">volume_mute</span><span class="font-body-md text-body-md">Hearthside</span></div><span class="font-label-code-sm text-label-code-sm px-1.5 py-0.5 rounded bg-surface-container-highest text-on-surface-variant">0</span></a></nav></div><div class="p-space-sm bg-surface-container-lowest m-space-sm rounded-xl flex items-center justify-between shadow-sm"><div class="flex items-center gap-2 overflow-hidden"><div class="relative flex-shrink-0"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-secondary ring-2 ring-surface-container-lowest"></span></div><div class="flex flex-col min-w-0"><span class="font-label-ui text-label-ui text-on-surface truncate">DungeonArchitect</span><span class="font-label-code-sm text-label-code-sm text-outline truncate">#d74a:e9</span></div></div><div class="flex items-center gap-1 text-on-surface-variant"><button class="p-1 hover:text-on-surface hover:bg-surface-container rounded transition-colors"><span class="material-symbols-outlined text-[18px]">mic</span></button><button class="p-1 hover:text-on-surface hover:bg-surface-container rounded transition-colors"><span class="material-symbols-outlined text-[18px]">headphones</span></button><button class="p-1 hover:text-on-surface hover:bg-surface-container rounded transition-colors"><span class="material-symbols-outlined text-[18px]">settings</span></button></div></div></aside><div class="pl-[312px]"><header class="fixed top-0 left-[312px] right-0 h-16 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-30 flex items-center justify-between px-space-lg"><div class="flex items-center gap-space-md"><div class="flex items-center gap-2"><span class="font-headline-sm text-headline-sm text-primary font-bold">MESA</span><span class="font-label-code-sm text-label-code-sm px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant">v0.9.4-local</span></div><div class="h-4 w-[1px] bg-surface-container-highest"></div><div class="flex items-center gap-2 px-2.5 py-1 rounded-full bg-surface-container"><span class="material-symbols-outlined text-secondary text-[16px]">lock</span><span class="font-label-code-sm text-label-code-sm text-on-surface">e2ee::active</span><span class="font-label-code-sm text-label-code-sm text-outline-variant font-mono">[0x7A9F]</span></div></div><nav class="hidden lg:flex items-center gap-space-lg" data-active-classes="text-primary font-semibold"><a class="font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface transition-colors" data-path="session-log" href="#">Session Stream</a><a class="font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface transition-colors" data-path="tactical-maps" href="#">Battlemap Canvas</a><a class="font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface transition-colors" data-path="tabletop-stage" href="#">Voice Stage</a><a class="font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface transition-colors" data-path="peer-telemetry" href="#">Node Mesh</a></nav><div class="flex items-center gap-space-md"><div class="flex items-center gap-2 text-on-surface-variant"><button class="p-2 hover:bg-surface-container hover:text-on-surface rounded-lg transition-colors"><span class="material-symbols-outlined text-[20px]">grid_view</span></button><button class="p-2 hover:bg-surface-container hover:text-on-surface rounded-lg transition-colors"><span class="material-symbols-outlined text-[20px]">dialpad</span></button><button class="p-2 hover:bg-surface-container hover:text-on-surface rounded-lg transition-colors"><span class="material-symbols-outlined text-[20px]">security</span></button></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></header><main class="relative pt-16 bg-surface min-h-screen w-full px-space-lg"><div class="flex flex-col w-full py-space-md">
+<!-- Backdrop / Atmospheric Frame for Modal -->
+<div class="relative w-full max-w-5xl mx-auto rounded-xl bg-surface-container-low shadow-xl p-space-sm md:p-space-md">
+<!-- Modal Header -->
+<div class="flex flex-col md:flex-row md:items-center justify-between pb-space-md gap-space-sm">
+<div class="flex items-center gap-space-sm flex-wrap">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-primary flex-shrink-0">
+<span class="material-symbols-outlined text-[24px]">key_visualizer</span>
+</div>
+<div>
+<div class="flex items-center gap-2 flex-wrap">
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Permissões de Canal — <span class="text-primary font-mono">#palco-das-batalhas</span></h2>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-surface-container-high text-secondary font-label-code-sm text-label-code-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+              MLS E2EE Ratchet
+            </span>
+<span class="font-label-code-sm text-label-code-sm px-2 py-0.5 rounded bg-surface-container-highest text-on-surface-variant font-mono">0x4E99</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Diagnóstico de herança e resolução criptográfica em tempo real</p>
+</div>
+</div>
+<div class="flex items-center gap-space-xs self-end md:self-auto">
+<button aria-label="Fechar" class="w-9 h-9 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-colors" title="Fechar Diálogo" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+</div>
+<!-- Navigation Tabs -->
+<div class="flex items-center gap-space-md pt-space-xs">
+<button class="pb-space-sm px-space-xs font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface flex items-center gap-2 transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">rule_folder</span>
+        Políticas e ACL Ativa
+        <span class="px-1.5 py-0.5 rounded-full bg-surface-container-highest text-on-surface-variant text-[10px]">4</span>
+</button>
+<button class="relative pb-space-sm px-space-xs font-label-ui text-label-ui text-primary-container font-semibold flex items-center gap-2" type="button">
+<span class="material-symbols-outlined text-[18px]">policy</span>
+        Inspecionar Acesso Efetivo
+        <span class="px-2 py-0.5 rounded-full bg-primary-container/20 text-primary text-[10px] tracking-wide uppercase font-label-code-sm">Diagnóstico de Chaves Ativo</span>
+<!-- Active Tab Underline Indicator -->
+<div class="absolute bottom-0 left-0 right-0 h-[2px] bg-primary-container rounded-full"></div>
+</button>
+</div>
+<!-- Main Content Area -->
+<div class="flex flex-col gap-space-lg pt-space-md">
+<!-- 1. Selection & High-Level Verdict Section -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-md items-start">
+<!-- Member Picker Box -->
+<div class="lg:col-span-5 bg-surface-container rounded-xl p-space-md shadow-sm">
+<div class="flex items-center justify-between pb-space-sm">
+<span class="font-label-ui text-label-ui text-outline uppercase tracking-wider">Membro Inspecionado</span>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant font-mono">UID: #9042-b</span>
+</div>
+<div class="relative flex items-center justify-between p-space-sm bg-surface-container-low rounded-lg hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="flex items-center gap-3 min-w-0">
+<div class="relative flex-shrink-0">
+<img class="w-11 h-11 rounded-lg object-cover bg-surface-container-highest" data-alt="Intricate digital illustration of a weary fantasy bard with lute strapped to cloak, soft amber tavern glow, detailed digital painting portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpfOiGjn9yu6j9aADddlAjiu1h-C0vIKFjeIe1XDoxvZfRlf3BhyjIjxMweKc2mOUA37L2HKVVebe8ypzjLFN0E2sd7oDO9kK5z6xKfJ8nrQ9G7w_r86jmQyKmR8oU_lRWsPmyZU3lIR6tQIMzSz4B72bJYDDWFYKWh5WLPEUXGAI30hDdxFM3erev6lnPiw_vf90oeH1CyqmUVor-rvv84yi6pUyWyP1R4_kSuTKPEZGgWWPnZQYtwg"/>
+<span class="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-error-container flex items-center justify-center ring-2 ring-surface-container-low" title="Silenciado">
+<span class="material-symbols-outlined text-[10px] text-error font-bold">mic_off</span>
+</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1.5 truncate">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Grimm</span>
+<span class="font-label-code-sm text-label-code-sm text-primary">(@grimm_bard)</span>
+</div>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="w-2 h-2 rounded-full bg-error"></span>
+<span class="font-body-sm text-body-sm text-error">Silenciado Temporário</span>
+</div>
+</div>
+</div>
+<div class="flex items-center text-on-surface-variant group-hover:text-on-surface">
+<span class="material-symbols-outlined text-[20px]">swap_vert</span>
+</div>
+</div>
+<!-- Quick Metadata Row -->
+<div class="mt-space-sm pt-space-xs grid grid-cols-2 gap-space-xs text-on-surface-variant font-label-code-sm text-label-code-sm">
+<div class="p-2 rounded bg-surface-container-low flex flex-col">
+<span class="text-outline text-[10px]">CARGOS PRESENTES</span>
+<span class="text-on-surface font-semibold truncate">@Veterano, @Espectador</span>
+</div>
+<div class="p-2 rounded bg-surface-container-low flex flex-col">
+<span class="text-outline text-[10px]">SESSÃO MLS ATUAL</span>
+<span class="text-secondary font-mono">Epoch #14 (Ok)</span>
+</div>
+</div>
+</div>
+<!-- High Level Status & Verdict Card -->
+<div class="lg:col-span-7 bg-surface-container-high rounded-xl p-space-md shadow-md">
+<div class="flex items-start justify-between gap-space-sm flex-wrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container text-[24px]">gavel</span>
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Veredito Geral: ACESSO RESTRITO / MODO OUVINTE APENAS</span>
+</div>
+<span class="px-2.5 py-0.5 rounded-full bg-error-container text-error font-label-code-sm text-label-code-sm font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">volume_off</span>
+              VOZ BLOQUEADA
+            </span>
+</div>
+<div class="mt-space-sm p-space-sm rounded-lg bg-surface-container-lowest">
+<p class="font-body-md text-body-md text-on-surface">
+              O membro <strong class="text-primary font-semibold">Grimm</strong> possui conexão válida com a chave de grupo e pode <strong class="text-secondary">ouvir</strong> a transmissão da mesa, porém sua permissão de <strong class="text-error">falar e transmitir vídeo foi anulada</strong> via sobrescrita individual de membro (P:999).
+            </p>
+</div>
+<div class="flex items-center justify-between flex-wrap gap-2 mt-space-sm font-label-code-sm text-label-code-sm text-outline">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-tertiary">lock_reset</span>
+<span>Chave Efêmera: <code class="text-on-surface font-mono">mls-ratchet-epoch#14::leaf_node[4]</code></span>
+</div>
+<div class="flex items-center gap-1 text-secondary">
+<span class="material-symbols-outlined text-[16px]">verified</span>
+<span>Resolução Criptográfica Estável</span>
+</div>
+</div>
+</div>
+</div>
+<!-- 2. Detailed Precedence Resolution Matrix -->
+<div class="bg-surface-container rounded-xl p-space-md shadow-sm">
+<div class="flex items-center justify-between pb-space-sm flex-wrap gap-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[22px]">account_tree</span>
+<h3 class="font-headline-md text-headline-md text-on-surface">Matriz de Resolução de Permissões</h3>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant font-label-code-sm text-label-code-sm bg-surface-container-low px-3 py-1 rounded-full">
+<span class="text-primary font-bold">Membro (P:999)</span>
+<span class="material-symbols-outlined text-[12px] text-outline">chevron_right</span>
+<span class="text-tertiary">Cargos (P:100..10)</span>
+<span class="material-symbols-outlined text-[12px] text-outline">chevron_right</span>
+<span class="text-outline">@everyone (P:0)</span>
+</div>
+</div>
+<!-- Factor Pipeline Cards -->
+<div class="flex flex-col gap-space-sm pt-space-xs">
+<!-- Factor 1: Direct Member Override (Priority 1) -->
+<div class="rounded-xl bg-surface-container-low p-space-sm">
+<div class="flex items-center justify-between pb-2 flex-wrap gap-2">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded-md bg-primary-container text-on-primary-container flex items-center justify-center font-label-code-sm text-label-code-sm font-bold">P1</span>
+<div>
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Sobrescrita Direta de Membro</span>
+<span class="font-label-code-sm text-label-code-sm text-error ml-2">(Prioridade Máxima — Prevalece)</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded bg-error-container text-error text-[11px] font-label-code-sm">2 Sobrescritas Ativas</span>
+</div>
+<!-- Permission Items -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-sm mt-2">
+<div class="flex items-start justify-between p-space-sm rounded-lg bg-surface-container-highest">
+<div class="flex items-start gap-2.5">
+<div class="w-7 h-7 rounded-md bg-error-container text-error flex items-center justify-center flex-shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<span class="font-label-ui text-label-ui text-on-surface">Falar no Palco</span>
+<span class="px-1.5 py-0.2 rounded bg-error/20 text-error font-label-code-sm text-[10px]">NEGADO</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+                      Silenciamento temporário aplicado diretamente ao membro Grimm pelo moderador <strong class="text-on-surface">DungeonArchitect</strong>.
+                    </p>
+</div>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-error font-mono">SUPRIME</span>
+</div>
+<div class="flex items-start justify-between p-space-sm rounded-lg bg-surface-container-highest">
+<div class="flex items-start gap-2.5">
+<div class="w-7 h-7 rounded-md bg-error-container text-error flex items-center justify-center flex-shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[18px]">videocam_off</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<span class="font-label-ui text-label-ui text-on-surface">Transmitir Vídeo / Compartilhar Tela</span>
+<span class="px-1.5 py-0.2 rounded bg-error/20 text-error font-label-code-sm text-[10px]">NEGADO</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+                      Transmissão de mídia suspensa enquanto perdurar a infração de etiqueta de mesa.
+                    </p>
+</div>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-error font-mono">SUPRIME</span>
+</div>
+</div>
+</div>
+<!-- Factor 2: Role Rules (Priority 2) -->
+<div class="rounded-xl bg-surface-container-low p-space-sm">
+<div class="flex items-center justify-between pb-2 flex-wrap gap-2">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded-md bg-tertiary-container text-on-tertiary-container flex items-center justify-center font-label-code-sm text-label-code-sm font-bold">P2</span>
+<div>
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Cargos Atribuídos: @Jogador Veterano &amp; @Espectador</span>
+<span class="font-label-code-sm text-label-code-sm text-outline ml-2">(Prioridade 100 / 10)</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant text-[11px] font-label-code-sm">Resolução por Herança</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-sm mt-2">
+<div class="flex items-start justify-between p-space-sm rounded-lg bg-surface-container-highest">
+<div class="flex items-start gap-2.5">
+<div class="w-7 h-7 rounded-md bg-surface-container text-outline flex items-center justify-center flex-shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[18px]">strikethrough_s</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<span class="font-label-ui text-label-ui text-on-surface-variant line-through">Falar: PERMITIDO (@Jogador Veterano)</span>
+</div>
+<p class="font-body-sm text-body-sm text-outline mt-0.5">
+                      Concessão original do cargo foi ignorada pelo pipeline devido à sobrescrita de prioridade P1.
+                    </p>
+</div>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-outline font-mono">IGNORADO</span>
+</div>
+<div class="flex items-start justify-between p-space-sm rounded-lg bg-surface-container-highest">
+<div class="flex items-start gap-2.5">
+<div class="w-7 h-7 rounded-md bg-secondary-container text-on-secondary-container flex items-center justify-center flex-shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[18px]">headphones</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<span class="font-label-ui text-label-ui text-on-surface">Ouvir Palco: PERMITIDO (@Espectador)</span>
+<span class="px-1.5 py-0.2 rounded bg-secondary/20 text-secondary font-label-code-sm text-[10px]">EFETIVO</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+                      Sem conflito com níveis superiores. O membro recebe áudio decifrado da conferência.
+                    </p>
+</div>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-secondary font-mono">ATIVO</span>
+</div>
+</div>
+</div>
+<!-- Factor 3: Base Role @everyone (Priority 3) -->
+<div class="rounded-xl bg-surface-container-low p-space-sm">
+<div class="flex items-center justify-between pb-2 flex-wrap gap-2">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded-md bg-surface-container-high text-on-surface-variant flex items-center justify-center font-label-code-sm text-label-code-sm font-bold">P3</span>
+<div>
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Cargo Base de Sistema: @everyone</span>
+<span class="font-label-code-sm text-label-code-sm text-outline ml-2">(Piso do Servidor P:0)</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant text-[11px] font-label-code-sm">Herança Global</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-sm mt-2">
+<div class="flex items-center justify-between p-space-sm rounded-lg bg-surface-container-highest">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-secondary text-[20px]">visibility</span>
+<div>
+<span class="font-label-ui text-label-ui text-on-surface">Ver Canal e Metadados</span>
+<span class="font-body-sm text-body-sm text-secondary block">PERMITIDO (Canal é público no servidor)</span>
+</div>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-secondary font-mono">HERDADO</span>
+</div>
+<div class="flex items-center justify-between p-space-sm rounded-lg bg-surface-container-highest">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-outline text-[20px]">mic_none</span>
+<div>
+<span class="font-label-ui text-label-ui text-on-surface-variant">Falar no Palco por Padrão</span>
+<span class="font-body-sm text-body-sm text-outline block">NEGADO (Configuração padrão de taverna)</span>
+</div>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-outline font-mono">DEFAULT</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- 3. Cryptographic & E2EE Custody Inspection -->
+<div class="rounded-xl bg-surface-container p-space-md shadow-sm">
+<div class="flex items-center justify-between pb-space-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[22px]">enhanced_encryption</span>
+<h3 class="font-headline-md text-headline-md text-on-surface">Inspeção Criptográfica &amp; Custódia E2EE</h3>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-outline">RFC 9420 (MLS) Protocol</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<!-- SRTP Decryption Key Card -->
+<div class="p-space-sm rounded-xl bg-surface-container-low flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[20px]">lock_open</span>
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Chave de Decifra de Áudio SRTP</span>
+</div>
+<span class="px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container text-[11px] font-label-code-sm font-semibold">VÁLIDA NO COFRE</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                Presente no Secure Enclave local do dispositivo de Grimm. O usuário é capaz de descriptografar sem ruído os pacotes WebRTC de voz da mesa.
+              </p>
+</div>
+<div class="mt-space-sm pt-space-xs font-label-code-sm text-label-code-sm text-outline flex items-center justify-between bg-surface-container-highest px-3 py-2 rounded-lg">
+<span class="font-mono">Fingerprint: c8f3..90be</span>
+<span class="text-secondary flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> Sincronizado
+              </span>
+</div>
+</div>
+<!-- MLS Leaf Signing Key Card -->
+<div class="p-space-sm rounded-xl bg-surface-container-low flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-error text-[20px]">key_off</span>
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Chave de Assinatura (MLS Leaf)</span>
+</div>
+<span class="px-2 py-0.5 rounded bg-error-container text-error text-[11px] font-label-code-sm font-semibold">REVOGADA / BLOQUEADA</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                Folha da árvore MLS isolada nesta época. O nó de Grimm está impossibilitado criptograficamente de assinar e injetar pacotes válidos no Ratchet Tree.
+              </p>
+</div>
+<div class="mt-space-sm pt-space-xs font-label-code-sm text-label-code-sm text-outline flex items-center justify-between bg-surface-container-highest px-3 py-2 rounded-lg">
+<span class="font-mono">Node ID: 0x4E99:L4</span>
+<span class="text-error flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span> Injeção Rejeitada
+              </span>
+</div>
+</div>
+</div>
+</div>
+<!-- 4. Quick Moderation Actions & Resolution Footer -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md pt-space-xs pb-space-sm">
+<!-- Legend Explaining Resolution Order -->
+<div class="flex items-center gap-2 text-on-surface-variant font-label-code-sm text-label-code-sm">
+<span class="material-symbols-outlined text-[16px] text-primary">info</span>
+<span>Regra de ouro: <strong class="text-on-surface">Membro (P:999)</strong> prevalece sobre <strong class="text-on-surface">Cargos (P:100-10)</strong> e <strong class="text-on-surface">Base (P:0)</strong></span>
+</div>
+<!-- Action Buttons -->
+<div class="flex items-center gap-space-sm flex-wrap">
+<button class="px-space-md py-2.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-ui text-label-ui transition-colors flex items-center gap-2" type="button">
+<span class="material-symbols-outlined text-[18px]">close</span>
+            Fechar Diagnóstico
+          </button>
+<button class="px-space-md py-2.5 rounded-lg bg-surface-container-high hover:bg-surface-bright text-on-surface font-label-ui text-label-ui transition-colors flex items-center gap-2" type="button">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+            Editar Regras de Membro
+          </button>
+<button class="px-space-md py-2.5 rounded-lg bg-primary-container text-on-primary-container hover:opacity-95 font-label-ui text-label-ui font-semibold transition-transform active:scale-95 flex items-center gap-2 shadow-md" type="button">
+<span class="material-symbols-outlined text-[18px]">mic</span>
+            Remover Silenciamento Temporário
+          </button>
+</div>
+</div>
+</div>
+</div>
+</div></main></div></body></html>

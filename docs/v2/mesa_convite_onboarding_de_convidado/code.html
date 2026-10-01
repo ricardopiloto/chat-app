@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_blank" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={"darkMode":"class","theme":{"extend":{"colors":{"secondary-container":"#2ca464","inverse-surface":"#e0e2ef","tertiary-container":"#a680fd","outline-variant":"#55423e","error":"#ffb4ab","primary-fixed":"#ffdbd2","on-primary-container":"#5b1604","on-surface":"#e0e2ef","surface-container-high":"#272a33","on-surface-variant":"#dbc1ba","on-secondary-fixed-variant":"#00522c","on-error":"#690005","on-secondary":"#00391d","primary":"#ffb4a1","surface-container-highest":"#32343e","on-primary":"#5d1805","surface-bright":"#363943","on-secondary-container":"#003118","secondary-fixed":"#88f9b0","error-container":"#93000a","secondary-fixed-dim":"#6bdc96","on-secondary-fixed":"#00210f","on-primary-fixed-variant":"#7c2e19","on-background":"#e0e2ef","primary-fixed-dim":"#ffb4a1","primary-container":"#e07a5f","tertiary-fixed":"#eaddff","on-tertiary-fixed-variant":"#5429a6","tertiary-fixed-dim":"#d1bcff","surface-variant":"#32343e","inverse-primary":"#9a442d","on-primary-fixed":"#3c0800","outline":"#a38b86","surface-dim":"#10131c","surface-container-lowest":"#0b0e17","secondary":"#6bdc96","on-error-container":"#ffdad6","background":"#10131c","on-tertiary-container":"#3b008c","on-tertiary":"#3c0090","surface-tint":"#ffb4a1","surface":"#10131c","surface-container":"#1c1f29","tertiary":"#d1bcff","surface-container-low":"#181b24","on-tertiary-fixed":"#24005b","inverse-on-surface":"#2d303a"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"space-lg":"1.5rem","space-md":"1rem","gutter-desktop":"1.5rem","margin":"1rem","space-sm":"0.5rem","margin-desktop":"2rem","space-xs":"0.25rem","gutter":"1rem","space-xl":"2.5rem"},"fontFamily":{"body-md":["Inter"],"body-lg":["Inter"],"display-lg":["Plus Jakarta Sans"],"headline-sm":["Plus Jakarta Sans"],"label-ui":["Inter"],"display-lg-mobile":["Plus Jakarta Sans"],"label-code-sm":["JetBrains Mono"],"headline-md":["Plus Jakarta Sans"],"body-sm":["Inter"],"headline-lg":["Plus Jakarta Sans"],"label-code-md":["JetBrains Mono"]},"fontSize":{"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"display-lg":["36px",{"lineHeight":"44px","fontWeight":"700"}],"headline-sm":["16px",{"lineHeight":"24px","fontWeight":"600"}],"label-ui":["12px",{"lineHeight":"16px","fontWeight":"600"}],"display-lg-mobile":["28px",{"lineHeight":"36px","fontWeight":"700"}],"label-code-sm":["11px",{"lineHeight":"16px","fontWeight":"500"}],"headline-md":["20px",{"lineHeight":"28px","fontWeight":"600"}],"body-sm":["12px",{"lineHeight":"18px","fontWeight":"400"}],"headline-lg":["24px",{"lineHeight":"32px","fontWeight":"600"}],"label-code-md":["13px",{"lineHeight":"18px","fontWeight":"500"}]}}}};</script></head><body class="bg-background font-body-md text-on-surface min-h-screen relative selection:bg-primary-container selection:text-on-primary-container"><div class="pointer-events-none fixed inset-0 z-0 flex items-center justify-center overflow-hidden"><div class="w-[680px] h-[680px] rounded-full bg-primary-container/10 blur-[130px] -translate-y-16"></div><div class="absolute bottom-0 w-full h-[40vh] bg-gradient-to-t from-surface-container-lowest to-transparent opacity-80"></div></div><div class="relative z-10 min-h-screen flex flex-col justify-between"><header class="w-full max-w-7xl mx-auto px-margin md:px-margin-desktop py-space-lg flex items-center justify-between"><button class="flex items-center gap-space-xs text-on-surface-variant hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">arrow_back</span><span class="font-label-ui text-label-ui uppercase tracking-wider">Return</span></button><div class="flex items-center gap-space-sm"><img alt="Geometric minimalist emblem logo for 'Mesa', a self-hosted encrypted chat and tabletop voice/video platform. Icon shows an abstracted round game table combined with subtle interlocking protective cryptographic shield or circle rings, warm terracotta coral and warm ivory tones on a sleek dark badge background, modern flat vector design, clean SVG silhouette.. Design context: - Primary color: #e07a5f
+- Font: plusJakartaSans
+- Mode: dark
+- Roundness: rounded-md
+. The logo should be visually consistent with these brand tokens." class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Wu6JPFAgZCyVeUFfgF2Kw0tDR-hsarUUfylK14HYlLwAvvLQCMU2yFj9S9B1Q71Fq6zapDK3Irg2Zx3iMoLWvt5oI4ddFcNATCLKLLVNiGVWqORn8REKU_XDfAo6kzvp9H8bl2WpVm1hnyVH6oiUeJ6ldFclk2C5YFAzLugzQ4b3hq3royoiQ-7WRiEWXxpZNjUqQ8_iyE-6cBPASSapis3gp1Pn8ONomgG9Rap9nRDBJ_5ZY22pvfcGTv"/><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight">Mesa</span></div><div class="flex items-center gap-space-sm"><button class="flex items-center gap-space-xs text-on-surface-variant hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">help</span><span class="hidden sm:inline font-label-ui text-label-ui uppercase tracking-wider">Support</span></button></div></header><main class="flex-1 w-full max-w-7xl mx-auto px-margin md:px-margin-desktop flex items-center justify-center py-space-lg"><div class="flex flex-col w-full">
+<!-- Glowing Embers Ambient Backdrop (contained) -->
+<div class="relative w-full max-w-6xl mx-auto my-auto">
+<div class="absolute -top-16 -left-16 w-80 h-80 rounded-full bg-primary-container/15 blur-[100px] pointer-events-none"></div>
+<div class="absolute -bottom-20 -right-20 w-96 h-96 rounded-full bg-primary/10 blur-[120px] pointer-events-none"></div>
+<!-- Main Balanced Two-Column Modular Card -->
+<div class="relative w-full bg-surface-container-low rounded-xl shadow-2xl overflow-hidden backdrop-blur-md">
+<div class="grid grid-cols-1 lg:grid-cols-12 min-h-[640px]">
+<!-- Left Column: Server Identity, Host & E2EE Cryptographic Telemetry -->
+<div class="lg:col-span-5 bg-surface-container p-space-lg sm:p-space-xl flex flex-col justify-between relative overflow-hidden">
+<!-- Subtle warm campfire ambient gradient layer -->
+<div class="absolute inset-0 bg-gradient-to-b from-primary-container/10 via-transparent to-surface-container-lowest/80 pointer-events-none"></div>
+<!-- Top Section: Brand Identity -->
+<div class="relative z-10 space-y-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="w-11 h-11 rounded-lg bg-surface-container-highest p-1.5 flex items-center justify-center shadow-md">
+<img alt="Mesa Emblem" class="w-full h-full object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Wu6JPFAgZCyVeUFfgF2Kw0tDR-hsarUUfylK14HYlLwAvvLQCMU2yFj9S9B1Q71Fq6zapDK3Irg2Zx3iMoLWvt5oI4ddFcNATCLKLLVNiGVWqORn8REKU_XDfAo6kzvp9H8bl2WpVm1hnyVH6oiUeJ6ldFclk2C5YFAzLugzQ4b3hq3royoiQ-7WRiEWXxpZNjUqQ8_iyE-6cBPASSapis3gp1Pn8ONomgG9Rap9nRDBJ_5ZY22pvfcGTv"/>
+</div>
+<div>
+<span class="font-headline-md text-headline-md tracking-tight text-on-surface block leading-tight">Mesa</span>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant flex items-center gap-1.5">
+<span class="inline-block w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+                  Enclave Ativo · p2p-mls
+                </span>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+              Comunicação tática autohospedada &amp; cifrada de ponta a ponta para mesas de RPG e coletivos de criação.
+            </p>
+</div>
+<!-- Mid Section: Guild Invitation Dossier Card -->
+<div class="relative z-10 my-space-md space-y-space-md">
+<!-- Server Overview Badge -->
+<div class="bg-surface-container-high rounded-lg p-space-md shadow-md space-y-space-sm relative overflow-hidden">
+<div class="absolute top-0 right-0 transform translate-x-3 -translate-y-2 opacity-5 pointer-events-none">
+<span class="material-symbols-outlined text-[100px] text-primary">swords</span>
+</div>
+<div class="flex items-start justify-between gap-space-xs">
+<div class="flex items-center gap-space-sm">
+<div class="w-12 h-12 rounded-lg bg-primary-container/20 flex items-center justify-center text-primary-container shadow-inner">
+<span class="material-symbols-outlined text-[28px]">shield</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface leading-snug">Masmorra do Dragão</h2>
+<span class="font-label-code-sm text-label-code-sm text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">verified</span>
+                      Convite Ativo e Cifrado
+                    </span>
+</div>
+</div>
+<span class="px-2.5 py-1 rounded-full bg-secondary-container/20 text-secondary-fixed font-label-code-sm text-label-code-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">auto_stories</span>
+                  Histórico
+                </span>
+</div>
+<!-- Host / Dungeon Master Row -->
+<div class="pt-space-xs flex items-center justify-between bg-surface-container-lowest/60 rounded-md px-3 py-2">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="relative">
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container font-headline-sm flex items-center justify-center text-xs font-bold">
+                      MA
+                    </div>
+<span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-secondary rounded-full ring-2 ring-surface-container-lowest"></span>
+</div>
+<div class="min-w-0">
+<div class="flex items-center gap-1.5">
+<span class="font-label-ui text-label-ui text-on-surface truncate">Mestre Aventuras</span>
+<span class="px-1.5 py-0.5 rounded bg-primary-container/30 text-primary-fixed text-[10px] font-label-code-sm font-semibold tracking-wider uppercase">Mestre</span>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant block truncate">@mestre_aventuras</span>
+</div>
+</div>
+<div class="text-right pl-2">
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant block">Membros</span>
+<span class="font-label-code-md text-label-code-md text-on-surface font-semibold">14 <span class="text-secondary text-[11px]">(4 on)</span></span>
+</div>
+</div>
+<!-- Cryptographic Integrity Guarantee Notes -->
+<div class="space-y-space-xs pt-space-xs">
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-primary">vpn_key</span>
+<span class="font-body-sm text-body-sm">
+                    Chaves de grupo (MLS) serão trocadas no seu primeiro handshake.
+                  </span>
+</div>
+<div class="flex items-center gap-2 text-secondary">
+<span class="material-symbols-outlined text-[16px]">menu_book</span>
+<span class="font-label-code-sm text-label-code-sm">
+                    📜 Com Histórico Liberado até a fundação da campanha.
+                  </span>
+</div>
+</div>
+</div>
+<!-- Cryptographic Fingerprint Strip -->
+<div class="bg-surface-container-lowest rounded-lg p-space-sm flex items-center justify-between text-on-surface-variant">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">fingerprint</span>
+<span class="font-label-code-sm text-label-code-sm truncate">SHA-256: 7f8c..9d12 · Enclave #0942</span>
+</div>
+<span class="px-2 py-0.5 rounded bg-surface-container-highest text-secondary font-label-code-sm text-label-code-sm flex items-center gap-1 shrink-0">
+<span class="material-symbols-outlined text-[12px]">security</span>
+                Válido
+              </span>
+</div>
+</div>
+<!-- Bottom Left: Instance Metadata -->
+<div class="relative z-10 pt-space-md flex items-center justify-between text-on-surface-variant font-label-code-sm text-label-code-sm">
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px] text-primary">dns</span>
+              Mesa v2.0 · Self-hosted &amp; Descentralizado
+            </span>
+<span class="hover:text-on-surface transition-colors cursor-pointer" onclick="toggleInviteStateModal()">Simular Inválido</span>
+</div>
+</div>
+<!-- Right Column: Guest Onboarding & Identity Claim Form -->
+<div class="lg:col-span-7 bg-surface-container-lowest p-space-lg sm:p-space-xl flex flex-col justify-between">
+<div class="w-full max-w-xl mx-auto space-y-space-md">
+<!-- Card Header: Warm Welcome -->
+<div class="space-y-space-xs">
+<div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-container/15 text-primary-fixed font-label-ui text-label-ui uppercase tracking-wider mb-space-xs">
+<span class="material-symbols-outlined text-[14px]">local_fire_department</span>
+                Mesa Redonda Reservada
+              </div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">
+                Você foi convidado para a mesa
+              </h1>
+<p class="font-body-md text-body-md text-on-surface-variant">
+                Crie a sua alcunha de aventureiro para puxar uma cadeira à lareira e receber a chave de cifra da guilda.
+              </p>
+</div>
+<!-- Form: Inline Account Creation -->
+<form class="space-y-space-md pt-space-xs" id="guestOnboardingForm" onsubmit="event.preventDefault(); simulateEntry();">
+<!-- Row: Handle & Display Name -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+<!-- Handle / Alcunha -->
+<div class="space-y-1.5">
+<div class="flex items-center justify-between">
+<label class="font-label-ui text-label-ui text-on-surface" for="handle">Alcunha / Handle</label>
+<span class="font-label-code-sm text-label-code-sm text-secondary flex items-center gap-1" id="handleStatus">
+<span class="material-symbols-outlined text-[12px]">check_circle</span>
+                      Disponível
+                    </span>
+</div>
+<div class="relative flex items-center">
+<span class="absolute left-3 font-label-code-md text-label-code-md text-primary font-semibold select-none">@</span>
+<input class="w-full bg-surface-container-high rounded-lg pl-8 pr-3 py-2.5 font-label-code-md text-label-code-md text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:bg-surface-container-highest transition-all duration-200" id="handle" name="handle" oninput="validateHandle(this.value)" placeholder="seu_usuario" required="" type="text" value="valerius_paladino"/>
+</div>
+</div>
+<!-- Display Name -->
+<div class="space-y-1.5">
+<div class="flex items-center justify-between">
+<label class="font-label-ui text-label-ui text-on-surface" for="displayName">Nome de Exibição</label>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">Visível à mesa</span>
+</div>
+<div class="relative flex items-center">
+<input class="w-full bg-surface-container-high rounded-lg px-3 py-2.5 font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:bg-surface-container-highest transition-all duration-200" id="displayName" name="displayName" placeholder="Ex: Valerius, o Guardião" required="" type="text" value="Valerius da Luz"/>
+</div>
+</div>
+</div>
+<!-- Password / Vault Key Field -->
+<div class="space-y-1.5">
+<div class="flex items-center justify-between">
+<label class="font-label-ui text-label-ui text-on-surface flex items-center gap-1.5" for="vaultKey">
+<span class="material-symbols-outlined text-[16px] text-primary">key</span>
+                    Palavra-passe / Chave do Cofre
+                  </label>
+<span class="font-label-code-sm text-label-code-sm text-secondary" id="strengthLabel">Forte (Chave de 256-bit)</span>
+</div>
+<div class="relative flex items-center">
+<span class="absolute left-3 material-symbols-outlined text-[18px] text-on-surface-variant">lock</span>
+<input class="w-full bg-surface-container-high rounded-lg pl-10 pr-10 py-2.5 font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:bg-surface-container-highest transition-all duration-200" id="vaultKey" name="vaultKey" oninput="assessPassword(this.value)" placeholder="Mínimo 8 caracteres, números e símbolos" required="" type="password" value="Eldoria#Crypt2025"/>
+<button class="absolute right-3 text-on-surface-variant hover:text-on-surface transition-colors" onclick="togglePasswordVisibility()" title="Alternar visibilidade" type="button">
+<span class="material-symbols-outlined text-[18px]" id="visibilityIcon">visibility</span>
+</button>
+</div>
+<!-- Password Strength Meter -->
+<div class="w-full bg-surface-container rounded-full h-1.5 overflow-hidden flex gap-1 mt-1">
+<div class="h-full flex-1 bg-secondary rounded-full transition-all" id="bar1"></div>
+<div class="h-full flex-1 bg-secondary rounded-full transition-all" id="bar2"></div>
+<div class="h-full flex-1 bg-secondary rounded-full transition-all" id="bar3"></div>
+<div class="h-full flex-1 bg-secondary/80 rounded-full transition-all" id="bar4"></div>
+</div>
+<p class="font-body-sm text-[11px] text-on-surface-variant">
+                  Usada para cifrar seu cofre de credenciais e histórico local (mín. 8 caracteres, números e símbolos).
+                </p>
+</div>
+<!-- Cryptographic Local Vault Checkbox -->
+<div class="bg-surface-container rounded-lg p-space-sm flex items-start gap-space-sm cursor-pointer select-none" onclick="toggleVaultCheckbox()">
+<div class="pt-0.5">
+<input checked="" class="w-4 h-4 rounded bg-surface-container-high text-primary-container focus:ring-0 cursor-pointer accent-primary-container" id="e2eeVaultCheck" type="checkbox"/>
+</div>
+<div class="space-y-0.5">
+<span class="font-label-ui text-label-ui text-on-surface block">
+                    Gerar cofre criptográfico local neste dispositivo (E2EE)
+                  </span>
+<span class="font-body-sm text-[12px] text-on-surface-variant block">
+                    Seus dados não tocam a nuvem sem cifragem assimétrica. Nenhum dado do mestre é acessível sem o token local.
+                  </span>
+</div>
+</div>
+<!-- Primary Action CTA Button -->
+<button class="w-full bg-primary-container text-on-primary-container hover:brightness-105 active:scale-[0.99] font-headline-sm text-headline-sm py-3.5 px-space-md rounded-lg shadow-lg flex items-center justify-center gap-space-sm transition-all duration-150" id="submitBtn" type="submit">
+<span class="material-symbols-outlined text-[20px]">meeting_room</span>
+<span>Aceitar Convite &amp; Entrar na Taverna</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</form>
+<!-- Discret Separator: Existing Identity -->
+<div class="pt-space-xs text-center space-y-space-xs">
+<div class="flex items-center gap-space-sm">
+<div class="flex-1 h-px bg-surface-container-high"></div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Já possui uma identidade nesta instância?</span>
+<div class="flex-1 h-px bg-surface-container-high"></div>
+</div>
+<button class="font-label-ui text-label-ui text-primary hover:underline hover:text-primary-fixed transition-colors py-1 inline-flex items-center gap-1" onclick="simulateExistingAccountPrompt()" type="button">
+<span>Entrar com conta existente ou restaurar semente</span>
+<span class="material-symbols-outlined text-[14px]">open_in_new</span>
+</button>
+</div>
+<!-- Informative Trust & Lifetime Pill Footer -->
+<div class="bg-surface-container-high/60 rounded-md px-space-md py-2.5 flex items-center justify-between text-on-surface-variant font-label-code-sm text-label-code-sm">
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[15px] text-primary-container">timer</span>
+                Link com validade para 1 utilização única
+              </span>
+<span class="text-secondary flex items-center gap-1 font-semibold">
+<span class="material-symbols-outlined text-[14px]">format_image_left</span>
+                SHA-256 Verificado
+              </span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Dynamic State Overlay / Modal for "Convite Expirado ou Inválido" Simulation -->
+<div class="hidden fixed inset-0 z-50 flex items-center justify-center bg-surface-container-lowest/85 backdrop-blur-md p-margin" id="invalidInviteModal">
+<div class="w-full max-w-md bg-surface-container rounded-xl p-space-lg shadow-2xl space-y-space-md relative">
+<div class="w-12 h-12 rounded-full bg-error-container text-on-error-container flex items-center justify-center mx-auto">
+<span class="material-symbols-outlined text-[28px]">link_off</span>
+</div>
+<div class="text-center space-y-space-xs">
+<h3 class="font-headline-lg text-headline-lg text-on-surface">Convite Expirado ou Revogado</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">
+          Este passe de acesso para a mesa <strong class="text-on-surface font-headline-sm">Masmorra do Dragão</strong> já consumiu a sua cota única de uso ou teve as chaves rotacionadas pelo Mestre.
+        </p>
+</div>
+<div class="bg-surface-container-high rounded-lg p-space-sm font-label-code-sm text-label-code-sm text-on-surface-variant space-y-1">
+<div class="flex justify-between">
+<span>Código do Token:</span>
+<span class="text-error">EXPIRED_HANDSHAKE_0x3B9F</span>
+</div>
+<div class="flex justify-between">
+<span>Servidor Origem:</span>
+<span class="text-on-surface">masmorra.mesa.internal</span>
+</div>
+</div>
+<div class="space-y-space-sm pt-space-xs">
+<button class="w-full bg-primary-container text-on-primary-container font-headline-sm text-headline-sm py-2.5 px-space-md rounded-lg flex items-center justify-center gap-space-sm hover:brightness-105 active:scale-95 transition-all" onclick="requestNewInvite()" type="button">
+<span class="material-symbols-outlined text-[18px]">contact_mail</span>
+<span>Solicitar Novo Convite ao Mestre</span>
+</button>
+<button class="w-full bg-surface-container-high text-on-surface font-body-md text-body-md py-2 px-space-md rounded-lg hover:bg-surface-container-highest transition-colors" onclick="toggleInviteStateModal()" type="button">
+          Fechar Prévia de Erro
+        </button>
+</div>
+</div>
+</div>
+<!-- Notification Toast Container -->
+<div class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none" id="toastNotification">
+<div class="bg-surface-container-highest text-on-surface px-4 py-3 rounded-lg shadow-xl flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary" id="toastIcon">check_circle</span>
+<span class="font-body-sm text-body-sm" id="toastMsg">Ação executada com sucesso.</span>
+</div>
+</div>
+<!-- Interactive Logic for Real-Time Validation & States -->
+<script>
+    function togglePasswordVisibility() {
+      const input = document.getElementById('vaultKey');
+      const icon = document.getElementById('visibilityIcon');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.innerText = 'visibility_off';
+      } else {
+        input.type = 'password';
+        icon.innerText = 'visibility';
+      }
+    }
+
+    function toggleVaultCheckbox() {
+      const chk = document.getElementById('e2eeVaultCheck');
+      chk.checked = !chk.checked;
+    }
+
+    function validateHandle(val) {
+      const status = document.getElementById('handleStatus');
+      const cleaned = val.replace(/[^a-zA-Z0-9_]/g, '');
+      if (cleaned.length < 3) {
+        status.innerHTML = '<span class="material-symbols-outlined text-[12px] text-error">cancel</span> Curto';
+        status.className = 'font-label-code-sm text-label-code-sm text-error flex items-center gap-1';
+      } else if (cleaned.toLowerCase() === 'admin' || cleaned.toLowerCase() === 'mestre') {
+        status.innerHTML = '<span class="material-symbols-outlined text-[12px] text-error">block</span> Reservado';
+        status.className = 'font-label-code-sm text-label-code-sm text-error flex items-center gap-1';
+      } else {
+        status.innerHTML = '<span class="material-symbols-outlined text-[12px] text-secondary">check_circle</span> Disponível';
+        status.className = 'font-label-code-sm text-label-code-sm text-secondary flex items-center gap-1';
+      }
+    }
+
+    function assessPassword(pwd) {
+      const b1 = document.getElementById('bar1');
+      const b2 = document.getElementById('bar2');
+      const b3 = document.getElementById('bar3');
+      const b4 = document.getElementById('bar4');
+      const label = document.getElementById('strengthLabel');
+
+      let score = 0;
+      if (pwd.length >= 8) score++;
+      if (/[A-Z]/.test(pwd) && /[a-z]/.test(pwd)) score++;
+      if (/[0-9]/.test(pwd)) score++;
+      if (/[^A-Za-z0-9]/.test(pwd)) score++;
+
+      // Reset
+      [b1, b2, b3, b4].forEach(b => b.className = 'h-full flex-1 bg-surface-container-highest rounded-full transition-all');
+
+      if (score === 0 || pwd.length < 4) {
+        label.innerText = 'Muito fraca';
+        label.className = 'font-label-code-sm text-label-code-sm text-error';
+        b1.className = 'h-full flex-1 bg-error rounded-full transition-all';
+      } else if (score <= 2) {
+        label.innerText = 'Razoável';
+        label.className = 'font-label-code-sm text-label-code-sm text-primary';
+        b1.className = 'h-full flex-1 bg-primary rounded-full transition-all';
+        b2.className = 'h-full flex-1 bg-primary rounded-full transition-all';
+      } else if (score === 3) {
+        label.innerText = 'Boa (MLS Apto)';
+        label.className = 'font-label-code-sm text-label-code-sm text-secondary';
+        b1.className = 'h-full flex-1 bg-secondary rounded-full transition-all';
+        b2.className = 'h-full flex-1 bg-secondary rounded-full transition-all';
+        b3.className = 'h-full flex-1 bg-secondary rounded-full transition-all';
+      } else {
+        label.innerText = 'Forte (Chave de 256-bit)';
+        label.className = 'font-label-code-sm text-label-code-sm text-secondary';
+        [b1, b2, b3, b4].forEach(b => b.className = 'h-full flex-1 bg-secondary rounded-full transition-all');
+      }
+    }
+
+    function toggleInviteStateModal() {
+      const modal = document.getElementById('invalidInviteModal');
+      modal.classList.toggle('hidden');
+    }
+
+    function showToast(msg, isSuccess = true) {
+      const toast = document.getElementById('toastNotification');
+      const toastMsg = document.getElementById('toastMsg');
+      const toastIcon = document.getElementById('toastIcon');
+
+      toastMsg.innerText = msg;
+      toastIcon.innerText = isSuccess ? 'check_circle' : 'info';
+      toastIcon.className = isSuccess ? 'material-symbols-outlined text-secondary' : 'material-symbols-outlined text-primary';
+
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+      }, 3500);
+    }
+
+    function simulateEntry() {
+      const btn = document.getElementById('submitBtn');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<span class="material-symbols-outlined text-[20px] animate-spin">sync</span><span>Trocando chaves MLS &amp; Handshake...</span>';
+      btn.disabled = true;
+
+      setTimeout(() => {
+        btn.innerHTML = '<span class="material-symbols-outlined text-[20px]">done_all</span><span>Bem-vindo à Taverna!</span>';
+        showToast('Identidade criada e ancorada ao enclave da Masmorra!', true);
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+        }, 2000);
+      }, 1200);
+    }
+
+    function simulateExistingAccountPrompt() {
+      showToast('Abertura de autenticação via Seed Phrase ou SSH Identity.');
+    }
+
+    function requestNewInvite() {
+      toggleInviteStateModal();
+      showToast('Ping de notificação PGP enviado para @mestre_aventuras.', true);
+    }
+  </script>
+</div></main><footer class="w-full max-w-7xl mx-auto px-margin md:px-margin-desktop py-space-md flex flex-col sm:flex-row items-center justify-between gap-space-sm"><div class="flex items-center gap-space-xs text-on-surface-variant font-label-code-sm text-label-code-sm"><span class="material-symbols-outlined text-[14px] text-secondary">lock</span><span>E2EE Cryptographic Enclave Verified</span></div><div class="flex items-center gap-space-md text-on-surface-variant font-body-sm text-body-sm"><a class="hover:text-on-surface transition-colors" href="#">Self-Hosted Docs</a><a class="hover:text-on-surface transition-colors" href="#">Peer Verification</a></div></footer></div></body></html>

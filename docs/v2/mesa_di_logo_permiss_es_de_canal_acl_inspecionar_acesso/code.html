@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"on-error":"#690005","tertiary":"#d1bcff","surface-container-highest":"#32343e","surface-bright":"#363943","on-surface-variant":"#dbc1ba","secondary":"#6bdc96","surface-tint":"#ffb4a1","secondary-fixed":"#88f9b0","inverse-primary":"#9a442d","on-primary-fixed":"#3c0800","surface-dim":"#10131c","surface-container-lowest":"#0b0e17","on-primary-container":"#5b1604","on-secondary":"#00391d","primary":"#ffb4a1","on-tertiary":"#3c0090","secondary-fixed-dim":"#6bdc96","primary-fixed":"#ffdbd2","tertiary-fixed":"#eaddff","tertiary-fixed-dim":"#d1bcff","on-tertiary-fixed":"#24005b","on-tertiary-container":"#3b008c","surface-container-high":"#272a33","primary-fixed-dim":"#ffb4a1","tertiary-container":"#a680fd","on-surface":"#e0e2ef","inverse-on-surface":"#2d303a","secondary-container":"#2ca464","surface-variant":"#32343e","outline-variant":"#55423e","inverse-surface":"#e0e2ef","on-background":"#e0e2ef","outline":"#a38b86","on-secondary-fixed-variant":"#00522c","background":"#10131c","surface-container-low":"#181b24","on-tertiary-fixed-variant":"#5429a6","surface":"#10131c","surface-container":"#1c1f29","on-error-container":"#ffdad6","on-secondary-container":"#003118","primary-container":"#e07a5f","on-primary-fixed-variant":"#7c2e19","error":"#ffb4ab","on-secondary-fixed":"#00210f","on-primary":"#5d1805","error-container":"#93000a"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"space-lg":"1.5rem","space-xl":"2.5rem","margin":"1rem","gutter-desktop":"1.5rem","space-md":"1rem","margin-desktop":"2rem","gutter":"1rem","space-xs":"0.25rem","space-sm":"0.5rem"},"fontFamily":{"label-ui":["Inter"],"display-lg":["Plus Jakarta Sans"],"headline-sm":["Plus Jakarta Sans"],"body-sm":["Inter"],"body-lg":["Inter"],"headline-md":["Plus Jakarta Sans"],"display-lg-mobile":["Plus Jakarta Sans"],"headline-lg":["Plus Jakarta Sans"],"body-md":["Inter"],"label-code-md":["JetBrains Mono"],"label-code-sm":["JetBrains Mono"]},"fontSize":{"label-ui":["12px",{"lineHeight":"16px","fontWeight":"600"}],"display-lg":["36px",{"lineHeight":"44px","fontWeight":"700"}],"headline-sm":["16px",{"lineHeight":"24px","fontWeight":"600"}],"body-sm":["12px",{"lineHeight":"18px","fontWeight":"400"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"headline-md":["20px",{"lineHeight":"28px","fontWeight":"600"}],"display-lg-mobile":["28px",{"lineHeight":"36px","fontWeight":"700"}],"headline-lg":["24px",{"lineHeight":"32px","fontWeight":"600"}],"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"label-code-md":["13px",{"lineHeight":"18px","fontWeight":"500"}],"label-code-sm":["11px",{"lineHeight":"16px","fontWeight":"500"}]}}}}</script></head><body class="bg-background text-on-surface font-body-md text-body-md"><aside class="fixed left-0 top-0 h-full w-[72px] bg-surface-container-lowest z-50 flex flex-col items-center py-space-md justify-between shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="flex flex-col items-center gap-space-sm w-full"><a class="w-12 h-12 rounded-xl bg-primary-container flex items-center justify-center text-on-primary-container shadow-md transition-transform hover:scale-105" data-path="overview" href="#"><span class="material-symbols-outlined text-[24px]">shield</span></a><div class="w-8 h-[2px] bg-surface-container-highest rounded-full my-space-xs"></div><div class="flex flex-col items-center gap-space-sm w-full"><button class="w-12 h-12 rounded-xl bg-surface-container hover:bg-surface-container-high text-primary flex items-center justify-center transition-all"><span class="material-symbols-outlined text-[22px]">castle</span></button><button class="w-12 h-12 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-all"><span class="material-symbols-outlined text-[22px]">local_fire_department</span></button><button class="w-12 h-12 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-all"><span class="material-symbols-outlined text-[22px]">casino</span></button></div></div><div class="flex flex-col items-center gap-space-sm w-full"><button class="w-12 h-12 rounded-xl bg-surface-container-low hover:bg-surface-container text-secondary flex items-center justify-center transition-all"><span class="material-symbols-outlined text-[20px]">add</span></button><button class="w-12 h-12 rounded-xl bg-surface-container-low hover:bg-surface-container text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-all"><span class="material-symbols-outlined text-[20px]">explore</span></button></div></aside><aside class="fixed left-[72px] top-0 h-full w-60 bg-surface-container-low z-40 flex flex-col justify-between shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="flex flex-col h-full"><div class="h-16 px-space-md flex items-center justify-between bg-surface-container-low"><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight font-semibold">Emberhold Realm</span><span class="font-label-code-sm text-label-code-sm text-secondary flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-secondary inline-block"></span>E2EE Node active</span></div><span class="material-symbols-outlined text-on-surface-variant text-[18px]">expand_more</span></div><div class="px-space-md pt-space-md pb-space-xs"><span class="font-label-ui text-label-ui text-outline uppercase tracking-wider">Chronicles &amp; Tactical</span></div><nav class="flex flex-col px-space-sm gap-1" data-active-classes="bg-surface-container text-primary font-semibold"><a aria-current="page" class="flex items-center px-space-sm py-2 rounded-lg transition-colors gap-2 bg-surface-container text-primary font-semibold" data-path="session-log" href="#"><span class="font-label-code-md text-label-code-md text-outline">#</span><span class="font-body-md text-body-md">session-log</span></a><a class="flex items-center px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors gap-2" data-path="tactical-maps" href="#"><span class="font-label-code-md text-label-code-md text-outline">#</span><span class="font-body-md text-body-md">tactical-maps</span></a><a class="flex items-center px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors gap-2" data-path="lore-compendium" href="#"><span class="font-label-code-md text-label-code-md text-outline">#</span><span class="font-body-md text-body-md">lore-compendium</span></a></nav><div class="px-space-md pt-space-lg pb-space-xs"><span class="font-label-ui text-label-ui text-outline uppercase tracking-wider">Voice Gathering</span></div><nav class="flex flex-col px-space-sm gap-1" data-active-classes="bg-surface-container text-secondary font-semibold"><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="tabletop-stage" href="#"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[18px] text-secondary">volume_up</span><span class="font-body-md text-body-md">Tabletop Stage</span></div><span class="font-label-code-sm text-label-code-sm px-1.5 py-0.5 rounded bg-surface-container-highest text-secondary">5/8</span></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="hearthside-whispers" href="#"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[18px] text-outline">volume_mute</span><span class="font-body-md text-body-md">Hearthside</span></div><span class="font-label-code-sm text-label-code-sm px-1.5 py-0.5 rounded bg-surface-container-highest text-on-surface-variant">0</span></a></nav></div><div class="p-space-sm bg-surface-container-lowest m-space-sm rounded-xl flex items-center justify-between shadow-sm"><div class="flex items-center gap-2 overflow-hidden"><div class="relative flex-shrink-0"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-secondary ring-2 ring-surface-container-lowest"></span></div><div class="flex flex-col min-w-0"><span class="font-label-ui text-label-ui text-on-surface truncate">DungeonArchitect</span><span class="font-label-code-sm text-label-code-sm text-outline truncate">#d74a:e9</span></div></div><div class="flex items-center gap-1 text-on-surface-variant"><button class="p-1 hover:text-on-surface hover:bg-surface-container rounded transition-colors"><span class="material-symbols-outlined text-[18px]">mic</span></button><button class="p-1 hover:text-on-surface hover:bg-surface-container rounded transition-colors"><span class="material-symbols-outlined text-[18px]">headphones</span></button><button class="p-1 hover:text-on-surface hover:bg-surface-container rounded transition-colors"><span class="material-symbols-outlined text-[18px]">settings</span></button></div></div></aside><div class="pl-[312px]"><header class="fixed top-0 left-[312px] right-0 h-16 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-30 flex items-center justify-between px-space-lg"><div class="flex items-center gap-space-md"><div class="flex items-center gap-2"><span class="font-headline-sm text-headline-sm text-primary font-bold">MESA</span><span class="font-label-code-sm text-label-code-sm px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant">v0.9.4-local</span></div><div class="h-4 w-[1px] bg-surface-container-highest"></div><div class="flex items-center gap-2 px-2.5 py-1 rounded-full bg-surface-container"><span class="material-symbols-outlined text-secondary text-[16px]">lock</span><span class="font-label-code-sm text-label-code-sm text-on-surface">e2ee::active</span><span class="font-label-code-sm text-label-code-sm text-outline-variant font-mono">[0x7A9F]</span></div></div><nav class="hidden lg:flex items-center gap-space-lg" data-active-classes="text-primary font-semibold"><a aria-current="page" class="transition-colors text-primary font-semibold" data-path="session-log" href="#">Session Stream</a><a class="font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface transition-colors" data-path="tactical-maps" href="#">Battlemap Canvas</a><a class="font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface transition-colors" data-path="tabletop-stage" href="#">Voice Stage</a><a class="font-label-ui text-label-ui text-on-surface-variant hover:text-on-surface transition-colors" data-path="peer-telemetry" href="#">Node Mesh</a></nav><div class="flex items-center gap-space-md"><div class="flex items-center gap-2 text-on-surface-variant"><button class="p-2 hover:bg-surface-container hover:text-on-surface rounded-lg transition-colors"><span class="material-symbols-outlined text-[20px]">grid_view</span></button><button class="p-2 hover:bg-surface-container hover:text-on-surface rounded-lg transition-colors"><span class="material-symbols-outlined text-[20px]">dialpad</span></button><button class="p-2 hover:bg-surface-container hover:text-on-surface rounded-lg transition-colors"><span class="material-symbols-outlined text-[20px]">security</span></button></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></header><main class="relative pt-16 bg-surface min-h-screen w-full px-space-lg"><div class="flex flex-col w-full">
+<!-- Backdrop Simulator (Simulates contextual Mesa Stage underneath with dark obsidian overlay) -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-space-md bg-surface-container-lowest/85 backdrop-blur-md">
+<!-- Modal Container: Campfire Modernism with crisp elevation & warm obsidian palette -->
+<div class="relative w-full max-w-5xl max-h-[92vh] flex flex-col bg-surface-container-low rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+<!-- Ambient Cryptographic Top Trim -->
+<div class="h-1 w-full bg-gradient-to-r from-primary-container via-secondary to-primary-container/40"></div>
+<!-- Modal Header -->
+<header class="px-space-lg py-space-md bg-surface-container-lowest/60 flex items-start justify-between gap-space-md">
+<div class="flex items-start gap-space-md min-w-0">
+<div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-primary-container shadow-inner flex-shrink-0">
+<span class="material-symbols-outlined text-[26px]">table_bar</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2 flex-wrap">
+<span class="font-headline-md text-headline-md text-on-surface tracking-tight">Permissões de Canal — #palco-das-batalhas</span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-secondary/10 text-secondary font-label-code-sm text-label-code-sm">
+<span class="material-symbols-outlined text-[14px]">lock</span>
+                MLS E2EE Ratchet
+              </span>
+<span class="font-label-code-sm text-label-code-sm px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant">
+                ID::0x4E99
+              </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 line-clamp-1">
+              Gerir listas de controlo de acesso criptográficas e inspecionar privilégios efetivos por membro.
+            </p>
+</div>
+</div>
+<button aria-label="Fechar Janela" class="p-2 rounded-lg bg-surface-container-high/40 hover:bg-surface-container-highest text-on-surface-variant hover:text-on-surface transition-colors flex-shrink-0" id="closeModalBtn">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</header>
+<!-- Sub-Navigation Navigation / Segmented Mode Selector -->
+<div class="px-space-lg py-space-xs bg-surface-container-low flex items-center justify-between border-b border-surface-container-highest/30">
+<div class="flex items-center gap-space-sm" role="tablist">
+<button class="tab-pill active flex items-center gap-2 px-space-md py-2 rounded-lg font-label-ui text-label-ui bg-surface-container text-primary-fixed shadow-sm transition-all" id="tabBtnRules" onclick="switchAclTab('rules')">
+<span class="material-symbols-outlined text-[18px]">verified_user</span>
+<span>Políticas e ACL Ativa</span>
+<span class="px-1.5 py-0.2 rounded-full bg-primary-container text-on-primary-container font-label-code-sm text-label-code-sm">4</span>
+</button>
+<button class="tab-pill flex items-center gap-2 px-space-md py-2 rounded-lg font-label-ui text-label-ui text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" id="tabBtnAudit" onclick="switchAclTab('audit')">
+<span class="material-symbols-outlined text-[18px]">find_in_page</span>
+<span>Inspecionar Acesso Efetivo</span>
+</button>
+</div>
+<div class="hidden sm:flex items-center gap-2 text-on-surface-variant font-label-code-sm text-label-code-sm">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+<span>Sincronismo de Chave: Concluído</span>
+</div>
+</div>
+<!-- Modal Body (Scrollable Workspace) -->
+<div class="p-space-lg overflow-y-auto space-y-space-lg flex-1">
+<!-- TAB 1: Configuração Básica & ACL -->
+<div class="space-y-space-lg" id="tabContentRules">
+<!-- SECTION 1: Configuração Básica & Visibilidade -->
+<section class="bg-surface-container p-space-md rounded-xl shadow-sm">
+<div class="flex items-center justify-between pb-space-xs mb-space-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px] text-primary">visibility</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Visibilidade Base &amp; Acesso Geral</h3>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-outline">camada_topologia_0</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md pt-space-xs">
+<!-- Radio: Público -->
+<label class="group relative flex items-start gap-space-sm p-space-md rounded-xl bg-surface-container-high/40 hover:bg-surface-container-high cursor-pointer transition-colors">
+<input checked="" class="mt-1 accent-primary-container h-4 w-4" name="visibilidade" type="radio" value="publico"/>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-label-ui text-label-ui text-on-surface group-hover:text-primary transition-colors">Público (Chave de Servidor)</span>
+<span class="px-2 py-0.5 rounded text-[10px] bg-secondary/15 text-secondary font-label-code-sm">Padrão</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-1">Qualquer membro autenticado com chave primária do reino entra no canal sem convite criptográfico exclusivo.</span>
+</div>
+</label>
+<!-- Radio: Privado -->
+<label class="group relative flex items-start gap-space-sm p-space-md rounded-xl bg-surface-container-high/40 hover:bg-surface-container-high cursor-pointer transition-colors">
+<input class="mt-1 accent-primary-container h-4 w-4" name="visibilidade" type="radio" value="privado"/>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-label-ui text-label-ui text-on-surface group-hover:text-primary transition-colors">Privado &amp; Fechado</span>
+<span class="px-2 py-0.5 rounded text-[10px] bg-outline-variant text-on-surface-variant font-label-code-sm">Isolado</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-1">Requer inclusão explícita no Ratchet Tree. Invisível para membros sem chave de canal delegada.</span>
+</div>
+</label>
+</div>
+<!-- Checkbox Visibilidade em listagem -->
+<div class="mt-space-md pt-space-sm bg-surface-container-lowest/40 rounded-lg p-space-sm flex items-center justify-between">
+<label class="flex items-center gap-space-sm cursor-pointer select-none">
+<input checked="" class="accent-primary-container h-4 w-4 rounded" type="checkbox"/>
+<span class="font-body-sm text-body-sm text-on-surface">Visível na listagem de canais para novos membros</span>
+</label>
+<span class="font-label-code-sm text-label-code-sm text-outline hidden sm:inline">sync: automatic-discovery</span>
+</div>
+</section>
+<!-- SECTION 2: Construtor de Regras (ACL Builder) -->
+<section class="bg-surface-container p-space-md rounded-xl shadow-sm">
+<div class="flex items-center justify-between pb-space-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px] text-primary-container">rule</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Adicionar Nova Regra de Acesso</h3>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-secondary">E2EE Rule Matrix</span>
+</div>
+<form class="mt-space-xs grid grid-cols-1 md:grid-cols-12 gap-space-sm bg-surface-container-low p-space-md rounded-xl" id="aclBuilderForm" onsubmit="event.preventDefault(); addNewRuleUi();">
+<!-- 1. Tipo de Sujeito -->
+<div class="md:col-span-3 flex flex-col gap-1.5">
+<label class="font-label-ui text-label-ui text-on-surface-variant">1. Tipo de Sujeito</label>
+<div class="relative">
+<select class="w-full appearance-none bg-surface-container-high text-on-surface font-body-sm text-body-sm py-2 px-3 rounded-lg focus:outline-none focus:bg-surface-container-highest cursor-pointer" id="subjectType">
+<option value="role">Cargo de Guilda</option>
+<option value="member">Membro Específico</option>
+<option value="everyone">Todos (@everyone)</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-2.5 pointer-events-none text-on-surface-variant text-[18px]">expand_more</span>
+</div>
+</div>
+<!-- 2. Sujeito -->
+<div class="md:col-span-3 flex flex-col gap-1.5">
+<label class="font-label-ui text-label-ui text-on-surface-variant">2. Sujeito / Identidade</label>
+<div class="relative">
+<select class="w-full appearance-none bg-surface-container-high text-on-surface font-body-sm text-body-sm py-2 px-3 rounded-lg focus:outline-none focus:bg-surface-container-highest cursor-pointer" id="subjectTarget">
+<option value="@Mestre da Mesa">@Mestre da Mesa</option>
+<option value="@Jogador Veterano">@Jogador Veterano</option>
+<option value="@Sentinela">@Sentinela da Muralha</option>
+<option value="Thorin Pedraferro">Thorin Pedraferro</option>
+<option value="Alysanne Arcana">Alysanne Arcana</option>
+<option value="@everyone">@everyone (Todos)</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-2.5 pointer-events-none text-on-surface-variant text-[18px]">expand_more</span>
+</div>
+</div>
+<!-- 3. Efeito (Permitir / Negar) -->
+<div class="md:col-span-2 flex flex-col gap-1.5">
+<label class="font-label-ui text-label-ui text-on-surface-variant">3. Efeito</label>
+<div class="flex items-center bg-surface-container-high p-1 rounded-lg">
+<button class="flex-1 py-1 text-center font-label-ui text-label-ui rounded bg-secondary-container text-on-secondary shadow-sm transition-all" id="effectAllowBtn" onclick="selectEffect('allow')" type="button">
+                    Permitir
+                  </button>
+<button class="flex-1 py-1 text-center font-label-ui text-label-ui rounded text-on-surface-variant hover:text-on-surface transition-all" id="effectDenyBtn" onclick="selectEffect('deny')" type="button">
+                    Negar
+                  </button>
+</div>
+</div>
+<!-- 4. Nível de Acesso (Voice/Text stage) -->
+<div class="md:col-span-2 flex flex-col gap-1.5">
+<label class="font-label-ui text-label-ui text-on-surface-variant">4. Nível de Palco</label>
+<div class="relative">
+<select class="w-full appearance-none bg-surface-container-high text-on-surface font-body-sm text-body-sm py-2 px-3 rounded-lg focus:outline-none focus:bg-surface-container-highest cursor-pointer" id="accessLevel">
+<option value="stage-manage">Gerir Palco</option>
+<option value="voice-stream">Falar &amp; Transmitir</option>
+<option value="voice-listen">Apenas Ouvir</option>
+<option value="text-readwrite">Texto: Leitura &amp; Escrita</option>
+<option value="text-readonly">Texto: Apenas Leitura</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-2.5 pointer-events-none text-on-surface-variant text-[18px]">expand_more</span>
+</div>
+</div>
+<!-- 5. Action Button -->
+<div class="md:col-span-2 flex flex-col justify-end">
+<button class="w-full h-[38px] bg-primary-container hover:bg-primary-container/90 active:scale-[0.98] text-on-primary-container font-label-ui text-label-ui rounded-lg flex items-center justify-center gap-1 shadow-md transition-all" type="submit">
+<span class="material-symbols-outlined text-[18px]">add_circle</span>
+<span>Adicionar</span>
+</button>
+</div>
+</form>
+</section>
+<!-- SECTION 3: Regras Ativas (Existing Rules List) -->
+<section class="bg-surface-container p-space-md rounded-xl shadow-sm space-y-space-sm">
+<div class="flex items-center justify-between pb-space-xs">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px] text-secondary">shield_with_heart</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Regras Ativas Compiladas</h3>
+<span class="font-label-code-sm text-label-code-sm px-2 py-0.5 rounded-full bg-surface-container-highest text-on-surface" id="rulesCounterBadge">4 regras</span>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-outline">ordem_prioridade: Membro &gt; Cargo &gt; @everyone</span>
+</div>
+<div class="space-y-space-xs" id="rulesListContainer">
+<!-- Rule 1: Cargo Mestre da Mesa -->
+<div class="rule-card flex flex-col sm:flex-row sm:items-center justify-between p-space-sm bg-surface-container-high/60 hover:bg-surface-container-high rounded-xl gap-space-sm transition-all group">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="w-9 h-9 rounded-lg bg-surface-container-highest flex items-center justify-center text-primary-container flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">badge</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-label-ui text-label-ui text-on-surface truncate">Cargo @Mestre da Mesa</span>
+<span class="px-2 py-0.5 rounded-full font-label-code-sm text-label-code-sm bg-secondary/15 text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">check_circle</span>
+                        Permitir
+                      </span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Privilégios: Falar, Transmitir Vídeo, Moderação de Palco, Criar Focos</span>
+</div>
+</div>
+<div class="flex items-center justify-between sm:justify-end gap-space-md">
+<div class="flex flex-col items-end">
+<span class="font-label-code-sm text-label-code-sm text-secondary">Cifrado MLS v2</span>
+<span class="font-label-code-sm text-label-code-sm text-outline font-mono">P:100 (Max)</span>
+</div>
+<button class="p-2 rounded-lg text-outline hover:text-error hover:bg-error-container/30 transition-colors" onclick="this.closest('.rule-card').remove(); updateRuleCount();" title="Revogar Regra">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</div>
+<!-- Rule 2: Cargo Jogador Veterano -->
+<div class="rule-card flex flex-col sm:flex-row sm:items-center justify-between p-space-sm bg-surface-container-high/60 hover:bg-surface-container-high rounded-xl gap-space-sm transition-all group">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="w-9 h-9 rounded-lg bg-surface-container-highest flex items-center justify-center text-secondary flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">shield</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-label-ui text-label-ui text-on-surface truncate">Cargo @Jogador Veterano</span>
+<span class="px-2 py-0.5 rounded-full font-label-code-sm text-label-code-sm bg-secondary/15 text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">check_circle</span>
+                        Permitir
+                      </span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Privilégios: Falar &amp; Ouvir (Voz Livre no Palco)</span>
+</div>
+</div>
+<div class="flex items-center justify-between sm:justify-end gap-space-md">
+<div class="flex flex-col items-end">
+<span class="font-label-code-sm text-label-code-sm text-secondary">Cifrado MLS v2</span>
+<span class="font-label-code-sm text-label-code-sm text-outline font-mono">P:40</span>
+</div>
+<button class="p-2 rounded-lg text-outline hover:text-error hover:bg-error-container/30 transition-colors" onclick="this.closest('.rule-card').remove(); updateRuleCount();" title="Revogar Regra">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</div>
+<!-- Rule 3: @everyone -->
+<div class="rule-card flex flex-col sm:flex-row sm:items-center justify-between p-space-sm bg-surface-container-high/60 hover:bg-surface-container-high rounded-xl gap-space-sm transition-all group">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="w-9 h-9 rounded-lg bg-surface-container-highest flex items-center justify-center text-on-surface-variant flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">groups</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-label-ui text-label-ui text-on-surface truncate">Sujeito @everyone</span>
+<span class="px-2 py-0.5 rounded-full font-label-code-sm text-label-code-sm bg-error-container/30 text-error flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">block</span>
+                        Negar
+                      </span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Privilégios: Falar (Apenas Modo Ouvinte / Audiência)</span>
+</div>
+</div>
+<div class="flex items-center justify-between sm:justify-end gap-space-md">
+<div class="flex flex-col items-end">
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">Ativo Global</span>
+<span class="font-label-code-sm text-label-code-sm text-outline font-mono">P:0 (Base)</span>
+</div>
+<button class="p-2 rounded-lg text-outline hover:text-error hover:bg-error-container/30 transition-colors" onclick="this.closest('.rule-card').remove(); updateRuleCount();" title="Revogar Regra">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</div>
+<!-- Rule 4: Membro Grimm -->
+<div class="rule-card flex flex-col sm:flex-row sm:items-center justify-between p-space-sm bg-surface-container-high/60 hover:bg-surface-container-high rounded-xl gap-space-sm transition-all group">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="w-9 h-9 rounded-lg bg-error-container/30 flex items-center justify-center text-error flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">person_off</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-label-ui text-label-ui text-on-surface truncate">Membro "Grimm"</span>
+<span class="px-2 py-0.5 rounded-full font-label-code-sm text-label-code-sm bg-error-container/30 text-error flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">volume_off</span>
+                        Negar
+                      </span>
+</div>
+<span class="font-body-sm text-body-sm text-error/90 truncate">Acesso Total: Silenciado temporariamente por timeout de moderador</span>
+</div>
+</div>
+<div class="flex items-center justify-between sm:justify-end gap-space-md">
+<div class="flex flex-col items-end">
+<span class="font-label-code-sm text-label-code-sm text-error">Sobrescrita Direta</span>
+<span class="font-label-code-sm text-label-code-sm text-outline font-mono">P:999</span>
+</div>
+<button class="p-2 rounded-lg text-outline hover:text-error hover:bg-error-container/30 transition-colors" onclick="this.closest('.rule-card').remove(); updateRuleCount();" title="Revogar Regra">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- TAB 2 / SUB-PAINEL: Inspecionar Acesso Efetivo -->
+<div class="hidden space-y-space-lg" id="tabContentAudit">
+<section class="bg-surface-container p-space-md rounded-xl shadow-sm">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md pb-space-sm border-b border-surface-container-highest/20">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[22px] text-tertiary">query_stats</span>
+<div class="flex flex-col">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Resolvedor de Privilégios Efetivos</h3>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Executa simulação formal do pipeline de autorização e derivação de chave MLS.</span>
+</div>
+</div>
+<!-- Member Dropdown Selector -->
+<div class="flex items-center gap-2">
+<label class="font-label-ui text-label-ui text-outline hidden lg:inline" for="memberAuditSelector">Inspecionar:</label>
+<div class="relative min-w-[260px]">
+<select class="w-full appearance-none bg-surface-container-high text-on-surface font-body-sm text-body-sm py-2 pl-3 pr-8 rounded-lg focus:outline-none focus:bg-surface-container-highest cursor-pointer" id="memberAuditSelector" onchange="simulateAuditResolver(this.value)">
+<option value="thorin">Thorin Pedraferro (@thorin_iron)</option>
+<option value="grimm">Grimm (@grimm_shadow)</option>
+<option value="mestre">DungeonArchitect (@mestre_supremo)</option>
+<option value="novato">Kaelen (@recem_chegado)</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-2.5 pointer-events-none text-on-surface-variant text-[18px]">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Dynamic Resolved Result Card -->
+<div class="mt-space-md bg-surface-container-low p-space-md rounded-xl space-y-space-md" id="auditResolvedCard">
+<!-- Subject Summary Banner -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-sm p-space-sm bg-surface-container rounded-lg">
+<div class="flex items-center gap-space-sm">
+<div class="w-12 h-12 rounded-xl bg-primary-container/20 flex items-center justify-center text-primary font-headline-sm text-headline-sm">
+                    TP
+                  </div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-headline-sm text-headline-sm text-on-surface" id="auditMemberName">Thorin Pedraferro</span>
+<span class="font-label-code-sm text-label-code-sm text-outline" id="auditMemberHandle">@thorin_iron</span>
+</div>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Cargos: <strong class="text-on-surface">@Jogador Veterano</strong>, <strong class="text-on-surface">@Ferreiro</strong></span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2 flex-wrap">
+<span class="px-2.5 py-1 rounded-full bg-secondary/15 text-secondary font-label-ui text-label-ui flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px]">visibility</span>
+                    Ver Canal: SIM (Permitido)
+                  </span>
+<span class="px-2.5 py-1 rounded-full bg-primary-container/20 text-primary-container font-label-ui text-label-ui flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px]">record_voice_over</span>
+                    Falar &amp; Transmitir (Voz Completa)
+                  </span>
+</div>
+</div>
+<!-- Factor-by-factor cryptographic breakdown -->
+<div class="space-y-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-ui text-label-ui text-on-surface uppercase tracking-wider">Explicação fator-a-fator da resolução</span>
+<span class="font-label-code-sm text-label-code-sm text-secondary font-mono">MLS_RATCHET_LEAF_INDEX::#4</span>
+</div>
+<div class="space-y-2">
+<!-- Factor 1 -->
+<div class="p-space-sm bg-surface-container-high/40 rounded-lg flex items-start gap-space-sm">
+<div class="w-6 h-6 rounded-full bg-error-container/20 text-error flex items-center justify-center flex-shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[14px]">block</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="font-label-ui text-label-ui text-on-surface">Fator 1: Cargo @everyone define Falar como Negado</span>
+<span class="font-label-code-sm text-label-code-sm text-outline">Prioridade 0 (Herança Base)</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+                        A política padrão do canal restringe fala pública para evitar desordem nas mesas de RPG.
+                      </p>
+</div>
+</div>
+<!-- Factor 2 -->
+<div class="p-space-sm bg-surface-container-high/40 rounded-lg flex items-start gap-space-sm">
+<div class="w-6 h-6 rounded-full bg-secondary/20 text-secondary flex items-center justify-center flex-shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="font-label-ui text-label-ui text-on-surface">Fator 2: Cargo @Jogador Veterano concede Falar &amp; Transmitir</span>
+<span class="font-label-code-sm text-label-code-sm text-secondary">Prioridade 40 (+ Sobrescreve Base)</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+                        O cargo específico eleva privilégios e adiciona a chave de emissão de áudio para o nó WebRTC e2ee.
+                      </p>
+</div>
+</div>
+<!-- Factor 3 -->
+<div class="p-space-sm bg-surface-container-high/40 rounded-lg flex items-start gap-space-sm">
+<div class="w-6 h-6 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center flex-shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[14px]">remove</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<span class="font-label-ui text-label-ui text-on-surface">Fator 3: Permissão Direta de Membro</span>
+<span class="font-label-code-sm text-label-code-sm text-outline">Prioridade 999</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+                        Nenhuma restrição individual ativa. Não há silenciamentos punitivos ou exclusões forçadas registradas.
+                      </p>
+</div>
+</div>
+<!-- Final Verdict -->
+<div class="p-space-sm bg-secondary-container/20 rounded-lg flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-secondary">key</span>
+<span class="font-label-ui text-label-ui text-secondary">Resultado Final: Acesso Concedido</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant hidden sm:inline">— Chave Ratcheted derivada em 1.4ms</span>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-secondary font-mono">HASH: 7a9f::c4e0</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+<!-- Modal Footer (Tactile and cryptographic reassurance) -->
+<footer class="px-space-lg py-space-md bg-surface-container-lowest flex flex-col sm:flex-row items-center justify-between gap-space-md border-t border-surface-container-highest/30">
+<div class="flex items-center gap-2.5 text-on-surface-variant text-left">
+<span class="material-symbols-outlined text-[20px] text-primary-container flex-shrink-0 animate-spin" style="animation-duration: 9s;">sync</span>
+<span class="font-body-sm text-body-sm">
+            Alterações de regras geram rotação automática de chave de canal (<span class="font-label-code-sm text-label-code-sm text-primary">Ratchet Tree MLS</span>).
+          </span>
+</div>
+<div class="flex items-center gap-space-sm w-full sm:w-auto justify-end">
+<button class="px-space-md py-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-ui text-label-ui transition-all" id="cancelModalBtn">
+            Cancelar
+          </button>
+<button class="px-space-lg py-2 rounded-lg bg-primary-container hover:bg-primary-container/90 active:scale-[0.98] text-on-primary-container font-label-ui text-label-ui flex items-center gap-2 shadow-lg transition-all" id="saveChangesBtn" onclick="commitAclChanges()">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+<span>Guardar Alterações</span>
+</button>
+</div>
+</footer>
+</div>
+</div>
+<script>
+    // Micro-interactions and simple state handling
+    let currentEffect = 'allow';
+
+    function selectEffect(type) {
+      currentEffect = type;
+      const allowBtn = document.getElementById('effectAllowBtn');
+      const denyBtn = document.getElementById('effectDenyBtn');
+      if (type === 'allow') {
+        allowBtn.className = 'flex-1 py-1 text-center font-label-ui text-label-ui rounded bg-secondary-container text-on-secondary shadow-sm transition-all';
+        denyBtn.className = 'flex-1 py-1 text-center font-label-ui text-label-ui rounded text-on-surface-variant hover:text-on-surface transition-all';
+      } else {
+        denyBtn.className = 'flex-1 py-1 text-center font-label-ui text-label-ui rounded bg-error text-on-error shadow-sm transition-all';
+        allowBtn.className = 'flex-1 py-1 text-center font-label-ui text-label-ui rounded text-on-surface-variant hover:text-on-surface transition-all';
+      }
+    }
+
+    function switchAclTab(tab) {
+      const btnRules = document.getElementById('tabBtnRules');
+      const btnAudit = document.getElementById('tabBtnAudit');
+      const contentRules = document.getElementById('tabContentRules');
+      const contentAudit = document.getElementById('tabContentAudit');
+
+      if (tab === 'rules') {
+        btnRules.className = 'tab-pill active flex items-center gap-2 px-space-md py-2 rounded-lg font-label-ui text-label-ui bg-surface-container text-primary-fixed shadow-sm transition-all';
+        btnAudit.className = 'tab-pill flex items-center gap-2 px-space-md py-2 rounded-lg font-label-ui text-label-ui text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all';
+        contentRules.classList.remove('hidden');
+        contentAudit.classList.add('hidden');
+      } else {
+        btnAudit.className = 'tab-pill active flex items-center gap-2 px-space-md py-2 rounded-lg font-label-ui text-label-ui bg-surface-container text-primary-fixed shadow-sm transition-all';
+        btnRules.className = 'tab-pill flex items-center gap-2 px-space-md py-2 rounded-lg font-label-ui text-label-ui text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all';
+        contentAudit.classList.remove('hidden');
+        contentRules.classList.add('hidden');
+      }
+    }
+
+    function updateRuleCount() {
+      const list = document.getElementById('rulesListContainer');
+      const counterBadge = document.getElementById('rulesCounterBadge');
+      const count = list.querySelectorAll('.rule-card').length;
+      counterBadge.textContent = count + (count === 1 ? ' regra' : ' regras');
+    }
+
+    function addNewRuleUi() {
+      const subjectTarget = document.getElementById('subjectTarget').value;
+      const accessLevel = document.getElementById('accessLevel');
+      const accessLevelText = accessLevel.options[accessLevel.selectedIndex].text;
+      const list = document.getElementById('rulesListContainer');
+
+      const isAllow = currentEffect === 'allow';
+      const badgeClass = isAllow ? 'bg-secondary/15 text-secondary' : 'bg-error-container/30 text-error';
+      const badgeIcon = isAllow ? 'check_circle' : 'block';
+      const badgeLabel = isAllow ? 'Permitir' : 'Negar';
+
+      const newCard = document.createElement('div');
+      newCard.className = 'rule-card flex flex-col sm:flex-row sm:items-center justify-between p-space-sm bg-surface-container-high/60 hover:bg-surface-container-high rounded-xl gap-space-sm transition-all group animate-in fade-in slide-in-from-top-2 duration-150';
+      newCard.innerHTML = `
+        <div class="flex items-center gap-space-sm min-w-0">
+          <div class="w-9 h-9 rounded-lg bg-surface-container-highest flex items-center justify-center text-primary-container flex-shrink-0">
+            <span class="material-symbols-outlined text-[20px]">shield</span>
+          </div>
+          <div class="flex flex-col min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="font-label-ui text-label-ui text-on-surface truncate">${subjectTarget}</span>
+              <span class="px-2 py-0.5 rounded-full font-label-code-sm text-label-code-sm ${badgeClass} flex items-center gap-1">
+                <span class="material-symbols-outlined text-[13px]">${badgeIcon}</span>
+                ${badgeLabel}
+              </span>
+            </div>
+            <span class="font-body-sm text-body-sm text-on-surface-variant truncate">Privilégios: ${accessLevelText}</span>
+          </div>
+        </div>
+        <div class="flex items-center justify-between sm:justify-end gap-space-md">
+          <div class="flex flex-col items-end">
+            <span class="font-label-code-sm text-label-code-sm text-secondary">Novo • Cifrado MLS</span>
+            <span class="font-label-code-sm text-label-code-sm text-outline font-mono">P:50</span>
+          </div>
+          <button class="p-2 rounded-lg text-outline hover:text-error hover:bg-error-container/30 transition-colors" title="Revogar Regra" onclick="this.closest('.rule-card').remove(); updateRuleCount();">
+            <span class="material-symbols-outlined text-[18px]">delete</span>
+          </button>
+        </div>
+      `;
+
+      list.prepend(newCard);
+      updateRuleCount();
+    }
+
+    function simulateAuditResolver(userKey) {
+      const nameEl = document.getElementById('auditMemberName');
+      const handleEl = document.getElementById('auditMemberHandle');
+      if (userKey === 'grimm') {
+        nameEl.textContent = 'Grimm';
+        handleEl.textContent = '@grimm_shadow';
+      } else if (userKey === 'mestre') {
+        nameEl.textContent = 'DungeonArchitect';
+        handleEl.textContent = '@mestre_supremo';
+      } else if (userKey === 'novato') {
+        nameEl.textContent = 'Kaelen';
+        handleEl.textContent = '@recem_chegado';
+      } else {
+        nameEl.textContent = 'Thorin Pedraferro';
+        handleEl.textContent = '@thorin_iron';
+      }
+    }
+
+    function commitAclChanges() {
+      const saveBtn = document.getElementById('saveChangesBtn');
+      const originalText = saveBtn.innerHTML;
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = `
+        <span class="material-symbols-outlined text-[18px] animate-spin">refresh</span>
+        <span>A recalcular Ratchet Tree...</span>
+      `;
+      setTimeout(() => {
+        saveBtn.innerHTML = `
+          <span class="material-symbols-outlined text-[18px]">done</span>
+          <span>Chave Rotacionada!</span>
+        `;
+        setTimeout(() => {
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = originalText;
+        }, 1500);
+      }, 900);
+    }
+  </script>
+</div></main></div></body></html>

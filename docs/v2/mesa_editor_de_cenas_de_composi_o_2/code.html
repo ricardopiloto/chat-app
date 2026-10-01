@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR" style=""><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "on-error-container": "#ffdad6", "secondary": "#6bdc96", "on-surface-variant": "#dbc1ba", "inverse-on-surface": "#2d303a", "secondary-fixed": "#88f9b0", "on-background": "#e0e2ef", "primary-container": "#e07a5f", "on-primary-fixed": "#3c0800", "surface-variant": "#32343e", "on-primary-fixed-variant": "#7c2e19", "tertiary": "#d1bcff", "surface-container-highest": "#32343e", "on-secondary-fixed": "#00210f", "on-secondary-fixed-variant": "#00522c", "on-error": "#690005", "inverse-primary": "#9a442d", "outline-variant": "#55423e", "on-tertiary-container": "#3b008c", "on-tertiary-fixed": "#24005b", "primary": "#ffb4a1", "surface-tint": "#ffb4a1", "surface-container-lowest": "#0b0e17", "primary-fixed-dim": "#ffb4a1", "on-secondary-container": "#003118", "surface-dim": "#10131c", "tertiary-fixed-dim": "#d1bcff", "on-primary": "#5d1805", "error-container": "#93000a", "tertiary-fixed": "#eaddff", "on-secondary": "#00391d", "on-tertiary-fixed-variant": "#5429a6", "surface-bright": "#363943", "surface-container-low": "#181b24", "primary-fixed": "#ffdbd2", "on-surface": "#e0e2ef", "surface-container-high": "#272a33", "outline": "#a38b86", "surface-container": "#1c1f29", "secondary-container": "#2ca464", "surface": "#10131c", "secondary-fixed-dim": "#6bdc96", "tertiary-container": "#a680fd", "on-primary-container": "#5b1604", "on-tertiary": "#3c0090", "inverse-surface": "#e0e2ef", "background": "#10131c", "error": "#ffb4ab" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-md": "1rem", "space-xl": "2.5rem", "margin": "1rem", "space-xs": "0.25rem", "gutter-desktop": "1.5rem", "margin-desktop": "2rem", "space-lg": "1.5rem", "space-sm": "0.5rem", "gutter": "1rem" }, "fontFamily": { "headline-md": [ "Plus Jakarta Sans" ], "display-lg-mobile": [ "Plus Jakarta Sans" ], "headline-lg": [ "Plus Jakarta Sans" ], "headline-sm": [ "Plus Jakarta Sans" ], "body-lg": [ "Inter" ], "body-md": [ "Inter" ], "label-code-sm": [ "JetBrains Mono" ], "display-lg": [ "Plus Jakarta Sans" ], "body-sm": [ "Inter" ], "label-code-md": [ "JetBrains Mono" ], "label-ui": [ "Inter" ] }, "fontSize": { "headline-md": [ "20px", { "lineHeight": "28px", "fontWeight": "600" } ], "display-lg-mobile": [ "28px", { "lineHeight": "36px", "fontWeight": "700" } ], "headline-lg": [ "24px", { "lineHeight": "32px", "fontWeight": "600" } ], "headline-sm": [ "16px", { "lineHeight": "24px", "fontWeight": "600" } ], "body-lg": [ "16px", { "lineHeight": "24px", "fontWeight": "400" } ], "body-md": [ "14px", { "lineHeight": "20px", "fontWeight": "400" } ], "label-code-sm": [ "11px", { "lineHeight": "16px", "fontWeight": "500" } ], "display-lg": [ "36px", { "lineHeight": "44px", "fontWeight": "700" } ], "body-sm": [ "12px", { "lineHeight": "18px", "fontWeight": "400" } ], "label-code-md": [ "13px", { "lineHeight": "18px", "fontWeight": "500" } ], "label-ui": [ "12px", { "lineHeight": "16px", "fontWeight": "600" } ] } } } };</script></head><body class="bg-surface font-body-md text-on-surface antialiased overflow-hidden"><header class="fixed top-0 left-0 right-0 h-14 bg-surface-container-lowest/90 backdrop-blur-md z-50 flex items-center justify-between px-space-md shadow-[0_1px_8px_rgba(0,0,0,0.25)]"><div class="flex items-center gap-space-md"><img alt="Mesa App Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Wu6JPFAgZCyVeUFfgF2Kw0tDR-hsarUUfylK14HYlLwAvvLQCMU2yFj9S9B1Q71Fq6zapDK3Irg2Zx3iMoLWvt5oI4ddFcNATCLKLLVNiGVWqORn8REKU_XDfAo6kzvp9H8bl2WpVm1hnyVH6oiUeJ6ldFclk2C5YFAzLugzQ4b3hq3royoiQ-7WRiEWXxpZNjUqQ8_iyE-6cBPASSapis3gp1Pn8ONomgG9Rap9nRDBJ_5ZY22pvfcGTv"/><div class="flex items-center gap-space-xs font-headline-sm text-headline-sm text-on-surface"><span class="text-primary-container font-bold">Mesa</span><span class="text-outline font-normal">·</span><span class="font-label-code-md text-label-code-md text-on-surface-variant font-medium tracking-tight">masmorra.xyz v2.0</span></div><div class="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-secondary-container/20 text-secondary font-label-code-sm text-label-code-sm"><span class="material-symbols-outlined text-[14px]">lock</span><span class="">E2EE Nativo</span></div></div><div class="flex items-center gap-space-md"><button class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-container-high text-on-surface-variant hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">search</span><span class="font-body-sm text-body-sm">Pesquisar ou pular...</span><kbd class="font-label-code-sm text-label-code-sm px-1.5 py-0.5 rounded bg-surface-container-highest text-on-surface-variant">Ctrl+K</kbd></button><div class="flex items-center gap-1 bg-surface-container-high p-1 rounded-lg"><button class="p-1 rounded text-on-surface-variant hover:text-on-surface transition-colors" title="Tema do Sistema" type="button"><span class="material-symbols-outlined text-[16px]">desktop_windows</span></button><button class="p-1 rounded text-on-surface-variant hover:text-on-surface transition-colors" title="Modo Claro" type="button"><span class="material-symbols-outlined text-[16px]">light_mode</span></button><button class="p-1 rounded bg-surface-container-highest text-primary transition-colors" title="Modo Escuro" type="button"><span class="material-symbols-outlined text-[16px]">dark_mode</span></button></div><button class="relative p-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary-container"></span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></header><div class="fixed left-0 top-14 bottom-0 w-[72px] bg-surface-container-lowest flex flex-col items-center py-space-sm z-40"><div class="relative group flex items-center justify-center w-full py-1.5"><div class="absolute left-0 w-1 h-8 rounded-r-full bg-primary-container"></div><button class="w-12 h-12 rounded-xl bg-primary-container text-on-primary-container flex items-center justify-center font-headline-sm text-headline-sm font-bold shadow-md hover:rounded-lg transition-all" title="Masmorra do Dragão" type="button">MD</button></div><div class="relative group flex items-center justify-center w-full py-1.5"><div class="absolute left-0 w-1 h-2 rounded-r-full bg-on-surface-variant group-hover:h-5 transition-all"></div><button class="relative w-12 h-12 rounded-full bg-surface-container-high hover:bg-surface-container-highest text-on-surface flex items-center justify-center font-headline-sm text-headline-sm font-semibold transition-all" title="Guilda dos Alquimistas" type="button">GA<span class="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-secondary ring-2 ring-surface-container-lowest flex items-center justify-center"><span class="material-symbols-outlined text-[10px] text-on-secondary">volume_up</span></span></button></div><div class="relative group flex items-center justify-center w-full py-1.5"><div class="absolute left-0 w-1 h-2 rounded-r-full bg-on-surface-variant group-hover:h-5 transition-all"></div><button class="relative w-12 h-12 rounded-full bg-surface-container-high hover:bg-surface-container-highest text-on-surface flex items-center justify-center font-headline-sm text-headline-sm font-semibold transition-all" title="Círculo Arcano" type="button">CA<span class="absolute top-0 right-0 w-3 h-3 rounded-full bg-primary-container ring-2 ring-surface-container-lowest"></span></button></div><div class="relative group flex items-center justify-center w-full py-1.5"><button class="w-12 h-12 rounded-full bg-surface-container-high hover:bg-surface-container-highest text-on-surface flex items-center justify-center font-headline-sm text-headline-sm font-semibold transition-all" title="Taverna Central" type="button">TC</button></div><div class="w-8 h-[1px] bg-surface-container-high my-2"></div><div class="flex items-center justify-center w-full py-1.5"><button class="w-12 h-12 rounded-full bg-surface-container-low hover:bg-secondary hover:text-on-secondary text-secondary flex items-center justify-center transition-all group" title="Criar ou Entrar em Servidor" type="button"><span class="material-symbols-outlined text-[24px]">add</span></button></div><div class="mt-auto flex items-center justify-center w-full py-1.5"><button class="w-12 h-12 rounded-full bg-surface-container-low hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-all" title="Explorar Servidores" type="button"><span class="material-symbols-outlined text-[22px]">explore</span></button></div></div><aside class="fixed left-[72px] top-14 bottom-0 w-[248px] bg-surface-container-low flex flex-col z-30 shadow-[1px_0_12px_rgba(0,0,0,0.15)]"><div class="h-12 px-space-md flex items-center justify-between bg-surface-container-low"><div class="flex items-center gap-2 overflow-hidden"><h2 class="font-headline-sm text-headline-sm text-on-surface truncate">Masmorra do Dragão</h2></div><div class="flex items-center gap-1"><button class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="Convidar Membros" type="button"><span class="material-symbols-outlined text-[18px]">person_add</span></button><button class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="Definições do Servidor" type="button"><span class="material-symbols-outlined text-[18px]">settings</span></button></div></div><nav class="flex-1 overflow-y-auto px-2 py-space-sm space-y-4" data-active-classes="bg-surface-container text-primary font-semibold"><div class="space-y-1"><div class="flex items-center justify-between px-2 py-1 text-on-surface-variant"><span class="font-label-ui text-label-ui uppercase tracking-wider">Canais de Texto</span><button class="p-0.5 rounded hover:bg-surface-container-high hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[16px]">add</span></button></div><a class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="canal-geral" href="#"><span class="text-outline font-label-code-md text-label-code-md">#</span><span class="truncate">geral</span></a><a class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="canal-regras-e-fichas" href="#"><span class="text-outline font-label-code-md text-label-code-md">#</span><span class="truncate">regras-e-fichas</span></a><a class="flex items-center justify-between px-2.5 py-1.5 rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="canal-sussurros-segredos" href="#"><div class="flex items-center gap-2 truncate"><span class="text-outline font-label-code-md text-label-code-md">#</span><span class="truncate">sussurros-segredos</span></div><span class="material-symbols-outlined text-[14px] text-secondary">lock</span></a></div><div class="space-y-1"><div class="flex items-center justify-between px-2 py-1 text-on-surface-variant"><span class="font-label-ui text-label-ui uppercase tracking-wider">Voz &amp; Transmissão</span><button class="p-0.5 rounded hover:bg-surface-container-high hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[16px]">add</span></button></div><a class="flex items-center justify-between px-2.5 py-1.5 rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="palco-da-campanha" href="#"><div class="flex items-center gap-2 truncate min-w-0 mr-1"><span class="material-symbols-outlined text-[18px] shrink-0">volume_up</span><span class="truncate">Palco da Campanha</span></div><span class="px-1.5 py-0.5 rounded bg-error-container text-on-error-container font-label-code-sm text-label-code-sm uppercase tracking-wider font-semibold whitespace-nowrap inline-flex items-center shrink-0">Ao Vivo</span></a><div class="pl-6 pr-2 py-1 space-y-1.5"><div class="flex items-center justify-between text-on-surface font-body-sm text-body-sm"><div class="flex items-center gap-2"><div class="relative"><div class="w-5 h-5 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-[10px] ring-2 ring-primary-container animate-pulse">TH</div></div><span class="">Torvald (Mestre)</span></div><span class="material-symbols-outlined text-[14px] text-secondary">mic</span></div><div class="flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm"><div class="flex items-center gap-2"><div class="w-5 h-5 rounded-full bg-surface-container-highest text-on-surface flex items-center justify-center font-bold text-[10px]">AL</div><span class="">Alysia</span></div><span class="material-symbols-outlined text-[14px] text-error">mic_off</span></div><div class="flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm"><div class="flex items-center gap-2"><div class="w-5 h-5 rounded-full bg-surface-container-highest text-on-surface flex items-center justify-center font-bold text-[10px]">GR</div><span class="">Grimm</span></div><span class="material-symbols-outlined text-[14px] text-secondary">mic</span></div></div><a class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="taverna-descanso" href="#"><span class="material-symbols-outlined text-[18px]">headset</span><span class="truncate">Taverna de Descanso</span></a></div><div class="space-y-1"><div class="flex items-center justify-between px-2 py-1 text-on-surface-variant"><span class="font-label-ui text-label-ui uppercase tracking-wider">Ferramentas VTT</span></div><a class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="mesa-tesserae-vtt" href="#"><span class="material-symbols-outlined text-[18px]">grid_view</span><span class="truncate">Tabuleiro Tático</span></a><a class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="rolagem-de-dados" href="#"><span class="material-symbols-outlined text-[18px]">casino</span><span class="truncate">Histórico de Dados</span></a></div></nav><div class="bg-surface-container-lowest p-2 space-y-2"><div class="flex items-center justify-between px-2 py-1 bg-surface-container rounded-lg"><div class="flex items-center gap-1"><button class="p-1.5 rounded hover:bg-surface-container-high text-secondary hover:text-on-surface transition-colors" title="Microfone Ativo" type="button"><span class="material-symbols-outlined text-[18px]">mic</span></button><button class="p-1.5 rounded hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface transition-colors" title="Ensurdecer" type="button"><span class="material-symbols-outlined text-[18px]">headphones</span></button><button class="p-1.5 rounded hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface transition-colors" title="Câmera Ligada" type="button"><span class="material-symbols-outlined text-[18px]">videocam</span></button></div><button class="p-1.5 rounded bg-error-container text-on-error-container hover:bg-error hover:text-on-error transition-colors" title="Desconectar Voz" type="button"><span class="material-symbols-outlined text-[18px]">call_end</span></button></div><div class="flex items-center justify-between px-1.5 py-1"><div class="flex items-center gap-2 min-w-0"><div class="relative"><div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xs">MA</div><span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-secondary ring-2 ring-surface-container-lowest"></span></div><div class="min-w-0"><p class="font-headline-sm text-body-sm text-on-surface truncate leading-tight">Mestre Aventuras</p><p class="font-label-code-sm text-label-code-sm text-on-surface-variant truncate">@mestre_aventuras</p></div></div><button class="p-1.5 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="Definições de Usuário" type="button"><span class="material-symbols-outlined text-[18px]">tune</span></button></div></div></aside><div class="pl-[320px]"><main class="pt-14 bg-surface h-screen max-h-screen flex flex-col overflow-hidden"><div class="flex flex-col w-full h-[calc(100vh-3.5rem)] overflow-hidden select-none">
+<!-- Top Bar: Scene Studio Header & Presets Strip (Organized into 3 distinct clean zones) -->
+<div class="h-14 px-4 bg-surface-container-low shadow-sm z-20 shrink-0 flex items-center justify-between gap-3 border-b border-surface-container-high">
+<!-- Zone 1 (Left): Scene Title & State Indicator -->
+<div class="flex items-center gap-2.5 shrink-0 min-w-0">
+<div class="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center text-primary-container shrink-0">
+<span class="material-symbols-outlined text-[18px]">layers</span>
+</div>
+<div class="flex items-center gap-2 truncate">
+<span class="font-headline-sm text-[15px] font-bold text-on-surface truncate">Mestre em Destaque</span>
+<span class="px-2 py-0.5 rounded-full bg-primary-container/20 text-primary-fixed-dim font-label-code-sm text-[10px] uppercase tracking-wider flex items-center gap-1 shrink-0">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container animate-pulse"></span>
+          Modo Edição
+        </span>
+<button class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors shrink-0" title="Renomear Presilha">
+<span class="material-symbols-outlined text-[15px]">edit</span>
+</button>
+</div>
+</div>
+<!-- Zone 2 (Center): Clean Transition Selector with Dropdown -->
+<div class="flex items-center gap-2 shrink-0">
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-container-lowest border border-surface-container-high text-on-surface font-label-code-sm text-label-code-sm shadow-sm">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">auto_mode</span>
+<span class="text-on-surface-variant">Transição:</span>
+<span class="text-on-surface font-medium">Crossfade</span>
+<span class="text-secondary font-semibold">300ms</span>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant cursor-pointer hover:text-on-surface">expand_more</span>
+</div>
+</div>
+<!-- Zone 3 (Right): Actions & Direction Controls -->
+<div class="flex items-center gap-2 shrink-0">
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface-variant hover:text-on-surface font-label-ui text-label-ui transition-colors">
+<span class="material-symbols-outlined text-[16px]">undo</span>
+<span>Descartar</span>
+</button>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-secondary font-label-ui text-label-ui transition-colors">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+<span class="hidden sm:inline">Pré-visualizar</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-primary-container text-on-primary-container font-headline-sm text-body-md hover:brightness-110 shadow-md transition-all active:scale-[0.98]">
+<span class="material-symbols-outlined text-[18px]">publish</span>
+<span>Salvar &amp; Aplicar</span>
+</button>
+</div>
+</div>
+<!-- Stage Workspace Area (Center Canvas + Inspector) -->
+<div class="flex-1 flex overflow-hidden min-h-0 relative">
+<!-- Central Stage / Canvas Grid -->
+<div class="flex-1 flex flex-col p-3 overflow-hidden min-h-0 relative bg-surface-container-lowest">
+<!-- Visual Grid Ruler / Coordinates Canvas Overlay -->
+<div class="absolute inset-0 pointer-events-none opacity-20 bg-[radial-gradient(#dbc1ba_1px,transparent_1px)] [background-size:24px_24px]"></div>
+<!-- Canvas Header Meta & Alignment Toolbar in a single non-wrapping line -->
+<div class="flex items-center justify-between mb-2 px-1 z-10 shrink-0 gap-2 whitespace-nowrap overflow-x-auto">
+<div class="flex items-center gap-3 shrink-0">
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface-container-high text-on-surface-variant font-label-code-sm text-label-code-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span>Viewport: 1920x1080 (Canvas Virtual)</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant font-label-code-sm text-label-code-sm">
+<span>Escala: 65%</span>
+<span class="text-outline">·</span>
+<span class="px-2 py-0.5 rounded-full bg-secondary-container/20 text-secondary flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+Snap Magnético Ativo
+</span>
+</div>
+</div>
+<div class="flex items-center gap-1 bg-surface-container-low p-1 rounded-lg shrink-0">
+<button class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container" title="Alinhar à Esquerda">
+<span class="material-symbols-outlined text-[16px]">align_horizontal_left</span>
+</button>
+<button class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container" title="Centralizar">
+<span class="material-symbols-outlined text-[16px]">align_horizontal_center</span>
+</button>
+<button class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container" title="Distribuir Verticalmente">
+<span class="material-symbols-outlined text-[16px]">csv</span>
+</button>
+<div class="w-px h-4 bg-surface-container-highest my-auto mx-1"></div>
+<button class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container" title="Grade de Alinhamento">
+<span class="material-symbols-outlined text-[16px] text-secondary">grid_goldenratio</span>
+</button>
+</div>
+</div>
+<!-- Composition Interactive Frame (16:9 Simulated Canvas) -->
+<div class="flex-1 w-full max-w-[1360px] mx-auto rounded-xl bg-surface p-2.5 shadow-2xl relative flex gap-2.5 z-10 min-h-0 overflow-hidden">
+<!-- Slot #1: Master Primary Focus Slot (Selected State) -->
+<div class="flex-1 flex flex-col relative rounded-xl bg-surface-container overflow-hidden shadow-xl group min-h-0">
+<!-- Selection Frame Highlights (Ambient Terracotta glow) -->
+<div class="absolute inset-0 rounded-xl pointer-events-none shadow-[inset_0_0_0_2px_#e07a5f] z-30"></div>
+<!-- Snap Corner Handles -->
+<div class="absolute top-0 left-0 w-2.5 h-2.5 bg-primary-container z-40 rounded-tl cursor-nwse-resize"></div>
+<div class="absolute top-0 right-0 w-2.5 h-2.5 bg-primary-container z-40 rounded-tr cursor-nesw-resize"></div>
+<div class="absolute bottom-0 left-0 w-2.5 h-2.5 bg-primary-container z-40 rounded-bl cursor-nesw-resize"></div>
+<div class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-primary-container z-40 rounded-br cursor-nwse-resize"></div>
+<!-- Slot Header Ribbon (Slot Tags on Left, Controls on Right, Clean & Uncluttered) -->
+<div class="absolute top-2.5 left-2.5 right-2.5 z-30 flex items-center justify-between gap-2 pointer-events-auto">
+<div class="flex items-center gap-1.5">
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-container-lowest/90 backdrop-blur-md text-on-surface shadow-md">
+<span class="w-2 h-2 rounded-full bg-primary-container"></span>
+<span class="font-headline-sm text-body-sm font-bold text-primary-fixed-dim">Slot #1</span>
+<span class="text-outline font-label-code-sm">·</span>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">16:9</span>
+</div>
+<div class="hidden sm:flex items-center gap-1 px-2 py-1 rounded-lg bg-secondary-container/20 text-secondary font-label-code-sm text-label-code-sm backdrop-blur-md">
+<span class="material-symbols-outlined text-[13px]">mic</span>
+<span>Prioridade Alta (Mestre)</span>
+</div>
+</div>
+<!-- Slot Fast Controls -->
+<div class="flex items-center gap-1 bg-surface-container-lowest/90 backdrop-blur-md p-0.5 rounded-lg shadow-md">
+<button class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="Trocar Participante">
+<span class="material-symbols-outlined text-[15px]">sync_alt</span>
+</button>
+<button class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="Espelhar Câmera">
+<span class="material-symbols-outlined text-[15px]">flip</span>
+</button>
+<button class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="Bloquear Proporção">
+<span class="material-symbols-outlined text-[15px] text-secondary">lock</span>
+</button>
+<button class="p-1 rounded text-on-surface-variant hover:text-error hover:bg-error-container/20 transition-colors" title="Esvaziar Slot">
+<span class="material-symbols-outlined text-[15px]">close</span>
+</button>
+</div>
+</div>
+<!-- Video Mock Frame & Feed -->
+<div class="w-full h-full relative overflow-hidden flex items-center justify-center bg-surface-container-low">
+<img class="w-full h-full object-cover" data-alt="A rugged Dungeon Master with a beard and hooded cloak in an ambient dimly lit tavern setting surrounded by antique books, warm candle embers glowing, wearing a studio headset, high resolution cinematic camera angle" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBxkf4naPiV-Wkqu0sAAb-AkenFYAbzExtLjngeinmR4tbSj03H4U_sb7RU7pYFP74q-uW86Z42RgYhcBEqslk76bM1zHBC4DJq1LSq27XhJ7BL6-AUsmZQzyE0EZ21FQmfqoqJnosPryK4LrkOVJGGeyogJd0ekJbxzAS1QqTtgxpmN5HmzUwEkeUzqJSlgT9fmXf_Ji0pcN9FJ_z5d0Y8OSycq4xIRS7QtWsJr9aBdHKRJFtAov57Q"/>
+<!-- Atmospheric Dark Scrim -->
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest/90 via-transparent to-surface-container-lowest/40 pointer-events-none"></div>
+<!-- Lower Badge Roster on Stream -->
+<div class="absolute bottom-2.5 left-3 right-3 flex items-center justify-between z-30 pointer-events-none">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container font-headline-sm text-body-sm flex items-center justify-center font-bold shadow-md ring-2 ring-primary-container shrink-0">
+TH
+</div>
+<div class="min-w-0">
+<div class="flex items-center gap-1.5 truncate">
+<span class="font-headline-sm text-body-md text-on-surface font-bold drop-shadow truncate">Torvald Valravn</span>
+<span class="px-1.5 py-0.2 rounded bg-surface-container-highest/90 text-primary-fixed-dim font-label-code-sm text-[10px] shrink-0">Mestre</span>
+</div>
+<p class="font-label-code-sm text-[11px] text-on-surface-variant drop-shadow truncate">@torvald_dm • Som Cristalino Opus 96kbps</p>
+</div>
+</div>
+<!-- Live Cryptographic E2EE telemetry on video stream -->
+<div class="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-surface-container-lowest/80 backdrop-blur-md text-secondary font-label-code-sm text-[11px] shadow shrink-0">
+<span class="material-symbols-outlined text-[13px]">verified_user</span>
+<span>E2EE SHA-256: 7f3b..99d2</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Lateral Column: Slots #2, #3, #4 and Drop Guide -->
+<div class="w-72 flex flex-col gap-2 min-h-0 shrink-0">
+<!-- Slot #2: Thorin -->
+<div class="flex-1 min-h-0 rounded-xl bg-surface-container relative overflow-hidden group shadow-md transition-all hover:bg-surface-container-high">
+<div class="absolute top-2 left-2 z-20 flex items-center gap-1.5">
+<span class="cursor-grab active:cursor-grabbing p-0.5 rounded bg-surface-container-lowest/80 text-on-surface-variant hover:text-on-surface">
+<span class="material-symbols-outlined text-[14px]">drag_indicator</span>
+</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-lowest/80 backdrop-blur-md text-on-surface font-label-code-sm text-[10px]">
+Slot #2
+</span>
+</div>
+<div class="w-full h-full relative">
+<img class="w-full h-full object-cover" data-alt="A dwarf warrior RPG player with braided auburn beard and brass spectacles smiling in front of a shelf filled with miniature tabletop figurines, warm lamp light, dark ambient background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBDfD69FvmXpp2kk6bEnf3H8KKMPLJguZ7dBnRU6tvANPe5WoW6zvaCMeWGiS_N0lRP1ZcXVRZqLKxZomLupqGAzB5bhAiS5g5HqupvnMGYKcB_8EAsR5lWVMnXWX5ZNm7F1yBvQ7QNDrqhJN1BUTdOPpg9adRWvGdeINXXiVl6rMP5Sqw86pSExhw5-nSB8RThkbKpdUEofVVq7A7MelAeT7UWnNOXJ2i9O25OK7ModWe17DgshvOXKg"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest/80 via-transparent to-transparent"></div>
+<div class="absolute bottom-1.5 left-2 right-2 flex items-center justify-between text-on-surface">
+<div class="flex items-center gap-1 truncate">
+<span class="font-label-ui text-label-ui truncate font-semibold">Thorin Ironforge</span>
+<span class="text-on-surface-variant font-label-code-sm text-[10px]">(@thorin)</span>
+</div>
+<span class="material-symbols-outlined text-[14px] text-secondary">mic</span>
+</div>
+</div>
+</div>
+<!-- Slot #3: Elysia -->
+<div class="flex-1 min-h-0 rounded-xl bg-surface-container relative overflow-hidden group shadow-md transition-all hover:bg-surface-container-high">
+<div class="absolute top-2 left-2 z-20 flex items-center gap-1.5">
+<span class="cursor-grab active:cursor-grabbing p-0.5 rounded bg-surface-container-lowest/80 text-on-surface-variant hover:text-on-surface">
+<span class="material-symbols-outlined text-[14px]">drag_indicator</span>
+</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-lowest/80 backdrop-blur-md text-on-surface font-label-code-sm text-[10px]">
+Slot #3
+</span>
+</div>
+<div class="w-full h-full relative">
+<img class="w-full h-full object-cover" data-alt="An elf wizard RPG player with silver hair wearing deep purple velvet robe looking at her dice tray illuminated by warm fairy lights, serene mood, high quality tabletop portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCt5Fw7aeT_8gYYW4gw5WfJ2UG22Y_0dkThKdMInebzmUQ633DkrL_OlR0ptZmNc0r7Dvpv3elmMwtrJUnSBBu6zQvaNCZk5DuTyldYGtzVVai9z-ShYbfe9oI2reZ14U_oVh2TwxN_JAl2UEeQGt1VrY8HKLjwJ-ocmG61lVrKFirQNo8iNqqRM3D8nIbBGgfCLXB4UK3237Kvn1iT2AWdPQJxixwqNXEpCms-FBDsd6Oh60_kSfjhFw"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest/80 via-transparent to-transparent"></div>
+<div class="absolute bottom-1.5 left-2 right-2 flex items-center justify-between text-on-surface">
+<div class="flex items-center gap-1 truncate">
+<span class="font-label-ui text-label-ui truncate font-semibold">Elysia Star</span>
+<span class="text-on-surface-variant font-label-code-sm text-[10px]">(@elysia)</span>
+</div>
+<span class="material-symbols-outlined text-[14px] text-secondary">mic</span>
+</div>
+</div>
+</div>
+<!-- Slot #4: Self User (@mestre_aventuras) -->
+<div class="flex-1 min-h-0 rounded-xl bg-surface-container relative overflow-hidden group shadow-md transition-all hover:bg-surface-container-high">
+<div class="absolute top-2 left-2 z-20 flex items-center gap-1.5">
+<span class="cursor-grab active:cursor-grabbing p-0.5 rounded bg-surface-container-lowest/80 text-on-surface-variant hover:text-on-surface">
+<span class="material-symbols-outlined text-[14px]">drag_indicator</span>
+</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-lowest/80 backdrop-blur-md text-on-surface font-label-code-sm text-[10px]">
+Slot #4 (Você)
+</span>
+</div>
+<div class="w-full h-full relative flex items-center justify-center bg-surface-container-high">
+<div class="flex flex-col items-center gap-1">
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xs">
+MA
+</div>
+<span class="font-label-code-sm text-[10px] text-on-surface-variant">Câmera Oculta no Palco</span>
+</div>
+<div class="absolute bottom-1.5 left-2 right-2 flex items-center justify-between text-on-surface">
+<span class="font-label-ui text-label-ui truncate">Mestre Aventuras</span>
+<span class="material-symbols-outlined text-[14px] text-error">videocam_off</span>
+</div>
+</div>
+</div>
+<!-- Secondary Drop Zone Slot -->
+<button class="h-10 rounded-xl border border-dashed border-surface-container-highest hover:border-secondary bg-surface-container-low flex items-center justify-center gap-1.5 text-on-surface-variant hover:text-secondary hover:bg-surface-container transition-all shrink-0" type="button">
+<span class="material-symbols-outlined text-[16px]">add_circle</span>
+<span class="font-label-ui text-label-ui">+ Adicionar Slot #5</span>
+</button>
+</div>
+</div>
+<!-- Quick Alignment Helper Line / Bar -->
+<div class="mt-1 flex items-center justify-center gap-4 text-on-surface-variant font-label-code-sm text-[11px] z-10 shrink-0">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px] text-secondary">drag_pan</span>
+Arraste qualquer slot para reorganizar ordem
+</span>
+<span class="text-outline">·</span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">aspect_ratio</span>
+Mantenha Shift pressionado para travar proporção livre
+</span>
+</div>
+</div>
+<!-- Inspector Drawer: Selected Slot Configuration Panel (Compact & Functional w-80) -->
+<aside class="w-80 bg-surface-container-low flex flex-col shadow-[-4px_0_16px_rgba(0,0,0,0.3)] z-30 shrink-0 border-l border-surface-container-high overflow-hidden">
+<!-- Panel Header -->
+<div class="p-3 bg-surface-container flex items-center justify-between shadow-sm shrink-0 border-b border-surface-container-high">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-[18px] text-primary-container shrink-0">tune</span>
+<div class="min-w-0">
+<h3 class="font-headline-sm text-[14px] font-bold text-on-surface truncate">Inspetor de Slot</h3>
+<p class="font-label-code-sm text-[10px] text-on-surface-variant truncate">Editando: Slot #1 Principal</p>
+</div>
+</div>
+<button class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors shrink-0" title="Redefinir Slot">
+<span class="material-symbols-outlined text-[16px]">restart_alt</span>
+</button>
+</div>
+<!-- Settings Sections Scroll Area -->
+<div class="flex-1 overflow-y-auto p-3 space-y-3.5">
+<!-- Source Mapping Card -->
+<div class="space-y-1.5">
+<label class="block font-label-ui text-label-ui text-on-surface-variant uppercase tracking-wider">Origem da Fonte</label>
+<div class="relative">
+<select class="w-full bg-surface-container-highest text-on-surface font-body-sm text-body-sm rounded-lg px-2.5 py-1.5 appearance-none focus:outline-none focus:bg-surface-bright transition-colors cursor-pointer text-xs">
+<option selected="">Torvald (Mestre da Mesa) • Câmera HD</option>
+<option>Thorin Ironforge • Câmera 1080p</option>
+<option>Elysia Star • Câmera 720p</option>
+<option>Compartilhamento: Grimório VTT</option>
+<option>Feed de Mapa Tático Dinâmico</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-2 pointer-events-none text-on-surface-variant text-[16px]">expand_more</span>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant font-label-code-sm text-[11px] px-0.5">
+<span>Resolução: 1920x1080</span>
+<span class="text-secondary">Sinal 60 FPS</span>
+</div>
+</div>
+<!-- Aspect Ratio Selection -->
+<div class="space-y-1.5">
+<label class="block font-label-ui text-label-ui text-on-surface-variant uppercase tracking-wider">Proporção &amp; Enquadramento</label>
+<div class="grid grid-cols-2 gap-1.5">
+<button class="flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg bg-primary-container text-on-primary-container font-label-code-sm text-[11px] font-semibold shadow-sm">
+<span class="material-symbols-outlined text-[14px]">crop_16_9</span>
+<span>16:9 Cinema</span>
+</button>
+<button class="flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-code-sm text-[11px] transition-colors">
+<span class="material-symbols-outlined text-[14px]">crop_square</span>
+<span>4:3 Retrô</span>
+</button>
+<button class="flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-code-sm text-[11px] transition-colors">
+<span class="material-symbols-outlined text-[14px]">square</span>
+<span>1:1 Ficha</span>
+</button>
+<button class="flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-code-sm text-[11px] transition-colors">
+<span class="material-symbols-outlined text-[14px]">fit_screen</span>
+<span>Preenchimento</span>
+</button>
+</div>
+</div>
+<!-- Frame Styling & Glow -->
+<div class="p-2.5 rounded-xl bg-surface-container space-y-2.5">
+<div class="flex items-center justify-between">
+<div>
+<p class="font-headline-sm text-body-sm text-on-surface font-medium">Borda Ativa ao Falar</p>
+<p class="font-label-code-sm text-[10px] text-on-surface-variant">Speaking Glow inteligente</p>
+</div>
+<!-- Interactive Switch -->
+<label class="relative inline-flex items-center cursor-pointer shrink-0">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-8 h-4 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-surface-container-lowest after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-primary-container after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-secondary"></div>
+</label>
+</div>
+<div class="space-y-1 pt-0.5">
+<div class="flex items-center justify-between text-on-surface-variant font-label-code-sm text-[10px]">
+<span>Espessura da Moldura</span>
+<span class="text-on-surface font-semibold">2.5 px</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1 rounded-full overflow-hidden">
+<div class="bg-primary-container h-full w-[45%] rounded-full"></div>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex items-center justify-between text-on-surface-variant font-label-code-sm text-[10px]">
+<span>Arredondamento</span>
+<span class="text-on-surface font-semibold">12 px</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1 rounded-full overflow-hidden">
+<div class="bg-primary-container h-full w-[60%] rounded-full"></div>
+</div>
+</div>
+</div>
+<!-- HUD & Stream Overlays Switches -->
+<div class="space-y-1.5">
+<label class="block font-label-ui text-label-ui text-on-surface-variant uppercase tracking-wider">Sobreposição &amp; Identidade</label>
+<div class="space-y-1">
+<label class="flex items-center justify-between p-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer text-xs">
+<span class="font-body-sm text-[12px] text-on-surface">Exibir Nome do Personagem</span>
+<input checked="" class="rounded bg-surface-container-highest text-primary-container accent-primary-container w-3.5 h-3.5" type="checkbox"/>
+</label>
+<label class="flex items-center justify-between p-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer text-xs">
+<span class="font-body-sm text-[12px] text-on-surface">Badge de Mestre / Cargo</span>
+<input checked="" class="rounded bg-surface-container-highest text-primary-container accent-primary-container w-3.5 h-3.5" type="checkbox"/>
+</label>
+<label class="flex items-center justify-between p-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer text-xs">
+<span class="font-body-sm text-[12px] text-on-surface">Telemetria E2EE &amp; Ping</span>
+<input checked="" class="rounded bg-surface-container-highest text-primary-container accent-primary-container w-3.5 h-3.5" type="checkbox"/>
+</label>
+<label class="flex items-center justify-between p-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer text-xs">
+<span class="font-body-sm text-[12px] text-on-surface">Desfoque de Fundo Neural</span>
+<input checked="" class="rounded bg-surface-container-highest text-primary-container accent-primary-container w-3.5 h-3.5" type="checkbox"/>
+</label>
+</div>
+</div>
+<!-- Audio Dynamics Mini Meter -->
+<div class="p-2.5 rounded-xl bg-surface-container space-y-1.5">
+<div class="flex items-center justify-between">
+<span class="font-headline-sm text-[11px] text-on-surface font-medium">Ganho do Feed</span>
+<span class="font-label-code-sm text-[10px] text-secondary font-semibold">+1.8 dB (Auto)</span>
+</div>
+<div class="flex items-end gap-1 h-3.5 pt-0.5">
+<div class="flex-1 bg-secondary rounded-t h-[40%]"></div>
+<div class="flex-1 bg-secondary rounded-t h-[75%]"></div>
+<div class="flex-1 bg-secondary rounded-t h-[60%]"></div>
+<div class="flex-1 bg-secondary rounded-t h-[90%]"></div>
+<div class="flex-1 bg-secondary rounded-t h-[50%]"></div>
+<div class="flex-1 bg-secondary rounded-t h-[30%]"></div>
+<div class="flex-1 bg-secondary rounded-t h-[70%]"></div>
+<div class="flex-1 bg-primary-container rounded-t h-[85%]"></div>
+<div class="flex-1 bg-surface-container-highest rounded-t h-[20%]"></div>
+<div class="flex-1 bg-surface-container-highest rounded-t h-[15%]"></div>
+</div>
+</div>
+</div>
+<!-- Inspector Footer -->
+<div class="p-2.5 bg-surface-container border-t border-surface-container-high flex items-center justify-between shrink-0">
+<button class="flex items-center gap-1 px-2.5 py-1 rounded-lg text-on-surface-variant hover:text-on-surface font-label-ui text-[11px] transition-colors">
+<span class="material-symbols-outlined text-[15px]">content_copy</span>
+<span>Duplicar Config</span>
+</button>
+<button class="flex items-center gap-1 px-2.5 py-1 rounded-lg text-primary hover:bg-surface-container-highest font-label-ui text-[11px] transition-colors">
+<span class="material-symbols-outlined text-[15px]">check</span>
+<span>Aplicado ao Slot</span>
+</button>
+</div>
+</aside>
+</div>
+<!-- Bottom Strip: Participants in Reserve / Bench & Input Sources (Fixed h-16, perfectly visible) -->
+<div class="h-16 bg-surface-container-low px-3 py-2 flex items-center gap-3 z-20 shrink-0 border-t border-surface-container-high shadow-lg">
+<!-- Bench Title Strip -->
+<div class="flex items-center gap-2 pl-1 pr-2 shrink-0 border-r border-surface-container-high">
+<span class="material-symbols-outlined text-[18px] text-primary-container">groups</span>
+<div class="flex flex-col">
+<span class="font-headline-sm text-body-sm font-bold text-on-surface leading-tight">Banco da Sala</span>
+<span class="font-label-code-sm text-[10px] text-on-surface-variant leading-tight">Arraste para o palco</span>
+</div>
+</div>
+<!-- Drag Cards Horizontal Scroll -->
+<div class="flex-1 flex items-center gap-2.5 overflow-x-auto h-full items-center">
+<!-- Participant Available #1 -->
+<div class="h-11 px-2.5 rounded-lg bg-surface-container hover:bg-surface-container-high flex items-center gap-2 shrink-0 shadow transition-all cursor-grab active:cursor-grabbing group">
+<div class="relative shrink-0">
+<div class="w-7 h-7 rounded-full bg-surface-container-highest text-on-surface flex items-center justify-center font-bold text-[10px]">
+BE
+</div>
+<span class="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-secondary ring-1 ring-surface-container"></span>
+</div>
+<div class="min-w-0 pr-1">
+<div class="flex items-center gap-1.5">
+<span class="font-headline-sm text-body-sm text-on-surface truncate font-semibold leading-none">Bardo Espectador</span>
+<span class="material-symbols-outlined text-[13px] text-on-surface-variant group-hover:text-primary transition-colors">drag_indicator</span>
+</div>
+<p class="font-label-code-sm text-[10px] text-secondary leading-none mt-0.5">Câmera Pronta (HD)</p>
+</div>
+</div>
+<!-- Participant Available #2 (Muted / No Camera) -->
+<div class="h-11 px-2.5 rounded-lg bg-surface-container/60 hover:bg-surface-container flex items-center gap-2 shrink-0 shadow transition-all cursor-grab active:cursor-grabbing group">
+<div class="relative shrink-0">
+<div class="w-7 h-7 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center font-bold text-[10px]">
+CL
+</div>
+<span class="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-outline ring-1 ring-surface-container"></span>
+</div>
+<div class="min-w-0 pr-1">
+<div class="flex items-center gap-1.5">
+<span class="font-headline-sm text-body-sm text-on-surface truncate font-semibold leading-none">Clérigo da Luz</span>
+<span class="material-symbols-outlined text-[13px] text-on-surface-variant group-hover:text-primary transition-colors">drag_indicator</span>
+</div>
+<p class="font-label-code-sm text-[10px] text-on-surface-variant leading-none mt-0.5">Apenas Voz</p>
+</div>
+</div>
+<!-- Add Source Action Card #1: Screen / VTT Window -->
+<button class="h-11 px-3 rounded-lg bg-surface-container-high/40 hover:bg-surface-container-high flex items-center gap-2 text-on-surface-variant hover:text-on-surface transition-all shrink-0">
+<span class="material-symbols-outlined text-[18px] text-secondary">screen_share</span>
+<div class="text-left">
+<span class="font-label-ui text-label-ui block leading-tight">Janela de VTT / Mapa</span>
+<span class="font-label-code-sm text-[9px] text-outline block leading-tight">Captura de Aplicação</span>
+</div>
+</button>
+<!-- Add Source Action Card #2: Media / Dice Cam Overlay -->
+<button class="h-11 px-3 rounded-lg bg-surface-container-high/40 hover:bg-surface-container-high flex items-center gap-2 text-on-surface-variant hover:text-on-surface transition-all shrink-0">
+<span class="material-symbols-outlined text-[18px] text-primary-container">casino</span>
+<div class="text-left">
+<span class="font-label-ui text-label-ui block leading-tight">Câmera de Dados Física</span>
+<span class="font-label-code-sm text-[9px] text-outline block leading-tight">Dispositivo Secundário</span>
+</div>
+</button>
+</div>
+<!-- Quick Audio Stream Indicator -->
+<div class="hidden xl:flex items-center gap-2 pl-2 shrink-0 bg-surface-container rounded-lg px-2.5 py-1 shadow">
+<div class="flex flex-col text-right">
+<span class="font-label-ui text-[11px] text-on-surface leading-tight">Mix de Direção</span>
+<span class="font-label-code-sm text-[10px] text-secondary leading-tight">4 Canais Ativos</span>
+</div>
+<div class="w-6 h-6 rounded bg-surface-container-high flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[15px]">equalizer</span>
+</div>
+</div>
+</div>
+</div></main></div>
+</body></html>

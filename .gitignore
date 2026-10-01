@@ -44,6 +44,15 @@ backend/data/attachments/
 data/avatars/
 backend/data/avatars/
 
+.agents
+.claude
+.cursor
+.aws
+.codex
+.specify
+.vscode
+.idea
+
 # OS
 .DS_Store
 temp/

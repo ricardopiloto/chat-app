@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_blank" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "primary-fixed-dim": "#ffb4a1", "error-container": "#93000a", "surface-variant": "#32343e", "secondary-fixed": "#88f9b0", "on-tertiary-fixed": "#24005b", "surface-container-lowest": "#0b0e17", "on-error": "#690005", "on-primary-fixed": "#3c0800", "on-error-container": "#ffdad6", "surface": "#10131c", "secondary": "#6bdc96", "outline-variant": "#55423e", "inverse-primary": "#9a442d", "inverse-surface": "#e0e2ef", "surface-tint": "#ffb4a1", "on-primary-fixed-variant": "#7c2e19", "on-secondary-fixed-variant": "#00522c", "on-primary": "#5d1805", "surface-container-high": "#272a33", "surface-bright": "#363943", "tertiary-fixed": "#eaddff", "primary-fixed": "#ffdbd2", "on-tertiary-container": "#3b008c", "tertiary-container": "#a680fd", "on-background": "#e0e2ef", "primary-container": "#e07a5f", "on-surface-variant": "#dbc1ba", "surface-container": "#1c1f29", "on-secondary-container": "#003118", "tertiary": "#d1bcff", "background": "#10131c", "error": "#ffb4ab", "on-primary-container": "#5b1604", "secondary-container": "#2ca464", "on-tertiary": "#3c0090", "on-secondary-fixed": "#00210f", "surface-container-highest": "#32343e", "on-tertiary-fixed-variant": "#5429a6", "inverse-on-surface": "#2d303a", "secondary-fixed-dim": "#6bdc96", "surface-dim": "#10131c", "on-surface": "#e0e2ef", "surface-container-low": "#181b24", "on-secondary": "#00391d", "primary": "#ffb4a1", "tertiary-fixed-dim": "#d1bcff", "outline": "#a38b86" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-lg": "1.5rem", "space-xl": "2.5rem", "space-xs": "0.25rem", "gutter-desktop": "1.5rem", "space-sm": "0.5rem", "margin-desktop": "2rem", "space-md": "1rem", "margin": "1rem", "gutter": "1rem" }, "fontFamily": { "headline-sm": [ "Plus Jakarta Sans" ], "display-lg": [ "Plus Jakarta Sans" ], "label-code-md": [ "JetBrains Mono" ], "display-lg-mobile": [ "Plus Jakarta Sans" ], "label-code-sm": [ "JetBrains Mono" ], "headline-md": [ "Plus Jakarta Sans" ], "body-lg": [ "Inter" ], "headline-lg": [ "Plus Jakarta Sans" ], "label-ui": [ "Inter" ], "body-md": [ "Inter" ], "body-sm": [ "Inter" ] }, "fontSize": { "headline-sm": [ "16px", { "lineHeight": "24px", "fontWeight": "600" } ], "display-lg": [ "36px", { "lineHeight": "44px", "fontWeight": "700" } ], "label-code-md": [ "13px", { "lineHeight": "18px", "fontWeight": "500" } ], "display-lg-mobile": [ "28px", { "lineHeight": "36px", "fontWeight": "700" } ], "label-code-sm": [ "11px", { "lineHeight": "16px", "fontWeight": "500" } ], "headline-md": [ "20px", { "lineHeight": "28px", "fontWeight": "600" } ], "body-lg": [ "16px", { "lineHeight": "24px", "fontWeight": "400" } ], "headline-lg": [ "24px", { "lineHeight": "32px", "fontWeight": "600" } ], "label-ui": [ "12px", { "lineHeight": "16px", "fontWeight": "600" } ], "body-md": [ "14px", { "lineHeight": "20px", "fontWeight": "400" } ], "body-sm": [ "12px", { "lineHeight": "18px", "fontWeight": "400" } ] } } } };</script></head><body class="bg-surface text-on-surface min-h-screen selection:bg-primary-container selection:text-on-primary-container"><main class="w-full min-h-screen bg-surface flex flex-col justify-center"><div class="flex flex-col w-full">
+<div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-16">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-stretch">
+<!-- Left Panel: Brand Column -->
+<section class="lg:col-span-5 flex flex-col justify-between bg-surface-container-low rounded-xl p-8 sm:p-10 relative overflow-hidden shadow-xl">
+<!-- Subtle Campfire Ambient Glow -->
+<div class="absolute -top-24 -left-24 w-96 h-96 bg-primary-container/10 rounded-full blur-3xl pointer-events-none"></div>
+<div class="absolute bottom-0 right-0 w-80 h-80 bg-secondary/5 rounded-full blur-3xl pointer-events-none"></div>
+<div class="absolute inset-0 bg-gradient-to-b from-transparent via-surface-container-low/40 to-surface-container-low pointer-events-none"></div>
+<div class="relative z-10 space-y-8">
+<!-- Logo & Brand Header -->
+<div class="flex items-center gap-4">
+<div class="w-14 h-14 rounded-lg bg-surface-container-high p-2 flex items-center justify-center shadow-md">
+<img alt="Mesa Platform Emblem" class="w-full h-full object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Wu6JPFAgZCyVeUFfgF2Kw0tDR-hsarUUfylK14HYlLwAvvLQCMU2yFj9S9B1Q71Fq6zapDK3Irg2Zx3iMoLWvt5oI4ddFcNATCLKLLVNiGVWqORn8REKU_XDfAo6kzvp9H8bl2WpVm1hnyVH6oiUeJ6ldFclk2C5YFAzLugzQ4b3hq3royoiQ-7WRiEWXxpZNjUqQ8_iyE-6cBPASSapis3gp1Pn8ONomgG9Rap9nRDBJ_5ZY22pvfcGTv"/>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<span class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Mesa</span>
+<span class="px-2 py-0.5 rounded-full bg-primary-container/20 text-primary font-label-code-sm text-label-code-sm uppercase tracking-wider">E2EE</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Ambiente Criptográfico Soberano</p>
+</div>
+</div>
+<!-- Instance Status Banner -->
+<div class="bg-surface-container-high/70 backdrop-blur rounded-lg p-3.5 flex items-start gap-3 shadow-sm">
+<span class="material-symbols-outlined text-secondary text-[20px] mt-0.5" style="font-variation-settings: 'FILL' 1;">cloud_done</span>
+<div class="min-w-0 flex-1">
+<div class="flex items-center justify-between gap-2">
+<span class="font-label-ui text-label-ui text-secondary uppercase tracking-wider">Instância Ativa</span>
+<span class="inline-flex items-center gap-1.5 font-label-code-sm text-label-code-sm text-secondary">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+                  P2P Mesh
+                </span>
+</div>
+<p class="font-label-code-sm text-label-code-sm text-on-surface-variant truncate mt-0.5">camp-br-04.mesa.mesh • Enclave Isolação L3</p>
+</div>
+</div>
+<!-- Hero Value Statement -->
+<div class="space-y-4">
+<h1 class="font-headline-md text-headline-md text-on-surface tracking-tight text-balance">
+              O calor da mesa física com a inviolabilidade da cifra moderna.
+            </h1>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+              Chat, voz e vídeo auto-hospedados com cifra E2EE nativa e composição de câmeras para mesas de RPG. Comunicação persistente para grupos de campanha, sem telemetria centralizada.
+            </p>
+</div>
+<!-- Architectural Trust Pillars -->
+<div class="space-y-3 pt-2">
+<div class="flex items-start gap-3">
+<div class="w-8 h-8 rounded-md bg-surface-container flex items-center justify-center shrink-0 text-primary">
+<span class="material-symbols-outlined text-[18px]">key</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Derivação Curve25519 Local</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">As suas chaves privadas jamais tocam os servidores centrais ou nós relay.</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<div class="w-8 h-8 rounded-md bg-surface-container flex items-center justify-center shrink-0 text-secondary">
+<span class="material-symbols-outlined text-[18px]">verified_user</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Protocolo Ratchet MLS 2.0</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Forward secrecy contínua para transmissões de voz de baixa latência e dados de grid.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Left Column Footer Telemetry -->
+<div class="relative z-10 pt-8 mt-8 bg-surface-container-low/50">
+<div class="flex flex-col gap-1">
+<div class="flex items-center justify-between text-on-surface-variant font-label-code-sm text-label-code-sm">
+<span>Mesa v2.4.1-rc3</span>
+<span class="text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">lock</span>
+                Zero-Knowledge
+              </span>
+</div>
+<p class="font-label-code-sm text-label-code-sm text-outline">Enclave local: Wasm Ed25519 Native Substrate</p>
+</div>
+</div>
+</section>
+<!-- Right Panel: Authentication & Identity Recovery Container -->
+<section class="lg:col-span-7 flex flex-col justify-center">
+<div class="bg-surface-container-low rounded-xl p-6 sm:p-8 md:p-10 shadow-xl relative">
+<!-- Context Status Chip -->
+<div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary-container/15 text-primary mb-6 shadow-sm">
+<span class="material-symbols-outlined text-[18px] text-primary" style="font-variation-settings: 'FILL' 1;">security</span>
+<span class="font-label-code-sm text-label-code-sm uppercase tracking-wide">Sessão do Servidor Detetada • Cofre Local em Falta</span>
+</div>
+<!-- Section Headings -->
+<div class="space-y-2 mb-6">
+<h2 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Desbloquear Cofre Local</h2>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+              Iniciou sessão neste nó como <span class="text-primary font-semibold">@mestre_aventuras</span>, mas este dispositivo não possui a cópia cifrada das suas chaves de identidade. Digite a sua senha mestra para desbloquear e derivar o cofre local.
+            </p>
+</div>
+<!-- User Identity Card -->
+<div class="bg-surface-container rounded-lg p-4 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+<div class="flex items-center gap-3 min-w-0">
+<div class="relative">
+<div class="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center text-primary font-headline-md text-headline-md font-bold shadow-inner">
+                  MA
+                </div>
+<div class="absolute -bottom-1 -right-1 w-4 h-4 bg-secondary rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-surface text-[10px]" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+</div>
+<div class="min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Mestre Aventuras</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-on-surface-variant font-label-code-sm text-label-code-sm">Nó #04</span>
+</div>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="font-label-code-md text-label-code-md text-primary truncate">@mestre_aventuras</span>
+<span class="text-outline text-xs">•</span>
+<span class="font-label-code-sm text-label-code-sm text-secondary truncate">Sessão Ativa (#4829-E2EE)</span>
+</div>
+</div>
+</div>
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container-high hover:bg-surface-bright text-on-surface-variant hover:text-on-surface text-label-ui font-label-ui transition-colors shrink-0 shadow-sm" onclick="switchSessionAlert()" type="button">
+<span class="material-symbols-outlined text-[16px]">switch_account</span>
+<span>Trocar de conta</span>
+</button>
+</div>
+<!-- Inline Warning Banner (Section 3.1 Specification) -->
+<div class="bg-surface-container-high/60 rounded-lg p-4 mb-6 flex items-start gap-3 shadow-inner">
+<span class="material-symbols-outlined text-primary text-[22px] mt-0.5 shrink-0" style="font-variation-settings: 'FILL' 1;">warning</span>
+<div class="space-y-1">
+<div class="font-label-ui text-label-ui text-primary uppercase tracking-wider font-semibold">Aviso de Enclave Criptográfico</div>
+<p class="font-body-sm text-body-sm text-on-surface leading-normal">
+                Cofre local em falta neste navegador ou dispositivo. Se este for o seu primeiro acesso neste computador, digite a sua senha mestra para derivar o cofre; ou recupere a identidade através de um dispositivo já sincronizado.
+              </p>
+</div>
+</div>
+<!-- Password Unlock Form -->
+<form class="space-y-5" id="unlockForm" onsubmit="handleUnlock(event)">
+<div class="space-y-2">
+<div class="flex items-center justify-between">
+<label class="font-label-ui text-label-ui text-on-surface font-semibold flex items-center gap-1.5" for="masterPassword">
+<span>Senha Mestra do Cofre / Palavra-passe</span>
+<span class="text-primary">*</span>
+</label>
+<span class="font-label-code-sm text-label-code-sm text-outline">Derivação Argon2id</span>
+</div>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">lock</span>
+</div>
+<input autocomplete="current-password" class="w-full pl-11 pr-11 py-3 bg-surface-container text-on-surface placeholder:text-outline font-label-code-md text-label-code-md rounded-lg focus:outline-none focus:bg-surface-container-highest transition-all shadow-inner" id="masterPassword" placeholder="••••••••••••••••" required="" type="password"/>
+<button aria-label="Alternar visibilidade da senha" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-on-surface-variant hover:text-on-surface transition-colors" id="togglePasswordBtn" onclick="togglePasswordVisibility()" type="button">
+<span class="material-symbols-outlined text-[20px]" id="passwordIcon">visibility</span>
+</button>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                Mínimo de 8 caracteres. Usada para derivar as sementes criptográficas Curve25519 e chaves MLS do nó.
+              </p>
+</div>
+<!-- Submit Action -->
+<button class="w-full py-3.5 px-6 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-headline-sm font-semibold flex items-center justify-center gap-2 shadow-lg transition-transform active:scale-[0.99]" id="submitBtn" type="submit">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">key</span>
+<span>Desbloquear Cofre</span>
+</button>
+</form>
+<!-- Interactive Feedback Toast Placeholder -->
+<div class="hidden mt-4 p-3 rounded-lg bg-secondary-container text-on-secondary-container font-body-sm text-body-sm flex items-center gap-2" id="statusToast">
+<span class="material-symbols-outlined text-[20px]">verified</span>
+<span>Chaves derivadas com sucesso. Sincronizando canais de voz...</span>
+</div>
+<!-- Separator OR -->
+<div class="relative my-8">
+<div class="h-0.5 w-full bg-surface-container-high rounded-full"></div>
+<div class="absolute inset-0 flex items-center justify-center">
+<span class="px-3 bg-surface-container-low font-label-code-sm text-label-code-sm text-outline uppercase tracking-widest">OU</span>
+</div>
+</div>
+<!-- Secondary Recovery Block (Section 3.1) -->
+<div class="space-y-4">
+<div class="bg-surface-container rounded-lg p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+<div class="space-y-1">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">qr_code_scanner</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Recuperar Identidade</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant max-w-md">
+                  Perdeu a senha ou está num nó não verificado? Use a semente mnemónica de 24 palavras ou sincronize via QR Code pelo telemóvel.
+                </p>
+</div>
+<button class="px-4 py-2.5 rounded-lg bg-surface-container-high hover:bg-surface-bright text-on-surface font-label-ui text-label-ui whitespace-nowrap transition-colors shadow-sm shrink-0 flex items-center gap-2" onclick="openRecoveryModal()" type="button">
+<span class="material-symbols-outlined text-[18px]">sync_alt</span>
+<span>Mesa Bridge</span>
+</button>
+</div>
+</div>
+<!-- Footer Switch Account Action -->
+<div class="mt-8 pt-4 text-center">
+<button class="inline-flex items-center gap-1.5 font-label-ui text-label-ui text-on-surface-variant hover:text-primary transition-colors py-1" onclick="switchSessionAlert()" type="button">
+<span>Não é @mestre_aventuras?</span>
+<span class="underline decoration-primary-container font-semibold text-primary">Trocar de conta (encerra esta sessão local)</span>
+</button>
+</div>
+</div>
+</section>
+</div>
+</div>
+<!-- Recovery Flow Interactive Modal -->
+<div class="fixed inset-0 z-50 hidden bg-surface-container-lowest/80 backdrop-blur-md flex items-center justify-center p-4" id="recoveryModal">
+<div class="w-full max-w-lg bg-surface-container-low rounded-xl p-6 sm:p-8 shadow-2xl relative">
+<div class="flex items-center justify-between pb-4 mb-4 bg-surface-container-low">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-primary text-[24px]">vpn_key</span>
+<h3 class="font-headline-md text-headline-md text-on-surface">Recuperação de Identidade E2EE</h3>
+</div>
+<button class="text-on-surface-variant hover:text-on-surface" onclick="closeRecoveryModal()" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<div class="space-y-4">
+<p class="font-body-md text-body-md text-on-surface-variant">
+          Selecione o método de emparelhamento soberano para derivar o par de chaves sem expor credenciais ao nó:
+        </p>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+<button class="p-4 rounded-lg bg-surface-container hover:bg-surface-container-high transition-colors text-left flex flex-col gap-2" type="button">
+<span class="material-symbols-outlined text-primary text-[28px]">qr_code_2</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Escanear QR do App</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Emparelhamento rápido via câmara móvel.</span>
+</button>
+<button class="p-4 rounded-lg bg-surface-container hover:bg-surface-container-high transition-colors text-left flex flex-col gap-2" type="button">
+<span class="material-symbols-outlined text-secondary text-[28px]">password</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Semente Mnemónica</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Insira a frase de 24 palavras BIP39.</span>
+</button>
+</div>
+<div class="bg-surface-container rounded-lg p-3 text-on-surface-variant font-label-code-sm text-label-code-sm flex items-center justify-between">
+<span>Hash Fingerprint Ativo:</span>
+<span class="text-secondary font-mono">0x9F41..E8B2</span>
+</div>
+</div>
+<div class="mt-6 flex justify-end">
+<button class="px-4 py-2 rounded-lg bg-surface-container-high text-on-surface font-label-ui text-label-ui hover:bg-surface-bright transition-colors" onclick="closeRecoveryModal()" type="button">
+          Voltar ao Desbloqueio
+        </button>
+</div>
+</div>
+</div>
+</div>
+<script>
+  function togglePasswordVisibility() {
+    const input = document.getElementById('masterPassword');
+    const icon = document.getElementById('passwordIcon');
+    if (!input || !icon) return;
+
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.textContent = 'visibility_off';
+    } else {
+      input.type = 'password';
+      icon.textContent = 'visibility';
+    }
+  }
+
+  function handleUnlock(event) {
+    event.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    const toast = document.getElementById('statusToast');
+    const passwordInput = document.getElementById('masterPassword');
+
+    if (!btn || !toast || !passwordInput) return;
+
+    // Visual button loading state
+    btn.disabled = true;
+    btn.classList.add('opacity-80', 'cursor-not-allowed');
+    btn.innerHTML = `
+      <span class="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
+      <span>Derivando Chaves Curve25519...</span>
+    `;
+
+    setTimeout(() => {
+      btn.innerHTML = `
+        <span class="material-symbols-outlined text-[20px]">check_circle</span>
+        <span>Cofre Desbloqueado</span>
+      `;
+      toast.classList.remove('hidden');
+      setTimeout(() => {
+        toast.textContent = "Conectando à sessão da campanha 'A Cidadela das Sombras'...";
+      }, 1200);
+    }, 1400);
+  }
+
+  function switchSessionAlert() {
+    if (confirm("Tem a certeza de que deseja encerrar esta sessão ativa de @mestre_aventuras e retornar ao seletor de identidade?")) {
+      window.location.reload();
+    }
+  }
+
+  function openRecoveryModal() {
+    const modal = document.getElementById('recoveryModal');
+    if (modal) {
+      modal.classList.remove('hidden');
+    }
+  }
+
+  function closeRecoveryModal() {
+    const modal = document.getElementById('recoveryModal');
+    if (modal) {
+      modal.classList.add('hidden');
+    }
+  }
+</script></main></body></html>

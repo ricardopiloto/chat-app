@@ -1,0 +1,31 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { defineConfig, createLogger } from "vite";
+import solid from "vite-plugin-solid";
+import basicSsl from "@vitejs/plugin-basic-ssl";
+
+const pkg = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "package.json"), "utf-8")) as { version: string };
+function mesaDevLogger() {
+  const logger = createLogger();
+  const error = logger.error.bind(logger);
+  logger.error = (msg, options) => {
+    const text = typeof msg === "string" ? msg : String(msg);
+    const errMsg = options?.error instanceof Error ? options.error.message : typeof options?.error === "string" ? options.error : "";
+    if (text.includes("ws proxy error") && errMsg.includes("This socket has been ended by the other party")) return;
+    error(msg, options);
+  };
+  return logger;
+}
+export default defineConfig({
+  plugins: [solid(), basicSsl()],
+  clearScreen: false,
+  customLogger: mesaDevLogger(),
+  define: { __APP_VERSION__: JSON.stringify(pkg.version) },
+  server: { https: {}, port: 1421, strictPort: true, host: true, proxy: {
+    "/api": { target: "http://127.0.0.1:8080", changeOrigin: true },
+    "/health": { target: "http://127.0.0.1:8080", changeOrigin: true },
+    "/ws": { target: "ws://127.0.0.1:8080", ws: true, changeOrigin: true },
+    "/rtc": { target: "http://127.0.0.1:7880", ws: true, changeOrigin: true }
+  } }
+});

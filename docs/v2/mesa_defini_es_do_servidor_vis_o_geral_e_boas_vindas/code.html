@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "inverse-primary": "#9a442d", "surface-container": "#1c1f29", "surface-dim": "#10131c", "on-primary-fixed-variant": "#7c2e19", "surface-container-lowest": "#0b0e17", "on-primary": "#5d1805", "inverse-surface": "#e0e2ef", "tertiary-container": "#a680fd", "surface": "#10131c", "surface-container-highest": "#32343e", "surface-tint": "#ffb4a1", "on-secondary": "#00391d", "on-surface": "#e0e2ef", "inverse-on-surface": "#2d303a", "on-error-container": "#ffdad6", "tertiary": "#d1bcff", "tertiary-fixed": "#eaddff", "on-surface-variant": "#dbc1ba", "secondary-container": "#2ca464", "error": "#ffb4ab", "on-primary-fixed": "#3c0800", "secondary-fixed-dim": "#6bdc96", "surface-variant": "#32343e", "primary-container": "#e07a5f", "surface-bright": "#363943", "outline": "#a38b86", "primary-fixed-dim": "#ffb4a1", "secondary-fixed": "#88f9b0", "surface-container-high": "#272a33", "on-secondary-fixed": "#00210f", "on-error": "#690005", "on-secondary-container": "#003118", "on-tertiary-container": "#3b008c", "on-background": "#e0e2ef", "primary": "#ffb4a1", "surface-container-low": "#181b24", "secondary": "#6bdc96", "background": "#10131c", "on-tertiary": "#3c0090", "on-tertiary-fixed": "#24005b", "on-tertiary-fixed-variant": "#5429a6", "error-container": "#93000a", "outline-variant": "#55423e", "tertiary-fixed-dim": "#d1bcff", "on-secondary-fixed-variant": "#00522c", "on-primary-container": "#5b1604", "primary-fixed": "#ffdbd2" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "gutter-desktop": "1.5rem", "space-md": "1rem", "margin": "1rem", "space-lg": "1.5rem", "margin-desktop": "2rem", "space-sm": "0.5rem", "space-xl": "2.5rem", "space-xs": "0.25rem", "gutter": "1rem" }, "fontFamily": { "label-code-md": [ "JetBrains Mono" ], "display-lg-mobile": [ "Plus Jakarta Sans" ], "body-md": [ "Inter" ], "display-lg": [ "Plus Jakarta Sans" ], "label-ui": [ "Inter" ], "headline-md": [ "Plus Jakarta Sans" ], "headline-sm": [ "Plus Jakarta Sans" ], "body-lg": [ "Inter" ], "body-sm": [ "Inter" ], "headline-lg": [ "Plus Jakarta Sans" ], "label-code-sm": [ "JetBrains Mono" ] }, "fontSize": { "label-code-md": [ "13px", { "lineHeight": "18px", "fontWeight": "500" } ], "display-lg-mobile": [ "28px", { "lineHeight": "36px", "fontWeight": "700" } ], "body-md": [ "14px", { "lineHeight": "20px", "fontWeight": "400" } ], "display-lg": [ "36px", { "lineHeight": "44px", "fontWeight": "700" } ], "label-ui": [ "12px", { "lineHeight": "16px", "fontWeight": "600" } ], "headline-md": [ "20px", { "lineHeight": "28px", "fontWeight": "600" } ], "headline-sm": [ "16px", { "lineHeight": "24px", "fontWeight": "600" } ], "body-lg": [ "16px", { "lineHeight": "24px", "fontWeight": "400" } ], "body-sm": [ "12px", { "lineHeight": "18px", "fontWeight": "400" } ], "headline-lg": [ "24px", { "lineHeight": "32px", "fontWeight": "600" } ], "label-code-sm": [ "11px", { "lineHeight": "16px", "fontWeight": "500" } ] } } } };</script></head><body class="bg-background font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 bottom-0 w-[72px] bg-surface-container-lowest z-50 flex flex-col items-center py-space-md justify-between shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="flex flex-col items-center gap-space-sm w-full"><button aria-label="Diretório Principal" class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"><span class="material-symbols-outlined text-[24px]">explore</span></button><div class="w-8 h-[2px] bg-surface-container-highest my-space-xs rounded-full"></div><button aria-label="Masmorra do Dragão" class="relative group w-12 h-12 rounded-xl bg-primary-container text-on-primary-container flex items-center justify-center font-headline-sm text-headline-sm font-bold shadow-[0_4px_20px_-2px_rgba(0,0,0,0.5)]"><span class="material-symbols-outlined text-[24px]">shield</span><div class="absolute left-0 w-1 h-8 bg-primary rounded-r-full -translate-x-3"></div></button><button aria-label="Mesa de Cyberpunk" class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all font-headline-sm text-headline-sm font-bold">CP</button><button aria-label="Grimório Arcano" class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all font-headline-sm text-headline-sm font-bold">GA</button></div><div class="flex flex-col items-center gap-space-sm"><button aria-label="Criar ou Adicionar Servidor" class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-secondary hover:bg-secondary-container hover:text-on-secondary-container transition-all"><span class="material-symbols-outlined text-[22px]">add</span></button></div></aside><aside class="fixed left-[72px] top-0 bottom-0 w-[240px] bg-surface-container-low z-40 flex flex-col justify-between shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="flex flex-col"><div class="h-14 px-space-md flex items-center justify-between bg-surface-container-low"><div class="flex items-center gap-space-xs overflow-hidden"><span class="material-symbols-outlined text-[18px] text-primary">settings</span><span class="font-headline-sm text-headline-sm text-on-surface truncate">Configurações</span></div><a aria-label="Voltar para Masmorra do Dragão" class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="retornar-ao-chat" href="#"><span class="material-symbols-outlined text-[20px]">close</span></a></div><div class="px-space-md py-space-xs"><span class="font-label-code-sm text-label-code-sm text-on-surface-variant uppercase tracking-wider block truncate">Masmorra do Dragão</span></div><nav class="flex-1 px-space-sm pt-space-sm space-y-space-md overflow-y-auto" data-active-classes="bg-surface-container-high text-primary font-headline-sm"><div><div class="px-space-sm py-space-xs font-label-ui text-label-ui text-on-surface-variant uppercase tracking-wider">Servidor</div><div class="flex flex-col gap-space-xs mt-space-xs"><a class="flex items-center gap-space-sm px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="geral-imagem" href="#"><span class="material-symbols-outlined text-[18px]">tune</span>Visão Geral</a><a class="flex items-center gap-space-sm px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="boas-vindas" href="#"><span class="material-symbols-outlined text-[18px]">waving_hand</span>Boas-vindas</a></div></div><div><div class="px-space-sm py-space-xs font-label-ui text-label-ui text-on-surface-variant uppercase tracking-wider">Papéis</div><div class="flex flex-col gap-space-xs mt-space-xs"><a class="flex items-center gap-space-sm px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="cargos-permissoes" href="#"><span class="material-symbols-outlined text-[18px]">badge</span>Cargos</a></div></div><div><div class="px-space-sm py-space-xs font-label-ui text-label-ui text-on-surface-variant uppercase tracking-wider">Pessoas</div><div class="flex flex-col gap-space-xs mt-space-xs"><a class="flex items-center gap-space-sm px-space-sm py-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md" data-path="membros" href="#"><span class="material-symbols-outlined text-[18px]">group</span>Membros</a></div></div><div><div class="px-space-sm py-space-xs font-label-ui text-label-ui text-error uppercase tracking-wider">Zona Crítica</div><div class="flex flex-col gap-space-xs mt-space-xs"><a class="flex items-center gap-space-sm px-space-sm py-space-xs rounded-lg text-error hover:bg-error-container hover:text-on-error-container transition-colors font-body-md text-body-md" data-path="apagar-servidor" href="#"><span class="material-symbols-outlined text-[18px]">delete_forever</span>Apagar Servidor</a></div></div></nav></div><div class="p-space-sm bg-surface-container-lowest m-space-xs rounded-xl flex items-center justify-between"><div class="flex items-center gap-space-sm min-w-0"><div class="relative flex-shrink-0"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-secondary ring-2 ring-surface-container-lowest"></span></div><div class="flex flex-col min-w-0"><span class="font-label-ui text-label-ui text-on-surface truncate">Mestre_Kael</span><span class="font-label-code-sm text-label-code-sm text-on-surface-variant truncate">#0042</span></div></div><div class="flex items-center gap-space-xs"><button aria-label="Mutar Áudio" class="w-7 h-7 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[16px]">mic</span></button><button aria-label="Configurações Pessoais" class="w-7 h-7 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[16px]">tune</span></button></div></div></aside><div class="pl-[312px]"><header class="fixed top-0 left-[312px] right-0 z-30 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-14 w-full px-space-lg flex items-center justify-between"><div class="flex items-center gap-space-md"><img alt="Geometric minimalist emblem logo for 'Mesa', a self-hosted encrypted chat and tabletop voice/video platform. Icon shows an abstracted round game table combined with subtle interlocking protective cryptographic shield or circle rings, warm terracotta coral and warm ivory tones on a sleek dark badge background, modern flat vector design, clean SVG silhouette.. Design context: - Primary color: #e07a5f
+- Font: plusJakartaSans
+- Mode: dark
+- Roundness: rounded-md
+. The logo should be visually consistent with these brand tokens." class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Wu6JPFAgZCyVeUFfgF2Kw0tDR-hsarUUfylK14HYlLwAvvLQCMU2yFj9S9B1Q71Fq6zapDK3Irg2Zx3iMoLWvt5oI4ddFcNATCLKLLVNiGVWqORn8REKU_XDfAo6kzvp9H8bl2WpVm1hnyVH6oiUeJ6ldFclk2C5YFAzLugzQ4b3hq3royoiQ-7WRiEWXxpZNjUqQ8_iyE-6cBPASSapis3gp1Pn8ONomgG9Rap9nRDBJ_5ZY22pvfcGTv"/><div class="flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-surface-container font-label-code-sm text-label-code-sm text-secondary"><span class="material-symbols-outlined text-[14px]">lock</span><span>E2EE :: 0x7E31...B9</span></div></div><nav class="hidden md:flex items-center gap-space-lg" data-active-classes="bg-primary-container text-on-primary-container font-headline-sm"><a class="font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="geral-imagem" href="#">Servidor</a><a class="font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="cargos-permissoes" href="#">Papéis</a><a class="font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="membros" href="#">Pessoas</a><a class="font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="apagar-servidor" href="#">Segurança</a></nav><div class="flex items-center gap-space-sm"><a class="flex items-center gap-space-xs px-space-sm py-space-xs rounded-lg bg-surface-container text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-label-ui text-label-ui" data-path="retornar-ao-chat" href="#"><span class="material-symbols-outlined text-[16px]">close</span><span>ESC</span></a><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="relative w-full pt-14 px-space-lg bg-background min-h-screen"><div class="flex flex-col w-full pb-16">
+<!-- Top Context Header / Breadcrumb Bar -->
+<div class="w-full flex flex-col md:flex-row md:items-center justify-between gap-space-sm pb-space-lg mb-space-lg shadow-sm">
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-xs font-label-code-sm text-label-code-sm uppercase tracking-wider text-on-surface-variant">
+<span>DEFINIÇÕES DA MASMORRA</span>
+<span class="text-outline">/</span>
+<span class="text-primary font-bold">Servidor (Dono)</span>
+</div>
+<div class="flex flex-wrap items-center gap-space-sm">
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Definições do Servidor: Visão Geral &amp; Boas-vindas</h1>
+<div class="flex items-center gap-space-xs px-space-sm py-0.5 rounded-full bg-surface-container-high text-primary font-label-ui text-label-ui">
+<span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">military_tech</span>
+<span>Acesso Exclusivo do Dono</span>
+</div>
+<div class="flex items-center gap-space-xs px-space-sm py-0.5 rounded-full bg-surface-container-highest text-secondary font-label-code-sm text-label-code-sm">
+<span class="material-symbols-outlined text-[14px]">lock</span>
+<span>E2EE :: 0x7E31...B9</span>
+</div>
+</div>
+</div>
+<!-- Quick Channel Jump Back -->
+<div class="flex items-center gap-space-sm self-start md:self-auto">
+<div class="px-space-sm py-space-xs rounded-lg bg-surface-container-low text-on-surface-variant font-label-code-sm text-label-code-sm flex items-center gap-space-xs">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+<span>Host P2P: Online (62ms)</span>
+</div>
+</div>
+</div>
+<!-- Primary Interactive Settings Grid -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-space-lg">
+<!-- Left Column: Identity, Media & Cryptographic Credentials (7 cols) -->
+<div class="xl:col-span-7 flex flex-col gap-space-lg">
+<!-- Card 1: Identidade & Imagem do Servidor -->
+<section class="bg-surface-container-low rounded-xl p-space-lg shadow-md flex flex-col gap-space-lg relative overflow-hidden">
+<div class="absolute -top-12 -right-12 w-48 h-48 bg-primary/5 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex items-start justify-between gap-space-md">
+<div>
+<div class="flex items-center gap-space-xs text-primary font-label-ui text-label-ui uppercase tracking-wider mb-space-xs">
+<span class="material-symbols-outlined text-[18px]">badge</span>
+<span>Visual &amp; Marca Pública</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Identidade &amp; Imagem do Servidor</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-space-xs max-w-xl">
+              Personalize o visual do servidor na barra lateral, convites de sessão e metadados de presença P2P. Formatos suportados: JPEG, PNG ou WebP até 1 MiB.
+            </p>
+</div>
+<span class="hidden sm:inline-flex px-space-sm py-space-xs rounded-lg bg-surface-container font-label-code-sm text-label-code-sm text-on-surface-variant">
+            ID: masmorra-0x84f
+          </span>
+</div>
+<!-- Server Emblem & Actions -->
+<div class="flex flex-col sm:flex-row items-center sm:items-start gap-space-lg bg-surface-container rounded-xl p-space-md">
+<div class="relative group flex-shrink-0">
+<div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-container via-surface-container-high to-surface-container-lowest flex items-center justify-center shadow-xl overflow-hidden p-1">
+<img class="w-full h-full object-cover rounded-xl" data-alt="Intricate gilded dragon crest with glowing crimson eyes wrapped around a polyhedral twenty-sided dice on deep obsidian metal shield background, warm campfire lighting style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB2FabPh5IHjWe1MnRifCPbqB0ll4kTvK0VVI82XfjQnJgL0-luMPcjU0lJqUxTKyLb7KUjtTpmgTyuTnnp3A7GeWQ46P3GAzqd8W9qKXWhImf-u8cWuq9qBmerQvPyZSixuvgDM_H_R8zD8ZBd9PGfT98Xv5yI8d4cuPTSPjaF6vG9AJWNwhQoDPP6PvZiCclchMmjS7rjCbJW9jtTsryw_Xl7YwQ39PgEyMgXe-Q6eedM7yEeB8851Q"/>
+</div>
+<div class="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full bg-secondary flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-on-secondary text-[14px]">verified</span>
+</div>
+</div>
+<div class="flex-1 flex flex-col justify-between w-full">
+<div class="flex flex-wrap items-center gap-space-sm mb-space-sm">
+<span class="font-headline-sm text-headline-sm text-on-surface">brasao_masmorra_v3.webp</span>
+<span class="px-space-xs py-0.5 rounded bg-surface-container-high font-label-code-sm text-label-code-sm text-on-surface-variant">512 × 512 px</span>
+<span class="px-space-xs py-0.5 rounded bg-surface-container-high font-label-code-sm text-label-code-sm text-secondary">420 KB (Otimizado)</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-space-md">
+              Imagem protegida por hash SHA-256 e sincronizada nos certificados de anfitrião seguro.
+            </p>
+<div class="flex flex-wrap items-center gap-space-sm">
+<button class="flex items-center gap-space-xs px-space-md py-space-xs rounded-lg bg-primary-container text-on-primary-container font-label-ui text-label-ui hover:bg-primary transition-all shadow-sm active:scale-95" type="button">
+<span class="material-symbols-outlined text-[18px]">upload</span>
+<span>Alterar Imagem</span>
+</button>
+<button class="flex items-center gap-space-xs px-space-md py-space-xs rounded-lg bg-surface-container-high text-on-surface hover:bg-error-container hover:text-on-error-container transition-all font-label-ui text-label-ui" type="button">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+<span>Remover</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Editable Form Parameters -->
+<div class="grid grid-cols-1 gap-space-md pt-space-xs">
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<label class="font-label-ui text-label-ui text-on-surface uppercase tracking-wider" for="server-name">Nome da Mesa / Servidor</label>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">18 / 32 caracteres</span>
+</div>
+<div class="relative">
+<input class="w-full bg-surface-container px-space-md py-space-sm rounded-lg text-on-surface font-headline-sm text-headline-sm placeholder-on-surface-variant focus:outline-none focus:bg-surface-container-high shadow-sm" id="server-name" maxlength="32" type="text" value="Masmorra do Dragão"/>
+<div class="absolute right-space-sm top-1/2 -translate-y-1/2 flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[20px]">edit</span>
+</div>
+</div>
+</div>
+<!-- Cryptographic Server Signature Metadata Box -->
+<div class="bg-surface-container-lowest rounded-lg p-space-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-lg bg-surface-container flex items-center justify-center text-primary flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">fingerprint</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-ui text-label-ui text-on-surface">Assinatura Pública da Guilda</span>
+<span class="font-label-code-sm text-label-code-sm text-secondary truncate max-w-xs sm:max-w-md">ed25519:9f40ab72c019d08e5e64f16b801a23891d4e78a6</span>
+</div>
+</div>
+<button class="px-space-sm py-space-xs rounded bg-surface-container hover:bg-surface-container-high text-on-surface-variant font-label-code-sm text-label-code-sm flex items-center gap-space-xs transition-colors self-end sm:self-auto" type="button">
+<span class="material-symbols-outlined text-[14px]">content_copy</span>
+<span>Copiar</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Tactical Visual Card: Server Activity & Dice Logs Metric -->
+<section class="bg-surface-container-low rounded-xl p-space-lg shadow-md flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs text-primary font-label-ui text-label-ui uppercase tracking-wider">
+<span class="material-symbols-outlined text-[18px]">query_stats</span>
+<span>Fluxo de Sessões e Integridade</span>
+</div>
+<span class="font-label-code-sm text-label-code-sm text-secondary flex items-center gap-space-xs">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> 100% Cifrado
+          </span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-space-sm">
+<div class="p-space-md rounded-lg bg-surface-container flex flex-col gap-space-xs">
+<span class="font-label-ui text-label-ui text-on-surface-variant">Membros Ativos</span>
+<div class="flex items-baseline gap-space-xs">
+<span class="font-headline-lg text-headline-lg text-on-surface">14</span>
+<span class="font-label-code-sm text-label-code-sm text-secondary">+2 esta semana</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">8 em canais de voz</span>
+</div>
+<div class="p-space-md rounded-lg bg-surface-container flex flex-col gap-space-xs">
+<span class="font-label-ui text-label-ui text-on-surface-variant">Lançamentos de D20</span>
+<div class="flex items-baseline gap-space-xs">
+<span class="font-headline-lg text-headline-lg text-on-surface">842</span>
+<span class="font-label-code-sm text-label-code-sm text-primary">47 Críticos</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Semente de entropia auditada</span>
+</div>
+<div class="p-space-md rounded-lg bg-surface-container flex flex-col gap-space-xs">
+<span class="font-label-ui text-label-ui text-on-surface-variant">Armazenamento Local</span>
+<div class="flex items-baseline gap-space-xs">
+<span class="font-headline-lg text-headline-lg text-on-surface">1.2 GB</span>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">/ 50 GB</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container-lowest rounded-full overflow-hidden mt-space-xs">
+<div class="h-full bg-primary-container rounded-full" style="width: 14%;"></div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column: Welcome Automation & Danger Zone (5 cols) -->
+<div class="xl:col-span-5 flex flex-col gap-space-lg">
+<!-- Card 2: Mensagem de Boas-vindas e Integração -->
+<section class="bg-surface-container-low rounded-xl p-space-lg shadow-md flex flex-col gap-space-md relative">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs text-primary font-label-ui text-label-ui uppercase tracking-wider">
+<span class="material-symbols-outlined text-[18px]">waving_hand</span>
+<span>Automação da Taverna</span>
+</div>
+<span class="px-space-xs py-0.5 rounded bg-surface-container-high text-secondary font-label-code-sm text-label-code-sm">
+            Ativo
+          </span>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Boas-vindas &amp; Integração</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-space-xs">
+            Envie uma saudação temática cifrada assim que um aventureiro verificar seu par de chaves e entrar na mesa.
+          </p>
+</div>
+<!-- Target Channel Selector -->
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-ui text-label-ui text-on-surface uppercase tracking-wider" for="welcome-channel">Canal de Destino das Boas-vindas</label>
+<div class="relative">
+<select class="w-full appearance-none bg-surface-container px-space-md py-space-sm pr-space-xl rounded-lg text-on-surface font-body-md text-body-md focus:outline-none focus:bg-surface-container-high cursor-pointer shadow-sm" id="welcome-channel">
+<option selected="" value="geral"># geral (Cozinha da Taverna &amp; Conversa)</option>
+<option value="regras"># regras-e-fichas (Pergaminhos do Mestre)</option>
+<option value="anuncios"># anuncios-da-campanha (Arauto Real)</option>
+</select>
+<span class="material-symbols-outlined absolute right-space-md top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-[20px]">expand_more</span>
+</div>
+</div>
+<!-- Template Message Area -->
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<label class="font-label-ui text-label-ui text-on-surface uppercase tracking-wider" for="welcome-template">Template da Mensagem Cifrada</label>
+<span class="font-label-code-sm text-label-code-sm text-secondary flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[14px]">vpn_key</span> Cripto-assinado
+            </span>
+</div>
+<textarea class="w-full bg-surface-container p-space-md rounded-lg text-on-surface font-body-md text-body-md leading-relaxed focus:outline-none focus:bg-surface-container-high resize-none shadow-sm" id="welcome-template" rows="5">Saudações nobre viajante {user}! Seja bem-vindo à {server}. Puxe uma cadeira na taverna e consulte as regras em {rules-channel} antes de lançar os dados. Que os vinte naturais estejam ao seu favor! ⚔️🎲</textarea>
+<!-- Tokens helper tag pill rack -->
+<div class="flex flex-wrap items-center gap-space-xs mt-space-xs">
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant mr-1">Tokens:</span>
+<button class="px-space-xs py-0.5 rounded bg-surface-container font-label-code-sm text-label-code-sm text-primary hover:bg-surface-container-high transition-colors" type="button">{user}</button>
+<button class="px-space-xs py-0.5 rounded bg-surface-container font-label-code-sm text-label-code-sm text-primary hover:bg-surface-container-high transition-colors" type="button">{server}</button>
+<button class="px-space-xs py-0.5 rounded bg-surface-container font-label-code-sm text-label-code-sm text-primary hover:bg-surface-container-high transition-colors" type="button">{rules-channel}</button>
+</div>
+</div>
+<!-- Direct Encrypted Whisper Toggle -->
+<div class="flex items-center justify-between p-space-md rounded-lg bg-surface-container gap-space-md">
+<div class="flex flex-col gap-0.5">
+<span class="font-label-ui text-label-ui text-on-surface">Enviar Sussurro Privado (DM)</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Também envia via canal direto E2EE com tutorial inicial do sistema.</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-surface peer-checked:bg-secondary-container after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-secondary-container after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+</label>
+</div>
+<!-- Action Footer with Dynamic Toast Feedback -->
+<div class="flex flex-col sm:flex-row items-center justify-between gap-space-md pt-space-xs">
+<div class="flex items-center gap-space-xs text-secondary font-label-code-sm text-label-code-sm" id="save-toast">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+<span>Boas-vindas guardadas no ledger local</span>
+</div>
+<div class="flex items-center gap-space-sm w-full sm:w-auto justify-end">
+<button class="px-space-md py-space-xs rounded-lg bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high font-label-ui text-label-ui transition-all" type="button">
+              Pré-visualizar
+            </button>
+<button class="px-space-md py-space-xs rounded-lg bg-primary-container text-on-primary-container hover:bg-primary font-label-ui text-label-ui transition-all shadow-sm active:scale-95" type="button">
+              Guardar Boas-vindas
+            </button>
+</div>
+</div>
+</section>
+<!-- Card 3: Zona Crítica (Zona de Perigo) — Apagar Servidor -->
+<section class="bg-surface-container-low rounded-xl p-space-lg shadow-md flex flex-col gap-space-md relative overflow-hidden">
+<!-- Danger ambient glow -->
+<div class="absolute -bottom-10 -right-10 w-40 h-40 bg-error-container/20 rounded-full blur-3xl pointer-events-none"></div>
+<div class="flex items-center gap-space-xs text-error font-label-ui text-label-ui uppercase tracking-wider">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">warning</span>
+<span>Zona Crítica • Irreversível</span>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md text-error">Apagar este Servidor permanentemente</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-space-xs leading-relaxed">
+            Ao apagar <strong class="text-on-surface font-semibold">“Masmorra do Dragão”</strong>, todas as chaves de sessão E2EE, histórico cifrado, mapas de batalha, fichas de personagem e canais serão destruídos imediatamente em todos os nós e clientes conectados.
+          </p>
+</div>
+<!-- Master Seed Key Prerequisite Notice -->
+<div class="flex items-start gap-space-sm p-space-md rounded-lg bg-surface-container-lowest">
+<span class="material-symbols-outlined text-error text-[20px] flex-shrink-0 mt-0.5">key_off</span>
+<div class="flex flex-col gap-space-xs">
+<span class="font-label-ui text-label-ui text-error font-bold">Requer Chave Mestra (Master Seed Key)</span>
+<span class="font-label-code-sm text-label-code-sm text-on-surface-variant">
+              Você precisará decifrar e confirmar as 12 palavras mnemônicas de posse geradas na fundação da mesa.
+            </span>
+</div>
+</div>
+<div class="pt-space-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-xs text-on-surface-variant font-label-code-sm text-label-code-sm">
+<span class="material-symbols-outlined text-[16px] text-error">shield</span>
+<span>Sem carência de recuperação</span>
+</div>
+<button class="flex items-center justify-center gap-space-xs px-space-md py-space-sm rounded-lg bg-error-container text-on-error-container hover:bg-error hover:text-on-error font-label-ui text-label-ui transition-all shadow-md active:scale-95" onclick="document.getElementById('danger-modal').classList.remove('hidden')" type="button">
+<span class="material-symbols-outlined text-[18px]">delete_forever</span>
+<span>Apagar Servidor</span>
+</button>
+</div>
+</section>
+</div>
+</div>
+<!-- Interactive Danger Confirmation Modal Overlay (Hidden by default) -->
+<div class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-space-md" id="danger-modal">
+<div class="w-full max-w-lg bg-surface-container rounded-xl p-space-lg shadow-[0_4px_20px_-2px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.08)] flex flex-col gap-space-md relative">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs text-error font-headline-sm text-headline-sm">
+<span class="material-symbols-outlined text-[24px]">crisis_alert</span>
+<span>Confirmar Destruição da Mesa</span>
+</div>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors" onclick="document.getElementById('danger-modal').classList.add('hidden')" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<p class="font-body-md text-body-md text-on-surface leading-relaxed">
+        Digite o nome exato do servidor <span class="px-space-xs py-0.5 rounded bg-surface-container-high font-label-code-md text-label-code-md text-primary font-bold">Masmorra do Dragão</span> para prosseguir com o expurgo criptográfico:
+      </p>
+<input class="w-full bg-surface-container-low px-space-md py-space-sm rounded-lg text-on-surface font-headline-sm text-headline-sm focus:outline-none focus:bg-surface-container-highest shadow-sm" id="confirm-input" placeholder="Masmorra do Dragão" type="text"/>
+<div class="flex items-center justify-end gap-space-sm pt-space-sm">
+<button class="px-space-md py-space-sm rounded-lg bg-surface-container-high text-on-surface-variant hover:text-on-surface font-label-ui text-label-ui transition-colors" onclick="document.getElementById('danger-modal').classList.add('hidden')" type="button">
+          Cancelar
+        </button>
+<button class="flex items-center gap-space-xs px-space-md py-space-sm rounded-lg bg-error text-on-error font-label-ui text-label-ui hover:bg-error-container hover:text-on-error-container transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-[18px]">local_fire_department</span>
+<span>Destruir Criptograficamente</span>
+</button>
+</div>
+</div>
+</div>
+<script>
+    // Subtle auto-fade for toast notification to keep tactile response active
+    setTimeout(() => {
+      const toast = document.getElementById('save-toast');
+      if (toast) {
+        toast.classList.add('transition-opacity', 'duration-1000', 'opacity-80');
+      }
+    }, 3000);
+  </script>
+</div></main></div></body></html>

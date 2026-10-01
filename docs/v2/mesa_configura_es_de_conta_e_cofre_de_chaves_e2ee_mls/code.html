@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"surface-container":"#1c1f29","background":"#10131c","outline-variant":"#55423e","surface-variant":"#32343e","inverse-surface":"#e0e2ef","primary":"#ffb4a1","primary-container":"#e07a5f","on-secondary-container":"#003118","on-tertiary-container":"#3b008c","on-surface-variant":"#dbc1ba","on-primary-container":"#5b1604","on-error":"#690005","on-background":"#e0e2ef","surface-tint":"#ffb4a1","on-primary":"#5d1805","surface-container-highest":"#32343e","secondary":"#6bdc96","on-secondary":"#00391d","secondary-fixed-dim":"#6bdc96","tertiary-fixed-dim":"#d1bcff","error":"#ffb4ab","tertiary":"#d1bcff","tertiary-container":"#a680fd","surface-container-lowest":"#0b0e17","on-primary-fixed":"#3c0800","error-container":"#93000a","surface-dim":"#10131c","secondary-container":"#2ca464","inverse-on-surface":"#2d303a","surface-container-high":"#272a33","on-tertiary":"#3c0090","tertiary-fixed":"#eaddff","on-tertiary-fixed":"#24005b","primary-fixed":"#ffdbd2","primary-fixed-dim":"#ffb4a1","on-tertiary-fixed-variant":"#5429a6","on-primary-fixed-variant":"#7c2e19","on-secondary-fixed-variant":"#00522c","on-error-container":"#ffdad6","surface":"#10131c","inverse-primary":"#9a442d","secondary-fixed":"#88f9b0","on-surface":"#e0e2ef","surface-container-low":"#181b24","outline":"#a38b86","on-secondary-fixed":"#00210f","surface-bright":"#363943"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"gutter":"1rem","gutter-desktop":"1.5rem","space-xs":"0.25rem","space-sm":"0.5rem","margin-desktop":"2rem","space-xl":"2.5rem","margin":"1rem","space-lg":"1.5rem","space-md":"1rem"},"fontFamily":{"body-md":["Inter"],"headline-md":["Plus Jakarta Sans"],"display-lg-mobile":["Plus Jakarta Sans"],"headline-lg":["Plus Jakarta Sans"],"display-lg":["Plus Jakarta Sans"],"body-lg":["Inter"],"headline-sm":["Plus Jakarta Sans"],"label-code-md":["JetBrains Mono"],"label-ui":["Inter"],"label-code-sm":["JetBrains Mono"],"body-sm":["Inter"]},"fontSize":{"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"headline-md":["20px",{"lineHeight":"28px","fontWeight":"600"}],"display-lg-mobile":["28px",{"lineHeight":"36px","fontWeight":"700"}],"headline-lg":["24px",{"lineHeight":"32px","fontWeight":"600"}],"display-lg":["36px",{"lineHeight":"44px","fontWeight":"700"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"headline-sm":["16px",{"lineHeight":"24px","fontWeight":"600"}],"label-code-md":["13px",{"lineHeight":"18px","fontWeight":"500"}],"label-ui":["12px",{"lineHeight":"16px","fontWeight":"600"}],"label-code-sm":["11px",{"lineHeight":"16px","fontWeight":"500"}],"body-sm":["12px",{"lineHeight":"18px","fontWeight":"400"}]}}}};</script></head><body class="bg-background text-on-surface font-body-md text-body-md min-h-screen selection:bg-primary-container selection:text-on-primary"><aside class="fixed left-0 top-0 h-full w-[72px] bg-surface-container-lowest z-50 flex flex-col items-center py-space-md justify-between shadow-[0_1px_8px_rgba(0,0,0,0.5)]"><div class="flex flex-col items-center gap-space-sm w-full"><a class="group relative flex items-center justify-center w-12 h-12 rounded-xl bg-surface-container hover:bg-surface-container-high transition-all" href="#" title="Mesa Core"><div class="absolute left-0 w-1 h-6 bg-primary-container rounded-r-full"></div><img alt="Geometric minimalist emblem logo for 'Mesa', a self-hosted encrypted chat and tabletop voice/video platform. Icon shows an abstracted round game table combined with subtle interlocking protective cryptographic shield or circle rings, warm terracotta coral and warm ivory tones on a sleek dark badge background, modern flat vector design, clean SVG silhouette.. Design context: - Primary color: #e07a5f
+- Font: plusJakartaSans
+- Mode: dark
+- Roundness: rounded-md
+. The logo should be visually consistent with these brand tokens." class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Wu6JPFAgZCyVeUFfgF2Kw0tDR-hsarUUfylK14HYlLwAvvLQCMU2yFj9S9B1Q71Fq6zapDK3Irg2Zx3iMoLWvt5oI4ddFcNATCLKLLVNiGVWqORn8REKU_XDfAo6kzvp9H8bl2WpVm1hnyVH6oiUeJ6ldFclk2C5YFAzLugzQ4b3hq3royoiQ-7WRiEWXxpZNjUqQ8_iyE-6cBPASSapis3gp1Pn8ONomgG9Rap9nRDBJ_5ZY22pvfcGTv"/><span class="sr-only">Mesa Server Rail</span></a><div class="w-8 h-[1px] bg-surface-variant my-space-xs"></div><div class="w-12 h-12 rounded-xl bg-surface-container-low hover:bg-surface-container flex items-center justify-center cursor-pointer transition-colors text-on-surface-variant hover:text-on-surface"><span class="material-symbols-outlined text-[20px]">shield</span></div><div class="w-12 h-12 rounded-xl bg-surface-container-low hover:bg-surface-container flex items-center justify-center cursor-pointer transition-colors text-on-surface-variant hover:text-on-surface"><span class="material-symbols-outlined text-[20px]">casino</span></div><div class="w-12 h-12 rounded-xl bg-surface-container-low hover:bg-surface-container flex items-center justify-center cursor-pointer transition-colors text-on-surface-variant hover:text-on-surface"><span class="material-symbols-outlined text-[20px]">hub</span></div></div><div class="flex flex-col items-center gap-space-sm"><div class="w-10 h-10 rounded-full bg-secondary-container/20 flex items-center justify-center text-secondary border border-secondary/30" title="E2EE Ativo: Canal Seguro"><span class="material-symbols-outlined text-[18px]">lock</span></div><div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-on-surface cursor-pointer"><span class="material-symbols-outlined text-[20px]">tune</span></div></div></aside><aside class="fixed left-[72px] top-0 h-full w-60 bg-surface-container-low z-40 flex flex-col justify-between py-space-lg px-space-md"><div class="flex flex-col h-full overflow-y-auto"><div class="px-space-sm mb-space-lg flex items-center justify-between"><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight">Configurações</span><span class="font-label-code-sm text-label-code-sm text-primary font-mono">mesa://node-01</span></div><span class="material-symbols-outlined text-on-surface-variant text-[18px]">verified_user</span></div><nav class="flex flex-col gap-space-xs" data-active-classes="bg-surface-container-high text-primary font-headline-sm font-semibold rounded-lg"><div class="px-space-sm pt-space-xs pb-space-xs font-label-ui text-label-ui uppercase tracking-wider text-outline">Identidade &amp; Cripto</div><a class="flex items-center gap-space-sm px-space-sm py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="minha-conta" href="#"><span class="material-symbols-outlined text-[20px]">person</span><span>Minha Conta</span></a><a aria-current="page" class="flex items-center gap-space-sm px-space-sm py-space-sm transition-colors bg-surface-container-high text-primary font-headline-sm font-semibold rounded-lg" data-path="cofre-de-chaves-e2ee" href="#"><span class="material-symbols-outlined text-[20px]">key</span><span>Cofre de Chaves E2EE</span></a><a class="flex items-center gap-space-sm px-space-sm py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="dispositivos-sessoes" href="#"><span class="material-symbols-outlined text-[20px]">devices</span><span>Dispositivos &amp; Sessões</span></a><div class="px-space-sm pt-space-md pb-space-xs font-label-ui text-label-ui uppercase tracking-wider text-outline">Experiência Mesa</div><a class="flex items-center gap-space-sm px-space-sm py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="audio-video" href="#"><span class="material-symbols-outlined text-[20px]">graphic_eq</span><span>Áudio &amp; Vídeo</span></a><a class="flex items-center gap-space-sm px-space-sm py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="aparencia" href="#"><span class="material-symbols-outlined text-[20px]">palette</span><span>Aparência</span></a><a class="flex items-center gap-space-sm px-space-sm py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="notificacoes" href="#"><span class="material-symbols-outlined text-[20px]">notifications</span><span>Notificações</span></a></nav></div><div class="pt-space-md mt-auto"><div class="flex items-center justify-between px-space-sm py-space-sm rounded-lg bg-surface-container"><div class="flex items-center gap-space-sm min-w-0"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="flex flex-col truncate"><span class="font-label-ui text-label-ui text-on-surface truncate">Mestre_Arton</span><span class="font-label-code-sm text-label-code-sm text-secondary truncate">#4829-E2EE</span></div></div><a class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors" href="#" title="Fechar Configurações"><span class="material-symbols-outlined text-[18px]">close</span></a></div></div></aside><div class="pl-[312px]"><header class="fixed top-0 left-[312px] right-0 h-16 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-30 flex items-center justify-between px-gutter-desktop"><div class="flex items-center gap-space-md"><img alt="Geometric minimalist emblem logo for 'Mesa', a self-hosted encrypted chat and tabletop voice/video platform. Icon shows an abstracted round game table combined with subtle interlocking protective cryptographic shield or circle rings, warm terracotta coral and warm ivory tones on a sleek dark badge background, modern flat vector design, clean SVG silhouette.. Design context: - Primary color: #e07a5f
+- Font: plusJakartaSans
+- Mode: dark
+- Roundness: rounded-md
+. The logo should be visually consistent with these brand tokens." class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Wu6JPFAgZCyVeUFfgF2Kw0tDR-hsarUUfylK14HYlLwAvvLQCMU2yFj9S9B1Q71Fq6zapDK3Irg2Zx3iMoLWvt5oI4ddFcNATCLKLLVNiGVWqORn8REKU_XDfAo6kzvp9H8bl2WpVm1hnyVH6oiUeJ6ldFclk2C5YFAzLugzQ4b3hq3royoiQ-7WRiEWXxpZNjUqQ8_iyE-6cBPASSapis3gp1Pn8ONomgG9Rap9nRDBJ_5ZY22pvfcGTv"/><span class="font-headline-sm text-headline-sm text-on-surface">Mesa Cryptographic Tabletop</span><div class="inline-flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-surface-container font-label-code-sm text-label-code-sm text-secondary"><span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span><span>V2.4 E2EE PROTECTED</span></div></div><div class="flex items-center gap-space-md"><a class="inline-flex items-center gap-space-xs px-space-md py-space-xs rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface text-body-sm font-body-sm transition-colors" href="#"><span class="material-symbols-outlined text-[16px]">keyboard_return</span><span>ESC para Voltar à Mesa</span></a><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></header><main class="relative pt-16 w-full px-gutter-desktop bg-surface min-h-screen"><div class="flex flex-col w-full">
+<!-- Subtle ambient aura behind content -->
+<div class="relative w-full max-w-7xl mx-auto py-space-lg flex flex-col gap-space-xl">
+<!-- Header Section with Breadcrumb / Escort & Sovereign Pill -->
+<header class="flex flex-col lg:flex-row lg:items-end justify-between gap-space-md">
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-xs font-label-code-sm text-label-code-sm text-outline">
+<span class="text-primary-container">MESA_NODE_SECURITY</span>
+<span>/</span>
+<span>PROTOCOL_RFC_9420</span>
+<span>/</span>
+<span class="text-on-surface">VAULT_CORE</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg lg:font-display-lg lg:text-display-lg text-on-surface tracking-tight">
+          Cofre de Chaves &amp; Identidade Criptográfica
+        </h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-3xl">
+          Gerencie seu enclave criptográfico local, semente mestre baseada em Messaging Layer Security (MLS RFC 9420), chaves de assinatura assimétrica e rotação de identidade descentralizada soberana.
+        </p>
+</div>
+<!-- Live Cryptographic Telemetry Badges -->
+<div class="flex items-center flex-wrap gap-space-xs shrink-0">
+<div class="flex items-center gap-space-xs px-space-md py-space-xs rounded-full bg-surface-container-high shadow-sm">
+<span class="material-symbols-outlined text-[16px] text-secondary">verified</span>
+<span class="font-label-code-sm text-label-code-sm text-on-surface">Enclave Local: Ativo</span>
+<span class="w-1.5 h-1.5 rounded-full bg-secondary animate-ping"></span>
+</div>
+<div class="flex items-center gap-space-xs px-space-md py-space-xs rounded-full bg-primary-container/15 text-primary">
+<span class="material-symbols-outlined text-[16px]">lock_clock</span>
+<span class="font-label-code-sm text-label-code-sm font-semibold">MLS v2.4 SYNC</span>
+</div>
+</div>
+</header>
+<!-- SECTION 1: Sovereign Identity & Ed25519 Fingerprint Mosaic -->
+<section class="grid grid-cols-1 xl:grid-cols-12 gap-space-md">
+<!-- User Profile & Master Pubkey Bento Box -->
+<div class="xl:col-span-8 bg-surface-container-low rounded-xl p-space-lg flex flex-col justify-between gap-space-lg shadow-md relative overflow-hidden">
+<div class="absolute -right-16 -top-16 w-56 h-56 bg-primary-container/10 rounded-full blur-3xl pointer-events-none"></div>
+<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="relative shrink-0">
+<div class="w-20 h-20 rounded-xl bg-surface-container-high flex items-center justify-center text-primary-container font-headline-lg text-headline-lg shadow-inner">
+                MA
+              </div>
+<span class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-secondary flex items-center justify-center text-on-secondary shadow-md" title="Identidade Criptográfica Verificada">
+<span class="material-symbols-outlined text-[14px]">shield</span>
+</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="font-headline-md text-headline-md text-on-surface">Mestre Aventuras</span>
+<button class="w-7 h-7 rounded-lg hover:bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors" title="Editar Nome de Exibição" type="button">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+</button>
+</div>
+<span class="font-label-code-md text-label-code-md text-primary">@mestre_aventuras</span>
+<div class="mt-space-xs inline-flex items-center gap-space-xs font-body-sm text-body-sm text-secondary">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span>Custódia Soberana Autônoma</span>
+</div>
+</div>
+</div>
+<!-- Network Sovereign Trust Meter -->
+<div class="bg-surface-container px-space-md py-space-sm rounded-lg flex flex-col gap-space-xs sm:text-right">
+<span class="font-label-ui text-label-ui uppercase tracking-wider text-outline">Nível de Confiança</span>
+<div class="flex items-center sm:justify-end gap-space-xs text-secondary font-headline-sm text-headline-sm">
+<span class="material-symbols-outlined text-[18px]">verified_user</span>
+<span>100% Blindado</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Zero chaves retidas pelo servidor</span>
+</div>
+</div>
+<!-- Fingerprint Strip -->
+<div class="flex flex-col gap-space-xs bg-surface-container p-space-md rounded-lg">
+<div class="flex items-center justify-between flex-wrap gap-space-xs">
+<span class="font-label-ui text-label-ui uppercase tracking-wider text-on-surface-variant flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[14px] text-primary">fingerprint</span>
+              Chave Pública de Identidade (Ed25519)
+            </span>
+<span class="font-label-code-sm text-label-code-sm text-outline">Algoritmo: Curve25519-IETF</span>
+</div>
+<div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-space-sm mt-space-xs">
+<code class="font-label-code-md text-label-code-md text-primary bg-surface-container-lowest px-space-md py-space-sm rounded-lg select-all overflow-x-auto truncate">
+              ed25519:7f8c:49a1:e07a:5f92:c0ff:33b8:d419:a8e2
+            </code>
+<div class="flex items-center gap-space-xs shrink-0">
+<button class="flex items-center gap-space-xs px-space-md py-space-sm rounded-lg bg-surface-container-high hover:bg-surface-variant text-on-surface font-body-sm text-body-sm transition-colors shadow-sm" id="copyKeyBtn" type="button">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+<span id="copyKeyText">Copiar</span>
+</button>
+<button class="flex items-center gap-space-xs px-space-md py-space-sm rounded-lg bg-surface-container-high hover:bg-surface-variant text-on-surface font-body-sm text-body-sm transition-colors shadow-sm" id="qrModalOpen" type="button">
+<span class="material-symbols-outlined text-[16px]">qr_code_2</span>
+<span>QR Enclave</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Enclave Integrity Status Card -->
+<div class="xl:col-span-4 bg-surface-container-low rounded-xl p-space-lg flex flex-col justify-between gap-space-md shadow-md">
+<div class="flex items-center justify-between">
+<span class="font-headline-sm text-headline-sm text-on-surface">Sanidade do Enclave</span>
+<span class="material-symbols-outlined text-secondary text-[24px]">task_alt</span>
+</div>
+<!-- Inline Visual Entropy Chart (SVG) -->
+<div class="flex flex-col gap-space-xs">
+<div class="flex justify-between items-end">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Entropia do Sistema</span>
+<span class="font-label-code-sm text-label-code-sm text-secondary">4096 bits CSPRNG</span>
+</div>
+<div class="w-full bg-surface-container-lowest h-2 rounded-full overflow-hidden">
+<div class="bg-gradient-to-r from-secondary to-primary-container h-full w-[94%] rounded-full"></div>
+</div>
+<!-- Sparkline representation of Key Rotations -->
+<div class="mt-space-sm">
+<svg class="w-full h-10 text-primary-container" fill="none" preserveaspectratio="none" viewbox="0 0 200 40">
+<path d="M0 28 L30 25 L60 30 L90 12 L120 18 L150 8 L180 15 L200 6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+<path d="M0 28 L30 25 L60 30 L90 12 L120 18 L150 8 L180 15 L200 6 L200 40 L0 40 Z" fill="currentColor" fill-opacity="0.08"></path>
+</svg>
+</div>
+</div>
+<div class="bg-surface-container p-space-sm rounded-lg flex items-center justify-between text-body-sm font-body-sm">
+<span class="text-on-surface-variant">Hash de Hardware</span>
+<span class="font-label-code-sm text-label-code-sm text-on-surface font-mono">0x9F41...88A0</span>
+</div>
+</div>
+</section>
+<!-- SECTION 2: Master Key & BIP-39 Recovery Phrase -->
+<section class="bg-surface-container-low rounded-xl p-space-lg shadow-md flex flex-col gap-space-md relative overflow-hidden">
+<!-- Critical Warning Header Banner -->
+<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-space-md p-space-md rounded-lg bg-surface-container-lowest">
+<div class="flex items-start sm:items-center gap-space-sm">
+<div class="w-10 h-10 rounded-lg bg-error-container/30 text-error flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[22px]">warning</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">Aviso de Soberania Crítica</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">
+              A sua semente é o único método matemático para descriptografar os logs de campanha da Mesa. O servidor não retém cópias.
+            </span>
+</div>
+</div>
+<div class="shrink-0 flex items-center gap-space-xs font-label-code-sm text-label-code-sm text-outline">
+<span class="material-symbols-outlined text-[16px] text-secondary">history</span>
+<span>Último backup há 12 dias</span>
+</div>
+</div>
+<!-- Seed Visual Display Container -->
+<div class="flex flex-col gap-space-md bg-surface-container p-space-lg rounded-xl">
+<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-space-sm">
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Semente Mestre de Recuperação (BIP-39 / MLS Root)</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+              Conjunto mnemônico criptografado em repouso por chave AES-256-GCM do seu sistema operacional.
+            </p>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="flex items-center gap-space-xs px-space-md py-space-sm rounded-lg bg-surface-container-high hover:bg-surface-variant text-on-surface font-body-sm text-body-sm transition-all shadow-sm" id="toggleSeedBtn" type="button">
+<span class="material-symbols-outlined text-[16px]" id="toggleSeedIcon">visibility</span>
+<span id="toggleSeedLabel">Revelar Semente</span>
+</button>
+<button class="flex items-center gap-space-xs px-space-md py-space-sm rounded-lg bg-primary-container text-on-primary-container font-headline-sm text-headline-sm transition-transform active:scale-95 shadow-md" type="button">
+<span class="material-symbols-outlined text-[18px]">download_for_offline</span>
+<span>Exportar .ENC</span>
+</button>
+</div>
+</div>
+<!-- Masked / Unmasked Word Grid -->
+<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-space-sm font-label-code-md text-label-code-md select-none transition-all" id="seedContainer">
+<!-- 12 Word Pills Initial Obfuscated State -->
+<div class="p-space-sm rounded-lg bg-surface-container-lowest flex items-center justify-between text-on-surface-variant">
+<span class="text-outline text-label-code-sm">01</span>
+<span class="seed-word tracking-widest text-primary">••••••</span>
+</div>
+<div class="p-space-sm rounded-lg bg-surface-container-lowest flex items-center justify-between text-on-surface-variant">
+<span class="text-outline text-label-code-sm">02</span>
+<span class="seed-word tracking-widest text-primary">••••••</span>
+</div>
+<div class="p-space-sm rounded-lg bg-surface-container-lowest flex items-center justify-between text-on-surface-variant">
+<span class="text-outline text-label-code-sm">03</span>
+<span class="seed-word tracking-widest text-primary">••••••</span>
+</div>
+<div class="p-space-sm rounded-lg bg-surface-container-lowest flex items-center justify-between text-on-surface-variant">
+<span class="text-outline text-label-code-sm">04</span>
+<span class="seed-word tracking-widest text-primary">••••••</span>
+</div>
+<div class="p-space-sm rounded-lg bg-surface-container-lowest flex items-center justify-between text-on-surface-variant">
+<span class="text-outline text-label-code-sm">05</span>
+<span class="seed-word tracking-widest text-primary">••••••</span>
+</div>
+<div class="p-space-sm rounded-lg bg-surface-container-lowest flex items-center justify-between text-on-surface-variant">
+<span class="text-outline text-label-code-sm">06</span>
+<span class="seed-word tracking-widest text-primary">••••••</span>
+</div>
+<div class="p-space-sm rounded-lg bg-surface-container-lowest flex items-center justify-between text-on-surface-variant">
+<span class="text-outline text-label-code-sm">07</span>
+<span class="seed-word tracking-widest text-primary">••••••</span>
+</div>
+<div class="p-space-sm rounded-lg bg-surface-container-lowest flex items-center justify-between text-on-surface-variant">
+<span class="text-outline text-label-code-sm">08</span>
+<span class="seed-word tracking-widest text-primary">••••••</span>
+</div>
+<div class="p-space-sm rounded-lg bg-surface-container-lowest flex items-center justify-between text-on-surface-variant">
+<span class="text-outline text-label-code-sm">09</span>
+<span class="seed-word tracking-widest text-primary">••••••</span>
+</div>
+<div class="p-space-sm rounded-lg bg-surface-container-lowest flex items-center justify-between text-on-surface-variant">
+<span class="text-outline text-label-code-sm">10</span>
+<span class="seed-word tracking-widest text-primary">••••••</span>
+</div>
+<div class="p-space-sm rounded-lg bg-surface-container-lowest flex items-center justify-between text-on-surface-variant">
+<span class="text-outline text-label-code-sm">11</span>
+<span class="seed-word tracking-widest text-primary">••••••</span>
+</div>
+<div class="p-space-sm rounded-lg bg-surface-container-lowest flex items-center justify-between text-on-surface-variant">
+<span class="text-outline text-label-code-sm">12</span>
+<span class="seed-word tracking-widest text-primary">••••••</span>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 3: Active MLS Ratchets & Ephemeral Session Keys -->
+<section class="flex flex-col gap-space-md">
+<div class="flex flex-col sm:flex-row sm:items-end justify-between gap-space-xs">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Árvore de Chaves MLS &amp; Canais Cifrados</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">
+            Sessões com catracas criptográficas ativas baseadas em Double Ratchet e MLS Ratchet Tree.
+          </p>
+</div>
+<div class="flex items-center gap-space-xs font-label-code-sm text-label-code-sm text-secondary">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span>3 sessões ratcheted</span>
+</div>
+</div>
+<!-- Ratchet Sessions Table / List -->
+<div class="bg-surface-container-low rounded-xl overflow-hidden shadow-md flex flex-col">
+<!-- Row 1: Active Tabletop Server -->
+<div class="p-space-md flex flex-col lg:flex-row lg:items-center justify-between gap-space-md hover:bg-surface-container/60 transition-colors">
+<div class="flex items-center gap-space-md min-w-0">
+<div class="w-12 h-12 rounded-xl bg-primary-container/20 text-primary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[24px]">castle</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-space-xs flex-wrap">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Masmorra do Dragão (Servidor)</span>
+<span class="px-space-xs py-0.5 rounded text-[10px] font-label-code-sm bg-primary-container/20 text-primary uppercase font-bold tracking-wider">Ratchet Tree</span>
+</div>
+<div class="flex items-center gap-space-sm mt-0.5 text-body-sm font-body-sm text-on-surface-variant">
+<span>Epoch: <strong class="text-on-surface font-label-code-sm">#014</strong></span>
+<span>•</span>
+<span class="font-label-code-sm text-outline">FPR: 8f2a...c091</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between lg:justify-end gap-space-md shrink-0">
+<div class="flex items-center gap-space-xs text-secondary font-label-code-sm text-label-code-sm">
+<span class="material-symbols-outlined text-[16px]">sync</span>
+<span>Ativo &amp; Sincronizado</span>
+</div>
+<button class="px-space-md py-space-xs rounded-lg bg-surface-container hover:bg-surface-variant text-on-surface font-body-sm text-body-sm transition-colors flex items-center gap-space-xs" type="button">
+<span class="material-symbols-outlined text-[16px] text-primary">autorenew</span>
+<span>Rotacionar Chave</span>
+</button>
+</div>
+</div>
+<!-- Subtle separator through bg -->
+<div class="h-[1px] bg-surface-variant/40 w-full"></div>
+<!-- Row 2: Live Voice Stage -->
+<div class="p-space-md flex flex-col lg:flex-row lg:items-center justify-between gap-space-md hover:bg-surface-container/60 transition-colors">
+<div class="flex items-center gap-space-md min-w-0">
+<div class="w-12 h-12 rounded-xl bg-secondary-container/20 text-secondary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[24px]">graphic_eq</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-space-xs flex-wrap">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">#palco-das-batalhas (Canal de Voz)</span>
+<span class="px-space-xs py-0.5 rounded text-[10px] font-label-code-sm bg-secondary-container/20 text-secondary uppercase font-bold tracking-wider">SRTP Epoch</span>
+</div>
+<div class="flex items-center gap-space-sm mt-0.5 text-body-sm font-body-sm text-on-surface-variant">
+<span>Epoch: <strong class="text-on-surface font-label-code-sm">#008</strong></span>
+<span>•</span>
+<span class="font-label-code-sm text-outline">FPR: 3b19...fa72</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between lg:justify-end gap-space-md shrink-0">
+<div class="flex items-center gap-space-xs text-primary font-label-code-sm text-label-code-sm">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+<span>Em Transmissão E2EE</span>
+</div>
+<button class="px-space-md py-space-xs rounded-lg bg-surface-container hover:bg-surface-variant text-on-surface font-body-sm text-body-sm transition-colors flex items-center gap-space-xs" type="button">
+<span class="material-symbols-outlined text-[16px]">policy</span>
+<span>Inspecionar ACL</span>
+</button>
+</div>
+</div>
+<div class="h-[1px] bg-surface-variant/40 w-full"></div>
+<!-- Row 3: Solo Test Table (Idle) -->
+<div class="p-space-md flex flex-col lg:flex-row lg:items-center justify-between gap-space-md hover:bg-surface-container/60 transition-colors">
+<div class="flex items-center gap-space-md min-w-0">
+<div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-outline shrink-0">
+<span class="material-symbols-outlined text-[24px]">casino</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-space-xs flex-wrap">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Mesa de Testes Solo</span>
+<span class="px-space-xs py-0.5 rounded text-[10px] font-label-code-sm bg-surface-container text-on-surface-variant uppercase font-bold tracking-wider">Chave P2P</span>
+</div>
+<div class="flex items-center gap-space-sm mt-0.5 text-body-sm font-body-sm text-on-surface-variant">
+<span>Epoch: <strong class="text-on-surface font-label-code-sm">#002</strong></span>
+<span>•</span>
+<span class="font-label-code-sm text-outline">FPR: e491...d210</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between lg:justify-end gap-space-md shrink-0">
+<div class="flex items-center gap-space-xs text-outline font-label-code-sm text-label-code-sm">
+<span class="w-2 h-2 rounded-full bg-outline"></span>
+<span>Inativo</span>
+</div>
+<button class="px-space-md py-space-xs rounded-lg bg-surface-container hover:bg-error-container/40 text-on-surface hover:text-error font-body-sm text-body-sm transition-colors flex items-center gap-space-xs" type="button">
+<span class="material-symbols-outlined text-[16px]">link_off</span>
+<span>Revogar</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 4: Critical Safeguard Actions & Emergency Key Rotation -->
+<section class="bg-surface-container-low rounded-xl p-space-lg shadow-md flex flex-col gap-space-md">
+<div class="flex flex-col">
+<h2 class="font-headline-md text-headline-md text-on-surface">Área de Ações Críticas do Enclave</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">
+          Operacione a rotação global de catracas ou execute destruição criptográfica local irreversível.
+        </p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-md">
+<!-- Action 1: Rotate All Keys -->
+<button class="flex flex-col items-start gap-space-xs p-space-md rounded-xl bg-surface-container hover:bg-surface-container-high transition-colors text-left group" type="button">
+<div class="w-10 h-10 rounded-lg bg-primary-container/20 text-primary-container flex items-center justify-center mb-space-xs group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[20px]">cached</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-surface">Rotacionar Catracas</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">
+            Força novo handshake de Forward Secrecy em todas as salas abertas.
+          </span>
+</button>
+<!-- Action 2: GPG Armored Export -->
+<button class="flex flex-col items-start gap-space-xs p-space-md rounded-xl bg-surface-container hover:bg-surface-container-high transition-colors text-left group" type="button">
+<div class="w-10 h-10 rounded-lg bg-secondary-container/20 text-secondary flex items-center justify-center mb-space-xs group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[20px]">key</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-surface">Exportar Armored ASCII</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">
+            Exporta bloco PEM com assinatura de identidade para auditorias externas.
+          </span>
+</button>
+<!-- Action 3: Purge Identity (Destructive) -->
+<button class="flex flex-col items-start gap-space-xs p-space-md rounded-xl bg-error-container/20 hover:bg-error-container/30 transition-colors text-left group" type="button">
+<div class="w-10 h-10 rounded-lg bg-error-container text-on-error flex items-center justify-center mb-space-xs group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[20px]">delete_forever</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-error">Purgar Cofre Local</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">
+            Sobrescreve a memória com zeros. Sem a semente mestre, os dados serão irrecuperáveis.
+          </span>
+</button>
+</div>
+</section>
+<!-- Modal Mockup: QR Code Sovereign Enclave (Toggled by JS) -->
+<div class="fixed inset-0 z-50 bg-background/80 backdrop-blur-md hidden items-center justify-center p-gutter" id="qrModal">
+<div class="bg-surface-container-high rounded-xl max-w-md w-full p-space-xl flex flex-col items-center gap-space-md shadow-2xl relative">
+<button class="absolute top-4 right-4 w-8 h-8 rounded-lg bg-surface-container hover:bg-surface flex items-center justify-center text-on-surface-variant hover:text-on-surface" id="qrModalClose" type="button">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+<div class="flex items-center gap-space-xs text-primary font-headline-sm text-headline-sm">
+<span class="material-symbols-outlined">qr_code_scanner</span>
+<span>Verificação Peer-to-Peer</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant text-center">
+          Apresente este código para membros da sua Mesa conferirem visualmente a sua chave criptográfica presencialmente.
+        </p>
+<!-- Inline Mock QR Matrix Display -->
+<div class="bg-white p-space-md rounded-lg shadow-inner flex items-center justify-center">
+<svg class="w-48 h-48" fill="none" viewbox="0 0 100 100">
+<!-- Simulated QR geometry using path -->
+<rect fill="#ffffff" height="100" width="100"></rect>
+<!-- Corner marker 1 -->
+<rect fill="#10131c" height="24" width="24" x="10" y="10"></rect>
+<rect fill="#ffffff" height="16" width="16" x="14" y="14"></rect>
+<rect fill="#10131c" height="8" width="8" x="18" y="18"></rect>
+<!-- Corner marker 2 -->
+<rect fill="#10131c" height="24" width="24" x="66" y="10"></rect>
+<rect fill="#ffffff" height="16" width="16" x="70" y="14"></rect>
+<rect fill="#10131c" height="8" width="8" x="74" y="18"></rect>
+<!-- Corner marker 3 -->
+<rect fill="#10131c" height="24" width="24" x="10" y="66"></rect>
+<rect fill="#ffffff" height="16" width="16" x="14" y="70"></rect>
+<rect fill="#10131c" height="8" width="8" x="18" y="74"></rect>
+<!-- Data clusters -->
+<rect fill="#10131c" height="6" width="6" x="38" y="14"></rect>
+<rect fill="#10131c" height="4" width="8" x="48" y="14"></rect>
+<rect fill="#10131c" height="6" width="14" x="38" y="24"></rect>
+<rect fill="#10131c" height="10" width="6" x="56" y="24"></rect>
+<rect fill="#10131c" height="6" width="8" x="14" y="38"></rect>
+<rect fill="#10131c" height="8" width="6" x="26" y="42"></rect>
+<rect fill="#e07a5f" height="8" width="8" x="38" y="38"></rect>
+<rect fill="#10131c" height="6" width="12" x="50" y="44"></rect>
+<rect fill="#10131c" height="8" width="14" x="70" y="40"></rect>
+<rect fill="#10131c" height="6" width="14" x="40" y="58"></rect>
+<rect fill="#10131c" height="8" width="8" x="58" y="58"></rect>
+<rect fill="#10131c" height="12" width="12" x="70" y="66"></rect>
+<rect fill="#10131c" height="6" width="18" x="40" y="74"></rect>
+<rect fill="#10131c" height="6" width="8" x="44" y="84"></rect>
+</svg>
+</div>
+<div class="text-center font-label-code-sm text-label-code-sm text-outline">
+          ed25519:7f8c:49a1:e07a:5f92:c0ff:33b8:d419:a8e2
+        </div>
+<button class="w-full py-space-sm rounded-lg bg-surface-container hover:bg-surface text-on-surface font-headline-sm text-headline-sm transition-colors" id="qrModalDone" type="button">
+          Fechar
+        </button>
+</div>
+</div>
+</div>
+</div>
+<script>
+  (function initVaultSettings() {
+    // 1. Copy Public Key to Clipboard Micro-interaction
+    const copyKeyBtn = document.getElementById('copyKeyBtn');
+    const copyKeyText = document.getElementById('copyKeyText');
+    const pubKey = 'ed25519:7f8c:49a1:e07a:5f92:c0ff:33b8:d419:a8e2';
+
+    if (copyKeyBtn && copyKeyText) {
+      copyKeyBtn.addEventListener('click', () => {
+        navigator.clipboard?.writeText(pubKey).then(() => {
+          copyKeyText.textContent = 'Copiado!';
+          setTimeout(() => {
+            copyKeyText.textContent = 'Copiar';
+          }, 2000);
+        }).catch(() => {
+          copyKeyText.textContent = 'Copiado!';
+          setTimeout(() => { copyKeyText.textContent = 'Copiar'; }, 2000);
+        });
+      });
+    }
+
+    // 2. BIP-39 Seed Reveal Simulation
+    const toggleSeedBtn = document.getElementById('toggleSeedBtn');
+    const toggleSeedLabel = document.getElementById('toggleSeedLabel');
+    const toggleSeedIcon = document.getElementById('toggleSeedIcon');
+    const seedWordElements = document.querySelectorAll('.seed-word');
+    
+    const realMnemonic = [
+      'ember', 'shield', 'tavern', 'dragon', 
+      'cipher', 'whisper', 'granite', 'relic', 
+      'goblin', 'portal', 'sanctum', 'matrix'
+    ];
+    let isRevealed = false;
+
+    if (toggleSeedBtn && toggleSeedLabel && toggleSeedIcon) {
+      toggleSeedBtn.addEventListener('click', () => {
+        isRevealed = !isRevealed;
+        if (isRevealed) {
+          seedWordElements.forEach((el, index) => {
+            el.textContent = realMnemonic[index];
+            el.classList.remove('tracking-widest');
+            el.classList.add('text-secondary');
+          });
+          toggleSeedLabel.textContent = 'Ocultar Semente';
+          toggleSeedIcon.textContent = 'visibility_off';
+        } else {
+          seedWordElements.forEach((el) => {
+            el.textContent = '••••••';
+            el.classList.add('tracking-widest');
+            el.classList.remove('text-secondary');
+          });
+          toggleSeedLabel.textContent = 'Revelar Semente';
+          toggleSeedIcon.textContent = 'visibility';
+        }
+      });
+    }
+
+    // 3. QR Code Modal Interactivity
+    const qrModal = document.getElementById('qrModal');
+    const qrModalOpen = document.getElementById('qrModalOpen');
+    const qrModalClose = document.getElementById('qrModalClose');
+    const qrModalDone = document.getElementById('qrModalDone');
+
+    function openModal() {
+      if (qrModal) {
+        qrModal.classList.remove('hidden');
+        qrModal.classList.add('flex');
+      }
+    }
+
+    function closeModal() {
+      if (qrModal) {
+        qrModal.classList.add('hidden');
+        qrModal.classList.remove('flex');
+      }
+    }
+
+    if (qrModalOpen) qrModalOpen.addEventListener('click', openModal);
+    if (qrModalClose) qrModalClose.addEventListener('click', closeModal);
+    if (qrModalDone) qrModalDone.addEventListener('click', closeModal);
+    
+    // Close modal on escape key press
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && qrModal && !qrModal.classList.contains('hidden')) {
+        closeModal();
+      }
+    });
+  })();
+</script></main></div></body></html>
