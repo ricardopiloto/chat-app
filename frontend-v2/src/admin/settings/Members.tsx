@@ -1,13 +1,13 @@
 import { For, Show, createMemo, createSignal } from "solid-js";
 import { useQueryClient } from "@tanstack/solid-query";
+import { PageHead } from "./PageHead";
+import { useShell } from "../../shell/state";
+import { createToast } from "../../lib/toast";
+import { errorText } from "../../lib/errors";
+import { publicDisplayLabel } from "../../lib/displayName";
+import { t } from "../../i18n";
 import { Avatar, Button, Icon, Toast } from "../../components/ui";
 import { avatarUrl, queryKeys, servers, type Member, type Server } from "../../api";
-import { t } from "../../i18n";
-import { publicDisplayLabel } from "../../lib/displayName";
-import { errorText } from "../../lib/errors";
-import { createToast } from "../../lib/toast";
-import { useShell } from "../../shell/state";
-import { PageHead } from "./PageHead";
 
 const PAGE_SIZE = 8;
 
@@ -101,7 +101,12 @@ export function Members(props: { server: Server }) {
 
   const members = () => shell.members.data ?? [];
   const online = () => new Set(shell.presence.data?.online_account_ids ?? []);
-  const roleOf = (accountId: string) => (shell.roles.data ?? []).find((r) => !r.is_system && r.member_ids.includes(accountId))?.id ?? "";
+  const assignableRoles = () => (shell.roles.data ?? []).filter((r) => !r.is_system);
+  const roleOf = (accountId: string) => assignableRoles().find((r) => r.member_ids.includes(accountId))?.id ?? "";
+  const applyRoleFilter = (value: string) => {
+    setRoleFilter(value);
+    setPage(0);
+  };
 
   const filtered = createMemo(() => {
     const needle = query().trim().toLowerCase().replace(/^@/, "");
@@ -138,10 +143,10 @@ export function Members(props: { server: Server }) {
           <Icon name="search" />
           <input type="search" value={query()} placeholder={t("mgmt.members.search")} onInput={(event) => { setQuery(event.currentTarget.value); setPage(0); }} />
         </label>
-        <select aria-label={t("mgmt.members.allRoles")} value={roleFilter()} onChange={(event) => { setRoleFilter(event.currentTarget.value); setPage(0); }}>
-          <option value="">{t("mgmt.members.allRoles")}</option>
-          <option value="none">{t("mgmt.members.noRole")}</option>
-          <For each={(shell.roles.data ?? []).filter((r) => !r.is_system)}>{(role) => <option value={role.id}>{role.name}</option>}</For>
+        <select aria-label={t("mgmt.members.allRoles")} onChange={(event) => applyRoleFilter(event.currentTarget.value)}>
+          <option value="" selected={roleFilter() === ""}>{t("mgmt.members.allRoles")}</option>
+          <option value="none" selected={roleFilter() === "none"}>{t("mgmt.members.noRole")}</option>
+          <For each={assignableRoles()}>{(role) => <option value={role.id} selected={roleFilter() === role.id}>{role.name}</option>}</For>
         </select>
         <Show when={shell.can("can_create_invites")}>
           <Button variant="primary" onClick={() => document.dispatchEvent(new Event("mesa:invite"))}><Icon name="person_add" />{t("mgmt.members.invite")}</Button>

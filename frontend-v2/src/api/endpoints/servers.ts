@@ -38,5 +38,7 @@ export const invites = {
   create: (serverId: string, options: { include_history?: boolean; welcome_channel_id?: string; expires_in_seconds?: number } = {}) =>
     http.post<Invite>(`/api/servers/${serverId}/invites`, options),
   preview: (code: string) => http.get<InvitePreview>(`/api/invites/${encodeURIComponent(code)}`),
+  handleAvailable: (code: string, handle: string) =>
+    http.get<{ available: boolean }>(`/api/invites/${encodeURIComponent(code)}/handle-available?handle=${encodeURIComponent(handle)}`),
   accept: (code: string, body: AcceptInviteBody = {}) => http.post<Membership>(`/api/invites/${encodeURIComponent(code)}/accept`, body),
 };

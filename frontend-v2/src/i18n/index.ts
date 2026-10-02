@@ -3,6 +3,8 @@ import { en } from "./catalogs/en";
 import { ptBR } from "./catalogs/pt-BR";
 import { en as legacyEn } from "./catalogs/legacy/en";
 import { ptBR as legacyPtBR } from "./catalogs/legacy/pt-BR";
+import { chatEn } from "./catalogs/chat.en";
+import { chatPtBR } from "./catalogs/chat.pt-BR";
 import { mgmtEn } from "./catalogs/mgmt.en";
 import { mgmtPtBR } from "./catalogs/mgmt.pt-BR";
 import { settingsEn } from "./catalogs/settings.en";
@@ -17,8 +19,8 @@ export const SUPPORTED_LOCALES = LOCALES.map((l) => l.code);
 // The legacy catalogs hold text for screens that have not been rebuilt yet; entries in the
 // current catalogs win. Each phase moves the keys it rebuilds out of legacy.
 const messages: Record<AppLocale, FlatMessages> = {
-  "pt-BR": merge(legacyPtBR, ptBR, mgmtPtBR, settingsPtBR),
-  en: merge(legacyEn, en, mgmtEn, settingsEn),
+  "pt-BR": merge(legacyPtBR, ptBR, mgmtPtBR, settingsPtBR, chatPtBR),
+  en: merge(legacyEn, en, mgmtEn, settingsEn, chatEn),
 };
 
 const [active, setActive] = createSignal<AppLocale>(savedLocale() ?? negotiateLocale());

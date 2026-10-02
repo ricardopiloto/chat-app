@@ -1,13 +1,13 @@
-import { Show, createEffect, createSignal } from "solid-js";
-import { Button, Dialog, Icon } from "../components/ui";
-import { channelKeyDisplay, generateChannelKey, rememberChannelKey, sealChannelKeyForSelf } from "../crypto/channelKey";
-import type { Identity } from "../crypto/identity";
+import { Show, batch, createEffect, createSignal } from "solid-js";
+import { KeyCustody } from "./KeyCustody";
+import { errorText } from "../lib/errors";
+import { t } from "../i18n";
 import { publishOwnEnvelope } from "../crypto/keyHandoff";
+import type { Identity } from "../crypto/identity";
+import { channelKeyDisplay, generateChannelKey, rememberChannelKey, sealChannelKeyForSelf } from "../crypto/channelKey";
+import { Button, Dialog, Icon } from "../components/ui";
 import { channels, servers } from "../api";
 import { MAX_IMAGE_BYTES, PROFILE_IMAGE_MEDIA_TYPES } from "../api/limits";
-import { t } from "../i18n";
-import { errorText } from "../lib/errors";
-import { KeyCustody } from "./KeyCustody";
 
 const NAME_MAX = 32;
 
@@ -20,23 +20,25 @@ export function CreateServerDialog(props: {
   onClose: () => void;
   onCreated: (serverId: string) => void;
 }) {
-  const [name, setName] = createSignal("");
-  const [key, setKey] = createSignal(generateChannelKey());
-  const [acknowledged, setAcknowledged] = createSignal(false);
-  const [image, setImage] = createSignal<File | null>(null);
-  const [preview, setPreview] = createSignal<string>();
   const [busy, setBusy] = createSignal(false);
   const [error, setError] = createSignal("");
+  const [image, setImage] = createSignal<File | null>(null);
+  const [preview, setPreview] = createSignal<string>();
+  const [key, setKey] = createSignal(generateChannelKey());
+  const [name, setName] = createSignal("");
+  const [acknowledged, setAcknowledged] = createSignal(false);
 
-  // Every opening starts clean, with a freshly generated key.
+  // Opening the dialog always yields a blank form and a newly generated key.
   createEffect(() => {
     if (!props.open) return;
-    setName("");
-    setKey(generateChannelKey());
-    setAcknowledged(false);
-    setImage(null);
-    setError("");
-    setBusy(false);
+    batch(() => {
+      setKey(generateChannelKey());
+      setImage(null);
+      setName("");
+      setAcknowledged(false);
+      setBusy(false);
+      setError("");
+    });
   });
   createEffect(() => {
     const file = image();
@@ -58,28 +60,35 @@ export function CreateServerDialog(props: {
     setImage(file);
   }
 
+  /** The new server starts with a text and a voice channel; the voice one was sealed with our key. */
+  async function rememberVoiceKeys(serverId: string) {
+    const created = await channels.listForServer(serverId);
+    created.filter((c) => c.type === "voice_video").forEach((c) => rememberChannelKey(c.id, key()));
+  }
+
   async function submit(event: Event) {
     event.preventDefault();
-    if (!valid() || !acknowledged() || busy()) return;
-    setBusy(true);
+    if (busy() || !acknowledged() || !valid()) return;
     setError("");
+    setBusy(true);
     try {
-      const created = await servers.create({
-        name: name().trim(),
-        custody_ack: true,
-        channel_key_sealed: sealChannelKeyForSelf(key(), props.identity),
-      });
-      await publishOwnEnvelope(created.id, props.accountId, props.identity, key());
-      // The backend starts the server with a text and a voice channel; the voice one is sealed with this key.
-      for (const channel of await channels.listForServer(created.id)) {
-        if (channel.type === "voice_video") rememberChannelKey(channel.id, key());
+      const sealed = sealChannelKeyForSelf(key(), props.identity);
+      const { id } = await servers.create({ name: name().trim(), custody_ack: true, channel_key_sealed: sealed });
+      await publishOwnEnvelope(id, props.accountId, props.identity, key());
+      await rememberVoiceKeys(id);
+      const picked = image();
+      if (picked) {
+        // A rejected image must not undo the server that was just created.
+        try {
+          await servers.setImage(id, picked, picked.type);
+        } catch {
+          /* the owner can set the image later from Overview */
+        }
       }
-      const file = image();
-      if (file) await servers.setImage(created.id, file, file.type).catch(() => undefined);
-      props.onCreated(created.id);
+      props.onCreated(id);
     } catch (failure) {
-      setError(errorText(failure, "mgmt.error"));
       setBusy(false);
+      setError(errorText(failure, "mgmt.error"));
     }
   }
 

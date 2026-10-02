@@ -22,6 +22,6 @@ Só quando **todas** as condições se verificam:
 
 | Data | Change | Requisito que a exige | Alteração | Retrocompatível | Testes |
 |---|---|---|---|---|---|
-| — | — | Nenhuma alteração de backend registada até à data. | — | — | — |
+| 2026-10-01 | `frontend-v2-server-admin` (tarefa 8.4) | Onboarding de convidado: "handle com disponibilidade" (D4 do design e `mesa_convite_onboarding_de_convidado`). Decisão do responsável do projecto de acrescentar o endpoint, em excepção à condição 3 acima (elemento de mockup sem endpoint). | Novo `GET /api/invites/{code}/handle-available?handle=`, `{available}`; só para convite utilizável (404 caso contrário); 60 pedidos/min por IP | Sim (aditiva; nenhuma rota existente muda) | `backend/tests/contract/invites.rs`: livre/ocupado, convite inválido ou revogado, handle vazio, limite de pedidos |
 
 O `frontend-v2-polish-cutover` reconcilia esta tabela antes do corte (tarefa 4A.4).

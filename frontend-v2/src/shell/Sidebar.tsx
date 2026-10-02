@@ -1,6 +1,6 @@
 import { For, Show, createSignal } from "solid-js";
 import { channels as channelsApi, avatarUrl, type Channel, type ChannelKind } from "../api";
-import { Badge, Icon } from "../components/ui";
+import { Badge, ContextMenu, Icon } from "../components/ui";
 import { canManageChannel } from "../lib/capabilities";
 import { normalizeChannelNameDraft, validateChannelName } from "../lib/channelName";
 import { errorText } from "../lib/errors";
@@ -70,8 +70,23 @@ function ChannelRow(props: { channel: Channel; glyph: string }) {
     }
   }
 
+  const startRename = () => {
+    setDraft(props.channel.name);
+    setProblem("");
+    setRenaming(true);
+  };
+  const menu = () =>
+    manageable()
+      ? [
+          { label: t("admin.channel.rename"), action: startRename },
+          { label: t("admin.channel.settings"), action: () => shell.setSettingsChannel(props.channel) },
+          { label: t("mgmt.channel.deleteChannel"), danger: true, action: () => { shell.setSettingsDelete(true); shell.setSettingsChannel(props.channel); } },
+        ]
+      : [];
+
   return (
     <li>
+      <ContextMenu items={menu()}>
       <div class="group relative flex items-center rounded-md transition-colors" classList={{ "bg-surface-container-high": selected(), "hover:bg-surface-container": !selected() }}>
         <Show
           when={renaming()}
@@ -121,6 +136,7 @@ function ChannelRow(props: { channel: Channel; glyph: string }) {
           </span>
         </Show>
       </div>
+      </ContextMenu>
       <Show when={problem()}>
         <p class="px-3 py-1 text-body-sm text-error" role="alert">{problem()}</p>
       </Show>

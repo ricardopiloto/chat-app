@@ -1,6 +1,6 @@
 import { Show, type JSX } from "solid-js";
-import { Badge } from "../../components/ui";
 import { t } from "../../i18n";
+import { Badge } from "../../components/ui";
 
 // Header shared by every settings page: breadcrumb, title and the state chips.
 export function PageHead(props: { crumb: string; title: string; lead?: JSX.Element; owner?: boolean; aside?: JSX.Element }) {

@@ -1,120 +1,76 @@
+// Distribution of a server's key: each member holds an envelope with the key sealed to their own
+// public key. The owner creates the first key and seals it for everyone; any member who holds the
+// key can answer a newcomer's request over the realtime channel.
 import { api, type Server, type ServerMember } from "../api/client";
 import type { WsEnvelope } from "../api/ws";
 import { b64, fromB64, seal, unseal, type Identity } from "./identity";
-import {
-  generateServerKey,
-  getServerKey,
-  rememberServerKey,
-} from "./serverKey";
+import { generateServerKey, getServerKey, rememberServerKey } from "./serverKey";
 
-/** Publishes the server key sealed for one account. */
-async function postEnvelope(
-  serverId: string,
-  accountId: string,
-  sealed: Uint8Array,
-) {
-  await api(`/api/servers/${serverId}/key-envelopes`, {
-    method: "POST",
-    body: JSON.stringify({ account_id: accountId, sealed_key: b64(sealed) }),
-  });
+const envelopesPath = (serverId: string) => `/api/servers/${serverId}/key-envelopes`;
+
+/** Stores `key` sealed to `recipientPublicKey` as the envelope of `accountId`. */
+function sendEnvelope(serverId: string, accountId: string, recipientPublicKey: Uint8Array, key: Uint8Array) {
+  const body = { account_id: accountId, sealed_key: b64(seal(key, recipientPublicKey)) };
+  return api(envelopesPath(serverId), { method: "POST", body: JSON.stringify(body) });
 }
 
-/** Publishes the server key sealed for the creator, so messages can be decrypted later. */
-export async function publishOwnEnvelope(
-  serverId: string,
-  accountId: string,
-  identity: Identity,
-  serverKey: Uint8Array,
-) {
-  await postEnvelope(serverId, accountId, seal(serverKey, identity.publicKey));
+/** The creator's own envelope; also keeps the key in memory for the current session. */
+export async function publishOwnEnvelope(serverId: string, accountId: string, identity: Identity, serverKey: Uint8Array) {
+  await sendEnvelope(serverId, accountId, identity.publicKey, serverKey);
   rememberServerKey(serverId, serverKey);
 }
 
-export async function loadServerKey(
-  serverId: string,
-  identity: Identity,
-): Promise<Uint8Array | undefined> {
-  const cached = getServerKey(serverId);
-  if (cached) return cached;
+/** Memory first, then the envelope stored for this account; undefined when neither yields a key. */
+export async function loadServerKey(serverId: string, identity: Identity): Promise<Uint8Array | undefined> {
+  const known = getServerKey(serverId);
+  if (known) return known;
+  let opened: Uint8Array | null = null;
   try {
-    const env = await api<{ sealed_key: string }>(
-      `/api/servers/${serverId}/key-envelopes/me`,
-    );
-    const opened = unseal(
-      fromB64(env.sealed_key),
-      identity.publicKey,
-      identity.secretKey,
-    );
-    if (opened) {
-      rememberServerKey(serverId, opened);
-      return opened;
-    }
+    const mine = await api<{ sealed_key: string }>(`${envelopesPath(serverId)}/me`);
+    opened = unseal(fromB64(mine.sealed_key), identity.publicKey, identity.secretKey);
   } catch {
     return undefined;
   }
-  return undefined;
+  if (!opened) return undefined;
+  rememberServerKey(serverId, opened);
+  return opened;
 }
 
-/** Loads the server key; the owner generates and distributes one when none exists yet. */
-export async function ensureServerKey(
-  serverId: string,
-  identity: Identity,
-  accountId: string,
-): Promise<Uint8Array | undefined> {
-  const existing = await loadServerKey(serverId, identity);
-  if (existing) return existing;
-  const servers = await api<Server[]>("/api/servers");
-  const server = servers.find((s) => s.id === serverId);
-  if (!server || server.owner_account_id !== accountId) return undefined;
-  const key = generateServerKey();
-  await publishOwnEnvelope(serverId, accountId, identity, key);
-  const members = await api<ServerMember[]>(`/api/servers/${serverId}/members`);
-  await Promise.all(
-    members
-      .filter((m) => m.account_id !== accountId)
-      .map((m) =>
-        postEnvelope(
-          serverId,
-          m.account_id,
-          seal(key, fromB64(m.identity_pubkey)),
-        ),
-      ),
-  );
-  return key;
+/** Returns the key, creating and distributing it when this account owns a server that has none. */
+export async function ensureServerKey(serverId: string, identity: Identity, accountId: string): Promise<Uint8Array | undefined> {
+  const loaded = await loadServerKey(serverId, identity);
+  if (loaded) return loaded;
+
+  const owned = (await api<Server[]>("/api/servers")).some((s) => s.id === serverId && s.owner_account_id === accountId);
+  if (!owned) return undefined;
+
+  const fresh = generateServerKey();
+  await publishOwnEnvelope(serverId, accountId, identity, fresh);
+  const others = (await api<ServerMember[]>(`/api/servers/${serverId}/members`)).filter((m) => m.account_id !== accountId);
+  await Promise.all(others.map((m) => sendEnvelope(serverId, m.account_id, fromB64(m.identity_pubkey), fresh)));
+  return fresh;
 }
 
-export async function loadAllServerKeys(
-  identity: Identity,
-  accountId: string,
-): Promise<void> {
-  const servers = await api<Server[]>("/api/servers");
-  await Promise.all(
-    servers.map((s) =>
-      ensureServerKey(s.id, identity, accountId).catch(() => undefined),
-    ),
-  );
+/** Warms the key cache for every server of the account; a failure on one server does not stop the rest. */
+export async function loadAllServerKeys(identity: Identity, accountId: string): Promise<void> {
+  const mine = await api<Server[]>("/api/servers");
+  const attempts = mine.map(({ id }) => ensureServerKey(id, identity, accountId));
+  await Promise.allSettled(attempts);
 }
 
-/** Answers other members' key requests and picks up a key handed to this account. */
-export async function handleHandoffEvent(
-  msg: WsEnvelope,
-  identity: Identity,
-  myId: string,
-) {
-  if (!msg.server_id) return;
-  if (msg.event === "key_handoff.requested") {
-    const key = await loadServerKey(msg.server_id, identity);
-    if (!key) return;
-    await postEnvelope(
-      msg.server_id,
-      String(msg.payload.account_id),
-      seal(key, fromB64(String(msg.payload.identity_pubkey))),
-    );
-  }
-  if (
-    msg.event === "key_handoff.completed" &&
-    String(msg.payload.account_id) === myId
-  ) {
-    await loadServerKey(msg.server_id, identity);
+/** Reacts to key_handoff events: answer a request when we hold the key, refresh when it is for us. */
+export async function handleHandoffEvent(event: WsEnvelope, identity: Identity, myId: string) {
+  const { server_id: serverId, payload } = event;
+  if (!serverId) return;
+  const subject = String(payload.account_id);
+
+  switch (event.event) {
+    case "key_handoff.requested": {
+      const held = await loadServerKey(serverId, identity);
+      if (held) await sendEnvelope(serverId, subject, fromB64(String(payload.identity_pubkey)), held);
+      return;
+    }
+    case "key_handoff.completed":
+      if (subject === myId) await loadServerKey(serverId, identity);
   }
 }

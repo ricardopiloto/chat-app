@@ -1,187 +1,161 @@
-import { For, Show, createEffect, createSignal, onCleanup } from "solid-js";
-import { api, type Channel, type UserNotification } from "../api/client";
+import { For, Match, Show, Switch, createEffect, createMemo, createResource, createSignal, onCleanup } from "solid-js";
+import { Portal } from "solid-js/web";
+import { useQueryClient } from "@tanstack/solid-query";
+import type { Notification } from "../api";
+import { avatarUrl } from "../api";
+import { Avatar, Badge, Icon } from "../components/ui";
 import { t } from "../i18n";
-import { channelDisplayName, formatNotifWhen } from "../lib/notifFormat";
-import {
-  dismissDurableNotification,
-  durableNotifications,
-  loadDurableNotifications,
-} from "../preferences/durableNotifications";
-import {
-  hasAnyUnseen,
-  sessionItemsForChannel,
-  unseenChannelIds,
-} from "../preferences/notifications";
+import { useShell } from "../shell/state";
+import { useSession } from "../session/session";
+import { messagesOf } from "./searching";
+import { allChannels, peopleOf, type ChannelRef } from "./directory";
+import { loadedMessages } from "./loaded";
+import { excerptOf } from "./MessageRow";
+import { channelNews, markAllSeen, mentionNotices, unseenCount, type ChannelNews } from "./notices";
 
-type SessionRow =
-  | { kind: "plus"; channelId: string; oldestMessageId: string }
-  | { kind: "detail"; channelId: string; messageId: string; createdAt: string };
+type Tab = "all" | "mentions" | "news";
 
-const MAX_DETAIL_PER_CHANNEL = 5;
+type Card = { type: "mention"; at: string; notice: Notification } | { type: "news"; at: string; news: ChannelNews };
 
-function sessionRows(): SessionRow[] {
-  const rows: SessionRow[] = [];
-  for (const channelId of unseenChannelIds()) {
-    const items = sessionItemsForChannel(channelId);
-    if (items.length > MAX_DETAIL_PER_CHANNEL) {
-      if (items[0])
-        rows.push({
-          kind: "plus",
-          channelId,
-          oldestMessageId: items[0].messageId,
-        });
-      continue;
-    }
-    for (const item of items)
-      rows.push({
-        kind: "detail",
-        channelId,
-        messageId: item.messageId,
-        createdAt: item.createdAt,
-      });
-  }
-  return rows;
+function ago(iso: string): string {
+  const minutes = Math.floor((Date.now() - new Date(iso).getTime()) / 60_000);
+  if (minutes < 1) return t("txt.notices.justNow");
+  if (minutes < 60) return t("txt.notices.minutesAgo", { n: minutes });
+  if (minutes < 60 * 24) return t("txt.notices.hoursAgo", { n: Math.floor(minutes / 60) });
+  return t("txt.notices.daysAgo", { n: Math.floor(minutes / 60 / 24) });
 }
 
-type ChannelRef = { name: string | null; serverId: string | null };
+// Dropdown under the bell: mentions and replies (kept until the message is seen) and channels that
+// got messages while another was open (this session only). Each card opens the message or channel.
+export function NotificationsPanel(props: { open: boolean; onClose: () => void; onOpenMessage: (channelId: string, serverId: string, messageId: string | null, reply?: boolean) => void }) {
+  const shell = useShell();
+  const session = useSession();
+  const cache = useQueryClient();
+  const [tab, setTab] = createSignal<Tab>("all");
+  let box: HTMLElement | undefined;
 
-/** Two fixed sections: mentions/replies (durable) and channels with news (this session). */
-export function NotificationsPanel(props: {
-  open: boolean;
-  onClose: () => void;
-  onOpenMessage: (
-    channelId: string,
-    serverId: string,
-    messageId: string | null,
-  ) => void;
-}) {
-  const [channels, setChannels] = createSignal<Record<string, ChannelRef>>({});
-  let root: HTMLDivElement | undefined;
+  const [directory] = createResource(
+    () => (props.open ? (shell.servers.data ?? []).map((s) => s.id).join(",") : undefined),
+    async () => {
+      const refs = await allChannels(cache, shell.servers.data ?? []);
+      // Decrypt the channels behind mentions so the cards can quote the message.
+      const needed = new Set(mentionNotices().map((n) => n.channel_id));
+      await Promise.all(refs.filter((r) => needed.has(r.channel.id)).map((r) => messagesOf({ identity: session.identity()!, accountId: shell.meId() }, r).catch(() => [])));
+      return { channels: new Map<string, ChannelRef>(refs.map((r) => [r.channel.id, r])), people: await peopleOf(cache, refs.map((r) => r.server.id)) };
+    },
+  );
 
-  async function resolve(ids: string[]) {
-    const missing = [...new Set(ids)].filter((id) => id && !(id in channels()));
-    await Promise.all(
-      missing.map(async (id) => {
-        try {
-          const ch = await api<Channel>(`/api/channels/${id}`);
-          setChannels((prev) => ({
-            ...prev,
-            [id]: { name: ch.name?.trim() || null, serverId: ch.server_id },
-          }));
-        } catch {
-          setChannels((prev) => ({
-            ...prev,
-            [id]: { name: null, serverId: null },
-          }));
-        }
-      }),
-    );
-  }
-  createEffect(() => {
-    if (props.open) void loadDurableNotifications();
+  const cards = createMemo<Card[]>(() => {
+    const mentions: Card[] = mentionNotices().map((notice) => ({ type: "mention", at: notice.created_at, notice }));
+    const news: Card[] = channelNews().map((entry) => ({ type: "news", at: entry.at, news: entry }));
+    const shown = tab() === "mentions" ? mentions : tab() === "news" ? news : [...mentions, ...news];
+    return shown.sort((a, b) => b.at.localeCompare(a.at));
   });
-  createEffect(() => {
-    void resolve([
-      ...durableNotifications().map((n) => n.channel_id),
-      ...unseenChannelIds(),
-    ]);
-  });
+
   createEffect(() => {
     if (!props.open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && props.onClose();
-    const onPointer = (e: PointerEvent) => {
-      const target = e.target as HTMLElement;
-      if (root && !root.contains(target) && !target.closest(".news-button"))
-        props.onClose();
+    const outside = (event: PointerEvent) => {
+      const target = event.target as Element;
+      if (!box?.contains(target) && !target.closest(".news-button")) props.onClose();
     };
-    window.addEventListener("keydown", onKey);
-    window.addEventListener("pointerdown", onPointer);
+    const escape = (event: KeyboardEvent) => event.key === "Escape" && props.onClose();
+    document.addEventListener("pointerdown", outside);
+    document.addEventListener("keydown", escape);
     onCleanup(() => {
-      window.removeEventListener("keydown", onKey);
-      window.removeEventListener("pointerdown", onPointer);
+      document.removeEventListener("pointerdown", outside);
+      document.removeEventListener("keydown", escape);
     });
   });
-  const name = (channelId: string) =>
-    channelDisplayName(channels()[channelId]?.name);
-  function open(
-    channelId: string,
-    messageId: string | null,
-    durable?: UserNotification,
-  ) {
-    const serverId = channels()[channelId]?.serverId;
-    if (durable) void dismissDurableNotification(durable);
-    if (serverId) props.onOpenMessage(channelId, serverId, messageId);
+
+  const channelOf = (id: string) => directory()?.channels.get(id);
+  const go = (channelId: string, messageId: string | null, reply = false) => {
+    const ref = channelOf(channelId);
+    if (!ref) return;
     props.onClose();
-  }
-  const empty = () => durableNotifications().length === 0 && !hasAnyUnseen();
+    props.onOpenMessage(channelId, ref.server.id, messageId, reply);
+  };
+
+  const tabs: { id: Tab; label: () => string }[] = [
+    { id: "all", label: () => t("txt.notices.all") },
+    { id: "mentions", label: () => t("txt.notices.mentions") },
+    { id: "news", label: () => t("txt.notices.news") },
+  ];
+
   return (
     <Show when={props.open}>
-      <div
-        class="notif-panel"
-        ref={(el) => (root = el)}
-        role="menu"
-        aria-label={t("shell.notifications")}
-      >
-        <Show when={durableNotifications().length > 0}>
-          <h2>{t("chat.mentionsReplies")}</h2>
-          <ul>
-            <For each={durableNotifications()}>
-              {(n) => (
-                <li>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    data-section="mentions"
-                    onClick={() => open(n.channel_id, n.message_id, n)}
-                  >
-                    <span class="notif-channel">
-                      {name(n.channel_id)} ·{" "}
-                      {t(n.kind === "reply" ? "chat.reply" : "chat.mention")}
-                    </span>
-                    <span class="notif-when">
-                      {formatNotifWhen(n.created_at)}
-                    </span>
-                  </button>
-                </li>
+      <Portal>
+        <aside ref={box} class="ch-notices" role="dialog" aria-label={t("txt.notices.title")}>
+          <header>
+            <h2>{t("txt.notices.title")}</h2>
+            <Show when={unseenCount() > 0}><Badge tone="primary" mono>{unseenCount() === 1 ? t("txt.notices.oneNew") : t("txt.notices.newCount", { count: unseenCount() })}</Badge></Show>
+            <Show when={mentionNotices().length > 0}>
+              <button type="button" class="ch-clear-all" onClick={() => void markAllSeen()} title={t("txt.notices.clearHint")}><Icon name="done_all" />{t("txt.notices.clear")}</button>
+            </Show>
+            <button type="button" onClick={props.onClose} title={t("txt.notices.close")} aria-label={t("txt.notices.close")}><Icon name="close" /></button>
+          </header>
+          <div class="ch-tabs" role="tablist" aria-label={t("txt.notices.tabs")}>
+            <For each={tabs}>{(item) => <button type="button" role="tab" aria-selected={tab() === item.id} classList={{ active: tab() === item.id }} onClick={() => setTab(item.id)}>{item.label()}</button>}</For>
+          </div>
+          <ul class="ch-cards">
+            <For each={cards()} fallback={<li class="ch-state"><Icon name="notifications_off" />{t("txt.notices.empty")}</li>}>
+              {(card) => (
+                <Switch>
+                  <Match when={card.type === "mention"}>
+                    {(() => {
+                      const notice = (card as { notice: Notification }).notice;
+                      const actor = () => directory()?.people.get(notice.actor_account_id);
+                      const where = () => channelOf(notice.channel_id);
+                      const quote = () => {
+                        void directory(); // the messages behind mentions are decrypted along with the directory
+                        const found = loadedMessages(notice.channel_id)?.find((m) => m.id === notice.message_id);
+                        return found?.text ? excerptOf(found.text, 140) : "";
+                      };
+                      return (
+                        <li class="ch-card unseen">
+                          <button type="button" class="ch-card-main" onClick={() => go(notice.channel_id, notice.message_id)}>
+                            <Avatar name={actor()?.label ?? "?"} src={actor()?.hasAvatar ? avatarUrl(actor()!.accountId) : undefined} size="md" />
+                            <span>
+                              <span class="ch-card-head"><strong>{actor()?.label ?? t("txt.notices.someone")}</strong><time>{ago(notice.created_at)}</time></span>
+                              <span class="ch-card-text">
+                                {t(notice.kind === "reply" ? "txt.notices.replied" : "txt.notices.mentioned")} <b>#{where()?.channel.name ?? t("txt.notices.unknownChannel")}</b>
+                                <Show when={quote()}>{(text) => <>: “{text()}”</>}</Show>
+                              </span>
+                            </span>
+                          </button>
+                          <span class="ch-card-actions">
+                            <button type="button" class="primary" onClick={() => go(notice.channel_id, notice.message_id, true)}><Icon name="reply" />{t("txt.notices.reply")}</button>
+                            <button type="button" onClick={() => go(notice.channel_id, null)}>{t("txt.notices.viewChannel")}</button>
+                          </span>
+                        </li>
+                      );
+                    })()}
+                  </Match>
+                  <Match when={card.type === "news"}>
+                    {(() => {
+                      const entry = (card as { news: ChannelNews }).news;
+                      const where = () => channelOf(entry.channelId);
+                      return (
+                        <li class="ch-card">
+                          <button type="button" class="ch-card-main" onClick={() => go(entry.channelId, entry.lastMessageId)}>
+                            <span class="ch-card-icon"><Icon name="tag" /></span>
+                            <span>
+                              <span class="ch-card-head"><strong>{where() ? `${where()!.server.name} · #${where()!.channel.name}` : t("txt.notices.unknownChannel")}</strong><time>{ago(entry.at)}</time></span>
+                              <span class="ch-card-text">{entry.count === 1 ? t("txt.notices.oneMessage") : t("txt.notices.newMessages", { count: entry.count })}</span>
+                            </span>
+                          </button>
+                          <span class="ch-card-actions">
+                            <button type="button" onClick={() => go(entry.channelId, null)}>{t("txt.notices.viewChannel")}</button>
+                          </span>
+                        </li>
+                      );
+                    })()}
+                  </Match>
+                </Switch>
               )}
             </For>
           </ul>
-        </Show>
-        <Show when={hasAnyUnseen()}>
-          <h2>{t("chat.channelsWithNews")}</h2>
-          <ul>
-            <For each={sessionRows()}>
-              {(row) => (
-                <li>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    data-section="news"
-                    onClick={() =>
-                      open(
-                        row.channelId,
-                        row.kind === "plus"
-                          ? row.oldestMessageId
-                          : row.messageId,
-                      )
-                    }
-                  >
-                    <span class="notif-channel">{name(row.channelId)}</span>
-                    <span class="notif-when">
-                      {row.kind === "plus"
-                        ? t("chat.pendingPlus")
-                        : formatNotifWhen(row.createdAt)}
-                    </span>
-                  </button>
-                </li>
-              )}
-            </For>
-          </ul>
-        </Show>
-        <Show when={empty()}>
-          <p class="muted">{t("chat.noActivity")}</p>
-        </Show>
-      </div>
+        </aside>
+      </Portal>
     </Show>
   );
 }

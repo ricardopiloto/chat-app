@@ -1,10 +1,10 @@
 import { Match, Switch, createEffect, onCleanup } from "solid-js";
-import type { Server } from "../../api";
-import { t } from "../../i18n";
-import { useShell } from "../../shell/state";
-import { Members } from "./Members";
-import { Overview } from "./Overview";
 import { Roles } from "./Roles";
+import { Overview } from "./Overview";
+import { Members } from "./Members";
+import { useShell } from "../../shell/state";
+import { t } from "../../i18n";
+import type { Server } from "../../api";
 
 // Main area of the settings. Overview (image, welcome, delete) is owner-only; roles and members
 // follow the role capabilities. Escape leaves the settings.

@@ -8,6 +8,8 @@ use std::time::{Duration, Instant};
 
 const AUTH_LIMIT: usize = 10;
 const AUTH_WINDOW: Duration = Duration::from_secs(60);
+// Handle availability is queried while typing, so it gets a roomier bucket of its own.
+const HANDLE_CHECK_LIMIT: usize = 60;
 
 /// In-process sliding window keyed by client IP (TCP peer; X-Forwarded-For ignored).
 #[derive(Debug)]
@@ -42,6 +44,13 @@ impl RateLimiter {
             .map(|a| a.to_string())
             .unwrap_or_else(|| "unknown".into());
         self.check(&key, AUTH_LIMIT, AUTH_WINDOW)
+    }
+
+    pub fn allow_handle_check(&self, ip: Option<IpAddr>) -> bool {
+        let who = ip
+            .map(|a| a.to_string())
+            .unwrap_or_else(|| "unknown".into());
+        self.check(&format!("handle-check:{who}"), HANDLE_CHECK_LIMIT, AUTH_WINDOW)
     }
 }
 

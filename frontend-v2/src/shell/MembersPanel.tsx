@@ -36,7 +36,7 @@ export function MembersPanel() {
   });
 
   const Person = (props: { member: Member; online: boolean }) => (
-    <li class="flex items-center gap-3 rounded-md px-2 py-1.5" classList={{ "opacity-60": !props.online }}>
+    <li class="flex items-center gap-3 rounded-md px-2 py-1.5" classList={{ "opacity-60": !props.online }} data-account={props.member.account_id}>
       <Avatar name={publicDisplayLabel(props.member.handle, props.member.display_name)} src={props.member.has_avatar ? avatarUrl(props.member.account_id) : undefined} online={props.online} size="sm" />
       <div class="min-w-0 leading-tight">
         <p class="truncate text-body-md">{publicDisplayLabel(props.member.handle, props.member.display_name)}</p>

@@ -2,7 +2,7 @@
 // identity (secret key, held only in memory) are separate: after a reload the account is known but
 // the identity is locked until the password opens the vault again.
 import { createContext, createSignal, useContext, type JSX } from "solid-js";
-import { auth, queryClient, type Account } from "../api";
+import { auth, invites, queryClient, type Account, type Membership } from "../api";
 import { b64, generateIdentity, hasLocalVault, IdentityUnlockError, persistIdentity, unlockIdentity, wrapIdentity, type Identity } from "../crypto/identity";
 
 export type SessionPhase = "loading" | "anonymous" | "locked" | "ready";
@@ -82,6 +82,19 @@ function createSession() {
     setIdentity(fresh);
   }
 
+  /** Accepts an invitation with no account yet: the same identity setup as `register`, in one call. */
+  async function joinWithInvite({ handle, password, inviteCode }: Credentials & { inviteCode: string }): Promise<Membership> {
+    const fresh = generateIdentity();
+    const vault = await wrapIdentity(fresh, password);
+    const membership = await invites.accept(inviteCode, { handle, password, identity_pubkey: b64(fresh.publicKey), identity_vault: vault });
+    const me = await auth.me();
+    if (!me) throw new Error("session missing after accepting the invitation");
+    await persistIdentity(me.id, fresh, password);
+    setAccount(me);
+    setIdentity(fresh);
+    return membership;
+  }
+
   /** Opens the vault for the signed-in account; throws IdentityUnlockError with the reason. */
   async function unlock(password: string): Promise<void> {
     const me = account();
@@ -122,6 +135,7 @@ function createSession() {
     restore,
     login,
     register,
+    joinWithInvite,
     unlock,
     recover,
     logout,

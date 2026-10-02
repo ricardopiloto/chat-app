@@ -1,12 +1,12 @@
 import { For, Show, createEffect, createMemo, createSignal } from "solid-js";
+import { PageHead } from "./PageHead";
+import { useShell } from "../../shell/state";
+import { createToast } from "../../lib/toast";
+import { errorText } from "../../lib/errors";
+import { publicDisplayLabel } from "../../lib/displayName";
+import { t } from "../../i18n";
 import { Button, Icon, Toast } from "../../components/ui";
 import { roles as rolesApi, avatarUrl, type RoleCapabilities, type Server, type ServerRole } from "../../api";
-import { t } from "../../i18n";
-import { publicDisplayLabel } from "../../lib/displayName";
-import { errorText } from "../../lib/errors";
-import { createToast } from "../../lib/toast";
-import { useShell } from "../../shell/state";
-import { PageHead } from "./PageHead";
 
 type Capability = keyof RoleCapabilities;
 
@@ -121,6 +121,13 @@ export function Roles(props: { server: Server }) {
     void run(() => rolesApi.setMembers(props.server.id, role.id, ids));
   };
 
+  /** The "add member" picker acts as a button: choosing an entry adds it and the picker returns to its prompt. */
+  const addFromPicker = (role: ServerRole, picker: HTMLSelectElement) => {
+    const accountId = picker.value;
+    picker.value = "";
+    if (accountId) toggleMember(role, accountId, false);
+  };
+
   const roleMembers = () => members().filter((m) => selected()?.member_ids.includes(m.account_id));
   const candidates = () => members().filter((m) => !selected()?.member_ids.includes(m.account_id) && m.account_id !== props.server.owner_account_id);
   const countLabel = (role: ServerRole) => (role.member_ids.length === 1 ? t("mgmt.roles.membersOne") : t("mgmt.roles.members", { count: role.member_ids.length }));
@@ -209,7 +216,7 @@ export function Roles(props: { server: Server }) {
                   </For>
                 </ul>
                 <Show when={canManage() && !role().is_system && candidates().length > 0}>
-                  <select aria-label={t("mgmt.roles.matrixAdd")} value="" onChange={(event) => { const id = event.currentTarget.value; event.currentTarget.value = ""; if (id) toggleMember(role(), id, false); }}>
+                  <select aria-label={t("mgmt.roles.matrixAdd")} value="" onChange={(event) => addFromPicker(role(), event.currentTarget)}>
                     <option value="">{t("mgmt.roles.matrixAdd")}</option>
                     <For each={candidates()}>{(member) => <option value={member.account_id}>{publicDisplayLabel(member.handle, member.display_name)}</option>}</For>
                   </select>
@@ -218,11 +225,12 @@ export function Roles(props: { server: Server }) {
             )}
           </Show>
         </div>
+        {/* detail pane */}
 
         <Show when={selected()}>
           {(role) => (
-            <div class="mg-stack">
-              <section class="mg-card">
+            <div class="mg-stack" data-pane="role-detail">
+              <section class="mg-card" data-part="head">
                 <div class="mg-role-head">
                   <span class="mg-role-icon"><Icon name={role().is_system ? "shield_person" : "badge"} /></span>
                   <div>

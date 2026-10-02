@@ -4,7 +4,7 @@ import { Logo } from "../components/ui";
 import { SettingsPage } from "../admin/settings/SettingsPage";
 import { t } from "../i18n";
 import { Account as AccountPage } from "../pages/Account";
-import { ChannelPage } from "../pages/Channel";
+import { ChannelPage } from "../chat/ChannelPage";
 import VoiceChannel from "../pages/VoiceChannel";
 import { useSession } from "../session/session";
 import { useShell } from "./state";
@@ -41,13 +41,22 @@ export function Content() {
           <SettingsPage server={shell.server()!} />
         </Match>
         <Match when={shell.route().channelId}>
-          <Show when={shell.channel()} fallback={<p class="p-6 text-on-surface-variant">{t("shell.loadingChannel")}</p>}>
-            {(channel) => (
+          <Show when={shell.channel()?.id} keyed fallback={<p class="p-6 text-on-surface-variant">{t("shell.loadingChannel")}</p>}>
+            {(_id) => (
               <Show
-                when={channel().type === "text"}
-                fallback={<VoiceChannel me={me()} channel={channel()} identity={identity()} server={shell.server()} roles={shell.roles.data ?? []} onWs={shell.subscribe} />}
+                when={shell.channel()!.type === "text"}
+                fallback={<VoiceChannel me={me()} channel={shell.channel()!} identity={identity()} server={shell.server()} roles={shell.roles.data ?? []} onWs={shell.subscribe} />}
               >
-                <ChannelPage me={me()} channel={channel()} identity={identity()} server={shell.server()} roles={shell.roles.data ?? []} subscribe={shell.subscribe} focusMessageId={new URLSearchParams(where.search).get("msg")} />
+                <ChannelPage
+                  me={me()}
+                  channel={shell.channel()!}
+                  identity={identity()}
+                  server={shell.server()}
+                  roles={shell.roles.data ?? []}
+                  subscribe={shell.subscribe}
+                  focusMessageId={new URLSearchParams(where.search).get("msg")}
+                  replyOnFocus={new URLSearchParams(where.search).get("reply") === "1"}
+                />
               </Show>
             )}
           </Show>

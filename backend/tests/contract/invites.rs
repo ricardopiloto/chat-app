@@ -256,3 +256,98 @@ async fn invite_membership_only_on_invite_server() {
     assert_eq!(ids, vec![server_id.as_str()]);
     assert!(!ids.contains(&other_id));
 }
+
+async fn invite_code(app: &TestApp, cookie: &str, server_id: &str) -> String {
+    let (status, inv, _) = app
+        .request(
+            "POST",
+            &format!("/api/servers/{server_id}/invites"),
+            Some(json!({})),
+            Some(cookie),
+        )
+        .await;
+    assert_eq!(status, StatusCode::CREATED, "{inv}");
+    inv["code"].as_str().unwrap().to_string()
+}
+
+#[tokio::test]
+async fn handle_available_reports_free_and_taken_handles() {
+    let app = TestApp::new().await;
+    let (cookie, server_id) = owner_and_server(&app).await;
+    let code = invite_code(&app, &cookie, &server_id).await;
+    let url = |handle: &str| format!("/api/invites/{code}/handle-available?handle={handle}");
+
+    let (status, body, _) = app.request("GET", &url("brand_new"), None, None).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["available"], true);
+
+    // The owner registered as "alice" in owner_and_server; matching ignores case.
+    let (_, owner, _) = app.request("GET", "/api/auth/me", None, Some(&cookie)).await;
+    let taken = owner["handle"].as_str().unwrap().to_uppercase();
+    let (status, body, _) = app.request("GET", &url(&taken), None, None).await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["available"], false);
+}
+
+#[tokio::test]
+async fn handle_available_requires_a_usable_invite() {
+    let app = TestApp::new().await;
+    let (cookie, server_id) = owner_and_server(&app).await;
+    let (status, _, _) = app
+        .request(
+            "GET",
+            "/api/invites/not-a-code/handle-available?handle=anyone",
+            None,
+            None,
+        )
+        .await;
+    assert_eq!(status, StatusCode::NOT_FOUND);
+
+    let code = invite_code(&app, &cookie, &server_id).await;
+    let (status, _, _) = app
+        .request("POST", &format!("/api/invites/{code}/revoke"), None, Some(&cookie))
+        .await;
+    assert_eq!(status, StatusCode::NO_CONTENT);
+    let (status, _, _) = app
+        .request(
+            "GET",
+            &format!("/api/invites/{code}/handle-available?handle=anyone"),
+            None,
+            None,
+        )
+        .await;
+    assert_eq!(status, StatusCode::NOT_FOUND);
+}
+
+#[tokio::test]
+async fn handle_available_rejects_blank_handle() {
+    let app = TestApp::new().await;
+    let (cookie, server_id) = owner_and_server(&app).await;
+    let code = invite_code(&app, &cookie, &server_id).await;
+    let (status, _, _) = app
+        .request(
+            "GET",
+            &format!("/api/invites/{code}/handle-available?handle=%20"),
+            None,
+            None,
+        )
+        .await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+}
+
+#[tokio::test]
+async fn handle_available_is_rate_limited() {
+    let app = TestApp::with_config(|c| {
+        c.rate_limit_disabled = false;
+    })
+    .await;
+    let (cookie, server_id) = owner_and_server(&app).await;
+    let code = invite_code(&app, &cookie, &server_id).await;
+    let url = format!("/api/invites/{code}/handle-available?handle=someone");
+    for i in 0..60 {
+        let (status, body, _) = app.request("GET", &url, None, None).await;
+        assert_eq!(status, StatusCode::OK, "i={i} {body}");
+    }
+    let (status, _, _) = app.request("GET", &url, None, None).await;
+    assert_eq!(status, StatusCode::TOO_MANY_REQUESTS);
+}
