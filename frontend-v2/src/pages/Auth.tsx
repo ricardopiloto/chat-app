@@ -30,7 +30,7 @@ export function Auth() {
   const where = useLocation();
   const presetInvite = inviteFromLocation(where.pathname, where.search);
 
-  const [mode, setMode] = createSignal<Mode>(presetInvite ? "register" : "login");
+  const [mode, setMode] = createSignal<Mode>(presetInvite && !where.search.includes("signin") ? "register" : "login");
   const [handle, setHandle] = createSignal("");
   const [password, setPassword] = createSignal("");
   const [invite, setInvite] = createSignal(presetInvite);

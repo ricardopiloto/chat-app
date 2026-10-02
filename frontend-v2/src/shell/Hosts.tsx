@@ -31,8 +31,9 @@ export function Hosts() {
     setSearching(true);
   }
 
-  function openMessage(channelId: string, serverId: string, messageId: string | null) {
-    shell.go(`/servers/${serverId}/channels/${channelId}${messageId ? `?msg=${encodeURIComponent(messageId)}` : ""}`);
+  function openMessage(channelId: string, serverId: string, messageId: string | null, reply = false) {
+    const query = messageId ? `?msg=${encodeURIComponent(messageId)}${reply ? "&reply=1" : ""}` : "";
+    shell.go(`/servers/${serverId}/channels/${channelId}${query}`);
   }
 
   createEffect(() => {
@@ -41,6 +42,7 @@ export function Hosts() {
       ["mesa:invite", () => setInviting(true)],
       ["mesa:server-settings", () => shell.serverId() && shell.go(`/servers/${shell.serverId()}/settings`)],
       ["mesa:search", () => openSearch(null)],
+      ["mesa:search-channel", () => openSearch(shell.channel()?.type === "text" ? `#${shell.channel()!.name} ` : null)],
       ["mesa:notifications", () => { setSearching(false); setNotifying((open) => !open); }],
     ];
     for (const [name, handler] of on) document.addEventListener(name, handler);
@@ -103,13 +105,16 @@ export function Hosts() {
       <ChannelSettingsDialog
         open={shell.settingsChannel() !== null}
         channel={shell.settingsChannel()}
-        meId={shell.meId()}
-        ownerId={shell.server()?.owner_account_id ?? ""}
         canMute={shell.can("can_mute_members")}
-        onClose={() => shell.setSettingsChannel(null)}
+        startDeleting={shell.settingsDelete()}
+        onClose={() => {
+          shell.setSettingsChannel(null);
+          shell.setSettingsDelete(false);
+        }}
         onChanged={() => void shell.refreshChannels()}
         onDeleted={(channelId) => {
           shell.setSettingsChannel(null);
+          shell.setSettingsDelete(false);
           void shell.refreshChannels();
           if (shell.route().channelId === channelId) shell.go(`/servers/${shell.serverId()}`);
         }}

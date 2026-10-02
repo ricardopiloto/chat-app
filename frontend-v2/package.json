@@ -10,7 +10,8 @@
     "lint": "eslint src",
     "format": "prettier --write src",
     "check:v1-overlap": "node scripts/check-v1-overlap.mjs",
-    "test:contracts": "node scripts/contracts/run.mjs"
+    "test:contracts": "node scripts/contracts/run.mjs",
+    "verify:chat": "node scripts/verify-chat.mjs"
   },
   "dependencies": {
     "@livekit/track-processors": "^0.7.2",

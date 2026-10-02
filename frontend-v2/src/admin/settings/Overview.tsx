@@ -1,13 +1,13 @@
 import { For, Show, createEffect, createMemo, createSignal } from "solid-js";
 import { createQuery, useQueryClient } from "@tanstack/solid-query";
+import { PageHead } from "./PageHead";
+import { useShell } from "../../shell/state";
+import { createToast } from "../../lib/toast";
+import { errorText } from "../../lib/errors";
+import { t } from "../../i18n";
 import { Button, Icon, Toast } from "../../components/ui";
 import { queryKeys, servers, type Server } from "../../api";
 import { MAX_IMAGE_BYTES, PROFILE_IMAGE_MEDIA_TYPES } from "../../api/limits";
-import { t } from "../../i18n";
-import { errorText } from "../../lib/errors";
-import { createToast } from "../../lib/toast";
-import { useShell } from "../../shell/state";
-import { PageHead } from "./PageHead";
 
 const NAME_MAX = 32;
 
@@ -103,11 +103,11 @@ function WelcomeCard(props: { server: Server }) {
   const cache = useQueryClient();
   const toast = createToast();
   const welcome = createQuery(() => ({ queryKey: queryKeys.welcome(props.server.id), queryFn: () => servers.welcome(props.server.id) }));
-  const [channelId, setChannelId] = createSignal("");
-  const [template, setTemplate] = createSignal("");
-  const [error, setError] = createSignal("");
-  const [preview, setPreview] = createSignal(false);
   const [busy, setBusy] = createSignal(false);
+  const [template, setTemplate] = createSignal("");
+  const [preview, setPreview] = createSignal(false);
+  const [channelId, setChannelId] = createSignal("");
+  const [error, setError] = createSignal("");
 
   // The draft starts from the saved settings once per server; later refetches must not overwrite what is being typed.
   let seeded = "";

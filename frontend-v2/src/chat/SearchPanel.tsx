@@ -1,216 +1,197 @@
-import { For, Show, createEffect, createSignal, onCleanup } from "solid-js";
-import { api, type Channel, type Message, type Server } from "../api/client";
-import { decryptMessage, getServerKey } from "../crypto/serverKey";
-import { t } from "../i18n";
-import {
-  parseSearchQuery,
-  type ParsedSearchQuery,
-} from "../search/parseSearchQuery";
+import { For, Match, Show, Switch, createEffect, createMemo, createSignal, on, onCleanup } from "solid-js";
+import { Portal } from "solid-js/web";
+import { useQueryClient } from "@tanstack/solid-query";
+import { avatarUrl } from "../api";
+import { Avatar, Badge, Icon } from "../components/ui";
+import { getLocale, t } from "../i18n";
+import { useSession } from "../session/session";
+import { useShell } from "../shell/state";
+import { peopleOf } from "./directory";
+import { parseQuery } from "./logic/search";
+import type { ChatPerson } from "./logic/people";
+import { runSearch, type Hit, type SearchOutcome } from "./searching";
 
-export type SearchHit = {
-  serverId: string;
-  serverName: string;
+export interface SearchHit {
   channelId: string;
-  channelName: string;
+  serverId: string;
   messageId: string;
-  snippet: string;
+}
+
+const DEBOUNCE_MS = 250;
+
+const when = (iso: string): string => {
+  const date = new Date(iso);
+  return `${date.toLocaleDateString(getLocale(), { day: "numeric", month: "short" })} · ${date.toLocaleTimeString(getLocale(), { hour: "2-digit", minute: "2-digit" })}`;
 };
 
-type EmptyReason = "channel_not_found" | "voice_only" | "no_results";
-
-/** Client-side search: decrypts the recent history of the text channels the user can open. */
-export function SearchPanel(props: {
-  open: boolean;
-  seed: string | null;
-  seedNonce: number;
-  onClose: () => void;
-  onOpenHit: (hit: SearchHit) => void;
-}) {
-  const [query, setQuery] = createSignal("");
-  const [status, setStatus] = createSignal<"idle" | "searching" | "done">(
-    "idle",
-  );
-  const [results, setResults] = createSignal<SearchHit[]>([]);
-  const [empty, setEmpty] = createSignal<EmptyReason | null>(null);
-  let timer: number | undefined;
-  let generation = 0;
+// Search over the messages this device can decrypt: free text, or "#channel text" to stay in one
+// channel. The channel shows as a chip that can be removed. Results are grouped by relevance of
+// recency, with the match highlighted.
+export function SearchPanel(props: { open: boolean; seed: string | null; seedNonce: number; onClose: () => void; onOpenHit: (hit: SearchHit) => void }) {
+  const shell = useShell();
+  const session = useSession();
+  const cache = useQueryClient();
+  const [channel, setChannel] = createSignal<string>();
+  const [term, setTerm] = createSignal("");
+  const [outcome, setOutcome] = createSignal<SearchOutcome>({ state: "idle", hits: [] });
+  const [busy, setBusy] = createSignal(false);
+  const [active, setActive] = createSignal(0);
+  const [people, setPeople] = createSignal<Map<string, ChatPerson>>(new Map());
   let input: HTMLInputElement | undefined;
-  let root: HTMLDivElement | undefined;
+  let generation = 0;
 
-  function reset(value: string) {
-    setQuery(value);
-    setResults([]);
-    setEmpty(null);
-    setStatus("idle");
-  }
-  createEffect(() => {
-    void props.seedNonce;
-    if (!props.open) {
-      reset("");
-      return;
+  const applyRaw = (raw: string) => {
+    const parsed = parseQuery(raw);
+    setChannel(parsed.channel);
+    setTerm(parsed.term);
+  };
+  // Each opening starts from its seed (the open channel for Ctrl/Cmd+F, nothing for Ctrl/Cmd+K).
+  createEffect(
+    on([() => props.open, () => props.seedNonce], ([open]) => {
+      if (!open) return;
+      applyRaw(props.seed ?? "");
+      setOutcome({ state: "idle", hits: [] });
+      queueMicrotask(() => input?.focus());
+    }),
+  );
+
+  const run = async () => {
+    const mine = ++generation;
+    const parsed = { channel: channel(), term: term().trim() };
+    if (!parsed.channel && !parsed.term) {
+      setBusy(false);
+      return setOutcome({ state: "idle", hits: [] });
     }
-    const seed = props.seed ?? "";
-    reset(seed);
-    queueMicrotask(() => {
-      input?.focus();
-      input?.setSelectionRange(seed.length, seed.length);
-    });
-  });
+    setBusy(true);
+    const result = await runSearch(
+      { cache, servers: shell.servers.data ?? [], currentServerId: shell.serverId(), identity: session.identity()!, accountId: shell.meId(), cancelled: () => mine !== generation },
+      parsed,
+    ).catch(() => ({ state: "done" as const, hits: [] as Hit[] }));
+    if (mine !== generation) return;
+    setPeople(await peopleOf(cache, result.hits.map((h) => h.server.id)));
+    if (mine !== generation) return;
+    setOutcome(result);
+    setActive(0);
+    setBusy(false);
+  };
   createEffect(() => {
     if (!props.open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        props.onClose();
-      }
-    };
-    const onPointer = (e: PointerEvent) => {
-      if (root && !root.contains(e.target as Node)) props.onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    const id = window.setTimeout(
-      () => window.addEventListener("pointerdown", onPointer),
-      0,
-    );
-    onCleanup(() => {
-      window.clearTimeout(id);
-      window.removeEventListener("keydown", onKey);
-      window.removeEventListener("pointerdown", onPointer);
-    });
+    void channel();
+    void term();
+    const timer = window.setTimeout(() => void run(), DEBOUNCE_MS);
+    onCleanup(() => window.clearTimeout(timer));
   });
-  onCleanup(() => window.clearTimeout(timer));
+
+  const hits = () => outcome().hits;
+  const open = (hit: Hit | undefined) => hit && props.onOpenHit({ channelId: hit.channel.id, serverId: hit.server.id, messageId: hit.message.id });
 
   function onInput(value: string) {
-    setQuery(value);
-    window.clearTimeout(timer);
-    const parsed = parseSearchQuery(value);
-    if (parsed.term.length < 2) {
-      setResults([]);
-      setEmpty(null);
-      setStatus("idle");
+    // Typing "#name " at the start turns into the channel chip.
+    const scoped = /^#(\S+)\s(.*)$/s.exec(value);
+    if (!channel() && scoped) {
+      setChannel(scoped[1]!.toLowerCase());
+      setTerm(scoped[2]!);
       return;
     }
-    setStatus("searching");
-    setEmpty(null);
-    timer = window.setTimeout(() => void run(parsed), 250);
+    setTerm(value);
   }
-
-  async function run(parsed: ParsedSearchQuery) {
-    const gen = ++generation;
-    setResults([]);
-    setEmpty(null);
-    const needle = parsed.term.toLowerCase();
-    const nameNeedle = (parsed.channelName ?? "").toLowerCase();
-    let hits = 0;
-    let reason: EmptyReason | null = null;
-    try {
-      const servers = await api<Server[]>("/api/servers");
-      const targets: { server: Server; channel: Channel }[] = [];
-      let matchedName = false;
-      for (const server of servers) {
-        let channels: Channel[] = [];
-        try {
-          channels = await api<Channel[]>(`/api/servers/${server.id}/channels`);
-        } catch {
-          continue;
-        }
-        if (gen !== generation) return;
-        for (const channel of channels) {
-          if (parsed.mode === "scoped") {
-            if (channel.name.toLowerCase() !== nameNeedle) continue;
-            matchedName = true;
-          }
-          if (channel.type === "text") targets.push({ server, channel });
-        }
-      }
-      if (parsed.mode === "scoped" && targets.length === 0) {
-        reason = matchedName ? "voice_only" : "channel_not_found";
-        return;
-      }
-      for (const { server, channel } of targets) {
-        const key = getServerKey(server.id);
-        if (!key) continue;
-        try {
-          const rows = await api<Message[]>(
-            `/api/channels/${channel.id}/messages`,
-          );
-          if (gen !== generation) return;
-          for (const row of rows) {
-            if (row.kind === "system") continue;
-            let text = "";
-            try {
-              text = await decryptMessage(key, row.content_ciphertext ?? "");
-            } catch {
-              continue;
-            }
-            if (!text.toLowerCase().includes(needle)) continue;
-            hits += 1;
-            setResults((prev) => [
-              ...prev,
-              {
-                serverId: server.id,
-                serverName: server.name,
-                channelId: channel.id,
-                channelName: channel.name,
-                messageId: row.id,
-                snippet: text.length > 120 ? `${text.slice(0, 117)}…` : text,
-              },
-            ]);
-          }
-        } catch {
-          /* one unreadable channel does not stop the search */
-        }
-      }
-    } finally {
-      if (gen === generation) {
-        setEmpty(reason ?? (hits === 0 ? "no_results" : null));
-        setStatus("done");
-      }
+  function onKeyDown(event: KeyboardEvent) {
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      if (hits().length) setActive((i) => (i + (event.key === "ArrowDown" ? 1 : -1) + hits().length) % hits().length);
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+      open(hits()[active()]);
+    } else if (event.key === "Backspace" && term() === "" && channel()) {
+      setChannel(undefined);
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      props.onClose();
     }
   }
+  createEffect(() => {
+    if (!props.open) return;
+    const onKey = (event: KeyboardEvent) => event.key === "Escape" && props.onClose();
+    document.addEventListener("keydown", onKey);
+    onCleanup(() => document.removeEventListener("keydown", onKey));
+  });
+
+  const openChannelName = () => (shell.channel()?.type === "text" ? shell.channel()!.name.toLowerCase() : undefined);
+  const resultLine = createMemo(() => (hits().length === 1 ? t("txt.search.oneResult") : t("txt.search.results", { count: hits().length })));
 
   return (
     <Show when={props.open}>
-      <div class="search-panel" ref={(el) => (root = el)} role="search">
-        <input
-          ref={(el) => (input = el)}
-          type="search"
-          placeholder={t("chat.searchPlaceholder")}
-          aria-label={t("chat.searchMessages")}
-          value={query()}
-          onInput={(e) => onInput(e.currentTarget.value)}
-        />
-        <div class="search-results">
-          <Show when={status() === "searching"}>
-            <p class="muted">{t("chat.searching")}</p>
-          </Show>
-          <ul>
-            <For each={results()}>
-              {(hit) => (
-                <li>
-                  <button
-                    type="button"
-                    class="search-result"
-                    onClick={() => props.onOpenHit(hit)}
-                  >
-                    <span class="search-result-meta">
-                      {hit.serverName} · #{hit.channelName}
-                    </span>
-                    <span class="search-result-snippet">{hit.snippet}</span>
-                  </button>
-                </li>
-              )}
-            </For>
-          </ul>
-          <Show when={status() === "done" && results().length === 0 && empty()}>
-            {(reason) => (
-              <p class="muted search-empty" data-reason={reason()}>
-                {t(`chat.searchEmpty.${reason()}`)}
-              </p>
-            )}
-          </Show>
+      <Portal>
+        <div class="ch-overlay" onPointerDown={(event) => event.target === event.currentTarget && props.onClose()}>
+          <section class="ch-search" role="dialog" aria-modal="true" aria-label={t("txt.search.label")}>
+            <div class="ch-search-field">
+              <Icon name="search" />
+              <Show when={channel()}>
+                {(name) => (
+                  <span class="ch-chip">
+                    <Icon name="tag" />{name()}
+                    <button type="button" onClick={() => setChannel(undefined)} title={t("txt.search.removeChannel")} aria-label={t("txt.search.removeChannel")}><Icon name="close" /></button>
+                  </span>
+                )}
+              </Show>
+              <input ref={input} value={term()} placeholder={t("txt.search.placeholder")} aria-label={t("txt.search.label")} autocomplete="off" spellcheck={false} onInput={(e) => onInput(e.currentTarget.value)} onKeyDown={onKeyDown} />
+              <Show when={term() || channel()}>
+                <button type="button" class="ch-clear" onClick={() => { applyRaw(""); input?.focus(); }} title={t("txt.search.clear")} aria-label={t("txt.search.clear")}><Icon name="backspace" /></button>
+              </Show>
+              <kbd>Esc</kbd>
+            </div>
+            <div class="ch-scopes" role="tablist">
+              <button type="button" role="tab" aria-selected={!channel()} classList={{ active: !channel() }} onClick={() => setChannel(undefined)}>
+                {t("txt.search.scopeAll")}<Show when={!channel() && outcome().state === "done"}><span class="ch-n">{hits().length}</span></Show>
+              </button>
+              <Show when={channel() || openChannelName()}>
+                <button type="button" role="tab" aria-selected={!!channel()} classList={{ active: !!channel() }} onClick={() => setChannel(channel() ?? openChannelName())}>
+                  <Icon name="tag" />{channel() ?? openChannelName()}<Show when={channel() && outcome().state === "done"}><span class="ch-n">{hits().length}</span></Show>
+                </button>
+              </Show>
+            </div>
+            <div class="ch-results" role="listbox" aria-busy={busy()}>
+              <Switch>
+                <Match when={outcome().state === "idle"}><p class="ch-state">{busy() ? t("txt.search.searching") : t("txt.search.idle")}</p></Match>
+                <Match when={outcome().state === "needTerm"}><p class="ch-state">{t("txt.search.needTerm", { channel: channel() ?? "" })}</p></Match>
+                <Match when={outcome().state === "noChannel"}><p class="ch-state"><Icon name="search_off" />{t("txt.search.noChannel", { channel: channel() ?? "" })}</p></Match>
+                <Match when={outcome().state === "voiceChannel"}><p class="ch-state"><Icon name="volume_up" />{t("txt.search.voiceChannel", { channel: channel() ?? "" })}</p></Match>
+                <Match when={outcome().state === "done" && hits().length === 0}><p class="ch-state"><Icon name="search_off" />{t("txt.search.noMatches")}</p></Match>
+                <Match when={true}>
+                  <For each={hits()}>
+                    {(hit, at) => {
+                      const sender = () => people().get(hit.message.senderId ?? "");
+                      return (
+                        <button type="button" role="option" aria-selected={active() === at()} class="ch-result" classList={{ active: active() === at() }} onMouseEnter={() => setActive(at())} onClick={() => open(hit)}>
+                          <Avatar name={sender()?.label ?? "?"} src={sender()?.hasAvatar ? avatarUrl(sender()!.accountId) : undefined} size="sm" />
+                          <span class="ch-result-body">
+                            <span class="ch-result-head">
+                              <strong>{sender()?.label ?? t("txt.search.unknownSender")}</strong>
+                              <small>{t("txt.search.in")} <b># {hit.channel.name}</b> · {hit.server.name}</small>
+                              <time>{when(hit.message.createdAt)}</time>
+                            </span>
+                            <span class="ch-result-text">
+                              {hit.excerpt.clippedStart ? "…" : ""}{hit.excerpt.before}<mark>{hit.excerpt.hit}</mark>{hit.excerpt.after}{hit.excerpt.clippedEnd ? "…" : ""}
+                            </span>
+                            <Show when={hit.message.attachmentIds.length > 0}>
+                              <Badge tone="neutral" mono icon="attach_file">{t("txt.search.attachments", { n: hit.message.attachmentIds.length })}</Badge>
+                            </Show>
+                          </span>
+                        </button>
+                      );
+                    }}
+                  </For>
+                </Match>
+              </Switch>
+            </div>
+            <footer class="ch-search-foot">
+              <span class="ch-count"><i classList={{ busy: busy() }} />{outcome().state === "done" ? resultLine() : busy() ? t("txt.search.searching") : ""}</span>
+              <span class="ch-keys"><kbd>↑↓</kbd>{t("txt.search.hintMove")}<kbd>↵</kbd>{t("txt.search.hintOpen")}<kbd>esc</kbd>{t("txt.search.hintClose")}</span>
+            </footer>
+          </section>
         </div>
-      </div>
+      </Portal>
     </Show>
   );
 }
+

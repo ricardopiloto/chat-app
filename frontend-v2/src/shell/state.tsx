@@ -10,8 +10,7 @@ import type { Account, Channel, ChannelKind, ChannelOccupancy, Member, Presence,
 import { handleHandoffEvent, loadAllServerKeys } from "../crypto/keyHandoff";
 import type { Identity } from "../crypto/identity";
 import { isOwner, memberHasCapability } from "../lib/capabilities";
-import { addDurableNotification, durableNotifications, listenForSeenMessages, loadDurableNotifications, parseNotification } from "../preferences/durableNotifications";
-import { hasAnyUnseen, markUnseen, removeChannel } from "../preferences/notifications";
+import { addNotice, clearNews, hasNews as anythingNew, loadNotices, noteNews, resetNotices } from "../chat/notices";
 import { mergeVoiceOccupancy, voiceOccupancyUpdates, type VoiceState } from "./voice-state";
 
 export type Listener = (message: RealtimeEnvelope) => void;
@@ -71,6 +70,8 @@ export function createShellState(props: { account: () => Account; identity: () =
   const [voiceRoster, setVoiceRoster] = createSignal<Record<string, ChannelOccupancy["occupants"]>>({});
   const [unreadServers, setUnreadServers] = createSignal<string[]>([]);
   const [delivery, setDelivery] = createSignal<DeliveryState>("connected");
+  // Counts reconnections, so a thread that is open knows to fetch what it missed.
+  const [resync, setResync] = createSignal(0);
 
   const applyOccupancy = (forServer: string, updates: ChannelOccupancy[]) => {
     setVoiceState((now) => mergeVoiceOccupancy(now, forServer, updates));
@@ -96,15 +97,18 @@ export function createShellState(props: { account: () => Account; identity: () =
   };
 
   createEffect(() => {
-    void loadDurableNotifications();
+    resetNotices();
+    void loadNotices();
     void loadAllServerKeys(props.identity(), meId());
-    onCleanup(listenForSeenMessages());
   });
 
   createEffect(() => {
     const live = connectRealtime({
       onState: setDelivery,
-      onResync: () => void cache.invalidateQueries(),
+      onResync: () => {
+        void cache.invalidateQueries();
+        setResync((n) => n + 1);
+      },
       onEvent: (message) => {
         const about = message.server_id ?? String(message.payload.server_id ?? "");
         void handleHandoffEvent(message, props.identity(), meId()).catch(() => undefined);
@@ -115,14 +119,13 @@ export function createShellState(props: { account: () => Account; identity: () =
             if (about && channelId !== route().channelId) {
               setUnreadServers((now) => (now.includes(about) ? now : [...now, about]));
               if (channelId && messageId && message.payload.sender_account_id !== meId()) {
-                markUnseen(channelId, messageId, String(message.payload.created_at ?? "") || undefined);
+                noteNews(about, channelId, messageId, String(message.payload.created_at ?? new Date().toISOString()));
               }
             }
             break;
           }
           case "notification.created": {
-            const note = parseNotification(message.payload);
-            if (note) addDurableNotification(note);
+            addNotice(message.payload);
             break;
           }
           case "presence":
@@ -139,12 +142,33 @@ export function createShellState(props: { account: () => Account; identity: () =
           case "voice.occupancy":
             if (about) applyOccupancy(about, voiceOccupancyUpdates(message.payload));
             break;
-          case "channel.deleted":
-            removeChannel(String(message.payload.id ?? message.payload.channel_id ?? ""));
+          case "channel.deleted": {
+            const gone = String(message.payload.id ?? message.payload.channel_id ?? "");
+            clearNews(gone);
             void cache.invalidateQueries({ queryKey: queryKeys.channels(about) });
+            // Someone looking at the channel that was just deleted is taken back to its server.
+            if (gone && route().channelId === gone) navigate(`/servers/${about || serverId()}`);
             break;
-          case "server.deleted":
+          }
+          case "server.deleted": {
+            const gone = String(message.payload.server_id ?? about);
             void cache.invalidateQueries({ queryKey: queryKeys.servers });
+            if (gone && serverId() === gone) navigate("/");
+            break;
+          }
+          case "invite.consumed":
+            // A new member joined through an invite: the member list and role counts change.
+            if (about) {
+              void cache.invalidateQueries({ queryKey: queryKeys.members(about) });
+              void cache.invalidateQueries({ queryKey: queryKeys.roles(about) });
+            }
+            break;
+          case "channel_role.changed":
+            // Roles of a channel changed what some members may do there.
+            if (about) {
+              void cache.invalidateQueries({ queryKey: queryKeys.channels(about) });
+              void cache.invalidateQueries({ queryKey: queryKeys.roles(about) });
+            }
             break;
         }
         listeners.forEach((handler) => handler(message));
@@ -169,6 +193,17 @@ export function createShellState(props: { account: () => Account; identity: () =
     }
   };
 
+  /** Brings a member into view in the members panel, opening the panel first if it is closed. */
+  const focusMember = (accountId: string) => {
+    setMembersChoice(true);
+    requestAnimationFrame(() => {
+      const row = document.querySelector<HTMLElement>(`[data-account="${CSS.escape(accountId)}"]`);
+      row?.scrollIntoView({ block: "center" });
+      row?.classList.add("member-flash");
+      window.setTimeout(() => row?.classList.remove("member-flash"), 1800);
+    });
+  };
+
   createEffect(() =>
     listen(window, "resize", () => {
       setViewport(window.innerWidth);
@@ -189,15 +224,17 @@ export function createShellState(props: { account: () => Account; identity: () =
   // Dialogs opened from the sidebar but rendered once, at the shell root.
   const [createChannelKind, setCreateChannelKind] = createSignal<ChannelKind | null>(null);
   const [settingsChannel, setSettingsChannel] = createSignal<Channel | null>(null);
+  // Set when the channel dialog is opened straight onto its delete confirmation (context menu).
+  const [settingsDelete, setSettingsDelete] = createSignal(false);
 
-  const hasNews = () => hasAnyUnseen() || durableNotifications().length > 0;
+  const hasNews = () => anythingNew();
   const go = (path: string) => navigate(path);
 
   return {
     route, serverId, servers, channels, roles, members, presence, server, channel, meId, owner, can, canAdminServer,
-    voiceState, voiceRoster, unreadServers, delivery, subscribe, listeners,
-    createChannelKind, setCreateChannelKind, settingsChannel, setSettingsChannel,
-    drawerOpen, setDrawerOpen, narrow, membersOpen, toggleMembers, hasNews, go,
+    voiceState, voiceRoster, unreadServers, delivery, resync, subscribe, listeners,
+    createChannelKind, setCreateChannelKind, settingsChannel, setSettingsChannel, settingsDelete, setSettingsDelete,
+    drawerOpen, setDrawerOpen, narrow, membersOpen, toggleMembers, focusMember, hasNews, go,
     refreshServers: () => cache.invalidateQueries({ queryKey: queryKeys.servers }),
     refreshChannels: () => cache.invalidateQueries({ queryKey: queryKeys.channels(serverId()) }),
     refreshRoles: () => cache.invalidateQueries({ queryKey: queryKeys.roles(serverId()) }),

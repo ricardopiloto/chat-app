@@ -1,7 +1,7 @@
 import { For, Show } from "solid-js";
-import { Icon } from "../../components/ui";
-import { t } from "../../i18n";
 import { useShell } from "../../shell/state";
+import { t } from "../../i18n";
+import { Icon } from "../../components/ui";
 
 type Entry = { id: string; label: string; icon: string; section: "overview" | "roles" | "members"; anchor?: string; ownerOnly?: boolean };
 

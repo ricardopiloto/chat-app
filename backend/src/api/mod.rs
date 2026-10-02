@@ -94,6 +94,10 @@ pub fn router(state: AppState) -> axum::Router {
                     post(invites::create_invite).get(invites::list_invites),
                 )
                 .route("/invites/{code}", get(invites::preview_invite))
+                .route(
+                    "/invites/{code}/handle-available",
+                    get(invites::handle_available),
+                )
                 .route("/invites/{code}/revoke", post(invites::revoke_invite))
                 .route("/invites/{code}/accept", post(invites::accept_invite))
                 .route(

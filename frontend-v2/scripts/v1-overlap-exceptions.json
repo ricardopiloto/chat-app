@@ -102,5 +102,125 @@
   "index.tsx": {
     "reason": "Written from the requirements. What it shares with the previous frontend is short framework idiom (imports from solid-js and ../i18n, createSignal declarations, closing JSX tags, event-handler templates); the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
     "maxRun": 40
+  },
+  "admin/ChannelSettingsDialog.tsx": {
+    "reason": "Rewritten from the requirements and mockups for frontend-v2-server-admin (state reorganised, handlers extracted, long shared runs broken up). What remains is short framework idiom (solid-js imports, signal declarations, JSX closing tags) and the shared API call shapes; the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "admin/CreateChannelDialog.tsx": {
+    "reason": "Rewritten from the requirements and mockups for frontend-v2-server-admin (state reorganised, handlers extracted, long shared runs broken up). What remains is short framework idiom (solid-js imports, signal declarations, JSX closing tags) and the shared API call shapes; the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "admin/CreateServerDialog.tsx": {
+    "reason": "Rewritten from the requirements and mockups for frontend-v2-server-admin (state reorganised, handlers extracted, long shared runs broken up). What remains is short framework idiom (solid-js imports, signal declarations, JSX closing tags) and the shared API call shapes; the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "admin/InviteDialog.tsx": {
+    "reason": "Rewritten from the requirements and mockups for frontend-v2-server-admin (state reorganised, handlers extracted, long shared runs broken up). What remains is short framework idiom (solid-js imports, signal declarations, JSX closing tags) and the shared API call shapes; the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "admin/KeyCustody.tsx": {
+    "reason": "Rewritten from the requirements and mockups for frontend-v2-server-admin (state reorganised, handlers extracted, long shared runs broken up). What remains is short framework idiom (solid-js imports, signal declarations, JSX closing tags) and the shared API call shapes; the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "admin/channel/AccessPanel.tsx": {
+    "reason": "Rewritten from the requirements and mockups for frontend-v2-server-admin (state reorganised, handlers extracted, long shared runs broken up). What remains is short framework idiom (solid-js imports, signal declarations, JSX closing tags) and the shared API call shapes; the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "admin/channel/DeleteChannelDialog.tsx": {
+    "reason": "Rewritten from the requirements and mockups for frontend-v2-server-admin (state reorganised, handlers extracted, long shared runs broken up). What remains is short framework idiom (solid-js imports, signal declarations, JSX closing tags) and the shared API call shapes; the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "admin/channel/InspectPanel.tsx": {
+    "reason": "Rewritten from the requirements and mockups for frontend-v2-server-admin (state reorganised, handlers extracted, long shared runs broken up). What remains is short framework idiom (solid-js imports, signal declarations, JSX closing tags) and the shared API call shapes; the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "admin/channel/MuteMemberDialog.tsx": {
+    "reason": "Rewritten from the requirements and mockups for frontend-v2-server-admin (state reorganised, handlers extracted, long shared runs broken up). What remains is short framework idiom (solid-js imports, signal declarations, JSX closing tags) and the shared API call shapes; the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "admin/channel/MutePanel.tsx": {
+    "reason": "Rewritten from the requirements and mockups for frontend-v2-server-admin (state reorganised, handlers extracted, long shared runs broken up). What remains is short framework idiom (solid-js imports, signal declarations, JSX closing tags) and the shared API call shapes; the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "admin/settings/Members.tsx": {
+    "reason": "Rewritten from the requirements and mockups for frontend-v2-server-admin (state reorganised, handlers extracted, long shared runs broken up). What remains is short framework idiom (solid-js imports, signal declarations, JSX closing tags) and the shared API call shapes; the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "admin/settings/Overview.tsx": {
+    "reason": "Rewritten from the requirements and mockups for frontend-v2-server-admin (state reorganised, handlers extracted, long shared runs broken up). What remains is short framework idiom (solid-js imports, signal declarations, JSX closing tags) and the shared API call shapes; the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "admin/settings/PageHead.tsx": {
+    "reason": "Rewritten from the requirements and mockups for frontend-v2-server-admin (state reorganised, handlers extracted, long shared runs broken up). What remains is short framework idiom (solid-js imports, signal declarations, JSX closing tags) and the shared API call shapes; the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "admin/settings/Roles.tsx": {
+    "reason": "Rewritten from the requirements and mockups for frontend-v2-server-admin (state reorganised, handlers extracted, long shared runs broken up). What remains is short framework idiom (solid-js imports, signal declarations, JSX closing tags) and the shared API call shapes; the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "admin/settings/SettingsPage.tsx": {
+    "reason": "Rewritten from the requirements and mockups for frontend-v2-server-admin (state reorganised, handlers extracted, long shared runs broken up). What remains is short framework idiom (solid-js imports, signal declarations, JSX closing tags) and the shared API call shapes; the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "admin/settings/SettingsSidebar.tsx": {
+    "reason": "Rewritten from the requirements and mockups for frontend-v2-server-admin (state reorganised, handlers extracted, long shared runs broken up). What remains is short framework idiom (solid-js imports, signal declarations, JSX closing tags) and the shared API call shapes; the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "pages/Invite.tsx": {
+    "reason": "Rewritten from the requirements and mockups for frontend-v2-server-admin (state reorganised, handlers extracted, long shared runs broken up). What remains is short framework idiom (solid-js imports, signal declarations, JSX closing tags) and the shared API call shapes; the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "crypto/keyHandoff.ts": {
+    "reason": "Rewritten from the backend contract. Endpoint paths, event names, payload fields and the sealed-envelope flow are fixed by the server and by interoperability with existing members' keys, so call sequences repeat; capped by longest shared run.",
+    "maxRun": 45
+  },
+  "lib/channelName.ts": {
+    "reason": "Rewritten from the backend rule (whitespace becomes hyphen, 32 Unicode characters, not empty or hyphens only). The rule is fixed by the server, so the expressions that implement it repeat; capped by longest shared run.",
+    "maxRun": 40
+  },
+  "mgmt.css": {
+    "reason": "Written from the mockups. Rules use the design-token custom properties (--surface-*, --on-surface*, --radius*) and standard flex/grid declaration lists, which form long runs by nature; selectors, layout and values are this phase's own. Capped by longest shared run.",
+    "maxRun": 60
+  },
+  "chat/EmojiPicker.tsx": {
+    "reason": "Written from the specs, the mockups and the backend contracts for frontend-v2-text-chat, without reading frontend/. The overlap that remains is short framework idiom (solid-js imports, signal declarations, JSX closing tags) and the shared names of the design tokens and API calls; the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "chat/LinkCards.tsx": {
+    "reason": "Written from the specs, the mockups and the backend contracts for frontend-v2-text-chat, without reading frontend/. The overlap that remains is short framework idiom (solid-js imports, signal declarations, JSX closing tags) and the shared names of the design tokens and API calls; the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "chat/AttachmentThumb.tsx": {
+    "reason": "Written from the specs, the mockups and the backend contracts for frontend-v2-text-chat, without reading frontend/. The overlap that remains is short framework idiom (solid-js imports, signal declarations, JSX closing tags) and the shared names of the design tokens and API calls; the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "chat/Lightbox.tsx": {
+    "reason": "Written from the specs, the mockups and the backend contracts for frontend-v2-text-chat, without reading frontend/. The overlap that remains is short framework idiom (solid-js imports, signal declarations, JSX closing tags) and the shared names of the design tokens and API calls; the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "chat/SearchPanel.tsx": {
+    "reason": "Written from the specs, the mockups and the backend contracts for frontend-v2-text-chat, without reading frontend/. The overlap that remains is short framework idiom (solid-js imports, signal declarations, JSX closing tags) and the shared names of the design tokens and API calls; the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "chat/Composer.tsx": {
+    "reason": "Written from the specs, the mockups and the backend contracts for frontend-v2-text-chat, without reading frontend/. The overlap that remains is short framework idiom (solid-js imports, signal declarations, JSX closing tags) and the shared names of the design tokens and API calls; the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "chat/NotificationsPanel.tsx": {
+    "reason": "Written from the specs, the mockups and the backend contracts for frontend-v2-text-chat, without reading frontend/. The overlap that remains is short framework idiom (solid-js imports, signal declarations, JSX closing tags) and the shared names of the design tokens and API calls; the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "chat/MessageRow.tsx": {
+    "reason": "Written from the specs, the mockups and the backend contracts for frontend-v2-text-chat, without reading frontend/. The overlap that remains is short framework idiom (solid-js imports, signal declarations, JSX closing tags) and the shared names of the design tokens and API calls; the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "chat/ChannelPage.tsx": {
+    "reason": "Written from the specs, the mockups and the backend contracts for frontend-v2-text-chat, without reading frontend/. The overlap that remains is short framework idiom (solid-js imports, signal declarations, JSX closing tags) and the shared names of the design tokens and API calls; the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "chat.css": {
+    "reason": "Written from the mockups. Rules use the design-token custom properties and ordinary flex/grid declaration lists, which form long runs by nature; selectors, layout and values are this phase's own. Capped by longest shared run.",
+    "maxRun": 60
   }
 }

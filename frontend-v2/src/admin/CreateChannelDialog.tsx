@@ -1,12 +1,12 @@
-import { Show, createEffect, createSignal } from "solid-js";
-import { Button, Dialog, Icon, Radio, Segmented } from "../components/ui";
-import { channelKeyDisplay, generateChannelKey, rememberChannelKey, sealChannelKeyForSelf } from "../crypto/channelKey";
-import type { Identity } from "../crypto/identity";
-import { channels, type Channel, type ChannelKind, type ChannelVisibility } from "../api";
-import { t } from "../i18n";
+import { Show, batch, createEffect, createSignal } from "solid-js";
+import { KeyCustody } from "./KeyCustody";
 import { errorText } from "../lib/errors";
 import { CHANNEL_NAME_MAX, normalizeChannelNameDraft, validateChannelName } from "../lib/channelName";
-import { KeyCustody } from "./KeyCustody";
+import { t } from "../i18n";
+import type { Identity } from "../crypto/identity";
+import { channelKeyDisplay, generateChannelKey, rememberChannelKey, sealChannelKeyForSelf } from "../crypto/channelKey";
+import { Button, Dialog, Icon, Radio, Segmented } from "../components/ui";
+import { channels, type Channel, type ChannelKind, type ChannelVisibility } from "../api";
 
 // "Create channel": text or voice, public or private, and — for voice only — the key custody step.
 export function CreateChannelDialog(props: {
@@ -17,25 +17,25 @@ export function CreateChannelDialog(props: {
   onClose: () => void;
   onCreated: (channel: Channel) => void;
 }) {
-  const [kind, setKind] = createSignal<ChannelKind>("text");
-  const [name, setName] = createSignal("");
-  const [visibility, setVisibility] = createSignal<ChannelVisibility>("public");
-  const [listed, setListed] = createSignal(true);
-  const [key, setKey] = createSignal(generateChannelKey());
-  const [acknowledged, setAcknowledged] = createSignal(false);
   const [busy, setBusy] = createSignal(false);
   const [error, setError] = createSignal("");
+  const [acknowledged, setAcknowledged] = createSignal(false);
+  const [key, setKey] = createSignal(generateChannelKey());
+  const [name, setName] = createSignal("");
+  const [kind, setKind] = createSignal<ChannelKind>("text");
+  const [listed, setListed] = createSignal(true);
+  const [visibility, setVisibility] = createSignal<ChannelVisibility>("public");
 
+  // Every time the dialog opens it starts from a blank form with a fresh key.
   createEffect(() => {
     if (!props.open) return;
-    setKind(props.initialType);
-    setName("");
-    setVisibility("public");
-    setListed(true);
-    setKey(generateChannelKey());
-    setAcknowledged(false);
-    setError("");
-    setBusy(false);
+    batch(() => {
+      setKind(props.initialType);
+      setKey(generateChannelKey());
+      for (const clear of [() => setName(""), () => setError(""), () => setAcknowledged(false), () => setBusy(false)]) clear();
+      setListed(true);
+      setVisibility("public");
+    });
   });
 
   const check = () => validateChannelName(name());

@@ -106,18 +106,23 @@ export function ContextMenu(props: { children: JSX.Element; items: MenuItem[] })
   useEscape(() => anchor() !== undefined, hide);
   createEffect(() => {
     if (!anchor()) return;
-    document.addEventListener("pointerdown", hide);
-    onCleanup(() => document.removeEventListener("pointerdown", hide));
+    // A press inside the menu is a choice in progress; only presses elsewhere dismiss it.
+    const dismissOutside = (event: PointerEvent) => {
+      if (!(event.target instanceof Element) || !event.target.closest(".context-menu")) hide();
+    };
+    document.addEventListener("pointerdown", dismissOutside);
+    onCleanup(() => document.removeEventListener("pointerdown", dismissOutside));
   });
   return (
     <div
       class="context-target"
       onContextMenu={(event) => {
+        if (props.items.length === 0) return;
         event.preventDefault();
         show(event.clientX, event.clientY);
       }}
       onPointerDown={(event) => {
-        if (event.pointerType === "touch") hold = window.setTimeout(() => show(event.clientX, event.clientY), TOUCH_HOLD_MS);
+        if (event.pointerType === "touch" && props.items.length > 0) hold = window.setTimeout(() => show(event.clientX, event.clientY), TOUCH_HOLD_MS);
       }}
       onPointerUp={() => window.clearTimeout(hold)}
       onPointerCancel={() => window.clearTimeout(hold)}
@@ -140,7 +145,8 @@ export function ContextMenu(props: { children: JSX.Element; items: MenuItem[] })
                   class={item.danger ? "danger" : undefined}
                   onClick={() => {
                     hide();
-                    item.action();
+                    // Run after this click has finished, so a dialog opened by the action does not receive it.
+                    window.setTimeout(item.action, 0);
                   }}
                 >
                   {item.label}

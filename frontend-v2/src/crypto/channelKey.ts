@@ -1,60 +1,42 @@
+// Voice-channel keys: a random 32-byte secret, shown once to the creator, sealed to their own
+// identity for the server, and cached in localStorage under a per-channel entry.
 import { b64, fromB64, seal, unseal, type Identity } from "./identity";
 
-const PREFIX = "mesa.channelKey.";
+const KEY_BYTES = 32;
+const storageName = (channelId: string) => `mesa.channelKey.${channelId}`;
 
-export function generateChannelKey(): Uint8Array {
-  return crypto.getRandomValues(new Uint8Array(32));
-}
+export const generateChannelKey = (): Uint8Array => crypto.getRandomValues(new Uint8Array(KEY_BYTES));
 
-export function channelKeyDisplay(key: Uint8Array): string {
-  return b64(key);
-}
+/** The copyable form of a key. */
+export const channelKeyDisplay = (key: Uint8Array): string => b64(key);
 
-export function sealChannelKeyForSelf(
-  key: Uint8Array,
-  identity: Identity,
-): string {
-  return b64(seal(key, identity.publicKey));
-}
+export const sealChannelKeyForSelf = (key: Uint8Array, owner: Identity): string => b64(seal(key, owner.publicKey));
 
-export function rememberChannelKey(channelId: string, key: Uint8Array) {
+export const unsealChannelKey = (sealed: string, owner: Identity): Uint8Array | null =>
+  unseal(fromB64(sealed), owner.publicKey, owner.secretKey);
+
+/** Storage can be full or blocked; a missing cache entry is always an acceptable outcome. */
+function withStorage<T>(action: (store: Storage) => T, fallback: T): T {
   try {
-    localStorage.setItem(PREFIX + channelId, b64(key));
+    return action(localStorage);
   } catch {
-    /* quota / private mode */
+    return fallback;
   }
 }
+
+export const rememberChannelKey = (channelId: string, key: Uint8Array): void =>
+  withStorage((store) => store.setItem(storageName(channelId), b64(key)), undefined);
+
+export const forgetChannelKey = (channelId: string): void =>
+  withStorage((store) => store.removeItem(storageName(channelId)), undefined);
 
 export function loadChannelKey(channelId: string): Uint8Array | null {
-  try {
-    const raw = localStorage.getItem(PREFIX + channelId);
-    return raw ? fromB64(raw) : null;
-  } catch {
-    return null;
-  }
+  const stored = withStorage((store) => store.getItem(storageName(channelId)), null);
+  return stored ? withStorage(() => fromB64(stored), null) : null;
 }
 
-export function forgetChannelKey(channelId: string) {
-  try {
-    localStorage.removeItem(PREFIX + channelId);
-  } catch {
-    /* ignore */
-  }
-}
-
-export function unsealChannelKey(
-  sealedB64: string,
-  identity: Identity,
-): Uint8Array | null {
-  return unseal(fromB64(sealedB64), identity.publicKey, identity.secretKey);
-}
-
-/** Parse pasted base64 channel key (32 bytes). */
-export function parseChannelKeyInput(raw: string): Uint8Array | null {
-  try {
-    const bytes = fromB64(raw.trim());
-    return bytes.length === 32 ? bytes : null;
-  } catch {
-    return null;
-  }
+/** Accepts a pasted base64 key and returns it only when it has the right length. */
+export function parseChannelKeyInput(pasted: string): Uint8Array | null {
+  const bytes = withStorage(() => fromB64(pasted.trim()), null);
+  return bytes?.length === KEY_BYTES ? bytes : null;
 }

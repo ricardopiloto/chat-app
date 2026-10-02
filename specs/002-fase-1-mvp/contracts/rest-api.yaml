@@ -136,6 +136,17 @@ paths:
       responses:
         "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/InvitePreview" } } } }
         "404": { description: "Convite inexistente, expirado ou revogado (FR-006, US2 Acceptance 7)" }
+  /invites/{code}/handle-available:
+    get:
+      summary: Diz se um handle ainda está livre, para o ecrã de onboarding do convite. Só responde para um convite utilizável; limite de 60 pedidos por minuto por IP.
+      parameters:
+        - { name: code, in: path, required: true, schema: { type: string } }
+        - { name: handle, in: query, required: true, schema: { type: string } }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: object, required: [available], properties: { available: { type: boolean } } } } } }
+        "400": { description: Handle vazio }
+        "404": { description: Convite inexistente, expirado ou revogado }
+        "429": { description: Demasiados pedidos }
   /invites/{code}/accept:
     post:
       summary: Aceita convite. Sem sessão, exige body de cadastro (delegam para /auth/register com invite_code); com sessão, só adiciona Membership.

@@ -6,8 +6,9 @@ use crate::domain::invite::InviteRecord;
 use crate::domain::membership::{KeyHandoffStatus, Membership};
 use crate::domain::permissions;
 use crate::error::ApiError;
+use crate::rate_limit::ClientIp;
 use crate::AppState;
-use axum::extract::{Path, State};
+use axum::extract::{Path, Query, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Json;
@@ -184,6 +185,40 @@ pub async fn preview_invite(
         include_history: invite.include_history,
         requires_account_creation: user.is_none(),
     }))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct HandleQuery {
+    pub handle: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct HandleAvailability {
+    pub available: bool,
+}
+
+/// Lets the invite onboarding screen tell a newcomer whether a handle is still free.
+/// Only answers for a usable invite, so it cannot be used to list accounts without one.
+pub async fn handle_available(
+    State(state): State<AppState>,
+    ClientIp(ip): ClientIp,
+    Path(code): Path<String>,
+    Query(query): Query<HandleQuery>,
+) -> Result<Json<HandleAvailability>, ApiError> {
+    if !state.config.rate_limit_disabled && !state.rate_limiter.allow_handle_check(ip) {
+        return Err(ApiError::too_many_requests());
+    }
+    usable_invite(&state, &code)
+        .await
+        .map_err(|_| ApiError::not_found("invite not found"))?;
+    let handle = query.handle.trim();
+    if handle.is_empty() {
+        return Err(ApiError::bad_request("handle required"));
+    }
+    let taken = db::account::find_by_handle(&state.pool, handle)
+        .await?
+        .is_some();
+    Ok(Json(HandleAvailability { available: !taken }))
 }
 
 pub async fn revoke_invite(

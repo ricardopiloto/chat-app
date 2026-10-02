@@ -1,7 +1,7 @@
 import { Show, type JSX } from "solid-js";
-import { Badge, Checkbox, Icon } from "../components/ui";
 import { createCopy } from "../lib/copy";
 import { t } from "../i18n";
+import { Badge, Checkbox, Icon } from "../components/ui";
 
 // The key block shared by "create server" and "create channel": what the key protects, the key
 // itself with a copy button, and the acknowledgement that must be ticked before creating.
