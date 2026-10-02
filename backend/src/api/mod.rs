@@ -176,6 +176,10 @@ pub fn router(state: AppState) -> axum::Router {
                 )
                 .route("/channels/{channel_id}/voice/e2ee", post(voice::set_e2ee))
                 .route(
+                    "/channels/{channel_id}/voice/channel-key",
+                    get(voice::channel_key),
+                )
+                .route(
                     "/channels/{channel_id}/egress/start",
                     post(voice::egress_start),
                 )

@@ -233,3 +233,40 @@ async fn e2ee_and_egress_require_channel_key() {
         .await;
     assert_eq!(status, StatusCode::FORBIDDEN);
 }
+
+#[tokio::test]
+async fn channel_key_is_readable_only_by_the_custodian() {
+    let app = TestApp::new().await;
+    let (_, _, cookie) = app.register("alice", "password1", None).await;
+    let cookie = must_cookie(cookie);
+    let (_, server, _) = app
+        .request("POST", "/api/servers", Some(crate::common::create_server_body("Mesa")), Some(&cookie))
+        .await;
+    let server_id = server["id"].as_str().unwrap();
+    let (_, ch, _) = app
+        .request("POST", &format!("/api/servers/{server_id}/channels"), Some(voice_body("mesa-extra")), Some(&cookie))
+        .await;
+    let channel_id = ch["id"].as_str().unwrap().to_string();
+
+    let (status, body, _) = app
+        .request("GET", &format!("/api/channels/{channel_id}/voice/channel-key"), None, Some(&cookie))
+        .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    assert_eq!(body["channel_key_sealed"], SEALED);
+
+    let (status, _, _) = app
+        .request("GET", &format!("/api/channels/{channel_id}/voice/channel-key"), None, None)
+        .await;
+    assert_eq!(status, StatusCode::UNAUTHORIZED);
+
+    let (_, invite, _) = app
+        .request("POST", &format!("/api/servers/{server_id}/invites"), Some(json!({ "include_history": false })), Some(&cookie))
+        .await;
+    let code = invite["code"].as_str().unwrap();
+    let (_, _, bob_cookie) = app.register("bob", "password1", Some(code)).await;
+    let bob_cookie = must_cookie(bob_cookie);
+    let (status, _, _) = app
+        .request("GET", &format!("/api/channels/{channel_id}/voice/channel-key"), None, Some(&bob_cookie))
+        .await;
+    assert_eq!(status, StatusCode::FORBIDDEN);
+}

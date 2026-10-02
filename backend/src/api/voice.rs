@@ -10,6 +10,7 @@ use axum::body::Bytes;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::Json;
+use base64::Engine;
 use chrono::Utc;
 use livekit_api::services::egress::{EgressClient, EgressOutput, RoomCompositeOptions};
 use livekit_protocol::EncodedFileOutput;
@@ -456,6 +457,25 @@ pub async fn set_e2ee(
         "e2ee_enabled": body.enabled,
         "audit_id": entry.id,
         "at": entry.created_at,
+    })))
+}
+
+/// The channel key sealed to its custodian, so the client can check a pasted key before re-enabling E2EE.
+/// Only the custodian receives it; the blob is useless without their identity secret.
+pub async fn channel_key(
+    State(state): State<AppState>,
+    AuthUser(account): AuthUser,
+    Path(channel_id): Path<Uuid>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    require_voice_owner(&state, account.id, channel_id).await?;
+    let row = db::channel_key::get(&state.pool, channel_id)
+        .await?
+        .ok_or_else(|| ApiError::not_found("channel has no channel key"))?;
+    if row.custodian_account_id != account.id {
+        return Err(ApiError::forbidden("only the key custodian can read the channel key"));
+    }
+    Ok(Json(serde_json::json!({
+        "channel_key_sealed": base64::engine::general_purpose::STANDARD.encode(&row.sealed_blob),
     })))
 }
 

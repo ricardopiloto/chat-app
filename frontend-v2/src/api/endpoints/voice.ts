@@ -13,6 +13,8 @@ export const voice = {
   occupancy: (serverId: string) => http.get<VoiceOccupancy>(`/api/servers/${serverId}/voice-occupancy`),
   setE2ee: (channelId: string, enabled: boolean, intent?: string) =>
     http.post<{ e2ee_enabled: boolean }>(`/api/channels/${channelId}/voice/e2ee`, { enabled, intent }),
+  /** The channel key sealed to its custodian; only the custodian can read it. */
+  channelKey: (channelId: string) => http.get<{ channel_key_sealed: string }>(`/api/channels/${channelId}/voice/channel-key`),
 };
 
 export const grid = {

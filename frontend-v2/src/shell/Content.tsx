@@ -5,7 +5,7 @@ import { SettingsPage } from "../admin/settings/SettingsPage";
 import { t } from "../i18n";
 import { Account as AccountPage } from "../pages/Account";
 import { ChannelPage } from "../chat/ChannelPage";
-import VoiceChannel from "../pages/VoiceChannel";
+import { VoicePage } from "../voice/VoicePage";
 import { useSession } from "../session/session";
 import { useShell } from "./state";
 
@@ -45,7 +45,7 @@ export function Content() {
             {(_id) => (
               <Show
                 when={shell.channel()!.type === "text"}
-                fallback={<VoiceChannel me={me()} channel={shell.channel()!} identity={identity()} server={shell.server()} roles={shell.roles.data ?? []} onWs={shell.subscribe} />}
+                fallback={<VoicePage channel={shell.channel()!} />}
               >
                 <ChannelPage
                   me={me()}

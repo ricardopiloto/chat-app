@@ -6,8 +6,7 @@ import { normalizeChannelNameDraft, validateChannelName } from "../lib/channelNa
 import { errorText } from "../lib/errors";
 import { publicDisplayLabel } from "../lib/displayName";
 import { t } from "../i18n";
-import CallControls from "../voice/CallControls";
-import { useVoiceSession } from "../voice/VoiceSession";
+import { useCall } from "../voice/callSession";
 import { useShell } from "./state";
 import { UserPanel } from "./UserPanel";
 
@@ -20,15 +19,15 @@ const iconButton = "grid h-7 w-7 place-items-center rounded-md text-on-surface-v
 
 function VoiceRoster(props: { channelId: string }) {
   const shell = useShell();
-  const voice = useVoiceSession();
+  const call = useCall();
   const people = () => shell.voiceRoster()[props.channelId] ?? [];
-  const speaking = () => (voice.channelId() === props.channelId ? voice.speakingAccountIds() : undefined);
+  const speaking = () => (call.channelId() === props.channelId ? call.speaking() : undefined);
   return (
     <Show when={people().length > 0}>
       <ul class="mb-1 ml-9 mt-0.5 flex flex-col gap-0.5">
         <For each={people()}>
           {(person) => (
-            <li class="flex items-center gap-2 rounded-md px-2 py-1 text-body-sm text-on-surface-variant" classList={{ "text-secondary": speaking()?.has(person.account_id) }} title={speaking()?.has(person.account_id) ? t("voice.rosterSpeaking") : undefined}>
+            <li class="flex items-center gap-2 rounded-md px-2 py-1 text-body-sm text-on-surface-variant" classList={{ "text-secondary": speaking()?.has(person.account_id) }} title={speaking()?.has(person.account_id) ? t("call.speaking") : undefined}>
               <span class="grid h-5 w-5 shrink-0 place-items-center overflow-hidden rounded-full bg-surface-container-highest text-[10px] font-semibold" classList={{ "ring-2 ring-secondary": speaking()?.has(person.account_id) }}>
                 <Show when={person.has_avatar} fallback={publicDisplayLabel(person.handle, person.display_name).slice(0, 1).toUpperCase()}>
                   <img src={avatarUrl(person.account_id)} alt="" class="h-full w-full object-cover" />
@@ -36,7 +35,7 @@ function VoiceRoster(props: { channelId: string }) {
               </span>
               <span class="min-w-0 flex-1 truncate">{publicDisplayLabel(person.handle, person.display_name)}</span>
               <Show when={!person.mic_on}>
-                <Icon name="mic_off" label={t("voice.rosterMuted")} class="text-[14px] text-error" />
+                <Icon name="mic_off" label={t("call.micOff")} class="text-[14px] text-error" />
               </Show>
             </li>
           )}
@@ -86,12 +85,12 @@ function ChannelRow(props: { channel: Channel; glyph: string }) {
 
   return (
     <li>
-      <ContextMenu items={menu()}>
-      <div class="group relative flex items-center rounded-md transition-colors" classList={{ "bg-surface-container-high": selected(), "hover:bg-surface-container": !selected() }}>
+      <ContextMenu items={menu()} class="w-full">
+      <div class="group relative flex min-w-0 flex-1 items-center rounded-md transition-colors" classList={{ "bg-surface-container-high hover:bg-surface-container-highest focus-within:bg-surface-container-highest": selected(), "hover:bg-surface-container focus-within:bg-surface-container": !selected() }}>
         <Show
           when={renaming()}
           fallback={
-            <button type="button" aria-current={selected() ? "page" : undefined} onClick={() => shell.go(`/servers/${shell.serverId()}/channels/${props.channel.id}`)} class="flex min-w-0 flex-1 items-center gap-2 px-3 py-2 text-left text-body-md" classList={{ "font-semibold text-on-surface": selected(), "text-on-surface-variant": !selected() }}>
+            <button type="button" aria-current={selected() ? "page" : undefined} onClick={() => shell.go(`/servers/${shell.serverId()}/channels/${props.channel.id}`)} class="flex min-w-0 flex-1 items-center gap-2 px-3 py-2 text-left text-body-md" classList={{ "font-semibold text-on-surface": selected(), "text-on-surface-variant": !selected(), "group-hover:pr-16 group-focus-within:pr-16": manageable() }}>
               <Icon name={props.glyph} class="text-[18px] opacity-70" />
               <span class="min-w-0 flex-1 truncate">{props.channel.name}</span>
               <Show when={props.channel.type === "voice_video" && (shell.voiceRoster()[props.channel.id]?.length ?? 0) > 0}>
@@ -126,7 +125,7 @@ function ChannelRow(props: { channel: Channel; glyph: string }) {
           />
         </Show>
         <Show when={manageable() && !renaming()}>
-          <span class="absolute right-1 top-1/2 flex -translate-y-1/2 rounded-md bg-surface-container-highest opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+          <span class="pointer-events-none absolute right-1 top-1/2 flex -translate-y-1/2 rounded-md bg-surface-container-highest opacity-0 ring-1 ring-outline-variant transition-opacity group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100 [@media(any-hover:none)]:!pointer-events-none [@media(any-hover:none)]:!opacity-0 [@media(any-hover:none)]:group-focus-within:!opacity-100">
             <button type="button" class={iconButton} title={t("admin.channel.rename")} aria-label={t("admin.channel.rename")} onClick={() => { setDraft(props.channel.name); setProblem(""); setRenaming(true); }}>
               <Icon name="edit" class="text-[16px]" />
             </button>
@@ -190,7 +189,6 @@ export function Sidebar() {
           </Show>
         </div>
       </Show>
-      <CallControls />
       <UserPanel />
     </aside>
   );

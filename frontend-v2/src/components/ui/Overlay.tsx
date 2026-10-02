@@ -94,7 +94,7 @@ const clamp = (value: number, low: number, high: number) => Math.min(Math.max(va
 
 // Context menu opened at the pointer by right-click, or by holding a finger down for half a second.
 // It clamps to the viewport and closes on an outside press, on Escape, or after a choice.
-export function ContextMenu(props: { children: JSX.Element; items: MenuItem[] }) {
+export function ContextMenu(props: { children: JSX.Element; items: MenuItem[]; class?: string }) {
   const [anchor, setAnchor] = createSignal<{ left: number; top: number }>();
   let hold = 0;
   const show = (x: number, y: number) =>
@@ -115,7 +115,7 @@ export function ContextMenu(props: { children: JSX.Element; items: MenuItem[] })
   });
   return (
     <div
-      class="context-target"
+      class={props.class ? `context-target ${props.class}` : "context-target"}
       onContextMenu={(event) => {
         if (props.items.length === 0) return;
         event.preventDefault();

@@ -5,8 +5,8 @@ import { ChannelSettingsDialog } from "../admin/ChannelSettingsDialog";
 import { InviteDialog } from "../admin/InviteDialog";
 import { NotificationsPanel } from "../chat/NotificationsPanel";
 import { SearchPanel, type SearchHit } from "../chat/SearchPanel";
-import FloatingVoicePip from "../voice/FloatingVoicePip";
-import { useVoiceSession } from "../voice/VoiceSession";
+import { FloatingPlayer } from "../voice/FloatingPlayer";
+import { useCall } from "../voice/callSession";
 import { useSession } from "../session/session";
 import { useShell } from "./state";
 
@@ -15,7 +15,7 @@ import { useShell } from "./state";
 export function Hosts() {
   const shell = useShell();
   const session = useSession();
-  const voice = useVoiceSession();
+  const voice = useCall();
 
   const [creatingServer, setCreatingServer] = createSignal(false);
   const [inviting, setInviting] = createSignal(false);
@@ -76,7 +76,7 @@ export function Hosts() {
   return (
     <>
       <Show when={voice.live() && voice.channelId() !== null && voice.channelId() !== shell.route().channelId}>
-        <FloatingVoicePip />
+        <FloatingPlayer />
       </Show>
       <CreateServerDialog
         open={creatingServer()}
