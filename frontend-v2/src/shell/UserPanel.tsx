@@ -3,6 +3,7 @@ import { avatarUrl } from "../api";
 import { Avatar, Icon } from "../components/ui";
 import { t } from "../i18n";
 import { useSession } from "../session/session";
+import { CallControls } from "../voice/CallControls";
 import { AccountMenu } from "./AccountMenu";
 
 // Pinned at the bottom of the sidebar: who you are, and the entry to the account menu.
@@ -12,7 +13,9 @@ export function UserPanel() {
   const me = () => session.account()!;
   const name = () => me().display_name || me().handle;
   return (
-    <div class="relative flex items-center gap-3 border-t border-outline-variant bg-surface-container px-3 py-3">
+    <div class="relative border-t border-outline-variant bg-surface-container">
+      <CallControls />
+      <div class="flex items-center gap-3 px-3 py-3">
       <Avatar name={name()} src={me().has_avatar ? avatarUrl(me().id) : undefined} online />
       <div class="flex min-w-0 flex-1 flex-col leading-tight">
         <strong class="truncate text-body-md">{name()}</strong>
@@ -24,6 +27,7 @@ export function UserPanel() {
       <Show when={open()}>
         <AccountMenu onClose={() => setOpen(false)} />
       </Show>
+      </div>
     </div>
   );
 }

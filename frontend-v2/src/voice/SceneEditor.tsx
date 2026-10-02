@@ -1,363 +1,232 @@
-import { For, Show, createEffect, createSignal, onCleanup } from "solid-js";
-import type { GridLayout } from "../api/client";
-import {
-  applySlotRemoval,
-  assignAccount,
-  bankAccountIds,
-  createDraft,
-  discardDraft,
-  isDirty,
-  markSaved,
-  returnToBank,
-  setNamedLayout,
-  trySetSlotCount,
-  type SceneDraft,
-} from "./sceneDraft";
-import { t } from "../i18n";
+// Edit mode for the channel's one scene. It replaces the composition view: numbered seats on the left,
+// a side panel (seat count, layout, bench) on the right. Everything happens on a draft; Save writes it,
+// Discard drops it, and closing with changes pending asks first (Cancel / Discard / Save).
+import { For, Show, createMemo, createSignal } from "solid-js";
+import { Badge, Button, Dialog, Icon } from "../components/ui";
 import { errorText } from "../lib/errors";
-import { Button, Dialog } from "../components/ui";
-import {
-  LAYOUT_KEYS,
-  MAX_SCENE_SLOTS,
-  MIN_SCENE_SLOTS,
-  cellStyle,
-  familyLabel,
-  layoutGeometry,
-  type LayoutKey,
-} from "./sceneLayouts";
+import { t } from "../i18n";
+import type { LayoutKey } from "../api";
+import { layoutClass } from "./CompositionView";
+import { useCallPeople } from "./people";
+import { LAYOUTS, MAX_SEATS, MIN_SEATS, assign, bench, clampSeats, isDirty, occupied, release, resize, seatOf, seatsToDrop, setLayout, type Scene } from "./scene";
+import { seatTone } from "./tiles";
 
-type Props = {
-  channelId: string;
-  sceneId: string;
-  sceneName: string;
-  sceneIsActive: boolean;
-  layout: GridLayout;
-  handles: Record<string, string>;
-  inCallIds: string[];
-  onSave: (layout: GridLayout) => Promise<void>;
-  onClose: () => void;
-};
+export function SceneEditor(props: { saved: Scene; name: string; onSave: (scene: Scene) => Promise<void>; onClose: () => void }) {
+  const { people, byId } = useCallPeople();
+  const [draft, setDraft] = createSignal<Scene>(props.saved);
+  const [picked, setPicked] = createSignal<string | null>(null);
+  const [overSeat, setOverSeat] = createSignal<number | null>(null);
+  const [saving, setSaving] = createSignal(false);
+  const [problem, setProblem] = createSignal("");
+  const [confirmingClose, setConfirmingClose] = createSignal(false);
+  /** Set while the admin must choose which occupied seats to remove before the count shrinks. */
+  const [shrinking, setShrinking] = createSignal<{ count: number; remove: number[] } | null>(null);
 
-type ReducePrompt = {
-  targetN: number;
-  delta: number;
-  selected: Set<number>;
-};
+  const dirty = createMemo(() => isDirty(props.saved, draft()));
+  const present = () => people().map((p) => p.id);
+  const benched = () => bench(draft(), present());
 
-export default function SceneEditor(props: Props) {
-  const [draft, setDraft] = createSignal<SceneDraft>(
-    createDraft(props.sceneId, props.channelId, props.layout, props.sceneName),
-  );
-  const [error, setError] = createSignal("");
-  const [busy, setBusy] = createSignal(false);
-  const [confirmExit, setConfirmExit] = createSignal(false);
-  const [selectedBank, setSelectedBank] = createSignal<string | null>(null);
-  const [reducePrompt, setReducePrompt] = createSignal<ReducePrompt | null>(null);
+  const place = (index: number, accountId: string) => {
+    setDraft(assign(draft(), index, accountId));
+    setPicked(null);
+  };
 
-  createEffect(() => {
-    setDraft(createDraft(props.sceneId, props.channelId, props.layout, props.sceneName));
-    setReducePrompt(null);
-  });
+  function onSeat(index: number) {
+    const current = draft().seats[index];
+    if (picked()) return place(index, picked()!);
+    if (current?.accountId) setDraft(release(draft(), index));
+  }
 
-  const bank = () => bankAccountIds(draft(), props.inCallIds);
-  const n = () => draft().draftLayout.slot_count || draft().draftLayout.slots.length || 4;
-  const geo = () =>
-    layoutGeometry(draft().draftLayout.layout_key as LayoutKey, n());
+  function onSeatDrop(event: DragEvent, index: number) {
+    event.preventDefault();
+    setOverSeat(null);
+    const id = event.dataTransfer?.getData("text/plain");
+    if (id) place(index, id);
+  }
+
+  function changeCount(raw: number) {
+    const count = clampSeats(raw);
+    if (count === draft().seats.length) return;
+    if (seatsToDrop(draft(), count) > 0) {
+      // Pre-select the highest occupied seats; the admin can change the choice in the dialog.
+      const tail = occupied(draft()).map((s) => s.index).slice(-seatsToDrop(draft(), count));
+      setShrinking({ count, remove: tail });
+      return;
+    }
+    setDraft(resize(draft(), count));
+  }
+
+  function toggleRemoval(index: number) {
+    const s = shrinking();
+    if (!s) return;
+    const has = s.remove.includes(index);
+    setShrinking({ ...s, remove: has ? s.remove.filter((i) => i !== index) : [...s.remove, index] });
+  }
+
+  const mustRemove = () => (shrinking() ? seatsToDrop(draft(), shrinking()!.count) : 0);
+  const chosenOk = () => (shrinking() ? shrinking()!.remove.length === mustRemove() : false);
+
+  function confirmShrink() {
+    const s = shrinking();
+    if (!s || !chosenOk()) return;
+    // `resize` removes the chosen seats, then empty seats, so only the chosen people lose a seat.
+    setDraft(resize(draft(), s.count, s.remove));
+    setShrinking(null);
+  }
 
   async function save() {
-    setBusy(true);
-    setError("");
+    setSaving(true);
+    setProblem("");
     try {
-      await props.onSave(draft().draftLayout);
-      setDraft(markSaved(draft()));
-      setConfirmExit(false);
+      await props.onSave(draft());
       props.onClose();
-    } catch (err) {
-      setError(errorText(err));
+    } catch (error) {
+      setProblem(errorText(error));
     } finally {
-      setBusy(false);
+      setSaving(false);
+      setConfirmingClose(false);
     }
   }
 
-  function discard() {
-    setDraft(discardDraft(draft()));
-    setReducePrompt(null);
-    setConfirmExit(false);
-    props.onClose();
-  }
-
-  function requestClose() {
-    if (isDirty(draft())) setConfirmExit(true);
-    else props.onClose();
-  }
-
-  function onSlotActivate(slotIndex: number) {
-    const prompt = reducePrompt();
-    if (prompt) {
-      const next = new Set(prompt.selected);
-      if (next.has(slotIndex)) next.delete(slotIndex);
-      else if (next.size < prompt.delta) next.add(slotIndex);
-      setReducePrompt({ ...prompt, selected: next });
-      return;
-    }
-    const sel = selectedBank();
-    if (sel) {
-      setDraft(assignAccount(draft(), sel, slotIndex));
-      setSelectedBank(null);
-      return;
-    }
-    const slot = draft().draftLayout.slots.find((s) => s.index === slotIndex);
-    if (slot?.account_id) setDraft(returnToBank(draft(), slot.account_id));
-  }
-
-  function onChangeN(raw: string) {
-    const target = Number(raw);
-    if (!Number.isFinite(target)) return;
-    const result = trySetSlotCount(draft(), target);
-    if (result.ok) {
-      setDraft(result.draft);
-      setReducePrompt(null);
-      return;
-    }
-    setReducePrompt({
-      targetN: result.targetN,
-      delta: result.delta,
-      selected: new Set(),
-    });
-  }
-
-  function confirmReduce() {
-    const prompt = reducePrompt();
-    if (!prompt || prompt.selected.size !== prompt.delta) return;
-    setDraft(applySlotRemoval(draft(), [...prompt.selected], prompt.targetN));
-    setReducePrompt(null);
-  }
-
-  function cancelReduce() {
-    setReducePrompt(null);
-  }
-
-  createEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        if (reducePrompt()) {
-          cancelReduce();
-          return;
-        }
-        requestClose();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    onCleanup(() => window.removeEventListener("keydown", onKey));
-  });
-
-  const slotChoices = Array.from(
-    { length: MAX_SCENE_SLOTS - MIN_SCENE_SLOTS + 1 },
-    (_, i) => MIN_SCENE_SLOTS + i,
-  );
+  const LAYOUT_LABEL: Record<LayoutKey, string> = { mestre: t("call.layout.mestre"), quad: t("call.layout.quad"), faixa: t("call.layout.faixa") };
 
   return (
-    <section class="scene-editor">
-      <div class="scene-editor-toolbar">
-        <strong>{t("scene.editing")}</strong>
-        <span class="muted" style={{ "margin-left": "auto" }}>
-          {t("scene.hint")}
-        </span>
-        <button type="button" class="ui-button secondary" onClick={requestClose} disabled={busy()}>
-          {t("scene.discard")}
-        </button>
-        <button
-          type="button"
-          class="ui-button primary"
-          onClick={() => void save()}
-          disabled={busy() || !isDirty(draft()) || !!reducePrompt()}
-        >
-          {t("scene.save")}
-        </button>
-      </div>
-
-      <Show when={reducePrompt()}>
-        {(p) => (
-          <div class="scene-reduce-banner" role="status">
-            <p>
-              {t("scene.reduceBanner", {
-                delta: p().delta,
-                target: p().targetN,
-                selected: p().selected.size,
-              })}
-            </p>
-            <div class="row" style={{ gap: "8px" }}>
-              <button type="button" class="ui-button secondary" onClick={cancelReduce}>
-                {t("voice.cancel")}
-              </button>
-              <button
-                type="button"
-                class="ui-button primary"
-                disabled={p().selected.size !== p().delta}
-                onClick={confirmReduce}
-              >
-                {t("scene.removeSelected")}
-              </button>
-            </div>
-          </div>
-        )}
+    <section class="call-editor" aria-label={t("call.editor.title")}>
+      <header class="call-editor-head">
+        <Icon name="edit" class="text-[20px]" />
+        <h2>{props.name || t("call.editor.title")}</h2>
+        <Badge tone="live" mono>{t("call.editor.mode")}</Badge>
+        <span class="spacer" />
+        <Button variant="secondary" onClick={() => (dirty() ? setConfirmingClose(true) : props.onClose())}>{t("call.editor.discard")}</Button>
+        <Button variant="primary" disabled={saving() || !dirty()} onClick={() => void save()}>{t("call.editor.save")}</Button>
+      </header>
+      <Show when={problem()}>
+        <p class="call-editor-error" role="alert">{problem()}</p>
       </Show>
 
-      <div class="scene-editor-body">
-        <div
-          class="editor-stage"
-          style={{
-            "grid-template-columns": geo().cols,
-            "grid-template-rows": geo().rows,
-          }}
-        >
-          <For each={draft().draftLayout.slots}>
-            {(slot) => {
-              const marked = () => reducePrompt()?.selected.has(slot.index) ?? false;
-              return (
-                <div
-                  class={`editor-slot${marked() ? " editor-slot-remove" : ""}`}
-                  style={cellStyle(
-                    draft().draftLayout.layout_key as LayoutKey,
-                    slot.index,
-                    n(),
+      <div class="call-editor-body">
+        <div class={`call-stage editing ${layoutClass(draft())}`}>
+          <For each={draft().seats}>
+            {(seat) => (
+              <button
+                type="button"
+                class="call-seat editable"
+                classList={{ "is-over": overSeat() === seat.index, "is-filled": !!seat.accountId, "is-target": !!picked() }}
+                onClick={() => onSeat(seat.index)}
+                onDragOver={(e) => { e.preventDefault(); setOverSeat(seat.index); }}
+                onDragLeave={() => setOverSeat(null)}
+                onDrop={(e) => onSeatDrop(e, seat.index)}
+                aria-label={t("call.editor.seatLabel", { n: seat.index + 1 })}
+              >
+                <span class="call-seat-number">{seat.index + 1}</span>
+                <Show when={byId(seat.accountId)} fallback={<span class="call-seat-hint">{picked() ? t("call.editor.dropHere") : t("call.editor.empty")}</span>}>
+                  {(person) => (
+                    <span class={`call-seat-person tone-${seatTone(person().id)}`}>
+                      <span class="call-bench-dot">{person().name.slice(0, 1).toUpperCase()}</span>
+                      <span>{person().name}</span>
+                      <Icon name="close" label={t("call.editor.toBench")} class="text-[16px]" />
+                    </span>
                   )}
-                  onClick={() => onSlotActivate(slot.index)}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    if (reducePrompt()) return;
-                    const id = e.dataTransfer?.getData("text/account-id");
-                    if (id) setDraft(assignAccount(draft(), id, slot.index));
-                  }}
-                >
-                  <span class="muted" style={{ "font-size": "11px" }}>
-                    {t("scene.slot", { n: slot.index + 1 })}
-                    {slot.index === 0 &&
-                    draft().draftLayout.layout_key === "mestre"
-                      ? t("scene.slotHost")
-                      : ""}
-                  </span>
-                  <Show when={slot.account_id} fallback={<span class="muted">{t("scene.empty")}</span>}>
-                    {(id) => <strong>{props.handles[id()] ?? id()}</strong>}
-                  </Show>
-                </div>
-              );
-            }}
+                </Show>
+              </button>
+            )}
           </For>
         </div>
 
-        <div class="scene-editor-side">
-          <div class="scene-editor-side-block scene-editor-side-block--slots">
-            <div class="scene-editor-side-heading">{t("scene.cameras")}</div>
-            <label class="field" style={{ "margin-bottom": "0" }}>
-              <span class="muted" style={{ "font-size": "12px" }}>
-                {t("scene.slotCount", { min: MIN_SCENE_SLOTS, max: MAX_SCENE_SLOTS })}
-              </span>
-              <select
-                value={String(n())}
-                disabled={!!reducePrompt()}
-                onChange={(e) => onChangeN(e.currentTarget.value)}
-              >
-                <For each={slotChoices}>{(v) => <option value={String(v)}>{v}</option>}</For>
-              </select>
-            </label>
-          </div>
-
-          <div class="scene-editor-side-block scene-editor-side-block--layout">
-            <div class="scene-editor-side-heading">{t("scene.layout")}</div>
-            <div class="layout-list">
-              <For each={LAYOUT_KEYS}>
-                {(key) => {
-                  const L = () => layoutGeometry(key, n());
-                  const active = () => draft().draftLayout.layout_key === key;
-                  return (
-                    <button
-                      type="button"
-                      class={`layout-option${active() ? " active" : ""}`}
-                      disabled={!!reducePrompt()}
-                      onClick={() => setDraft(setNamedLayout(draft(), key))}
-                    >
-                      <span
-                        class="layout-thumb"
-                        style={{
-                          "grid-template-columns": L().cols,
-                          "grid-template-rows": L().rows,
-                        }}
-                      >
-                        <For each={L().cells}>
-                          {(c) => (
-                            <span
-                              style={{
-                                "grid-column": c.col,
-                                "grid-row": c.row,
-                                background: "var(--tile)",
-                                "border-radius": "2px",
-                              }}
-                            />
-                          )}
-                        </For>
-                      </span>
-                      <span>{familyLabel(key, n())}</span>
-                      <span class="muted" style={{ "margin-left": "auto" }}>
-                        {n()}
-                      </span>
-                    </button>
-                  );
-                }}
-              </For>
+        <aside class="call-editor-side">
+          <section>
+            <h3 class="mono-label">{t("call.editor.seats")}</h3>
+            <div class="call-stepper">
+              <Button variant="icon" title={t("call.editor.fewer")} disabled={draft().seats.length <= MIN_SEATS} onClick={() => changeCount(draft().seats.length - 1)}>
+                <Icon name="remove" />
+              </Button>
+              <output aria-live="polite">{draft().seats.length}</output>
+              <Button variant="icon" title={t("call.editor.more")} disabled={draft().seats.length >= MAX_SEATS} onClick={() => changeCount(draft().seats.length + 1)}>
+                <Icon name="add" />
+              </Button>
             </div>
-          </div>
+          </section>
 
-          <div class="scene-editor-side-block scene-editor-side-block--bank">
-            <div class="scene-editor-side-heading">{t("scene.bank")}</div>
-            <div class="editor-bank">
-              <For each={bank()}>
-                {(id) => (
-                  <button
-                    type="button"
-                    class="bank-token"
-                    draggable
-                    disabled={!!reducePrompt()}
-                    onDragStart={(e) => e.dataTransfer?.setData("text/account-id", id)}
-                    onClick={() => setSelectedBank(selectedBank() === id ? null : id)}
-                    style={
-                      selectedBank() === id
-                        ? { outline: "2px solid var(--color-accent)" }
-                        : undefined
-                    }
-                  >
-                    {props.handles[id] ?? id.slice(0, 8)}
+          <section>
+            <h3 class="mono-label">{t("call.editor.layouts")}</h3>
+            <div class="call-layout-list" role="radiogroup" aria-label={t("call.editor.layouts")}>
+              <For each={LAYOUTS}>
+                {(key) => (
+                  <button type="button" role="radio" aria-checked={draft().layout === key} class="call-layout-option" onClick={() => setDraft(setLayout(draft(), key))}>
+                    <span class={`call-layout-preview layout-${key} seats-${draft().seats.length}`} aria-hidden="true">
+                      <For each={draft().seats}>{() => <i />}</For>
+                    </span>
+                    <span>{LAYOUT_LABEL[key]}</span>
                   </button>
                 )}
               </For>
-              <Show when={bank().length === 0}>
-                <span class="muted">{t("scene.bankEmpty")}</span>
-              </Show>
             </div>
-          </div>
-        </div>
+          </section>
+
+          <section>
+            <h3 class="mono-label">{t("call.bench")}</h3>
+            <p class="call-editor-hint">{t("call.editor.benchHint")}</p>
+            <ul class="call-bench-list">
+              <For each={benched()}>
+                {(id) => (
+                  <Show when={byId(id)}>
+                    {(person) => (
+                      <li>
+                        <button
+                          type="button"
+                          draggable={true}
+                          class={`call-bench-chip tone-${seatTone(person().id)}`}
+                          classList={{ "is-picked": picked() === id }}
+                          aria-pressed={picked() === id}
+                          onDragStart={(e) => e.dataTransfer?.setData("text/plain", id)}
+                          onClick={() => setPicked(picked() === id ? null : id)}
+                        >
+                          <span class="call-bench-dot">{person().name.slice(0, 1).toUpperCase()}</span>
+                          {person().name}
+                        </button>
+                      </li>
+                    )}
+                  </Show>
+                )}
+              </For>
+              <Show when={benched().length === 0}>
+                <li class="call-editor-hint">{t("call.benchEmpty")}</li>
+              </Show>
+            </ul>
+            <Show when={seatOf(draft(), picked() ?? "") === -1 && picked()}>
+              <p class="call-editor-hint">{t("call.editor.pickSeat")}</p>
+            </Show>
+          </section>
+        </aside>
       </div>
 
-      <p class="form-error" role="alert">{error()}</p>
-      <Dialog
-        open={confirmExit()}
-        title={t("scene.unsavedTitle")}
-        onClose={() => setConfirmExit(false)}
-      >
-        <p>{t("scene.unsavedBody")}</p>
-        <div class="dialog-actions">
-          <Button onClick={() => setConfirmExit(false)}>
-            {t("scene.keepEditing")}
-          </Button>
-          <Button variant="danger" onClick={discard}>
-            {t("scene.discard")}
-          </Button>
-          <Button variant="primary" onClick={() => void save()}>
-            {t("scene.save")}
-          </Button>
-        </div>
+      <Dialog open={shrinking() !== null} title={t("call.editor.shrinkTitle")} icon="grid_view" onClose={() => setShrinking(null)}>
+        <p>{t("call.editor.shrinkBody", { n: mustRemove() })}</p>
+        <ul class="call-shrink-list">
+          <For each={occupied(draft())}>
+            {(seat) => (
+              <li>
+                <label>
+                  <input type="checkbox" checked={shrinking()?.remove.includes(seat.index)} onChange={() => toggleRemoval(seat.index)} />
+                  <span>{t("call.editor.seatLabel", { n: seat.index + 1 })} · {byId(seat.accountId)?.name ?? "?"}</span>
+                </label>
+              </li>
+            )}
+          </For>
+        </ul>
+        <footer class="dialog-actions call-dialog-actions">
+          <Button variant="secondary" onClick={() => setShrinking(null)}>{t("call.cancel")}</Button>
+          <Button variant="primary" disabled={!chosenOk()} onClick={confirmShrink}>{t("call.editor.shrinkConfirm")}</Button>
+        </footer>
+      </Dialog>
+
+      <Dialog open={confirmingClose()} title={t("call.editor.unsavedTitle")} icon="warning" accent onClose={() => setConfirmingClose(false)}>
+        <p>{t("call.editor.unsavedBody")}</p>
+        <footer class="dialog-actions call-dialog-actions">
+          <Button variant="secondary" onClick={() => setConfirmingClose(false)}>{t("call.cancel")}</Button>
+          <Button variant="danger" onClick={() => { setConfirmingClose(false); props.onClose(); }}>{t("call.editor.discard")}</Button>
+          <Button variant="primary" disabled={saving()} onClick={() => void save()}>{t("call.editor.save")}</Button>
+        </footer>
       </Dialog>
     </section>
   );

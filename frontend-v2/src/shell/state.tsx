@@ -12,6 +12,7 @@ import type { Identity } from "../crypto/identity";
 import { isOwner, memberHasCapability } from "../lib/capabilities";
 import { addNotice, clearNews, hasNews as anythingNew, loadNotices, noteNews, resetNotices } from "../chat/notices";
 import { mergeVoiceOccupancy, voiceOccupancyUpdates, type VoiceState } from "./voice-state";
+import { noteE2eeChange } from "../voice/e2eeState";
 
 export type Listener = (message: RealtimeEnvelope) => void;
 type Capability = Parameters<typeof memberHasCapability>[2];
@@ -68,6 +69,7 @@ export function createShellState(props: { account: () => Account; identity: () =
   // --- live state that is not a query: who is in voice, which servers have something unread
   const [voiceState, setVoiceState] = createSignal<VoiceState>({});
   const [voiceRoster, setVoiceRoster] = createSignal<Record<string, ChannelOccupancy["occupants"]>>({});
+  const [voiceCalls, setVoiceCalls] = createSignal<Record<string, string | null>>({});
   const [unreadServers, setUnreadServers] = createSignal<string[]>([]);
   const [delivery, setDelivery] = createSignal<DeliveryState>("connected");
   // Counts reconnections, so a thread that is open knows to fetch what it missed.
@@ -76,6 +78,7 @@ export function createShellState(props: { account: () => Account; identity: () =
   const applyOccupancy = (forServer: string, updates: ChannelOccupancy[]) => {
     setVoiceState((now) => mergeVoiceOccupancy(now, forServer, updates));
     setVoiceRoster((now) => ({ ...now, ...Object.fromEntries(updates.map((u) => [u.channel_id, u.occupants])) }));
+    setVoiceCalls((now) => ({ ...now, ...Object.fromEntries(updates.map((u) => [u.channel_id, u.call_started_at])) }));
   };
 
   createEffect(() => {
@@ -142,6 +145,12 @@ export function createShellState(props: { account: () => Account; identity: () =
           case "voice.occupancy":
             if (about) applyOccupancy(about, voiceOccupancyUpdates(message.payload));
             break;
+          case "channel.e2ee_changed": {
+            const changed = String(message.payload.channel_id ?? "");
+            if (changed) noteE2eeChange(changed, message.payload);
+            if (about) void cache.invalidateQueries({ queryKey: queryKeys.channels(about) });
+            break;
+          }
           case "channel.deleted": {
             const gone = String(message.payload.id ?? message.payload.channel_id ?? "");
             clearNews(gone);
@@ -232,7 +241,7 @@ export function createShellState(props: { account: () => Account; identity: () =
 
   return {
     route, serverId, servers, channels, roles, members, presence, server, channel, meId, owner, can, canAdminServer,
-    voiceState, voiceRoster, unreadServers, delivery, resync, subscribe, listeners,
+    voiceState, voiceRoster, voiceCalls, unreadServers, delivery, resync, subscribe, listeners,
     createChannelKind, setCreateChannelKind, settingsChannel, setSettingsChannel, settingsDelete, setSettingsDelete,
     drawerOpen, setDrawerOpen, narrow, membersOpen, toggleMembers, focusMember, hasNews, go,
     refreshServers: () => cache.invalidateQueries({ queryKey: queryKeys.servers }),

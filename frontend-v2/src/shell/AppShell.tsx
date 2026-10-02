@@ -1,7 +1,7 @@
 import { Show, createEffect, onCleanup } from "solid-js";
 import { t } from "../i18n";
 import { useSession } from "../session/session";
-import { VoiceSessionProvider } from "../voice/VoiceSession";
+import { CallProvider } from "../voice/callSession";
 import { Content } from "./Content";
 import { Hosts } from "./Hosts";
 import { MembersPanel } from "./MembersPanel";
@@ -61,10 +61,10 @@ export function AppShell() {
   const session = useSession();
   const shell = createShellState({ account: () => session.account()!, identity: () => session.identity()! });
   return (
-    <VoiceSessionProvider onWs={shell.subscribe}>
+    <CallProvider subscribe={shell.subscribe}>
       <ShellProvider value={shell}>
         <Frame />
       </ShellProvider>
-    </VoiceSessionProvider>
+    </CallProvider>
   );
 }

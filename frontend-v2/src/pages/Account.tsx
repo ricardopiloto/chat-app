@@ -7,9 +7,11 @@ import { LOCALES, getLocale, setLocale, t, type AppLocale } from "../i18n";
 import { useSession } from "../session/session";
 import { setThemeMode, themeMode, type ThemeMode } from "../shell/theme";
 import { useShell } from "../shell/state";
+import { AudioVideoSettings } from "../voice/AudioVideoSettings";
 
 const NAV = [
   { id: "profile", icon: "manage_accounts", label: "account.navProfile" },
+  { id: "audio-video", icon: "graphic_eq", label: "call.settings.nav" },
   { id: "appearance", icon: "palette", label: "account.navAppearance" },
 ];
 
@@ -140,6 +142,8 @@ export function Account() {
             </Show>
           </div>
         </Card>
+
+        <AudioVideoSettings />
 
         <section id="appearance">
           <Card icon="translate" label={t("account.appearanceLabel")} title={t("account.appearanceTitle")}>

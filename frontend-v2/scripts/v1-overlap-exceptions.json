@@ -222,5 +222,53 @@
   "chat.css": {
     "reason": "Written from the mockups. Rules use the design-token custom properties and ordinary flex/grid declaration lists, which form long runs by nature; selectors, layout and values are this phase's own. Capped by longest shared run.",
     "maxRun": 60
+  },
+  "voice/CompositionView.tsx": {
+    "reason": "Written from the requirements. What it shares with the previous frontend is short framework idiom (imports from solid-js and ../i18n, createSignal declarations, closing JSX tags, event-handler templates); the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "voice/E2ee.tsx": {
+    "reason": "Written from the requirements. What it shares with the previous frontend is short framework idiom (imports from solid-js and ../i18n, createSignal declarations, closing JSX tags, event-handler templates); the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "voice/CallControls.tsx": {
+    "reason": "Written from the requirements. What it shares with the previous frontend is short framework idiom (imports from solid-js and ../i18n, createSignal declarations, closing JSX tags, event-handler templates); the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "voice/GridView.tsx": {
+    "reason": "Written from the requirements. What it shares with the previous frontend is short framework idiom (imports from solid-js and ../i18n, createSignal declarations, closing JSX tags, event-handler templates); the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "voice/SceneEditor.tsx": {
+    "reason": "Written from the requirements. What it shares with the previous frontend is short framework idiom (imports from solid-js and ../i18n, createSignal declarations, closing JSX tags, event-handler templates); the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "voice/tiles.tsx": {
+    "reason": "Written from the requirements. What it shares with the previous frontend is short framework idiom (imports from solid-js and ../i18n, createSignal declarations, closing JSX tags, event-handler templates); the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "voice/VoicePage.tsx": {
+    "reason": "Written from the requirements. What it shares with the previous frontend is short framework idiom (imports from solid-js and ../i18n, createSignal declarations, closing JSX tags, event-handler templates); the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "voice/Stage.tsx": {
+    "reason": "Written from the requirements. What it shares with the previous frontend is short framework idiom (imports from solid-js and ../i18n, createSignal declarations, closing JSX tags, event-handler templates); the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "voice/GreenRoom.tsx": {
+    "reason": "Written from the requirements. What it shares with the previous frontend is short framework idiom (imports from solid-js and ../i18n, createSignal declarations, closing JSX tags, event-handler templates); the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "voice/AudioVideoSettings.tsx": {
+    "reason": "Written from the requirements. What it shares with the previous frontend is short framework idiom (imports from solid-js and ../i18n, createSignal declarations, closing JSX tags, event-handler templates); the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "voice/FloatingPlayer.tsx": {
+    "reason": "Written from the requirements. What it shares with the previous frontend is short framework idiom (imports from solid-js and ../i18n, createSignal declarations, closing JSX tags, event-handler templates); the exception holds only while the longest shared run stays at or below the cap, so copied logic would still fail.",
+    "maxRun": 40
+  },
+  "voice.css": {
+    "reason": "Written from the mockups. Rules use the design-token custom properties (--surface-*, --on-surface*, --radius*) and standard flex/grid declaration lists, which form long runs by nature; selectors, layout and values are this phase's own. Capped by longest shared run.",
+    "maxRun": 60
   }
 }
