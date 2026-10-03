@@ -127,3 +127,48 @@ Critério: maior distância do mockup × maior exposição ao utilizador × meno
 - As telas 17–19 e partes de 20 continuam fora de escopo? (TR §10, pergunta 1)
 - O `design.md` da Fase 4 (D1) autoriza portar a v1 "quase 1:1". Para a interface isso precisa ser revogado, mantendo a regra só para a lógica de LiveKit/E2EE.
 - As `tasks.md` hoje verificam comportamento ("o botão existe"). Precisam de um critério de fidelidade visual por tela (comparação lado a lado com o `screen.png`), senão a regressão para UI genérica se repete.
+
+## 9. Reavaliação final (`frontend-v2-polish-cutover`, 2026-10-02)
+
+Protocolo de `docs/v2/fidelity-protocol.md` aplicado às 31 entradas do §4. Método: cada tela em escopo foi capturada de novo na v2 atual (tema escuro, pt-BR, janela de 1440×900, backend descartável com duas contas e uma chamada em curso) e comparada lado a lado com o `screen.png` do mockup, contra a lista de elementos obrigatórios que cada fase registou no seu `verification.md` (`openspec/changes/archive/`). As capturas estão em `docs/v2/fidelity/frontend-v2-polish-cutover/`. As capturas de cada fase ficam como registo detalhado. Esta passagem serve para confirmar que nada regrediu desde o fecho de cada fase (efeitos sonoros, ajustes de contraste e alvos de toque desta fase, remoção do `admin.css`).
+
+Resultado: **26 telas em escopo, todas Fiel; 5 entradas fora de escopo ou excluídas, justificadas. Nenhuma Parcial ou Genérica.**
+
+| # | Mockup | Classificação | Registo |
+|---|---|---|---|
+| 1 | `autentica_o_e_registo` | Fiel | `login.jpg`, `register.jpg`; auth-shell 9.1 |
+| 2 | `desbloqueio_de_conta_recupera_o` | Fiel | auth-shell 9.2 (três estados) |
+| 3 | `convite_onboarding_de_convidado` | Fiel | `invite-onboarding.jpg`; server-admin 7.7 |
+| 4 | `shell_da_aplica_o_chat_de_texto` | Fiel | `shell-chat.jpg`; text-chat |
+| 5 | `dropdown_de_notifica_es_e_busca_global` | Fiel | `search.jpg`, `notifications.jpg`; text-chat |
+| 6 | `lightbox_de_anexos_de_imagem` | Fiel | `lightbox.jpg`; text-chat |
+| 7 | `menu_de_conta_popover_modal_de_sair` | Fiel | `account-menu.jpg`, `signout.jpg`; auth-shell 9.4 |
+| 8 | `defini_es_do_servidor_vis_o_geral` | Fiel | `settings-overview.jpg`; server-admin 7.3 |
+| 9 | `defini_es_do_servidor_membros` | Fiel | `settings-members.jpg`; server-admin 7.4 |
+| 10 | `defini_es_do_servidor_cargos` | Fiel | `settings-roles.jpg`; server-admin 7.4 |
+| 11 | `modais_de_gest_o_de_canal` | Fiel | server-admin 7.6 |
+| 12 | `modal_criar_canal_de_voz` | Fiel | `create-channel.jpg`; server-admin 7.2 |
+| 13 | `modal_criar_servidor` | Fiel | `create-server.jpg`; server-admin 7.1 |
+| 14 | `di_logo_de_convidar` | Fiel | `invite-1.jpg`; server-admin 7.7 |
+| 15 | `di_logo_inspecionar_acesso` | Fiel | server-admin 7.5 |
+| 16 | `di_logo_permiss_es_de_canal_acl` | Fiel | `channel-settings.jpg`; server-admin 7.5 |
+| 17 | `configura_es_de_conta_e_cofre_de_chaves_e2ee_mls` | Fora de escopo | TR §7 (MLS, cofre MLS) |
+| 18 | `configura_es_dispositivos_sess_es` | Fora de escopo | TR §7 (multidispositivo) |
+| 19 | `configura_es_minha_conta_perfil_soberano` | Fiel no subconjunto em escopo | `account.jpg`; nome, avatar e idioma. Perfil estendido, bio e P2P excluídos (§6) |
+| 20 | `configura_es_udio_v_deo` | Fiel no subconjunto em escopo | `av-settings.jpg`; voice-video 10.4 |
+| 21 | `pr_entrada_na_chamada_green_room` | Fiel | `green-room.jpg`; voice-video |
+| 22 | `palco_de_voz_v_deo_composi_o` | Fiel | `stage.jpg`; voice-video |
+| 23 | `editor_de_cenas_de_composi_o_1` | Fiel | `editor.jpg`; voice-video |
+| 24 | `editor_de_cenas_de_composi_o_2` | Fiel | `editor.jpg`; voice-video |
+| 25 | `visualiza_o_por_grade_1` | Fiel | `grid.jpg`; voice-video |
+| 26 | `visualiza_o_por_grade_2` | Fiel | `grid.jpg`; voice-video |
+| 27 | `grade_com_compartilhamento_de_tela_1` | Fiel | voice-video (`grade-share-1280.png`) |
+| 28 | `grade_com_compartilhamento_de_tela_2` | Fiel | voice-video (`grade-share-1600.png`) |
+| 29 | `chamada_de_voz_v_deo_em_pip` | Fiel | `pip.jpg`; voice-video |
+| 30 | `sistema_de_design_tokens_componentes` | Fiel | `foundation.jpg`; foundation 10.2 |
+| 31 | `mesa_logo` | Fiel | logo em autenticação, convite, cabeçalho, barra de servidores e estado inicial |
+
+Notas:
+- As telas 27 e 28 (partilha de ecrã) não foram recapturadas: o Chromium de teste não partilha ecrã. Valem a captura e a verificação da fase de voz.
+- O shell (menu lateral, painel Membros) é o da v2 e não o dos mockups, como já registado em voice-video. Os elementos excluídos (§6) estão ausentes em todas as capturas.
+- Modo claro e viewport <768 px (tarefa 4A.5): as telas Fiel foram revistas nas duas variantes (ver `docs/v2/closing-report.md`). Nenhum elemento obrigatório foi removido nem nenhum excluído foi reintroduzido; só se ajustaram cores de tokens (contraste), alvos de toque e o cabeçalho de autenticação em mobile.

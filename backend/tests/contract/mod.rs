@@ -22,6 +22,7 @@ mod invites;
 mod key_envelopes;
 mod message_delete;
 mod messages;
+mod mention_everyone;
 mod mentions_replies;
 mod mentionables;
 mod member_join_welcome;

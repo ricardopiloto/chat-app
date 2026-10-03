@@ -6,9 +6,9 @@ Pensado para mesas de RPG que gravam ou transmitem sessões, e para qualquer gru
 
 | | |
 |--|--|
-| **Estado** | Backend `0.8.1` · Frontend v2 `0.1.0` (reescrita completa, em fase de polimento e corte) |
+| **Estado** | Backend `1.0.0` · Frontend `1.0.0` (reescrita v2 completa; corte de produção, ver [docs/deploy-producao.md § 14](docs/deploy-producao.md#14-corte-para-o-frontend-v2-e-rollback)) |
 | **Stack** | Backend Rust (Axum + SQLite) · Frontend **v2** SolidJS (Vite, Tailwind) · LiveKit (voz/vídeo) |
-| **Frontend** | [`frontend-v2/`](frontend-v2/) é o cliente atual. [`frontend/`](frontend/) é a v1, mantida só como *rollback* até ao corte |
+| **Frontend** | [`frontend-v2/`](frontend-v2/) é o cliente atual. [`frontend/`](frontend/) é a v1, mantida só como *rollback* durante e depois do corte |
 | **Operação** | [docs/operar-instancia.md](docs/operar-instancia.md) · [docs/deploy-producao.md](docs/deploy-producao.md) |
 | **Arquitetura** | [docs/arquitetura-tecnica.md](docs/arquitetura-tecnica.md) |
 | **Produto** | [docs/product-brief.md](docs/product-brief.md) |
@@ -58,7 +58,7 @@ Lista do que a v2 faz hoje. A fonte de verdade, com 138 itens e o endpoint de ca
 ### Servidores, membros e cargos
 - Criar servidor com **custódia da chave** obrigatória (cria também o canal de texto `geral` e o de voz `mesa`).
 - Imagem do servidor, mensagem e canal de boas-vindas, apagar servidor confirmando o nome.
-- Membros com pesquisa, mudança de cargo, remoção. **Cargos** com 11 permissões (ver canais, gerir canais, gerir cargos, criar convites, enviar mensagens, apagar mensagens, anexar ficheiros, remover membros, silenciar membros, ligar-se à voz, falar), reordenação e cargo de sistema do dono.
+- Membros com pesquisa, mudança de cargo, remoção. **Cargos** com 12 permissões (ver canais, gerir canais, gerir cargos, criar convites, enviar mensagens, apagar mensagens, anexar ficheiros, mencionar @todos, remover membros, silenciar membros, ligar-se à voz, falar). Quem não tem cargo vê e escreve nos canais de texto e participa nos de voz; só um cargo, um canal privado ou o silenciamento reduzem isso, reordenação e cargo de sistema do dono.
 - **Convites** em dois passos, pré-visualização sem sessão, aceitar com registo inline ou com sessão.
 - Painel de Membros com presença (online / offline) e aviso quando um convite é consumido.
 
@@ -69,7 +69,7 @@ Lista do que a v2 faz hoje. A fonte de verdade, com 138 itens e o endpoint de ca
 
 ### Chat de texto (E2EE)
 - Mensagens cifradas no cliente; só o *ciphertext* passa pela rede. Tempo real, agrupamento por remetente, separadores de dia, saltar para o presente.
-- Responder com citação, apagar por permissão, **menções** (`@`) e autocompletar de emoji (`:shortcode:`), selector de emoji.
+- Responder com citação, apagar por permissão, **menções** (`@`, e `@todos` para quem tem a permissão) e autocompletar de emoji (`:shortcode:`), selector de emoji.
 - **Anexos** de imagem (ficheiro ou colar), até 10 por mensagem e 5 MiB cada, cifrados no cliente, com *lightbox* (zoom, download, navegação).
 - Pré-visualização de links (até 5 por mensagem).
 - Marcar canal como lido e recuperar mensagens perdidas após reconexão.
@@ -89,8 +89,13 @@ Lista do que a v2 faz hoje. A fonte de verdade, com 138 itens e o endpoint de ca
 - Página **Áudio & Vídeo**: escolha de microfone, saída e câmera, medidor em tempo real, som de teste, pré-visualização e blur partilhado com a chamada.
 - Entrar noutro canal de voz sai do anterior; apagar o canal ou o servidor encerra a chamada.
 
+### Efeitos sonoros
+- Dois sons curtos: **nova menção ou resposta** e **alguém entrou na chamada em que está**. Nunca são o único aviso, não tocam com o utilizador ensurdecido, usam a saída de áudio escolhida e falham em silêncio (autoplay recusado, ficheiro em falta).
+- A menção não toca se o canal está aberto e a janela em foco; rajadas contam como um só toque.
+- Interruptor e pré-escuta em **Áudio & Vídeo**; a escolha fica neste dispositivo. Os ficheiros vivem em `assets/audio/` e são copiados para `frontend-v2/public/audio/` quando o Vite arranca.
+
 ### Transversal
-- Responsivo (gaveta abaixo de 768 px), modo claro e escuro, menu de contexto por clique direito e toque longo, faixa de reconexão do WebSocket, estados vazios e de erro por lista, diálogos com `Esc`.
+- Responsivo (gaveta abaixo de 768 px, sem scroll horizontal), modo claro e escuro com contraste verificado, português (pt-BR) e inglês, menu de contexto por clique direito e toque longo, faixa de reconexão do WebSocket, estados vazios e de erro por lista, diálogos com `Esc`.
 
 ---
 
@@ -294,7 +299,7 @@ Só os contratos que a **v2** consome. O backend tem mais rotas (listadas em [Ro
 | `GET` | `/api/servers/{id}/presence` | — | `{ online_account_ids }` | Complementa o evento `presence` |
 | `DELETE` | `/api/servers/{id}/members/{account}` | — | sem corpo | Remover membro |
 | `PUT` | `/api/servers/{id}/members/{account}/role` | `{ role_id: Id \| null }` | `{ account_id, role_id }` | Mudar cargo |
-| `GET` / `POST` | `/api/servers/{id}/roles` | — / `{ name, capabilities? }` | `ServerRole[]` / `ServerRole` | `RoleCapabilities` tem 11 permissões |
+| `GET` / `POST` | `/api/servers/{id}/roles` | — / `{ name, capabilities? }` | `ServerRole[]` / `ServerRole` | `RoleCapabilities` tem 12 permissões; `can_mention_everyone` (Mencionar @todos) vem desligada por omissão |
 | `PATCH` / `DELETE` | `/api/servers/{id}/roles/{role}` | `{ name?, capabilities? }` / — | `ServerRole` / sem corpo | O cargo de sistema do dono é só de leitura |
 | `PUT` | `/api/servers/{id}/roles/positions` | `{ roles: [{ id, position }] }` | `ServerRole[]` | Reordenar |
 | `PUT` | `/api/servers/{id}/roles/{role}/members` | `{ member_ids }` | `ServerRole` | Substitui os membros do cargo |
@@ -329,7 +334,7 @@ Só os contratos que a **v2** consome. O backend tem mais rotas (listadas em [Ro
 | Método | Caminho | Pedido | Resposta | Notas |
 |--------|---------|--------|----------|-------|
 | `GET` | `/api/channels/{id}/messages?before=` | — | `Message[]` | Página mais recente primeiro. `before` pagina para trás. Só `content_ciphertext` |
-| `POST` | `/api/channels/{id}/messages` | `PostMessageBody` `{ content_ciphertext, attachment_ids?, mentioned_account_ids?, reply_to_message_id? }` | `Message` (201) | Cria notificações de menção e de resposta. Emite `message.new` |
+| `POST` | `/api/channels/{id}/messages` | `PostMessageBody` `{ content_ciphertext, attachment_ids?, mentioned_account_ids?, reply_to_message_id?, mention_everyone? }` | `Message` (201) | Cria notificações de menção e de resposta. Emite `message.new` |
 | `DELETE` | `/api/channels/{id}/messages/{mid}` | — | sem corpo | Por permissão. Emite `message.deleted` |
 | `POST` | `/api/channels/{id}/attachments` | bytes cifrados + `X-Mesa-Media-Type` | `Attachment` (201) | O backend guarda bytes opacos |
 | `GET` | `/api/attachments/{id}` | — | bytes + `X-Mesa-Media-Type` | Cifrados |
@@ -744,6 +749,8 @@ npm run build               # tsc + vite build
 npm run lint                # eslint
 npm run test:contracts      # vetores criptográficos (24 casos)
 npm run check:v1-overlap    # independência em relação ao código da v1
+npm run verify:i18n-keys    # chaves usadas = chaves em pt-BR e en
+npm run verify:sound        # chegadas, janela de repouso e preferência dos efeitos sonoros
 
 cd ../backend && cargo test # contratos e integração da API
 ```
@@ -755,12 +762,12 @@ cd ../backend && cargo test # contratos e integração da API
 ```text
 backend/          # API Axum, SQLite, tokens LiveKit, hub de WebSocket
 frontend-v2/      # SPA SolidJS (cliente atual)
-frontend/         # SPA da v1, só como rollback até ao corte
+frontend/         # SPA da v1, só como rollback depois do corte
 infra/            # Docker Compose do LiveKit
 openspec/         # Specs e changes da v2 (specs/ = estado atual, changes/ = trabalho)
 docs/             # Produto, arquitetura, operação, contratos e mockups (docs/v2/)
 specs/            # Specs históricas da v1 (Speckit)
-assets/audio/     # Efeitos sonoros curtos (a ligar ao frontend)
+assets/audio/     # Efeitos sonoros curtos (mention.mp3, call-join.mp3), copiados para o frontend-v2
 spike/            # Provas de conceito descartáveis
 CHANGELOG.md      # Versionamento
 ```
@@ -777,5 +784,5 @@ CHANGELOG.md      # Versionamento
 - Múltiplas cenas nomeadas por canal, co-diretor e *templates* de cena partilháveis.
 - MLS, multi-dispositivo, Passkeys e semente BIP-39.
 - Reações, rolagem de dados, ferramentas VTT, telemetria de rede e perfil estendido.
-- Efeitos sonoros de nova menção e de chegada a uma chamada (change `frontend-v2-sound-effects`, planeado).
+- Outros sons além de menção e chegada à chamada, volume ajustável e notificações do sistema.
 - Cliente desktop empacotado (Tauri) como binário único cliente + servidor (visão de longo prazo).

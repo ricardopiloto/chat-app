@@ -66,12 +66,12 @@ Com o perfil de produção, o processo **não arranca** se as chaves forem as de
 ## 3. Cliente web
 
 ```bash
-cd frontend
+cd frontend-v2
 npm install
 npm run dev
 ```
 
-Abra `https://127.0.0.1:1420` (certificado de desenvolvimento — aceite-o). No telemóvel na mesma Wi‑Fi use `https://<IP-LAN>:1420`. `http://IP` não é origem segura: `mediaDevices` fica indefinido.
+Este é o cliente de produção (**frontend v2**). Abra `https://127.0.0.1:1421` (certificado de desenvolvimento — aceite-o). No telemóvel na mesma Wi‑Fi use `https://<IP-LAN>:1421`. O Vite arranca com proxy para o backend (`/api`, `/ws`, `/health`) e para o LiveKit (`/rtc`). A v1 (`frontend/`, porta `1420`) fica só como rollback; ver [deploy-producao.md § 14](deploy-producao.md#14-corte-para-o-frontend-v2-e-rollback). `http://IP` não é origem segura: `mediaDevices` fica indefinido.
 
 ### Dev: proxy WebSocket `/rtc` (LiveKit)
 
@@ -89,7 +89,7 @@ Não copie `spike/` — é descartável. Este binário é o produto.
 
 | Serviço | Porta | Protocolo |
 |---------|-------|-----------|
-| SPA (dev) | 1420 | TCP |
+| SPA v2 (dev) | 1421 | TCP |
 | API + WebSocket | 8080 | TCP |
 | LiveKit sinalização | 7880 | TCP |
 | LiveKit RTC TCP | 7881 | TCP |
@@ -98,7 +98,7 @@ Não copie `spike/` — é descartável. Este binário é o produto.
 
 Cenas de câmera (Fase 2) não abrem portas novas: são só composições da grade no canal de vídeo. Trocar de cena não reinicia a chamada.
 
-A SPA (Fase 3) segue o visual **Mesa / Nocturne** (tema claro/escuro, shell com sidebar). Não há portas nem processos novos — só o frontend em `1420` (dev) ou o estático servido com a API.
+A SPA segue o visual **Mesa / Nocturne** (tema claro/escuro, shell com sidebar). Não há portas nem processos novos — só o frontend em `1421` (dev) ou o estático de `frontend-v2/dist` servido pelo Nginx.
 
 Layouts de cena (**Mestre em destaque**, **Painel**, **Faixa N-up**) aceitam **2–8** câmeras/slots por cena; a família de layout e o número são independentes. Continuam só dados SQLite + API, sem portas novas.
 
@@ -108,3 +108,7 @@ Layouts de cena (**Mestre em destaque**, **Painel**, **Faixa N-up**) aceitam **2
 - Ao criar um canal de voz, o cliente gera a chave de mídia do canal: guarde-a (checkbox de custódia) — o servidor só guarda o envelope selado.
 - Artefacto de gravação (LiveKit Egress) é **opcional**. Sem storage configurado, Gravar falha com erro claro e a E2EE **não** fica desligada a falso.
 - Para activar artefacto: configure o LiveKit Egress na instância e exporte `LIVEKIT_EGRESS_FILE_PREFIX` (caminho/prefixo de ficheiro aceite pelo egress, ex. `/out/mesa` ou `s3://bucket/mesa`). Não abre portas novas além das já listadas.
+
+## Efeitos sonoros do frontend v2
+
+O frontend v2 toca dois sons curtos (nova menção e alguém a entrar na chamada). Os ficheiros `mention.mp3` e `call-join.mp3` ficam em `assets/audio/` e são copiados para `frontend-v2/public/audio/` quando o Vite arranca (dev) ou faz o build; sem eles a funcionalidade fica silenciosa, sem erro. Cada pessoa liga ou desliga os efeitos em **Áudio & Vídeo**.

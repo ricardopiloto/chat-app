@@ -13,6 +13,7 @@ struct Row {
     reply_to_message_id: Option<String>,
     kind: String,
     content_plaintext: Option<String>,
+    mentions_everyone: i64,
 }
 
 fn map_row(row: Row) -> Result<Message, sqlx::Error> {
@@ -49,6 +50,7 @@ fn map_row(row: Row) -> Result<Message, sqlx::Error> {
             .transpose()?,
         mentioned_account_ids: Vec::new(),
         reply_to_sender_account_id: None,
+        mentions_everyone: row.mentions_everyone != 0,
     })
 }
 
@@ -66,7 +68,7 @@ async fn enrich(pool: &SqlitePool, message: &mut Message) -> Result<(), sqlx::Er
     Ok(())
 }
 
-const SELECT_COLS: &str = "id, channel_id, sender_account_id, content_ciphertext, created_at, reply_to_message_id, kind, content_plaintext";
+const SELECT_COLS: &str = "id, channel_id, sender_account_id, content_ciphertext, created_at, reply_to_message_id, kind, content_plaintext, mentions_everyone";
 
 async fn find_by_id_raw(pool: &SqlitePool, id: Uuid) -> Result<Option<Message>, sqlx::Error> {
     let row = sqlx::query_as::<_, Row>(&format!(
@@ -86,10 +88,11 @@ pub async fn create(
     ciphertext: &[u8],
     created_at: DateTime<Utc>,
     reply_to_message_id: Option<Uuid>,
+    mentions_everyone: bool,
 ) -> Result<Message, sqlx::Error> {
     sqlx::query(
-        "INSERT INTO message (id, channel_id, sender_account_id, content_ciphertext, created_at, reply_to_message_id, kind, content_plaintext)
-         VALUES (?, ?, ?, ?, ?, ?, 'user', NULL)",
+        "INSERT INTO message (id, channel_id, sender_account_id, content_ciphertext, created_at, reply_to_message_id, kind, content_plaintext, mentions_everyone)
+         VALUES (?, ?, ?, ?, ?, ?, 'user', NULL, ?)",
     )
     .bind(id.to_string())
     .bind(channel_id.to_string())
@@ -97,6 +100,7 @@ pub async fn create(
     .bind(ciphertext)
     .bind(created_at.to_rfc3339())
     .bind(reply_to_message_id.map(|id| id.to_string()))
+    .bind(if mentions_everyone { 1 } else { 0 })
     .execute(pool)
     .await?;
     find_by_id(pool, id)

@@ -19,7 +19,7 @@ Internet ─────────────────────▶  Ngi
                   │                 │                        │
              / (estático)      /api /health /ws          /rtc (WS)
                   │                 │                        │
-          frontend/dist    127.0.0.1:8080 (backend)  127.0.0.1:7880 (LiveKit)
+     frontend-v2/dist    127.0.0.1:8080 (backend)  127.0.0.1:7880 (LiveKit)
                                                               │
                                                      7881/tcp, 3478/udp,
                                                      50000-50100/udp
@@ -163,13 +163,14 @@ sudo mkswap /swapfile && sudo swapon /swapfile
 ## 6. Compilar o frontend
 
 ```bash
-cd /opt/mesa/frontend
+cd /opt/mesa/frontend-v2
 npm install
 npm run build
 ```
 
-Isto gera `frontend/dist/` — ficheiros estáticos que o Nginx vai servir directamente (o backend
-não serve HTML/JS, ver secção "Arquitectura").
+Isto gera `frontend-v2/dist/` — ficheiros estáticos que o Nginx vai servir directamente (o backend
+não serve HTML/JS, ver secção "Arquitectura"). O frontend de produção é o **v2**; a v1 (`frontend/`)
+só serve para o rollback descrito na secção 14.
 
 ## 7. Variáveis de ambiente de produção
 
@@ -269,7 +270,7 @@ server {
     client_max_body_size 6m;   # cobre o limite de anexos (5 MiB) + avatares
 
     # Frontend estático
-    root /opt/mesa/frontend/dist;
+    root /opt/mesa/frontend-v2/dist;
     index index.html;
     location / {
         try_files $uri /index.html;
@@ -365,7 +366,7 @@ TURN (3478/udp) e o range de mídia estão mesmo alcançáveis a partir da inter
 cd /opt/mesa
 git pull
 cd backend && cargo build --release && sudo systemctl restart mesa-backend
-cd ../frontend && npm install && npm run build   # Nginx serve o dist/ novo de imediato
+cd ../frontend-v2 && npm install && npm run build   # Nginx serve o dist/ novo de imediato
 ```
 
 Se a actualização trouxer novas migrações SQL (`backend/migrations/`), correm automaticamente
@@ -404,3 +405,67 @@ instância pequena a paragem é de segundos.
 - **CSP** já vem restritiva por omissão (`backend/src/security_headers.rs`); se adicionar
   integrações externas (ex.: outro CDN de fontes) terá de rever essa política em conjunto com
   este ficheiro.
+
+## 14. Corte para o frontend v2 e rollback
+
+Para uma instância instalada com a v1 (Nginx com `root /opt/mesa/frontend/dist;`), o corte troca só o
+directório que o Nginx serve. Instalações novas seguem as secções 6 a 9 e já nascem na v2. O backend, a origem (`https://chat.1nodado.com.br`),
+as portas e o cookie de sessão (`SameSite=Strict`) não mudam, por isso quem já tem sessão continua
+autenticado. Não há período de convivência: a v1 e a v2 não servem pessoas diferentes ao mesmo tempo.
+
+### 14.1 Antes do corte
+
+Só se corta com os três portões fechados (registo em [`docs/v2/closing-report.md`](v2/closing-report.md)):
+
+1. **Paridade funcional:** todos os itens de `docs/v2/parity-checklist.md` verificados.
+2. **Fidelidade visual:** todas as telas em escopo classificadas **Fiel** em `docs/v2/AUDIT-fidelity.md` §4.
+3. **Independência da v1:** `npm run check:v1-overlap` com 0 reprovados.
+
+Confirme também no servidor: `cargo test` do backend sem falhas novas, e as alterações de backend da
+reescrita (duas rotas aditivas, ver `docs/v2/contracts/backend-change-policy.md`) já implantadas.
+Como são aditivas, a v1 continua a funcionar com elas.
+
+### 14.2 Cortar
+
+```bash
+cd /opt/mesa && git pull
+cd backend && cargo build --release && sudo systemctl restart mesa-backend   # só se o backend mudou
+cd ../frontend-v2 && npm install && npm run build                            # gera frontend-v2/dist
+```
+
+Guarde uma cópia da configuração atual e troque o `root`:
+
+```bash
+sudo cp /etc/nginx/sites-available/mesa /etc/nginx/sites-available/mesa.v1
+sudo sed -i 's|root /opt/mesa/frontend/dist;|root /opt/mesa/frontend-v2/dist;|' /etc/nginx/sites-available/mesa
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+(Ajuste o caminho do ficheiro ao que usa na sua instalação.) **Não apague** `/opt/mesa/frontend/dist`:
+é o destino do rollback.
+
+### 14.3 Verificar depois do corte
+
+- Uma sessão aberta **antes** do corte continua válida: recarregue a página; deve pedir só o
+  desbloqueio do cofre (palavra-passe), não um novo login.
+- `https://chat.1nodado.com.br/health` responde `{"ok":true}` e o app fala com a API pela mesma origem.
+- Entre numa chamada entre dois dispositivos e confirme voz, vídeo e a faixa de E2EE.
+- Os efeitos sonoros (se `frontend-v2/public/audio/` tiver os MP3) tocam; sem ficheiros ficam silenciosos.
+
+### 14.4 Rollback
+
+Sem alterações no backend nem nos dados:
+
+```bash
+sudo cp /etc/nginx/sites-available/mesa.v1 /etc/nginx/sites-available/mesa
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+Confirme que a v1 abre, que o login funciona e que as mensagens e chamadas continuam a funcionar.
+Para voltar a cortar, repita 14.2.
+
+### 14.5 Depois do corte
+
+Mantenha `frontend/` no repositório e o seu `dist/` no servidor durante o período de rollback.
+Quando remover a v1 do repositório é decisão do responsável do produto, depois de a v2 estar validada
+em produção por tempo suficiente (pergunta em aberto no `design.md` da change `frontend-v2-polish-cutover`).

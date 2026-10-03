@@ -5,9 +5,44 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-Product versions align with `frontend/package.json` and `backend/Cargo.toml` unless noted.
+Product versions align with `frontend/package.json` and `backend/Cargo.toml` unless noted. Up to 0.8.1 `frontend/` was the v1 client; since 1.0.0 it holds the v2 client (the rewrite formerly developed as `frontend-v2/`).
 
 ## [Unreleased]
+
+## [1.0.0] - 2026-10-03
+
+First release of the rewritten client. Frontend v2 replaces v1 as the production client; the backend stays compatible (same origin, same `Session` cookie, so existing sessions survive the switch) and only gains additive changes.
+
+### Added
+
+- **Frontend v2** (SolidJS, in `frontend/`): complete rewrite with the Mesa visual identity, light and dark themes (system, light, dark), pt-BR and en, and a responsive layout with a drawer on narrow screens. Cut-over procedure and rollback in [docs/deploy-producao.md § 14](docs/deploy-producao.md#14-corte-para-o-frontend-v2-e-rollback); closing audit in [docs/v2/closing-report.md](docs/v2/closing-report.md).
+  - **Sign-in and identity**: login, registration with an editable invitation code (also filled from the URL), vault unlock on a new device and identity recovery; client-side identity vault (NaCl key pair, Argon2id, AES-GCM, IndexedDB).
+  - **Shell**: server rail, sidebar, top bar (instance, E2EE chip, search, theme switch, notifications, avatar), user panel and members panel grouped by role and presence.
+  - **Server and channel administration**: create servers and channels with key custody, server settings (members, roles and permissions, server image, welcome message, delete), channel settings (rename, delete, access rules and effective access inspector, mute members), and invitations with onboarding for guests.
+  - **Text chat**: day separators and grouping, replies, delete by permission, `@handle` mentions, image attachments decrypted on the client with a lightbox, link previews, emoji picker and `:shortcode:` completion, read-only and muted states, "jump to present" pill, search (free text or `#channel term`) and a notifications dropdown with deep links.
+  - **Voice and video**: pre-join screen (green room) with preview and device calibration, Audio & Video settings, LiveKit call session with call controls, camera blur, speaking indicators, inline voice roster in the sidebar, channel E2EE status and re-enable flow, Composition view (named layouts, 2 to 8 positions, scene editor) and Grid view (with screen-share spotlight), and a floating call PiP.
+  - **My account**: display name, photo, language, and audio and video preferences.
+- **Return to the last channel**: closing the settings goes back to where you were. The server settings (close icon and Esc) open the last channel of that server, and My account ("Voltar à Mesa" and Esc) opens the last channel opened anywhere. The memory is per account, stays on the device, survives reloads and is forgotten when the channel is deleted. If the channel is gone or inaccessible, the server (or home) opens as before. The voice channel opens its pre-join screen without joining the call. Esc while editing the display name now cancels the edit.
+- **Mention @todos**: new role permission "Mencionar @todos" (off by default; the owner always has it). With it, `@todos` in a text channel notifies every member who can see the channel (no 20-mention limit, never the sender); without it the text stays plain. Backend: `can_mention_everyone` on roles and `mention_everyone` / `mentions_everyone` on messages (migration `0022`, additive).
+- **Sound effects**: short sounds for a new mention or reply and for someone joining your call, with an on/off switch and preview in Audio & Video; silent when deafened, when the channel is already in view, or when the file is missing.
+- **Backend (additive, backwards compatible)**: `GET /api/invites/{code}/handle-available` (handle availability during invite onboarding, rate limited) and `GET /api/channels/{id}/voice/channel-key` (sealed channel key, custodian only, used to validate re-enabling E2EE).
+- Channel rows highlight entirely on hover.
+- Verification scripts in `frontend/`: `npm run verify:i18n-keys`, `verify:sound`, `verify:mentions` and `verify:last-channel`.
+
+### Changed
+
+- Product version is now **1.0.0** for the backend crate and the frontend (v2 was developed as `0.1.0`).
+- Closing audit of the rewrite: light mode and mobile reviewed screen by screen (contrast, horizontal overflow, touch targets), i18n parity between pt-BR and en checked by `npm run verify:i18n-keys`, functional parity and visual fidelity tracked in [docs/v2/parity-checklist.md](docs/v2/parity-checklist.md) and [docs/v2/AUDIT-fidelity.md](docs/v2/AUDIT-fidelity.md).
+
+### Removed
+
+- **Frontend v1** was removed from the repository at the cut-over; v2 now lives in `frontend/`. The rollback target is the 0.8.1 commit (`b0a65d1`).
+- `npm run check:v1-overlap` stopped being meaningful with v1 gone (it measured independence from v1).
+
+### Fixed
+
+- **Camera off really releases the camera**: the blurred preview (green room and Audio & Video) kept a copy of the camera track alive, and switching the camera on and off quickly in a call could leave it on.
+- **Guests without a role can speak in voice channels** and attach images: the client treated "no role" as "no permission" for permissions that are on by default.
 
 ## [0.8.1] - 2026-09-11
 

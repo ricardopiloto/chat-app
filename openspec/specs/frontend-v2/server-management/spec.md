@@ -33,7 +33,7 @@ O sistema SHALL apresentar, para quem tem permissão de gerir membros, uma lista
 - **THEN** esse membro deixa de aparecer na lista e perde acesso ao servidor
 
 ### Requirement: Cargos com permissões agrupadas
-O sistema SHALL permitir criar, reordenar e apagar cargos (excepto cargos de sistema, que SHALL ser apresentados como só-leitura sem opção de reordenar ou apagar), e editar as permissões de cada cargo agrupadas em três secções: Geral (ver canais, gerir canais, gerir cargos, criar convites, remover membros, silenciar membros), Texto (enviar mensagens, apagar mensagens, anexar ficheiros) e Voz (ligar, falar).
+O sistema SHALL permitir criar, reordenar e apagar cargos (excepto cargos de sistema, que SHALL ser apresentados como só-leitura sem opção de reordenar ou apagar), e editar as permissões de cada cargo agrupadas em três secções: Geral (ver canais, gerir canais, gerir cargos, criar convites, remover membros, silenciar membros), Texto (enviar mensagens, apagar mensagens, anexar ficheiros, mencionar @todos) e Voz (ligar, falar).
 
 #### Scenario: Cargo de sistema é só-leitura
 - **WHEN** o utilizador selecciona um cargo de sistema (ex. `@everyone`) para edição
@@ -46,6 +46,10 @@ O sistema SHALL permitir criar, reordenar e apagar cargos (excepto cargos de sis
 #### Scenario: Apagar cargo com membros associados
 - **WHEN** o utilizador apaga um cargo que tem membros associados
 - **THEN** o sistema avisa explicitamente que os membros associados perdem as permissões desse cargo antes de confirmar a eliminação
+
+#### Scenario: Permissão de mencionar @todos
+- **WHEN** o utilizador abre as permissões de um cargo não-sistema
+- **THEN** a secção Texto mostra o interruptor "Mencionar @todos", desligado num cargo novo, com uma explicação de que notifica todos os membros do canal
 
 ### Requirement: Imagem, boas-vindas e eliminação do servidor
 O sistema SHALL permitir, a quem tem acesso de dono: alterar ou remover a imagem do servidor (JPEG/PNG/WebP, até 1 MiB); configurar uma mensagem de boas-vindas com um canal de texto de destino e um template de texto; e apagar o servidor mediante uma confirmação que exige digitar o nome exacto do servidor antes de o botão destrutivo ficar activo.
