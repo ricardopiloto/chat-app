@@ -10,6 +10,10 @@ fn is_user_kind(kind: &str) -> bool {
     kind.is_empty() || kind == "user"
 }
 
+fn is_false(value: &bool) -> bool {
+    !*value
+}
+
 fn nil_uuid() -> Uuid {
     Uuid::nil()
 }
@@ -39,6 +43,9 @@ pub struct Message {
     pub mentioned_account_ids: Vec<Uuid>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reply_to_sender_account_id: Option<Uuid>,
+    /// The sender was allowed to mention @todos and notified every member who sees the channel.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub mentions_everyone: bool,
 }
 
 impl Message {

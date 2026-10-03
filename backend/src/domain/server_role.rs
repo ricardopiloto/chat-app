@@ -32,6 +32,9 @@ pub struct RoleCapabilities {
     pub can_connect_voice: bool,
     #[serde(default = "default_true")]
     pub can_speak_voice: bool,
+    /// Mention @todos in a text channel: notifies every member who can see it. Off unless granted.
+    #[serde(default)]
+    pub can_mention_everyone: bool,
 }
 
 fn default_true() -> bool {
@@ -52,6 +55,7 @@ impl RoleCapabilities {
             can_mute_members: false,
             can_connect_voice: true,
             can_speak_voice: true,
+            can_mention_everyone: false,
         }
     }
 
@@ -68,6 +72,7 @@ impl RoleCapabilities {
             can_mute_members: true,
             can_connect_voice: true,
             can_speak_voice: true,
+            can_mention_everyone: true,
         }
     }
 
@@ -84,6 +89,7 @@ impl RoleCapabilities {
             can_mute_members: self.can_mute_members || other.can_mute_members,
             can_connect_voice: self.can_connect_voice || other.can_connect_voice,
             can_speak_voice: self.can_speak_voice || other.can_speak_voice,
+            can_mention_everyone: self.can_mention_everyone || other.can_mention_everyone,
         }
     }
 }

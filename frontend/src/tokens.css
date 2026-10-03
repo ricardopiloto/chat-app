@@ -1,0 +1,30 @@
+/* Token references: color roles mirror the shared M3 palette in the 29 product mockups; typography, 4/8/12/16px radius, spacing and overlay depths follow docs/v2/campfire_modernism/DESIGN.md. */
+:root, [data-theme="dark"] {
+  color-scheme: dark;
+  --background:#10131c; --surface:#10131c; --surface-dim:#10131c; --surface-bright:#363943;
+  --surface-container-lowest:#0b0e17; --surface-container-low:#181b24; --surface-container:#1c1f29; --surface-container-high:#272a33; --surface-container-highest:#32343e; --surface-variant:#32343e;
+  --on-background:#e0e2ef; --on-surface:#e0e2ef; --on-surface-variant:#dbc1ba; --outline:#a38b86; --outline-variant:#55423e;
+  --primary:#ffb4a1; --on-primary:#5d1805; --primary-container:#e07a5f; --on-primary-container:#5b1604; --inverse-primary:#9a442d;
+  --secondary:#6bdc96; --on-secondary:#00391d; --secondary-container:#2ca464; --on-secondary-container:#003118;
+  --tertiary:#d1bcff; --on-tertiary:#3c0090; --tertiary-container:#a680fd; --on-tertiary-container:#3b008c;
+  --error:#ffb4ab; --on-error:#690005; --error-container:#93000a; --on-error-container:#ffdad6;
+  --inverse-surface:#e0e2ef; --inverse-on-surface:#2d303a; --surface-tint:#ffb4a1; --primary-fixed:#ffdbd2; --primary-fixed-dim:#ffb4a1; --on-primary-fixed:#3c0800; --on-primary-fixed-variant:#7c2e19; --secondary-fixed:#88f9b0; --secondary-fixed-dim:#6bdc96; --on-secondary-fixed:#00210f; --on-secondary-fixed-variant:#00522c; --tertiary-fixed:#eaddff; --tertiary-fixed-dim:#d1bcff; --on-tertiary-fixed:#24005b; --on-tertiary-fixed-variant:#5429a6;
+  --font-display:"Plus Jakarta Sans",sans-serif; --font-body:"Inter",sans-serif; --font-code:"JetBrains Mono",monospace;
+  --space-xs:.25rem; --space-sm:.5rem; --space-md:1rem; --space-lg:1.5rem; --space-xl:2.5rem;
+  --radius-sm:.25rem; --radius: .5rem; --radius-md:.75rem; --radius-lg:1rem; --radius-xl:1.5rem; --radius-pill:9999px;
+  --shadow-floating:0 4px 20px -2px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.08); --shadow-stage:0 12px 32px -4px rgba(15,17,23,.8),0 0 0 1px rgba(224,122,95,.25);
+  --bp-mobile:767px; --bp-tablet:1024px; --bp-desktop:1025px;
+}
+/* Light values are extrapolated from the mockup dark semantic palette: warm paper surfaces, dark readable text, and the same semantic accent relationships. */
+[data-theme="light"] {
+  color-scheme: light;
+  --background:#fdfbf7; --surface:#fdfbf7; --surface-dim:#e8e1d9; --surface-bright:#ffffff;
+  --surface-container-lowest:#ffffff; --surface-container-low:#f4efeb; --surface-container:#eee8e2; --surface-container-high:#e8e1d9; --surface-container-highest:#ded6ce; --surface-variant:#ded6ce;
+  --on-background:#211b19; --on-surface:#211b19; --on-surface-variant:#51433f; --outline:#77635d; --outline-variant:#c9b8b0;
+  --primary:#87351f; --on-primary:#ffffff; --primary-container:#c05436; --on-primary-container:#ffffff; --inverse-primary:#ffb4a1;
+  --secondary:#14683b; --on-secondary:#ffffff; --secondary-container:#b8f0cb; --on-secondary-container:#103b25;
+  --tertiary:#6040a0; --on-tertiary:#ffffff; --tertiary-container:#eaddff; --on-tertiary-container:#32136a;
+  --error:#ba1a1a; --on-error:#ffffff; --error-container:#ffdad6; --on-error-container:#410002;
+  --inverse-surface:#2d303a; --inverse-on-surface:#f4eff4; --surface-tint:#87351f; --primary-fixed:#ffdbd2; --primary-fixed-dim:#ffb4a1; --on-primary-fixed:#3c0800; --on-primary-fixed-variant:#7c2e19; --secondary-fixed:#b8f0cb; --secondary-fixed-dim:#6bdc96; --on-secondary-fixed:#00210f; --on-secondary-fixed-variant:#00522c; --tertiary-fixed:#eaddff; --tertiary-fixed-dim:#d1bcff; --on-tertiary-fixed:#24005b; --on-tertiary-fixed-variant:#5429a6;
+  --shadow-floating:0 4px 20px -2px rgba(42,28,20,.18),0 0 0 1px rgba(42,28,20,.12); --shadow-stage:0 12px 32px -4px rgba(42,28,20,.16),0 0 0 1px rgba(135,53,31,.2);
+}

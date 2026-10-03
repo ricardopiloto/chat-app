@@ -33,6 +33,9 @@ pub struct PostMessageBody {
     pub mentioned_account_ids: Vec<Uuid>,
     #[serde(default)]
     pub reply_to_message_id: Option<Uuid>,
+    /// The text contains @todos. Honoured only for the owner or a role with `can_mention_everyone`.
+    #[serde(default)]
+    pub mention_everyone: bool,
 }
 
 async fn membership_for_channel(
@@ -86,6 +89,18 @@ pub async fn list_messages(
     Ok(Json(
         db::message::list_since(&state.pool, channel_id, since, query.before, 200).await?,
     ))
+}
+
+async fn sender_may_mention_everyone(
+    state: &AppState,
+    account_id: Uuid,
+    channel: &crate::domain::channel::Channel,
+) -> Result<bool, ApiError> {
+    let server = db::server::find_by_id(&state.pool, channel.server_id)
+        .await?
+        .ok_or_else(|| ApiError::not_found("channel not found"))?;
+    let caps = db::server_role::aggregated_caps(&state.pool, channel.server_id, account_id).await?;
+    Ok(crate::domain::permissions::effective_role_caps(server.owner_account_id == account_id, caps).can_mention_everyone)
 }
 
 pub async fn post_message(
@@ -156,6 +171,25 @@ pub async fn post_message(
         }
     }
 
+    // @todos is declared by the client (the text is encrypted) and decided here: without the
+    // permission the flag is ignored and the message goes out as plain text.
+    let mut everyone_targets: Vec<Uuid> = Vec::new();
+    let mut mentions_everyone = false;
+    if body.mention_everyone && sender_may_mention_everyone(&state, account.id, &channel).await? {
+        mentions_everyone = true;
+        for membership in db::membership::list_by_server(&state.pool, channel.server_id).await? {
+            let target = membership.account_id;
+            if target == account.id || mention_targets.contains(&target) {
+                continue;
+            }
+            if let Ok((_, access)) = crate::api::authz::channel_access(&state.pool, target, &channel).await {
+                if access.view {
+                    everyone_targets.push(target);
+                }
+            }
+        }
+    }
+
     let message_id = Uuid::new_v4();
     let now = Utc::now();
     let created = db::message::create(
@@ -166,6 +200,7 @@ pub async fn post_message(
         &stored,
         now,
         body.reply_to_message_id,
+        mentions_everyone,
     )
     .await?;
 
@@ -212,6 +247,26 @@ pub async fn post_message(
             channel.server_id,
             &n,
         );
+    }
+
+    if !everyone_targets.is_empty() {
+        let notices: Vec<UserNotification> = everyone_targets
+            .iter()
+            .map(|target| UserNotification {
+                id: Uuid::new_v4(),
+                account_id: *target,
+                kind: NotificationKind::Mention,
+                channel_id,
+                message_id: Some(message_id),
+                actor_account_id: account.id,
+                created_at: now,
+                read_at: None,
+            })
+            .collect();
+        db::notification::insert_many(&state.pool, &notices).await?;
+        for n in &notices {
+            state.ws.send_to_accounts(&[n.account_id], "notification.created", channel.server_id, n);
+        }
     }
 
     if let Some(ref parent) = reply_parent {

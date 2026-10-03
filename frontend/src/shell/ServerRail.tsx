@@ -1,85 +1,56 @@
 import { For, Show } from "solid-js";
-import { serverImageUrl, type Server } from "../api/client";
+import { Icon, Logo } from "../components/ui";
+import { servers as serversApi } from "../api";
 import { t } from "../i18n";
+import { useShell } from "./state";
 
-type Props = {
-  servers: Server[];
-  selectedId: string | null;
-  onSelect: (server: Server) => void;
-  onCreate?: () => void;
-  onContextMenu?: (server: Server, e: MouseEvent) => void;
-};
-
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (!parts.length) return "?";
-  const first = parts[0] ?? "";
-  if (parts.length === 1) return first.slice(0, 2).toUpperCase();
-  const second = parts[1] ?? "";
-  return ((first[0] ?? "") + (second[0] ?? "")).toUpperCase() || "?";
-}
-
-export default function ServerRail(props: Props) {
+// One square per server: image or initials, a bar on the left for the active one, and a dot for
+// unread content or a live call. Opening the creation dialog is the admin phase's job; the "+"
+// only announces the intent.
+export function ServerRail() {
+  const shell = useShell();
+  const base = "relative grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-lg font-display text-headline-sm transition-all duration-150";
   return (
-    <nav class="server-rail" aria-label={t("servers.title")}>
-      <div class="server-rail-list">
-        <For each={props.servers}>
-          {(s) => (
-            <button
-              type="button"
-              class={`server-rail-btn${s.id === props.selectedId ? " active" : ""}`}
-              classList={{
-                "has-unread": !!s.has_unread,
-                "has-voice": !!s.has_voice,
-              }}
-              title={s.name}
-              aria-label={
-                [
-                  s.name,
-                  s.has_unread ? t("shell.unreadMessages") : null,
-                  s.has_voice ? t("shell.voiceActive") : null,
-                ]
-                  .filter(Boolean)
-                  .join(", ")
-              }
-              aria-current={s.id === props.selectedId ? "true" : undefined}
-              onClick={() => props.onSelect(s)}
-              onContextMenu={(e) => {
-                e.preventDefault();
-                props.onContextMenu?.(s, e);
-              }}
-            >
-              <Show when={s.has_unread}>
-                <span class="server-rail-unread" aria-hidden="true" />
-              </Show>
-              <Show
-                when={s.has_image}
-                fallback={<span class="server-rail-glyph">{initials(s.name)}</span>}
+    <nav class="flex w-[72px] shrink-0 flex-col items-center gap-3 overflow-y-auto bg-surface-container-lowest py-3" aria-label={t("shell.servers")}>
+      <button type="button" title={t("shell.home")} aria-label={t("shell.home")} onClick={() => shell.go("/")} class={`${base} bg-surface-container text-primary hover:rounded-md`}>
+        <Logo size={30} />
+      </button>
+      <span class="h-px w-8 bg-outline-variant" aria-hidden="true" />
+      <For each={shell.servers.data ?? []}>
+        {(server) => {
+          const active = () => shell.serverId() === server.id;
+          const inCall = () => Object.values(shell.voiceState()[server.id] ?? {}).some(Boolean);
+          const unread = () => shell.unreadServers().includes(server.id) || server.has_unread;
+          return (
+            <div class="relative">
+              <span class="absolute -left-3 top-1/2 w-1 -translate-y-1/2 rounded-r-full bg-primary transition-all" classList={{ "h-8": active(), "h-2": !active() && unread(), "h-0": !active() && !unread() }} aria-hidden="true" />
+              <button
+                type="button"
+                title={server.name}
+                aria-label={server.name}
+                aria-current={active() ? "true" : undefined}
+                onClick={() => shell.go(`/servers/${server.id}`)}
+                class={`${base} hover:rounded-md`}
+                classList={{ "bg-primary-container text-on-primary-container": active(), "bg-surface-container-high text-on-surface hover:bg-surface-container-highest": !active() }}
               >
-                <img
-                  class="server-rail-glyph"
-                  src={serverImageUrl(s.id)}
-                  alt=""
-                  draggable={false}
-                />
+                <Show when={server.has_image} fallback={server.name.slice(0, 2).toUpperCase()}>
+                  <img src={serversApi.imageUrl(server.id)} alt="" class="h-full w-full object-cover" />
+                </Show>
+              </button>
+              <Show when={unread()}>
+                <span class="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-surface-container-lowest bg-primary" title={t("shell.unread")} />
               </Show>
-              <Show when={s.has_voice}>
-                <span class="server-rail-voice" aria-hidden="true" />
+              <Show when={inCall()}>
+                <span class="absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center rounded-full border-2 border-surface-container-lowest bg-secondary text-on-secondary" title={t("shell.liveCall")}>
+                  <Icon name="volume_up" class="text-[10px]" filled />
+                </span>
               </Show>
-            </button>
-          )}
-        </For>
-      </div>
-      <button
-        type="button"
-        class="server-rail-btn server-rail-create"
-        aria-label={t("servers.create")}
-        title={t("servers.create")}
-        onClick={() => props.onCreate?.()}
-      >
-        <span class="server-rail-glyph" aria-hidden="true">
-          +
-        </span>
+            </div>
+          );
+        }}
+      </For>
+      <button type="button" title={t("shell.createServer")} aria-label={t("shell.createServer")} onClick={() => document.dispatchEvent(new Event("mesa:create-server"))} class={`${base} border border-dashed border-outline-variant bg-transparent text-secondary hover:border-secondary hover:bg-surface-container`}>
+        <Icon name="add" class="text-[26px]" />
       </button>
     </nav>
   );

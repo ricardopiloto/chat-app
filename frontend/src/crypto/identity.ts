@@ -1,182 +1,91 @@
-import nacl from "tweetnacl";
-import { argon2id } from "hash-wasm";
-import { blake2b } from "@noble/hashes/blake2b";
+// Account identity: key pair, the vault that protects it, and where the vault is kept. The vault
+// format and derivation live in vault.ts; this module adds browser storage and the unlock policy.
+import { BadPasswordError, newKeyPair, seal, unlockVault, unseal, wrapVault, type IdentityVault, type KeyPair } from "./vault";
 
-const DB = "chat-identity";
+export { seal, unseal, type IdentityVault };
+export type Identity = KeyPair;
+
+const DB_NAME = "chat-identity";
 const STORE = "keys";
 
-function openDb(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB, 1);
-    req.onupgradeneeded = () => req.result.createObjectStore(STORE);
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-async function idbGet<T>(key: string): Promise<T | undefined> {
-  const db = await openDb();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, "readonly");
-    const req = tx.objectStore(STORE).get(key);
-    req.onsuccess = () => resolve(req.result as T | undefined);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-async function idbPut(key: string, value: unknown): Promise<void> {
-  const db = await openDb();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, "readwrite");
-    tx.objectStore(STORE).put(value, key);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
-}
-
-export function b64(bytes: Uint8Array): string {
-  let s = "";
-  bytes.forEach((b) => {
-    s += String.fromCharCode(b);
-  });
-  return btoa(s);
-}
-
-export function fromB64(value: string): Uint8Array {
-  const bin = atob(value);
-  const out = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
-  return out;
-}
-
-async function deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
-  const hash = await argon2id({
-    password,
-    salt,
-    parallelism: 1,
-    iterations: 3,
-    memorySize: 32 * 1024,
-    hashLength: 32,
-    outputType: "binary",
-  });
-  return crypto.subtle.importKey("raw", hash, "AES-GCM", false, ["encrypt", "decrypt"]);
-}
-
-export type Identity = {
-  publicKey: Uint8Array;
-  secretKey: Uint8Array;
-};
-
-export type IdentityVault = {
-  v: 1;
-  publicKey: number[];
-  salt: number[];
-  iv: number[];
-  wrapped: number[];
-};
-
-function identityStoreKey(accountId: string): string {
-  return `identity:${accountId}`;
-}
-
-export function generateIdentity(): Identity {
-  const kp = nacl.box.keyPair();
-  return { publicKey: kp.publicKey, secretKey: kp.secretKey };
-}
-
-export async function wrapIdentity(identity: Identity, password: string): Promise<IdentityVault> {
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const key = await deriveKey(password, salt);
-  const wrapped = new Uint8Array(
-    await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, identity.secretKey),
-  );
-  return {
-    v: 1,
-    publicKey: Array.from(identity.publicKey),
-    salt: Array.from(salt),
-    iv: Array.from(iv),
-    wrapped: Array.from(wrapped),
-  };
-}
-
-export async function persistIdentity(
-  accountId: string,
-  identity: Identity,
-  password: string,
-): Promise<IdentityVault> {
-  const vault = await wrapIdentity(identity, password);
-  await idbPut(identityStoreKey(accountId), vault);
-  return vault;
-}
-
-async function openVault(stored: IdentityVault, password: string): Promise<Identity> {
-  const key = await deriveKey(password, Uint8Array.from(stored.salt));
-  const secret = new Uint8Array(
-    await crypto.subtle.decrypt(
-      { name: "AES-GCM", iv: Uint8Array.from(stored.iv) },
-      key,
-      Uint8Array.from(stored.wrapped),
-    ),
-  );
-  return { publicKey: Uint8Array.from(stored.publicKey), secretKey: secret };
-}
+/** Why an unlock attempt failed; the screen decides the wording. */
+export type UnlockFailure = "missing_vault" | "bad_password";
 
 export class IdentityUnlockError extends Error {
-  readonly reason: "missing_vault" | "bad_password";
-
-  constructor(reason: "missing_vault" | "bad_password") {
-    super(
-      reason === "missing_vault"
-        ? "A senha foi aceite, mas não há cofre de chaves neste navegador nem no servidor. Use o mesmo endereço com que criou a conta (127.0.0.1 e o IP da LAN são origens diferentes). Se apagou os dados do site, pode gerar novas chaves — o histórico antigo deixa de ser legível."
-        : "senha incorrecta ou cofre de chaves ilegível.",
-    );
+  readonly reason: UnlockFailure;
+  constructor(reason: UnlockFailure) {
+    super(reason);
     this.name = "IdentityUnlockError";
     this.reason = reason;
   }
 }
 
-export async function unlockIdentity(
-  password: string,
-  accountId: string,
-  remoteVault?: IdentityVault | null,
-): Promise<Identity> {
-  const keyed = await idbGet<IdentityVault>(identityStoreKey(accountId));
-  const legacy = keyed ? undefined : await idbGet<IdentityVault>("identity");
-  const stored = keyed ?? remoteVault ?? legacy;
-  if (!stored) {
-    throw new IdentityUnlockError("missing_vault");
-  }
+export const b64 = (bytes: Uint8Array): string => {
+  let binary = "";
+  for (let at = 0; at < bytes.length; at += 0x8000) binary += String.fromCharCode(...bytes.subarray(at, at + 0x8000));
+  return btoa(binary);
+};
+
+export const fromB64 = (text: string): Uint8Array => Uint8Array.from(atob(text), (char) => char.charCodeAt(0));
+
+const vaultKey = (accountId: string) => `identity:${accountId}`;
+
+function openDatabase(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, 1);
+    request.onupgradeneeded = () => request.result.createObjectStore(STORE);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function withStore<T>(mode: IDBTransactionMode, run: (store: IDBObjectStore) => IDBRequest<T>): Promise<T> {
+  const db = await openDatabase();
   try {
-    const identity = await openVault(stored, password);
-    await idbPut(identityStoreKey(accountId), stored);
-    return identity;
-  } catch {
-    throw new IdentityUnlockError("bad_password");
+    return await new Promise<T>((resolve, reject) => {
+      const request = run(db.transaction(STORE, mode).objectStore(STORE));
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  } finally {
+    db.close();
   }
 }
 
-function concat(a: Uint8Array, b: Uint8Array): Uint8Array {
-  const out = new Uint8Array(a.length + b.length);
-  out.set(a);
-  out.set(b, a.length);
-  return out;
+const readLocalVault = (accountId: string) => withStore<IdentityVault | undefined>("readonly", (store) => store.get(vaultKey(accountId)));
+const writeLocalVault = (accountId: string, vault: IdentityVault) => withStore("readwrite", (store) => store.put(vault, vaultKey(accountId)));
+
+/** True when this browser already holds the account's vault (so an unlock needs no server copy). */
+export const hasLocalVault = async (accountId: string): Promise<boolean> => (await readLocalVault(accountId)) !== undefined;
+
+export const generateIdentity = (): Identity => newKeyPair();
+
+export const wrapIdentity = (identity: Identity, password: string): Promise<IdentityVault> => wrapVault(identity, password);
+
+/** Opens a vault held in memory, without touching storage. */
+export async function unlockIdentityVault(vault: IdentityVault, password: string): Promise<Identity> {
+  try {
+    return await unlockVault(vault, password);
+  } catch (error) {
+    throw error instanceof BadPasswordError ? new IdentityUnlockError("bad_password") : error;
+  }
 }
 
-export function seal(plaintext: Uint8Array, recipientPk: Uint8Array): Uint8Array {
-  const eph = nacl.box.keyPair();
-  const nonce = blake2b(concat(eph.publicKey, recipientPk), { dkLen: 24 });
-  const boxed = nacl.box(plaintext, nonce, recipientPk, eph.secretKey);
-  return concat(eph.publicKey, boxed);
+/** Wraps the identity with the password and keeps the vault in this browser; returns it for upload. */
+export async function persistIdentity(accountId: string, identity: Identity, password: string): Promise<IdentityVault> {
+  const vault = await wrapIdentity(identity, password);
+  await writeLocalVault(accountId, vault);
+  return vault;
 }
 
-export function unseal(
-  sealed: Uint8Array,
-  publicKey: Uint8Array,
-  secretKey: Uint8Array,
-): Uint8Array | null {
-  const ephPk = sealed.slice(0, 32);
-  const boxed = sealed.slice(32);
-  const nonce = blake2b(concat(ephPk, publicKey), { dkLen: 24 });
-  return nacl.box.open(boxed, nonce, ephPk, secretKey);
+/**
+ * Unlocks the account identity. The vault kept in this browser wins; otherwise the one held by the
+ * server is used. A vault that opens is also kept locally so the next visit needs no server copy.
+ */
+export async function unlockIdentity(password: string, accountId: string, remoteVault?: IdentityVault | null): Promise<Identity> {
+  const vault = (await readLocalVault(accountId)) ?? remoteVault ?? undefined;
+  if (!vault) throw new IdentityUnlockError("missing_vault");
+  const identity = await unlockIdentityVault(vault, password);
+  await writeLocalVault(accountId, vault);
+  return identity;
 }

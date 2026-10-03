@@ -51,89 +51,89 @@ Regra (`frontend-v2-foundation`, capability `functional-parity`): **todas as fun
 | SHL-09 | Gaveta mobile (< 768 px) | — | A, P | Abre/fecha por botão e backdrop | V (auth-shell) |
 | SHL-10 | Menu de contexto por clique-direito e toque-longo | — | F, S | Variante "perigosa" | |
 | SHL-11 | Faixa de ligação (reconexão do WS) | WS | A, T | Aviso não-modal enquanto reconecta | V (auth-shell) |
-| SHL-12 | Convite e definições a partir do cabeçalho da sidebar | — | A, S | Abrem os diálogos/páginas | parcial: afordâncias (A); diálogos em S |
+| SHL-12 | Convite e definições a partir do cabeçalho da sidebar | — | A, S | Abrem os diálogos/páginas | V (auth-shell: afordâncias; server-admin: diálogos e páginas) |
 | SHL-13 | Versão da instância visível | — | A | Mostrada na topbar | V (auth-shell) |
 
 ## 4. Servidores
 
 | ID | Funcionalidade | API / evento | Fase | Critério | Estado |
 |---|---|---|---|---|---|
-| SRV-01 | Criar servidor (nome + chave gerada, custódia obrigatória) | `POST /api/servers` | S | Botão bloqueado sem checkbox; cria canal de texto e de voz | |
-| SRV-02 | Copiar chave com feedback "Copiado" | — | S | Feedback temporário | |
-| SRV-03 | Apagar servidor confirmando o nome | `DELETE /api/servers/{id}` | S | Botão só activa com o nome exacto | |
-| SRV-04 | Evento de servidor apagado limpa selecção | WS `server.deleted` | S | Sai do servidor | |
-| SRV-05 | Imagem do servidor: enviar / remover (JPEG/PNG/WebP ≤ 1 MiB) | `PUT/DELETE /api/servers/{id}/image` | S | Validação local | |
-| SRV-06 | Boas-vindas: canal e modelo | `GET/PATCH /api/servers/{id}/welcome` | S | Guardar com toast; mensagem publicada ao entrar | |
-| SRV-07 | Landing de definições (Visão geral) | — | S | Abre populada | |
-| SRV-08 | Listar membros com pesquisa | `GET /api/servers/{id}/members` | S | Filtra por handle/nome | |
-| SRV-09 | Alterar cargo de membro | `PUT /api/servers/{id}/members/{account}/role` | S | Reflectido na lista; dono sem controlo | |
-| SRV-10 | Remover membro | `DELETE /api/servers/{id}/members/{account}` | S | Dono não removível | |
-| SRV-11 | Listar cargos | `GET /api/servers/{id}/roles` | S | Ordem e contagem | |
-| SRV-12 | Criar cargo | `POST /api/servers/{id}/roles` | S | Aparece na lista | |
-| SRV-13 | Reordenar cargos | `PUT /api/servers/{id}/roles/positions` | S | ↑/↓; sistema bloqueado | |
-| SRV-14 | Editar permissões do cargo (Geral/Texto/Voz) | `PATCH /api/servers/{id}/roles/{role}` | S | Afecta acesso real; sistema só-leitura | |
-| SRV-15 | Apagar cargo com aviso | `DELETE /api/servers/{id}/roles/{role}` | S | Avisa sobre membros associados | |
-| SRV-16 | Atribuir membros a um cargo | `PUT /api/servers/{id}/roles/{role}/members` | S | Lista de membros do cargo actualiza | |
-| SRV-17 | Criar convite (dois passos) | `POST /api/servers/{id}/invites` | S | Escolhe canal de boas-vindas se faltar; URL copiável | |
-| SRV-18 | Pré-visualizar convite sem sessão | `GET /api/invites/{code}` | S | Nome, histórico, inválido/expirado | |
-| SRV-19 | Aceitar convite com registo inline ou com sessão | `POST /api/invites/{code}/accept` | S | Entra no servidor | |
-| SRV-20 | Aviso de convite consumido | WS `invite.consumed` | S | Reflecte o uso | |
+| SRV-01 | Criar servidor (nome + chave gerada, custódia obrigatória) | `POST /api/servers` | S | Botão bloqueado sem checkbox; cria canal de texto e de voz | V (server-admin) |
+| SRV-02 | Copiar chave com feedback "Copiado" | — | S | Feedback temporário | V (server-admin) |
+| SRV-03 | Apagar servidor confirmando o nome | `DELETE /api/servers/{id}` | S | Botão só activa com o nome exacto | V (server-admin) |
+| SRV-04 | Evento de servidor apagado limpa selecção | WS `server.deleted` | S | Sai do servidor | V (server-admin) |
+| SRV-05 | Imagem do servidor: enviar / remover (JPEG/PNG/WebP ≤ 1 MiB) | `PUT/DELETE /api/servers/{id}/image` | S | Validação local | V (server-admin) |
+| SRV-06 | Boas-vindas: canal e modelo | `GET/PATCH /api/servers/{id}/welcome` | S | Guardar com toast; mensagem publicada ao entrar | V (server-admin) |
+| SRV-07 | Landing de definições (Visão geral) | — | S | Abre populada | V (server-admin) |
+| SRV-08 | Listar membros com pesquisa | `GET /api/servers/{id}/members` | S | Filtra por handle/nome | V (server-admin) |
+| SRV-09 | Alterar cargo de membro | `PUT /api/servers/{id}/members/{account}/role` | S | Reflectido na lista; dono sem controlo | V (server-admin) |
+| SRV-10 | Remover membro | `DELETE /api/servers/{id}/members/{account}` | S | Dono não removível | V (server-admin) |
+| SRV-11 | Listar cargos | `GET /api/servers/{id}/roles` | S | Ordem e contagem | V (server-admin) |
+| SRV-12 | Criar cargo | `POST /api/servers/{id}/roles` | S | Aparece na lista | V (server-admin) |
+| SRV-13 | Reordenar cargos | `PUT /api/servers/{id}/roles/positions` | S | ↑/↓; sistema bloqueado | V (server-admin) |
+| SRV-14 | Editar permissões do cargo (Geral/Texto/Voz) | `PATCH /api/servers/{id}/roles/{role}` | S | Afecta acesso real; sistema só-leitura | V (server-admin) |
+| SRV-15 | Apagar cargo com aviso | `DELETE /api/servers/{id}/roles/{role}` | S | Avisa sobre membros associados | V (server-admin) |
+| SRV-16 | Atribuir membros a um cargo | `PUT /api/servers/{id}/roles/{role}/members` | S | Lista de membros do cargo actualiza | V (server-admin) |
+| SRV-17 | Criar convite (dois passos) | `POST /api/servers/{id}/invites` | S | Escolhe canal de boas-vindas se faltar; URL copiável | V (server-admin) |
+| SRV-18 | Pré-visualizar convite sem sessão | `GET /api/invites/{code}` | S | Nome, histórico, inválido/expirado | V (server-admin) |
+| SRV-19 | Aceitar convite com registo inline ou com sessão | `POST /api/invites/{code}/accept` | S | Entra no servidor | V (server-admin) |
+| SRV-20 | Aviso de convite consumido | WS `invite.consumed` | S | Reflecte o uso | V (server-admin) |
 
 ## 5. Canais
 
 | ID | Funcionalidade | API / evento | Fase | Critério | Estado |
 |---|---|---|---|---|---|
-| CHN-01 | Criar canal de texto ou voz (visibilidade, "visível a novos") | `POST /api/servers/{id}/channels` | S | Voz exige custódia | |
-| CHN-02 | Obter canal | `GET /api/channels/{id}` | S, T, V | Dados e permissão do utilizador | |
-| CHN-03 | Renomear inline (hífens, 32 caracteres) | `PATCH /api/channels/{id}` | S | Normaliza e persiste | |
-| CHN-04 | Apagar canal; 409 `last_channel_of_type` explicado | `DELETE /api/channels/{id}` | S | Mensagem clara | |
-| CHN-05 | Evento de canal apagado | WS `channel.deleted` | S, T, V | Sai do canal | |
-| CHN-06 | ACL: visibilidade e regras (membro/cargo/todos, efeito, nível) | `GET/PUT /api/channels/{id}/acl` | S | Adicionar e remover regras | |
-| CHN-07 | Inspector de acesso efectivo | `GET /api/channels/{id}/access/{account}` | S | Veredito e precedência | |
-| CHN-08 | Silenciar membro (5/10/15/30 min ou custom) | `PUT /api/channels/{id}/mutes/{account}` | S | Tempo restante visível | |
-| CHN-09 | Dessilenciar | `DELETE /api/channels/{id}/mutes/{account}` | S | Imediato | |
-| CHN-10 | Listar silenciamentos | `GET /api/channels/{id}/mutes` | S | Mostra quem está silenciado | |
-| CHN-11 | Saber se eu estou silenciado | `GET /api/channels/{id}/mutes/me` | S, T | Composer mostra "silenciado até" | |
-| CHN-12 | Membros mencionáveis do canal | `GET /api/channels/{id}/mentionables` | T | Autocompletar de menção | |
-| CHN-13 | Mudança de papéis de canal | WS `channel_role.changed` | S | Actualiza permissões | |
+| CHN-01 | Criar canal de texto ou voz (visibilidade, "visível a novos") | `POST /api/servers/{id}/channels` | S | Voz exige custódia | V (server-admin) |
+| CHN-02 | Obter canal | `GET /api/channels/{id}` | S, T, V | Dados e permissão do utilizador | V (server-admin) |
+| CHN-03 | Renomear inline (hífens, 32 caracteres) | `PATCH /api/channels/{id}` | S | Normaliza e persiste | V (server-admin) |
+| CHN-04 | Apagar canal; 409 `last_channel_of_type` explicado | `DELETE /api/channels/{id}` | S | Mensagem clara | V (server-admin) |
+| CHN-05 | Evento de canal apagado | WS `channel.deleted` | S, T, V | Sai do canal | V (server-admin) |
+| CHN-06 | ACL: visibilidade e regras (membro/cargo/todos, efeito, nível) | `GET/PUT /api/channels/{id}/acl` | S | Adicionar e remover regras | V (server-admin) |
+| CHN-07 | Inspector de acesso efectivo | `GET /api/channels/{id}/access/{account}` | S | Veredito e precedência | V (server-admin) |
+| CHN-08 | Silenciar membro (5/10/15/30 min ou custom) | `PUT /api/channels/{id}/mutes/{account}` | S | Tempo restante visível | V (server-admin) |
+| CHN-09 | Dessilenciar | `DELETE /api/channels/{id}/mutes/{account}` | S | Imediato | V (server-admin) |
+| CHN-10 | Listar silenciamentos | `GET /api/channels/{id}/mutes` | S | Mostra quem está silenciado | V (server-admin) |
+| CHN-11 | Saber se eu estou silenciado | `GET /api/channels/{id}/mutes/me` | S, T | Composer mostra "silenciado até" | V (server-admin) |
+| CHN-12 | Membros mencionáveis do canal | `GET /api/channels/{id}/mentionables` | T | Autocompletar de menção | V (server-admin) |
+| CHN-13 | Mudança de papéis de canal | WS `channel_role.changed` | S | Actualiza permissões | V (server-admin) |
 
 ## 6. Chat de texto
 
 | ID | Funcionalidade | API / evento | Fase | Critério | Estado |
 |---|---|---|---|---|---|
-| TXT-01 | Listar mensagens e decifrar | `GET /api/channels/{id}/messages` | T | Texto legível; só ciphertext na rede | |
-| TXT-02 | Enviar mensagem cifrada | `POST /api/channels/{id}/messages` | T | Pedido só com `content_ciphertext` | |
-| TXT-03 | Nova mensagem em tempo real | WS `message.new` | T | Aparece sem recarregar | |
-| TXT-04 | Agrupar por remetente; separadores de dia com marcador fixo | — | T | Avatar uma vez por grupo; Hoje/Ontem/data | |
-| TXT-05 | Responder com citação (cancelável) | `POST …/messages` | T | Citação truncada na resposta | |
-| TXT-06 | Apagar mensagem por permissão | `DELETE /api/channels/{id}/messages/{id}`, WS `message.deleted` | T | Autor, criador do canal, dono ou permissão | |
-| TXT-07 | Menções clicáveis só se resolvem a membro real | — | T | Inválidas como texto | |
-| TXT-08 | Anexar imagens por ficheiro e colar; várias; limite; miniaturas removíveis | `POST /api/channels/{id}/attachments` | T | Cifra antes de enviar | |
-| TXT-09 | Mostrar anexos decifrados | `GET /api/attachments/{id}` | T | Miniatura legível | |
-| TXT-10 | Lightbox: zoom, download, navegação, fecho por Esc/botão/fundo, arrastar ampliado | — | T | Os três fechos | |
-| TXT-11 | Pré-visualização de links (até 5) | `POST /api/unfurl` | T | Miniatura, site, título, "Vídeo" | |
-| TXT-12 | Autocompletar `@` e `:shortcode:`; selector de emoji pesquisável | — | T | Teclado e selecção | |
-| TXT-13 | Composer "somente leitura" e "silenciado até HH:MM" | — | T | Substitui o composer | |
-| TXT-14 | Saltar para o presente com contagem | — | T | Rola e oculta | |
-| TXT-15 | Marcar canal como lido | `PUT /api/channels/{id}/read` | T | Limpa não lidos | |
-| TXT-16 | Recuperar mensagens após reconexão | `GET …/messages` | T | Sem lacunas | |
-| TXT-17 | Linhas de sistema (boas-vindas a novo membro) | — | T | Centradas | |
-| TXT-18 | Chip E2EE ligada no cabeçalho do canal de texto | — | T | Sempre ligada | |
+| TXT-01 | Listar mensagens e decifrar | `GET /api/channels/{id}/messages` | T | Texto legível; só ciphertext na rede | V (text-chat) |
+| TXT-02 | Enviar mensagem cifrada | `POST /api/channels/{id}/messages` | T | Pedido só com `content_ciphertext` | V (text-chat) |
+| TXT-03 | Nova mensagem em tempo real | WS `message.new` | T | Aparece sem recarregar | V (text-chat) |
+| TXT-04 | Agrupar por remetente; separadores de dia com marcador fixo | — | T | Avatar uma vez por grupo; Hoje/Ontem/data | V (text-chat) |
+| TXT-05 | Responder com citação (cancelável) | `POST …/messages` | T | Citação truncada na resposta | V (text-chat) |
+| TXT-06 | Apagar mensagem por permissão | `DELETE /api/channels/{id}/messages/{id}`, WS `message.deleted` | T | Autor, criador do canal, dono ou permissão | V (text-chat) |
+| TXT-07 | Menções clicáveis só se resolvem a membro real | — | T | Inválidas como texto | V (text-chat) |
+| TXT-08 | Anexar imagens por ficheiro e colar; várias; limite; miniaturas removíveis | `POST /api/channels/{id}/attachments` | T | Cifra antes de enviar | V (text-chat) |
+| TXT-09 | Mostrar anexos decifrados | `GET /api/attachments/{id}` | T | Miniatura legível | V (text-chat) |
+| TXT-10 | Lightbox: zoom, download, navegação, fecho por Esc/botão/fundo, arrastar ampliado | — | T | Os três fechos | V (text-chat); arrastar a imagem ampliada sem teste manual |
+| TXT-11 | Pré-visualização de links (até 5) | `POST /api/unfurl` | T | Miniatura, site, título, "Vídeo" | V (text-chat); selo "Vídeo" implementado, sem teste manual |
+| TXT-12 | Autocompletar `@` e `:shortcode:`; selector de emoji pesquisável | — | T | Teclado e selecção | V (text-chat) |
+| TXT-13 | Composer "somente leitura" e "silenciado até HH:MM" | — | T | Substitui o composer | V (text-chat) |
+| TXT-14 | Saltar para o presente com contagem | — | T | Rola e oculta | V (text-chat) |
+| TXT-15 | Marcar canal como lido | `PUT /api/channels/{id}/read` | T | Limpa não lidos | V (text-chat) |
+| TXT-16 | Recuperar mensagens após reconexão | `GET …/messages` | T | Sem lacunas | V (text-chat) |
+| TXT-17 | Linhas de sistema (boas-vindas a novo membro) | — | T | Centradas | V (text-chat) |
+| TXT-18 | Chip E2EE ligada no cabeçalho do canal de texto | — | T | Sempre ligada | V (text-chat) |
 
 ## 7. Pesquisa e notificações
 
 | ID | Funcionalidade | API / evento | Fase | Critério | Estado |
 |---|---|---|---|---|---|
-| NTF-01 | Pesquisa livre em todos os canais de texto, decifrando no cliente | — | T | Agrupada por servidor · canal | |
-| NTF-02 | Pesquisa `#canal termo` | — | T | Só esse canal | |
-| NTF-03 | Estados vazios diferenciados | — | T | Não encontrado / voz / sem resultados | |
-| NTF-04 | Atalho Ctrl/Cmd+F pré-preenchido | — | T | Abre com o canal actual | |
-| NTF-05 | Notificações de menção/resposta persistentes | `GET /api/notifications`, WS `notification.created` | T | Persistem até a mensagem ser vista | |
-| NTF-06 | Marcar notificação como lida | `POST /api/notifications/{id}/read` | T | Ao ver a mensagem | |
-| NTF-07 | Marcar todas como lidas (acção "Limpar") | `POST /api/notifications/read-all` | T | Limpa a secção persistente | |
-| NTF-08 | Canais com novidade (efémeros) | WS `message.new` | T | Só na sessão actual | |
-| NTF-09 | Deep-link para a mensagem | — | T | Navega, rola e destaca | |
-| NTF-10 | Indicador de novidade na topbar | — | A, T | Reflecte existência | |
+| NTF-01 | Pesquisa livre em todos os canais de texto, decifrando no cliente | — | T | Agrupada por servidor · canal | V (text-chat) |
+| NTF-02 | Pesquisa `#canal termo` | — | T | Só esse canal | V (text-chat) |
+| NTF-03 | Estados vazios diferenciados | — | T | Não encontrado / voz / sem resultados | V (text-chat) |
+| NTF-04 | Atalho Ctrl/Cmd+F pré-preenchido | — | T | Abre com o canal actual | V (text-chat) |
+| NTF-05 | Notificações de menção/resposta persistentes | `GET /api/notifications`, WS `notification.created` | T | Persistem até a mensagem ser vista | V (text-chat) |
+| NTF-06 | Marcar notificação como lida | `POST /api/notifications/{id}/read` | T | Ao ver a mensagem | V (text-chat) |
+| NTF-07 | Marcar todas como lidas (acção "Limpar") | `POST /api/notifications/read-all` | T | Limpa a secção persistente | V (text-chat) |
+| NTF-08 | Canais com novidade (efémeros) | WS `message.new` | T | Só na sessão actual | V (text-chat) |
+| NTF-09 | Deep-link para a mensagem | — | T | Navega, rola e destaca | V (text-chat) |
+| NTF-10 | Indicador de novidade na topbar | — | A, T | Reflecte existência | V (text-chat) |
 
 ## 8. Voz e vídeo
 
@@ -169,26 +169,26 @@ Regra (`frontend-v2-foundation`, capability `functional-parity`): **todas as fun
 
 | ID | Funcionalidade | API / evento | Fase | Critério | Estado |
 |---|---|---|---|---|---|
-| CRP-01 | Publicar envelope de chave do servidor para um membro | `POST /api/servers/{id}/key-envelopes` | A, S | Membro novo recebe a chave | |
-| CRP-02 | Obter o meu envelope | `GET /api/servers/{id}/key-envelopes/me` | A, T | Decifra mensagens | |
-| CRP-03 | Pedido e conclusão de handoff | WS `key_handoff.requested`, `key_handoff.completed` | A, T | Sincroniza a chave | |
-| CRP-04 | Chave do servidor visível uma vez na criação, com custódia | — | S | Checkbox obrigatória | |
-| CRP-05 | Chave de canal de voz com custódia na criação | `POST …/channels` | S, V | Checkbox obrigatória | |
+| CRP-01 | Publicar envelope de chave do servidor para um membro | `POST /api/servers/{id}/key-envelopes` | A, S | Membro novo recebe a chave | V (server-admin) |
+| CRP-02 | Obter o meu envelope | `GET /api/servers/{id}/key-envelopes/me` | A, T | Decifra mensagens | V (polish-cutover, 2 sessões) |
+| CRP-03 | Pedido e conclusão de handoff | WS `key_handoff.requested`, `key_handoff.completed` | A, T | Sincroniza a chave | V (polish-cutover: convidado entra com o dono offline, o dono volta, o convidado decifra) |
+| CRP-04 | Chave do servidor visível uma vez na criação, com custódia | — | S | Checkbox obrigatória | V (server-admin) |
+| CRP-05 | Chave de canal de voz com custódia na criação | `POST …/channels` | S, V | Checkbox obrigatória | V (server-admin, voice-video) |
 
 ## 10. Transversal
 
 | ID | Funcionalidade | Fase | Critério | Estado |
 |---|---|---|---|---|
 | TRV-01 | Diálogos: título, corpo, acções; fecham por Esc e fundo | F | Padrão único | V (/__foundation) |
-| TRV-02 | Diálogo de alterações por guardar (Cancelar/Descartar/Guardar) | F, V | Usado no editor de cena | |
+| TRV-02 | Diálogo de alterações por guardar (Cancelar/Descartar/Guardar) | F, V | Usado no editor de cena | V (voice-video, editor de cena) |
 | TRV-03 | Toasts de confirmação | F | Acções assíncronas | V (/__foundation) |
 | TRV-04 | Feedback "Copiado" | F | Temporário | V (/__foundation) |
-| TRV-05 | Estados vazios e de erro por lista | F, todas | Mensagem própria | |
+| TRV-05 | Estados vazios e de erro por lista | F, todas | Mensagem própria | V (todas as fases; revisto em polish-cutover) |
 | TRV-06 | Iniciais como fallback de avatar (utilizador e servidor) | F | Sem foto | V (/__foundation) |
-| TRV-07 | Modo claro e responsivo em todas as telas | P | Auditoria | |
-| TRV-08 | Paridade de i18n pt-BR/en | P | Sem chaves em falta | |
-| TRV-09 | Cookie de sessão e mesma origem preservados no corte | P | Sessão sobrevive | |
-| TRV-10 | Health | — | `GET /health` responde `ok` | |
+| TRV-07 | Modo claro e responsivo em todas as telas | P | Auditoria | V (polish-cutover: auditoria de modo claro e mobile) |
+| TRV-08 | Paridade de i18n pt-BR/en | P | Sem chaves em falta | V (polish-cutover: verify:i18n-keys) |
+| TRV-09 | Cookie de sessão e mesma origem preservados no corte | P | Sessão sobrevive | Procedimento em docs/deploy-producao.md §14.3; corte não executado |
+| TRV-10 | Health | — | `GET /health` responde `ok` | V (polish-cutover) |
 
 ## 11. Cobertura de contratos
 
@@ -211,3 +211,22 @@ Excluído em `docs/v2/TR-frontend-v2.md` §4.2/§7 e `docs/backlog/backlog.md`. 
 | EXC-04 | `GET /api/servers/{id}/invites`, `POST /api/invites/{code}/revoke` | Controlo de validade/permanência de convites (backlog); sem UI na aplicação actual |
 | EXC-05 | MLS, multi-dispositivo, Passkeys, cofre MLS, semente BIP-39 | TR §7 |
 | EXC-06 | Reações, rolagem de dados, ferramentas VTT, telemetria de rede, perfil estendido | Mockups fora de escopo (AUDIT §6) |
+
+## 13. Acréscimos à v1 (sem equivalente na aplicação anterior)
+
+Funcionalidades novas da v2. Não contam para a paridade nem dependem da v1.
+
+| ID | Funcionalidade | API / evento | Fase | Critério | Estado |
+|---|---|---|---|---|---|
+| ACR-01 | Som de nova menção ou resposta | `notification.created` | `frontend-v2-sound-effects` | Toca uma vez com o canal fora de vista ou a janela sem foco; silêncio com o canal aberto em foco, ensurdecido, efeitos desligados, carga inicial, recarga e reconexão; rajada conta como um toque | V (sound-effects, 2 sessões) |
+| ACR-02 | Som de chegada a uma chamada | `voice.occupancy` | `frontend-v2-sound-effects` | Toca para quem está na chamada quando outra pessoa entra; silêncio para a própria entrada, para quem lá estava, para quem não está na chamada, ensurdecido e reconexão | V (sound-effects, 2 sessões) |
+| ACR-03 | Secção "Efeitos sonoros" em Áudio & Vídeo | — | `frontend-v2-sound-effects` | Interruptor imediato e guardado; pré-escuta por efeito, mesmo com efeitos desligados, sem consumir a janela dos avisos reais | V (sound-effects) |
+| ACR-04 | Falhas silenciosas | — | `frontend-v2-sound-effects` | Autoplay recusado, ficheiro em falta (404) e saída guardada inexistente não mostram erro nem afetam o outro efeito | V (sound-effects) |
+| ACR-05 | Duração dos MP3 dentro do alvo | — | `frontend-v2-sound-effects` | `mention.mp3` ≤ 0,7 s e `call-join.mp3` ≤ 1,0 s | V (sound-effects): aparados com ffmpeg para 0,70 s e 1,00 s, com fade-out de 0,2 s |
+| ACR-06 | Permissão "Mencionar @todos" e notificação a todo o canal | `POST /api/channels/{id}/messages` (`mention_everyone`), `notification.created` | `frontend-v2-mention-everyone-and-voice-fixes` | Desligada por omissão, ativável por cargo, o dono tem-na sempre; com permissão notifica todos os membros que veem o canal (sem limite de 20, sem o remetente, só quem vê um canal privado); sem permissão é texto simples e ninguém é notificado; `@todos` destacado e só sugerido a quem pode | V (backend: 8 testes de contrato; frontend: 2 sessões e `verify:mentions`) |
+| ACR-07 | Desligar a câmara liberta a câmara | — | `frontend-v2-mention-everyone-and-voice-fixes` | Zero faixas de vídeo vivas depois de desligar na pré-entrada (com e sem desfoque), na chamada (incluindo ligar e desligar depressa), na página de Áudio & Vídeo e ao sair da chamada | V (navegador de teste com câmara falsa; repetir à mão com câmara real) |
+| ACR-08 | Membro sem cargo entra e participa nos canais por omissão | `GET /api/channels/{id}` (`my_permission`) | `frontend-v2-mention-everyone-and-voice-fixes` | Um convidado sem cargo vê e escreve em canais de texto públicos, anexa imagens, entra, fala e liga a câmara nos de voz; só um cargo sem a permissão, um canal privado ou o silenciamento o reduzem | V (convidado sem cargo, 2 sessões) |
+| ACR-09 | Memória do último canal aberto | — | `frontend-v2-settings-return-to-last-channel` | Por servidor e global, por conta, em `mesa.lastChannel.v1`; sobrevive a recarregar; abrir configurações ou conta não a altera; esquecida quando o canal é apagado; armazenamento bloqueado não falha | V (settings-return): `verify:last-channel` (16 verificações) e no navegador, incluindo apagar o canal |
+| ACR-10 | Fechar as configurações do servidor volta ao último canal | — | `frontend-v2-settings-return-to-last-channel` | Ícone de fechar e Esc abrem o último canal do servidor (de texto ou a pré-entrada de voz, sem entrar na chamada); canal apagado ou sem memória abre o servidor sem canal, sem erro; entrada direta no endereço e Esc logo após o desbloqueio também voltam ao canal | V (settings-return) |
+| ACR-11 | Voltar da conta ao último canal | — | `frontend-v2-settings-return-to-last-channel` | "Voltar à Mesa" e Esc abrem o último canal aberto, mesmo depois de passar pelas configurações do servidor ou de recarregar; sem memória abre a página inicial; Esc durante a edição do nome só cancela a edição | V (settings-return) |
+| ACR-12 | Botão Voltar do navegador inalterado | — | `frontend-v2-settings-return-to-last-channel` | Regressa ao endereço anterior do histórico (o canal de onde se abriram as configurações) | V (settings-return) |

@@ -22,6 +22,7 @@ struct Row {
     can_mute_members: i64,
     can_connect_voice: i64,
     can_speak_voice: i64,
+    can_mention_everyone: i64,
     is_system: i64,
     position: i64,
 }
@@ -29,7 +30,7 @@ struct Row {
 const SELECT_COLS: &str = "id, server_id, name, can_create_channels,
     can_view_channels, can_manage_channels, can_manage_roles, can_create_invites,
     can_send_messages, can_delete_messages, can_attach_files, can_remove_members,
-    can_mute_members, can_connect_voice, can_speak_voice, is_system, position";
+    can_mute_members, can_connect_voice, can_speak_voice, can_mention_everyone, is_system, position";
 
 fn map_row(row: Row, member_ids: Vec<Uuid>) -> Result<ServerRole, sqlx::Error> {
     let manage = row.can_manage_channels != 0 || row.can_create_channels != 0;
@@ -45,6 +46,7 @@ fn map_row(row: Row, member_ids: Vec<Uuid>) -> Result<ServerRole, sqlx::Error> {
         can_mute_members: row.can_mute_members != 0,
         can_connect_voice: row.can_connect_voice != 0,
         can_speak_voice: row.can_speak_voice != 0,
+        can_mention_everyone: row.can_mention_everyone != 0,
     };
     Ok(ServerRole {
         id: Uuid::parse_str(&row.id).map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
@@ -99,8 +101,8 @@ pub async fn create(pool: &SqlitePool, role: &ServerRole) -> Result<(), sqlx::Er
             id, server_id, name, can_create_channels,
             can_view_channels, can_manage_channels, can_manage_roles, can_create_invites,
             can_send_messages, can_delete_messages, can_attach_files, can_remove_members,
-            can_mute_members, can_connect_voice, can_speak_voice, is_system, position, created_at
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            can_mute_members, can_connect_voice, can_speak_voice, can_mention_everyone, is_system, position, created_at
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(role.id.to_string())
     .bind(role.server_id.to_string())
@@ -117,6 +119,7 @@ pub async fn create(pool: &SqlitePool, role: &ServerRole) -> Result<(), sqlx::Er
     .bind(if c.can_mute_members { 1 } else { 0 })
     .bind(if c.can_connect_voice { 1 } else { 0 })
     .bind(if c.can_speak_voice { 1 } else { 0 })
+    .bind(if c.can_mention_everyone { 1 } else { 0 })
     .bind(if role.is_system { 1 } else { 0 })
     .bind(position)
     .bind(Utc::now().to_rfc3339())
@@ -204,7 +207,8 @@ pub async fn ensure_dono_role(
                 can_remove_members = 1,
                 can_mute_members = 1,
                 can_connect_voice = 1,
-                can_speak_voice = 1
+                can_speak_voice = 1,
+                can_mention_everyone = 1
              WHERE id = ?",
         )
         .bind(DONO_ROLE_NAME)
@@ -267,7 +271,8 @@ pub async fn update_full(
             can_remove_members = ?,
             can_mute_members = ?,
             can_connect_voice = ?,
-            can_speak_voice = ?
+            can_speak_voice = ?,
+            can_mention_everyone = ?
          WHERE id = ?",
     )
     .bind(name.map(str::trim))
@@ -283,6 +288,7 @@ pub async fn update_full(
     .bind(if caps.can_mute_members { 1 } else { 0 })
     .bind(if caps.can_connect_voice { 1 } else { 0 })
     .bind(if caps.can_speak_voice { 1 } else { 0 })
+    .bind(if caps.can_mention_everyone { 1 } else { 0 })
     .bind(role_id.to_string())
     .execute(pool)
     .await?;

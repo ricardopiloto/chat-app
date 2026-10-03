@@ -63,6 +63,29 @@ pub async fn insert(pool: &SqlitePool, n: &UserNotification) -> Result<(), sqlx:
     Ok(())
 }
 
+/// Inserts many notifications atomically (used when one message notifies a whole channel).
+pub async fn insert_many(pool: &SqlitePool, all: &[UserNotification]) -> Result<(), sqlx::Error> {
+    let mut tx = pool.begin().await?;
+    for n in all {
+        sqlx::query(
+            "INSERT INTO user_notification
+             (id, account_id, kind, channel_id, message_id, actor_account_id, created_at, read_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        )
+        .bind(n.id.to_string())
+        .bind(n.account_id.to_string())
+        .bind(n.kind.as_str())
+        .bind(n.channel_id.to_string())
+        .bind(n.message_id.map(|id| id.to_string()))
+        .bind(n.actor_account_id.to_string())
+        .bind(n.created_at.to_rfc3339())
+        .bind(n.read_at.map(|t| t.to_rfc3339()))
+        .execute(&mut *tx)
+        .await?;
+    }
+    tx.commit().await
+}
+
 pub async fn list_for_account(
     pool: &SqlitePool,
     account_id: Uuid,
