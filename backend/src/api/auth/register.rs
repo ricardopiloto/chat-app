@@ -29,6 +29,10 @@ pub struct RegisterBody {
     pub identity_pubkey: String,
     pub identity_vault: Option<serde_json::Value>,
     pub invite_code: Option<String>,
+    #[serde(default)]
+    pub recovery_vault: Option<serde_json::Value>,
+    #[serde(default)]
+    pub recovery_verifier_pubkey: Option<String>,
 }
 
 pub fn encode_identity_vault(
@@ -168,7 +172,8 @@ pub async fn register_inner(
                 return Err(ApiError::conflict("handle already exists"));
             }
 
-            let record = AccountRecord {
+            let mut record = AccountRecord {
+                has_recovery_key: false,
                 id: Uuid::new_v4(),
                 handle,
                 password_hash,
@@ -181,6 +186,8 @@ pub async fn register_inner(
                 display_name: None,
             };
             db::account::create(&mut *tx, &record).await?;
+            store_recovery(&mut tx, record.id, body.recovery_vault.as_ref(), body.recovery_verifier_pubkey.as_deref()).await?;
+            record.has_recovery_key = body.recovery_vault.is_some() && body.recovery_verifier_pubkey.is_some();
 
             if let Some(inv) = &invite {
                 if !db::membership::exists(&mut *tx, record.id, inv.server_id).await? {
@@ -261,4 +268,35 @@ pub async fn emit_invite_consumed(
     }
 
     crate::api::welcome::announce_member_join(state, invite, new_member).await;
+}
+
+pub(crate) async fn store_recovery(
+    tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
+    account_id: Uuid,
+    vault: Option<&serde_json::Value>,
+    verifier: Option<&str>,
+) -> Result<(), ApiError> {
+    match (vault, verifier) {
+        (None, None) => Ok(()),
+        (Some(vault), Some(verifier)) => {
+            let vault_bytes = encode_identity_vault(Some(vault))?.ok_or_else(|| ApiError::bad_request("recovery_vault required"))?;
+            let key = base64::engine::general_purpose::STANDARD
+                .decode(verifier.trim())
+                .map_err(|_| ApiError::bad_request("recovery_verifier_pubkey must be base64"))?;
+            if key.len() != 32 {
+                return Err(ApiError::bad_request("recovery_verifier_pubkey must be 32 bytes"));
+            }
+            sqlx::query(
+                "UPDATE account SET recovery_vault = ?, recovery_verifier_pubkey = ?, recovery_generation = recovery_generation + 1, recovery_set_at = ? WHERE id = ?",
+            )
+            .bind(vault_bytes)
+            .bind(key)
+            .bind(Utc::now().to_rfc3339())
+            .bind(account_id.to_string())
+            .execute(&mut **tx)
+            .await?;
+            Ok(())
+        }
+        _ => Err(ApiError::bad_request("recovery_vault and recovery_verifier_pubkey are set together")),
+    }
 }

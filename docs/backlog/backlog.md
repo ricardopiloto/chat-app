@@ -131,7 +131,15 @@ Guardar no servidor (operador da instância) uma cópia da chave de criptografia
 
 **Nota de tensão com o modelo actual**: isto contradiz directamente a garantia de E2EE hoje documentada — *"o operador da instância não obtém áudio/vídeo decodificável sem as chaves dos clientes"* ([docs/e2ee-gaps.md](../e2ee-gaps.md)) e o handoff de chave que hoje é desenhado precisamente para o backend nunca ver a `server_key` em claro ([key-handoff.md](../../specs/002-fase-1-mvp/contracts/key-handoff.md)). Guardar uma cópia no servidor muda a natureza da garantia de "ponta-a-ponta" para algo mais próximo de "cifrado em repouso com custódia pelo operador" — a decidir com cuidado (qual o âmbito legal real, se é por instância/jurisdição, se afecta a promessa de produto feita a utilizadores). Por agora, só registo — sem decisão tomada.
 
-## 18. Fluxo de recuperação de senha esquecida
+## 18. Fluxo de recuperação de senha esquecida — Implementado (2026-10-08)
+
+**Implementado** pelo change OpenSpec `password-recovery`: as duas fases descritas abaixo (opção A e opção B) estão entregues e testadas (backend: contratos de `auth_recovery`/`auth_recovery_key`; frontend: `npm run build`/lint/`test:contracts` verdes e verificação manual no navegador).
+
+- **Fase 1 (opção A — reset pelo operador, nova identidade):** subcomando `reset-code <handle>` no binário do backend (ver [docs/operar-instancia.md](../operar-instancia.md)); `POST /api/auth/recovery/code/redeem`; `PUT /api/auth/password` (alterar senha com a senha actual, mesma identidade); ecrã público `/recover`, caminho "Tenho um código do operador".
+- **Fase 2 (opção B — chave de recuperação, preserva a identidade):** geração da chave de recuperação no registo directo e por convite (confirmação "guardei" antes do POST); cartão "Chave de recuperação" em "Minha conta" para criar/substituir numa conta já existente; `/recover`, caminho "Tenho a chave de recuperação".
+- **Correcção associada:** a bifurcação da chave de um Servidor após troca de identidade (dono perde a senha, cliente gerava uma `server_key` nova em vez de esperar o handoff) foi corrigida com uma guarda transaccional no backend (409 em sobrescrita não-idempotente) e o cliente passou a consultar um indicador de existência antes de gerar chave nova.
+- **Desvio de UI registado:** o link do ecrã de login que no mockup dizia "Esqueceu o cofre?" passa a **"Esqueci a senha"** e abre `/recover` (ver [docs/v2/AUDIT-fidelity.md §10](../v2/AUDIT-fidelity.md)).
+- **Fora desta entrega:** item 19 (tela de admin para emitir códigos, só registo abaixo); item 17 (cópia de chave no servidor); credenciais/recuperação de contas de bot (fora do universo de contas humanas que este fluxo cobre).
 
 Hoje não existe nenhum caminho de "esqueci a senha" — nem rota no backend nem tela no frontend. Um utilizador que perde a password fica sem acesso à conta.
 
@@ -142,6 +150,14 @@ Duas direcções possíveis para discussão futura:
 2. **Recuperação real da identidade**: exige um segredo de recuperação **adicional e independente da password**, gerado no momento da criação da conta (ex. frase/seed, guardada só pelo utilizador), capaz de desencriptar a `identity_vault` sem a password. Isto já apareceu como mockup especulativo ("Desbloqueio de conta/Recuperação de identidade", seed BIP-39) na análise do frontend v2 ([TR-frontend-v2.md §7.1](../v2/TR-frontend-v2.md)) e foi explicitamente marcado como **fora do escopo actual** por não existir suporte nenhum no backend — teria de ser desenhado do zero, com as implicações de UX de "guarde esta frase, se perder não há recuperação" que isso implica.
 
 Sem código nem decisão hoje — registado para discussão futura.
+
+**Análise técnica (2026-10-04):** [TR-item18-recuperacao-de-senha.md](TR-item18-recuperacao-de-senha.md) — mapeia o que a estrutura actual exige, três opções (A operador/nova identidade, B chave de recuperação, C combinação recomendada) e as decisões pendentes antes da spec.
+
+## 19. Tela de administração da instância (emissão de códigos de reset)
+
+Decidido na spec do item 18 (2026-10-04): o operador emite os códigos de reset de senha **via CLI** no host (`reset-code <handle>`), porque hoje não existe nenhum papel nem tela de "admin de instância" (`is_initial_operator` é só um flag lido na criação da conta). Este item regista a tela que substituiria a CLI: listar contas, emitir/revogar códigos de reset com validade, e, por extensão, ser o ponto natural para outras ações de operador.
+
+Pré-requisito de produto a decidir antes: **quem é o operador na UI** (só a conta `is_initial_operator`? transferível? vários?) e como isso se separa do dono de Servidor, que é um conceito por servidor e não por instância. Sem código nem decisão hoje.
 
 ---
 

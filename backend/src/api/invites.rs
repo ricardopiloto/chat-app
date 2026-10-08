@@ -57,6 +57,10 @@ pub struct AcceptBody {
     pub password: Option<String>,
     pub identity_pubkey: Option<String>,
     pub identity_vault: Option<serde_json::Value>,
+    #[serde(default)]
+    pub recovery_vault: Option<serde_json::Value>,
+    #[serde(default)]
+    pub recovery_verifier_pubkey: Option<String>,
 }
 
 pub async fn create_invite(
@@ -278,6 +282,8 @@ pub async fn accept_invite(
                 identity_pubkey,
                 identity_vault: body.identity_vault,
                 invite_code: Some(code.clone()),
+                recovery_vault: body.recovery_vault,
+                recovery_verifier_pubkey: body.recovery_verifier_pubkey,
             },
         )
         .await?;

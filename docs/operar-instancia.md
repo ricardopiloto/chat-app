@@ -85,6 +85,19 @@ Ao **sair da sala** de voz/vídeo, o cliente faz disconnect ordenado (desliga tr
 
 Não copie `spike/` — é descartável. Este binário é o produto.
 
+### Senha esquecida (código do operador)
+
+Não há e-mail. Quem perdeu a senha pede um código a quem opera a máquina. No host, com o mesmo `DATABASE_URL` do serviço:
+
+```bash
+chat-backend reset-code <handle>
+chat-backend reset-code <handle> --ttl-minutes 15
+```
+
+O comando imprime um código de 26 caracteres (grupos de 4) e o prazo. Por omissão vale 30 minutos. A base guarda só o hash. Um segundo código para o mesmo handle invalida o primeiro. Cinco tentativas erradas também o invalidam. Entregue o código por um canal que já use com essa pessoa (presencial, mensagem fora da Mesa). Não o guarde em ticket nem em log.
+
+A pessoa abre **Esqueci a senha** no ecrã de entrada, escolhe **Tenho um código do operador**, escreve o handle, o código e uma senha nova, e confirma o aviso. Entra com uma **identidade nova**. Os servidores voltam a abrir quando alguém que ainda tem a chave estiver online. Servidores em que essa conta era a única com a chave, e a custódia da chave de voz, não voltam. A sessão antiga deixa de valer.
+
 ## Portas a documentar no router (FR-017)
 
 | Serviço | Porta | Protocolo |

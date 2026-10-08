@@ -59,6 +59,16 @@ pub async fn find_by_token_hash(
     row.map(map_row).transpose()
 }
 
+pub async fn find_by_id(pool: &SqlitePool, id: Uuid) -> Result<Option<Session>, sqlx::Error> {
+    let row = sqlx::query_as::<_, Row>(
+        "SELECT id, account_id, token_hash, expires_at, revoked_at FROM session WHERE id = ?",
+    )
+    .bind(id.to_string())
+    .fetch_optional(pool)
+    .await?;
+    row.map(map_row).transpose()
+}
+
 pub async fn revoke(pool: &SqlitePool, id: Uuid) -> Result<(), sqlx::Error> {
     sqlx::query("UPDATE session SET revoked_at = ? WHERE id = ?")
         .bind(Utc::now().to_rfc3339())
@@ -66,4 +76,22 @@ pub async fn revoke(pool: &SqlitePool, id: Uuid) -> Result<(), sqlx::Error> {
         .execute(pool)
         .await?;
     Ok(())
+}
+
+pub async fn revoke_all_for_account(
+    pool: &SqlitePool,
+    account_id: Uuid,
+    except: Option<Uuid>,
+) -> Result<Vec<Uuid>, sqlx::Error> {
+    let now = Utc::now().to_rfc3339();
+    let ids: Vec<(String,)> = sqlx::query_as("UPDATE session SET revoked_at = ? WHERE account_id = ? AND revoked_at IS NULL AND (? IS NULL OR id != ?) RETURNING id")
+        .bind(now)
+        .bind(account_id.to_string())
+        .bind(except.map(|id| id.to_string()))
+        .bind(except.map(|id| id.to_string()))
+        .fetch_all(pool)
+        .await?;
+    ids.into_iter()
+        .map(|(id,)| Uuid::parse_str(&id).map_err(|e| sqlx::Error::Decode(Box::new(e))))
+        .collect()
 }

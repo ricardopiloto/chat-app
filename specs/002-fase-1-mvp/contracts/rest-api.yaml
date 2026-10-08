@@ -25,6 +25,8 @@ paths:
                 password: { type: string, minLength: 8 }
                 identity_pubkey: { type: string, description: "X25519 pubkey, base64" }
                 invite_code: { type: string, description: "Obrigatório se a instância já tem alguma conta" }
+                recovery_vault: { type: object, description: "Opcional. Cofre da chave de recuperação. Só junto com recovery_verifier_pubkey." }
+                recovery_verifier_pubkey: { type: string, description: "Opcional. Ed25519 pública em base64. O código de recuperação não é enviado." }
       responses:
         "201":
           description: Conta criada, sessão iniciada (cookie de sessão setado)
@@ -64,6 +66,45 @@ paths:
       responses:
         "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Account" } } } }
         "401": { description: Sem sessão válida }
+  /auth/password:
+    put:
+      summary: Troca a senha e o cofre da mesma identidade. Mantém a sessão actual e revoga as outras.
+      responses:
+        "204": { description: Senha substituída }
+        "401": { description: Senha actual incorrecta ou sem sessão }
+        "400": { description: Senha curta ou cofre de outra identidade }
+  /auth/recovery-key:
+    put:
+      summary: Guarda ou substitui a chave de recuperação. Exige a senha actual. Invalida desafios e tickets anteriores.
+      responses:
+        "200": { description: Conta, com has_recovery_key true e sem recovery_vault }
+        "401": { description: Senha actual incorrecta }
+  /auth/recovery/code/redeem:
+    post:
+      summary: Reset com código do operador. Cria identidade nova, consome o código, revoga sessões e abre outra.
+      responses:
+        "200": { description: Sessão nova }
+        "401": { description: Handle, código ou prova inválidos, com o mesmo corpo }
+        "400": { description: Senha com menos de 8 caracteres; o código não é consumido }
+        "429": { description: Limite de tentativas }
+  /auth/recovery/key/challenge:
+    post:
+      summary: Desafio de uso único. A resposta não revela se o handle existe.
+      responses:
+        "200": { description: "{ challenge_id, nonce }" }
+  /auth/recovery/key/start:
+    post:
+      summary: Verifica a assinatura do desafio e devolve o recovery_vault e um ticket.
+      responses:
+        "200": { description: "{ recovery_vault, ticket }" }
+        "401": { description: Prova inválida, handle sem chave ou handle inexistente, com o mesmo corpo e sem o cofre }
+  /auth/recovery/key/redeem:
+    post:
+      summary: Consome o ticket e troca a senha do cofre da mesma identidade. Envelopes e identity_pubkey ficam.
+      responses:
+        "200": { description: Sessão nova }
+        "401": { description: Prova inválida, resposta uniforme }
+        "400": { description: Cofre cuja chave pública não é a da conta, ou senha curta }
 
   /servers:
     post:
@@ -213,7 +254,14 @@ paths:
                 account_id: { type: string, format: uuid }
                 sealed_key: { type: string, description: "crypto_box_seal output, base64" }
       responses:
-        "201": { description: "Envelope armazenado; Membership.key_handoff_status vira synced" }
+        "201": { description: "Envelope armazenado, ou repetição idêntica do próprio envelope. Membership.key_handoff_status vira synced" }
+        "409": { description: "O próprio envelope já existe com bytes diferentes, ou o servidor já tem envelope e este pedido criaria outro. Corpo { error: key already exists }" }
+  /servers/{serverId}/key-envelopes/exists:
+    get:
+      summary: Indica se o servidor já tem algum envelope, sem devolver a chave.
+      parameters: [{ $ref: "#/components/parameters/ServerId" }]
+      responses:
+        "200": { description: "{ exists: boolean }" }
 
 components:
   parameters:
@@ -231,6 +279,7 @@ components:
         id: { type: string, format: uuid }
         handle: { type: string }
         is_initial_operator: { type: boolean }
+        has_recovery_key: { type: boolean, description: "Opcional na leitura. Nunca inclui recovery_vault." }
     Server:
       type: object
       required: [id, name, owner_account_id]

@@ -4,6 +4,7 @@ import { Route, Router, useLocation } from "@solidjs/router";
 import { AppQueryProvider } from "./api";
 import { AppShell } from "./shell/AppShell";
 import { Auth } from "./pages/Auth";
+import { Recover } from "./pages/Recover";
 import { Foundation } from "./pages/Foundation";
 import { Invite } from "./pages/Invite";
 import { Unlock } from "./pages/Unlock";
@@ -35,6 +36,9 @@ function Gate() {
       </Match>
       <Match when={where.pathname.startsWith("/invite/") && !where.search.includes("signin") && ["anonymous", "ready"].includes(session.phase())}>
         <Invite />
+      </Match>
+      <Match when={session.phase() === "anonymous" && where.pathname === "/recover"}>
+        <Recover />
       </Match>
       <Match when={session.phase() === "anonymous"}>
         <Auth />

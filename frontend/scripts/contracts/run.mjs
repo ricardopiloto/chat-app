@@ -111,6 +111,47 @@ check("sanity: harness library is the expected NaCl", () => {
   expect(nacl.box.keyPair().publicKey.length === 32, "nacl");
 });
 
+if (impl.wrapRecovery && impl.deriveRecovery && impl.signRecovery && impl.verifyRecovery) {
+  const handle = "Alice";
+  const code = "0123-4567-89AB-CDEF-GHJK-MNPQ-RS";
+  const identity = nacl.box.keyPair();
+  check("recovery: round-trip and wrong code", async () => {
+    const material = await impl.wrapRecovery(identity, code, handle);
+    const opened = await impl.unwrapRecovery(material.vault, code, handle);
+    expect(same(opened.secretKey, identity.secretKey), "recovered secret differs");
+    expect(await rejects(() => impl.unwrapRecovery(material.vault, "0123456789ABCDEFGHJKMNPQRT", handle)), "wrong code was accepted");
+  });
+  check("recovery: wrap and sign domains differ", async () => {
+    const material = await impl.wrapRecovery(identity, code, handle);
+    const master = new Uint8Array(32).fill(9);
+    const derived = impl.deriveRecovery(master);
+    expect(!same(derived.wrapKey, derived.signSeed), "domains collided");
+    expect(material.verifierPublicKey.length === 32, "verifier length");
+  });
+  check("recovery: signature is bound to operation, handle and payload", async () => {
+    const left = new Uint8Array(16).fill(1);
+    const right = new Uint8Array(32).fill(2);
+    const message = impl.recoverySignMessage("start", handle, left, right);
+    const signature = await impl.signWithRecoveryCode(code, handle, message);
+    const material = await impl.wrapRecovery(identity, code, handle);
+    expect(impl.verifyRecovery(message, signature, material.verifierPublicKey), "signature rejected");
+    const other = impl.recoverySignMessage("redeem", handle, left, right);
+    expect(!impl.verifyRecovery(other, signature, material.verifierPublicKey), "operation was not bound");
+    const otherHandle = impl.recoverySignMessage("start", "bob", left, right);
+    expect(!impl.verifyRecovery(otherHandle, signature, material.verifierPublicKey), "handle was not bound");
+  });
+  if (vectors.recovery) {
+    const vector = vectors.recovery;
+    check("recovery: published vector", async () => {
+      const signature = await impl.signWithRecoveryCode(vector.code, vector.handle, bytes(vector.message));
+      expect(same(signature, bytes(vector.signature)), "signature differs from the vector");
+      expect(impl.canonicalIdentityVaultJson(vector.vault) === vector.canonicalVault, "canonical vault differs");
+      const hash = await impl.recoveryPayloadHash(vector.password, vector.canonicalVault);
+      expect(same(hash, bytes(vector.payloadHash)), "payload hash differs");
+    });
+  }
+}
+
 await Promise.all(pending);
 if (passed + failures.length === 0) {
   console.log("FAIL  no checks ran");

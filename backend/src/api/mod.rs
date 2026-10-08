@@ -7,6 +7,7 @@ use axum::extract::{DefaultBodyLimit, State, WebSocketUpgrade};
 use axum::response::IntoResponse;
 use axum::routing::{delete, get, patch, post, put};
 use axum::Router;
+use axum_extra::extract::cookie::CookieJar;
 use futures_util::{SinkExt, StreamExt};
 
 pub mod attachments;
@@ -224,6 +225,10 @@ pub fn router(state: AppState) -> axum::Router {
                 .route(
                     "/servers/{server_id}/key-envelopes/me",
                     get(key_envelopes::get_my_envelope),
+                )
+                .route(
+                    "/servers/{server_id}/key-envelopes/exists",
+                    get(key_envelopes::envelope_exists),
                 ),
         )
         .with_state(state)
@@ -237,32 +242,66 @@ async fn ws_handler(
     ws: WebSocketUpgrade,
     State(state): State<AppState>,
     OptionalAuth(user): OptionalAuth,
+    jar: CookieJar,
 ) -> Result<impl IntoResponse, crate::error::ApiError> {
     let account = user.ok_or_else(crate::error::ApiError::unauthorized)?;
-    Ok(ws.on_upgrade(move |socket| handle_socket(state, account.id, socket)))
+    let session_id = auth::session::current_session_id(&state, &jar)
+        .await?
+        .ok_or_else(crate::error::ApiError::unauthorized)?;
+    Ok(ws.on_upgrade(move |socket| handle_socket(state, account.id, session_id, socket)))
 }
 
-async fn handle_socket(state: AppState, account_id: uuid::Uuid, socket: WebSocket) {
-    let mut rx = state.ws.subscribe(account_id);
+async fn handle_socket(state: AppState, account_id: uuid::Uuid, session_id: uuid::Uuid, mut socket: WebSocket) {
+    let subscription = state.ws.subscribe(account_id, session_id);
+    let session_valid = db::session::find_by_id(&state.pool, session_id)
+        .await
+        .ok()
+        .flatten()
+        .is_some_and(|session| session.account_id == account_id && session.is_valid(chrono::Utc::now()));
+    if !session_valid || *subscription.cancel.borrow() {
+        state.ws.unsubscribe(account_id, subscription.id);
+        let _ = socket.send(Message::Close(None)).await;
+        return;
+    }
+    let mut rx = subscription.messages;
+    let mut cancelled = subscription.cancel;
     ws::replay_pending_handoffs(&state, account_id).await;
     broadcast_presence_for_account(&state, account_id).await;
     let (mut sender, mut receiver) = socket.split();
+    let mut send_cancelled = cancelled.clone();
     let send_task = tokio::spawn(async move {
-        while let Some(msg) = rx.recv().await {
-            if sender.send(Message::Text(msg.into())).await.is_err() {
-                break;
+        loop {
+            tokio::select! {
+                _ = send_cancelled.changed() => {
+                    if *send_cancelled.borrow() {
+                        let _ = sender.send(Message::Close(None)).await;
+                        break;
+                    }
+                }
+                msg = rx.recv() => {
+                    let Some(msg) = msg else { break; };
+                    if sender.send(Message::Text(msg.into())).await.is_err() { break; }
+                }
             }
         }
     });
-    while let Some(Ok(msg)) = receiver.next().await {
-        match msg {
-            Message::Text(t) if t == "ping" => {}
-            Message::Close(_) => break,
-            _ => {}
+    let mut was_cancelled = false;
+    loop {
+        tokio::select! {
+            _ = cancelled.changed() => {
+                if *cancelled.borrow() { was_cancelled = true; break; }
+            }
+            msg = receiver.next() => {
+                match msg {
+                    Some(Ok(Message::Text(t))) if t == "ping" => {}
+                    Some(Ok(Message::Close(_))) | None | Some(Err(_)) => break,
+                    _ => {}
+                }
+            }
         }
     }
-    send_task.abort();
-    state.ws.unsubscribe(account_id, false);
+    state.ws.unsubscribe(account_id, subscription.id);
+    if was_cancelled { let _ = send_task.await; } else { send_task.abort(); }
     broadcast_presence_for_account(&state, account_id).await;
 }
 

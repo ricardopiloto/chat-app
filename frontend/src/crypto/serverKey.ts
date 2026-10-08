@@ -34,3 +34,6 @@ export const decryptMessage = async (serverKey: Uint8Array, encoded: string): Pr
 export const rememberServerKey = (serverId: string, key: Uint8Array): void => void keysByServer.set(serverId, key);
 
 export const getServerKey = (serverId: string): Uint8Array | undefined => keysByServer.get(serverId);
+
+/** Drops every server key held in this tab. Call when the account or its identity changes. */
+export const forgetServerKeys = (): void => keysByServer.clear();

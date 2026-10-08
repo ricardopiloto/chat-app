@@ -10,7 +10,7 @@
     "lint": "eslint src",
     "format": "prettier --write src",
     "check:v1-overlap": "node scripts/check-v1-overlap.mjs",
-    "test:contracts": "node scripts/contracts/run.mjs",
+    "test:contracts": "node --experimental-strip-types scripts/contracts/run.mjs && node --experimental-strip-types scripts/contracts/run.mjs --impl scripts/contracts/impl-v2.mjs",
     "verify:chat": "node scripts/verify-chat.mjs",
     "verify:i18n-keys": "node scripts/verify-i18n-keys.mjs",
     "verify:sound": "node scripts/verify-sound.mjs",

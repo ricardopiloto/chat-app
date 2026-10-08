@@ -21,6 +21,14 @@ fn map_row(row: Row) -> Result<KeyEnvelope, sqlx::Error> {
     })
 }
 
+pub async fn server_has_envelope(pool: &SqlitePool, server_id: Uuid) -> Result<bool, sqlx::Error> {
+    let (n,): (i64,) = sqlx::query_as("SELECT COUNT(*) FROM key_envelope WHERE server_id = ?")
+        .bind(server_id.to_string())
+        .fetch_one(pool)
+        .await?;
+    Ok(n > 0)
+}
+
 pub async fn upsert(pool: &SqlitePool, envelope: &KeyEnvelope) -> Result<(), sqlx::Error> {
     sqlx::query(
         "INSERT INTO key_envelope (server_id, account_id, sealed_key, sealed_by_account_id, created_at)

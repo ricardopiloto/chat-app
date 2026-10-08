@@ -172,3 +172,14 @@ Notas:
 - As telas 27 e 28 (partilha de ecrã) não foram recapturadas: o Chromium de teste não partilha ecrã. Valem a captura e a verificação da fase de voz.
 - O shell (menu lateral, painel Membros) é o da v2 e não o dos mockups, como já registado em voice-video. Os elementos excluídos (§6) estão ausentes em todas as capturas.
 - Modo claro e viewport <768 px (tarefa 4A.5): as telas Fiel foram revistas nas duas variantes (ver `docs/v2/closing-report.md`). Nenhum elemento obrigatório foi removido nem nenhum excluído foi reintroduzido; só se ajustaram cores de tokens (contraste), alvos de toque e o cabeçalho de autenticação em mobile.
+
+## 10. Change `password-recovery` (2026-10-08)
+
+Verificação no navegador (Claude em Chrome, backend/BD descartáveis) do fluxo completo de recuperação de senha, como exige a spec `frontend-v2/auth` (requisito "Ecrãs de autenticação fiéis aos mockups").
+
+- **#1 `autentica_o_e_registo`** continua **Fiel**, com um único desvio ao mockup, já previsto no `design.md` D10 e confirmado nesta verificação: o link que no mockup diz "Esqueceu o cofre?" passa a **"Esqueci a senha"** e abre `/recover` (antes só explicava o desbloqueio; agora recupera de facto). Nenhum outro elemento obrigatório do mockup (painel esquerdo, controlo segmentado, prefixo `@`, separador, acção secundária) foi alterado ou removido.
+- **#2 `desbloqueio_de_conta_recupera_o`** continua **Fiel**; a acção "Recuperar identidade" está sempre visível (não condicional a tentativa falhada) e o texto de aviso foi corrigido (tarefa 6.4) para não afirmar perda total do histórico.
+- **`/recover`** (ecrã público "Esqueci a senha", ambos os caminhos — código do operador e chave de recuperação) não tem mockup: classificado **Adaptado**, construído só com componentes e tokens do sistema de design existente (`AuthFrame`, `AuthField`, `Segmented`, `Button`, `Icon`), seguindo o mesmo layout de duas colunas dos ecrãs de autenticação.
+- **Passo de chave de recuperação no registo** (`RecoverySetup`, usado em `Auth.tsx` e `Invite.tsx`) também não tem mockup: classificado **Adaptado**, mesmo padrão de `fieldset`/`Card` e botões já usados nos restantes formulários de auth/conta.
+
+Capturado ao vivo nesta verificação: `/auth` com o link "Esqueci a senha"; `/recover` nos dois caminhos (código e chave), incluindo o aviso de identidade nova e os erros genéricos/429; registo e aceitação de convite com "criar agora" (código mostrado uma vez, confirmação "guardei" obrigatória antes do POST); ecrã de desbloqueio com o aviso corrigido. Ver `openspec/changes/password-recovery/tasks.md` tarefas 6.6 e 7.9 para o percurso completo testado.

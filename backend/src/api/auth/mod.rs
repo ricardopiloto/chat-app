@@ -13,8 +13,12 @@ use axum::Router;
 use axum_extra::extract::cookie::{Cookie, CookieJar};
 use base64::Engine;
 use serde::Deserialize;
+use sqlx::SqliteConnection;
+use uuid::Uuid;
 
 pub mod login;
+pub mod recovery;
+pub mod recovery_key;
 pub mod register;
 pub mod session;
 
@@ -32,6 +36,12 @@ pub fn router() -> Router<AppState> {
         )
         .route("/auth/identity-vault", put(put_identity_vault))
         .route("/auth/identity", put(put_identity))
+        .route("/auth/password", put(recovery::change_password))
+        .route("/auth/recovery/code/redeem", post(recovery::redeem_code))
+        .route("/auth/recovery/key/challenge", post(recovery_key::challenge))
+        .route("/auth/recovery/key/start", post(recovery_key::start))
+        .route("/auth/recovery/key/redeem", post(recovery_key::redeem))
+        .route("/auth/recovery-key", put(recovery_key::put_recovery_key))
         .route("/auth/display-name", patch(patch_display_name))
 }
 
@@ -78,17 +88,15 @@ async fn put_identity(
     let pubkey = register::decode_pubkey(&body.identity_pubkey)?;
     let vault = register::encode_identity_vault(Some(&body.identity_vault))?
         .ok_or_else(|| ApiError::bad_request("identity_vault required"))?;
-    db::account::replace_identity(&state.pool, account.id, &pubkey, &vault).await?;
-    db::key_envelope::delete_for_account(&state.pool, account.id).await?;
-    let server_ids = db::membership::list_server_ids_for_account(&state.pool, account.id).await?;
-    for server_id in server_ids {
-        db::membership::set_handoff_pending(&state.pool, account.id, server_id).await?;
-        let synced = db::membership::list_synced_account_ids(&state.pool, server_id).await?;
-        let encoded = base64::engine::general_purpose::STANDARD.encode(&pubkey);
+    let mut tx = state.pool.begin().await?;
+    let events = apply_identity_replacement(&mut tx, account.id, &pubkey, &vault).await?;
+    tx.commit().await?;
+    let encoded = base64::engine::general_purpose::STANDARD.encode(&pubkey);
+    for event in events {
         state.ws.send_to_accounts(
-            &synced,
+            &event.synced_account_ids,
             "key_handoff.requested",
-            server_id,
+            event.server_id,
             &serde_json::json!({
                 "account_id": account.id,
                 "identity_pubkey": encoded,
@@ -99,6 +107,65 @@ async fn put_identity(
         .await?
         .ok_or_else(ApiError::unauthorized)?;
     Ok(Json(updated.auth_view()))
+}
+
+pub(crate) struct HandoffEvent {
+    pub server_id: Uuid,
+    pub synced_account_ids: Vec<Uuid>,
+}
+
+/// Performs every persistent consequence of a new identity in the caller's transaction.
+/// The caller must publish returned events only after the transaction commits.
+pub(crate) async fn apply_identity_replacement(
+    tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
+    account_id: Uuid,
+    pubkey: &[u8],
+    vault: &[u8],
+) -> Result<Vec<HandoffEvent>, ApiError> {
+    let conn: &mut SqliteConnection = &mut *tx;
+    sqlx::query(
+        "UPDATE account SET identity_pubkey = ?, identity_vault = ?, recovery_vault = NULL, \
+         recovery_verifier_pubkey = NULL, recovery_set_at = NULL, recovery_generation = recovery_generation + 1 \
+         WHERE id = ?",
+    )
+    .bind(pubkey)
+    .bind(vault)
+    .bind(account_id.to_string())
+    .execute(&mut *conn)
+    .await?;
+    sqlx::query("DELETE FROM recovery_challenge WHERE account_id = ?")
+        .bind(account_id.to_string())
+        .execute(&mut *conn)
+        .await?;
+    sqlx::query("DELETE FROM recovery_ticket WHERE account_id = ?")
+        .bind(account_id.to_string())
+        .execute(&mut *conn)
+        .await?;
+    sqlx::query("DELETE FROM key_envelope WHERE account_id = ?")
+        .bind(account_id.to_string())
+        .execute(&mut *conn)
+        .await?;
+    let server_ids: Vec<(String,)> = sqlx::query_as("SELECT server_id FROM membership WHERE account_id = ?")
+        .bind(account_id.to_string())
+        .fetch_all(&mut *conn)
+        .await?;
+    let mut events = Vec::with_capacity(server_ids.len());
+    for (server_id,) in server_ids {
+        sqlx::query("UPDATE membership SET key_handoff_status = 'pending' WHERE account_id = ? AND server_id = ?")
+            .bind(account_id.to_string())
+            .bind(&server_id)
+            .execute(&mut *conn)
+            .await?;
+        let synced: Vec<(String,)> = sqlx::query_as("SELECT account_id FROM membership WHERE server_id = ? AND key_handoff_status = 'synced'")
+            .bind(&server_id)
+            .fetch_all(&mut *conn)
+            .await?;
+        events.push(HandoffEvent {
+            server_id: Uuid::parse_str(&server_id).map_err(|e| ApiError::internal(e.to_string()))?,
+            synced_account_ids: synced.into_iter().map(|(id,)| Uuid::parse_str(&id).map_err(|e| ApiError::internal(e.to_string()))).collect::<Result<_, _>>()?,
+        });
+    }
+    Ok(events)
 }
 
 #[derive(Debug, Deserialize)]

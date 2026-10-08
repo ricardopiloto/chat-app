@@ -1,8 +1,11 @@
 import { Show, createSignal } from "solid-js";
-import { useLocation } from "@solidjs/router";
+import { A, useLocation } from "@solidjs/router";
 import { ApiError } from "../api";
 import { AuthField, AuthFrame, bindValue } from "../auth/AuthFrame";
+import { RecoverySetup, type RecoveryChoice } from "../auth/RecoverySetup";
 import { Button, Icon, Segmented } from "../components/ui";
+import { generateIdentity, type Identity } from "../crypto/identity";
+import { createRecovery, type RecoveryMaterial } from "../crypto/recovery";
 import { t } from "../i18n";
 import { useSession } from "../session/session";
 
@@ -35,9 +38,11 @@ export function Auth() {
   const [password, setPassword] = createSignal("");
   const [invite, setInvite] = createSignal(presetInvite);
   const [revealed, setRevealed] = createSignal(false);
-  const [vaultHelp, setVaultHelp] = createSignal(false);
   const [busy, setBusy] = createSignal(false);
   const [problem, setProblem] = createSignal("");
+  const [recoveryChoice, setRecoveryChoice] = createSignal<RecoveryChoice>("later");
+  const [recoveryDraft, setRecoveryDraft] = createSignal<{ handle: string; identity: Identity; material: RecoveryMaterial }>();
+  const [recoverySaved, setRecoverySaved] = createSignal(false);
 
   async function submit(event: SubmitEvent) {
     event.preventDefault();
@@ -50,8 +55,25 @@ export function Auth() {
     setBusy(true);
     try {
       const credentials = { handle: handle().trim().replace(/^@/, ""), password: password() };
-      if (mode() === "register") await session.register({ ...credentials, inviteCode: invite().trim() });
-      else await session.login(credentials);
+      if (mode() === "register") {
+        if (recoveryChoice() === "now") {
+          const current = recoveryDraft();
+          if (!current || current.handle !== credentials.handle) {
+            const fresh = generateIdentity();
+            const material = await createRecovery(fresh, credentials.handle);
+            setRecoveryDraft({ handle: credentials.handle, identity: fresh, material });
+            setRecoverySaved(false);
+            return;
+          }
+          if (!recoverySaved()) {
+            setProblem(t("recover.savedRequired"));
+            return;
+          }
+          await session.register({ ...credentials, inviteCode: invite().trim(), identity: current.identity, recovery: current.material });
+        } else {
+          await session.register({ ...credentials, inviteCode: invite().trim() });
+        }
+      } else await session.login(credentials);
     } catch (error) {
       setProblem(failureText(error, mode()));
     } finally {
@@ -94,9 +116,9 @@ export function Auth() {
           label={t("auth.password")}
           aside={
             <Show when={!registering()}>
-              <button type="button" class="inline-flex min-h-6 items-center text-body-sm text-primary hover:underline" aria-expanded={vaultHelp()} onClick={() => setVaultHelp(!vaultHelp())}>
-                {t("auth.forgotVault")}
-              </button>
+              <A href="/recover" class="inline-flex min-h-6 items-center text-body-sm text-primary hover:underline">
+                {t("auth.forgotPassword")}
+              </A>
             </Show>
           }
           lead={<Icon name="key" class="text-[18px]" />}
@@ -110,14 +132,23 @@ export function Auth() {
           <input name="password" type={revealed() ? "text" : "password"} autocomplete={registering() ? "new-password" : "current-password"} required {...bindValue(password, setPassword)} />
         </AuthField>
 
-        <Show when={vaultHelp() && !registering()}>
-          <p class="rounded-md bg-surface-container p-3 text-body-sm text-on-surface-variant">{t("auth.forgotVaultHelp")}</p>
-        </Show>
-
         <Show when={registering()}>
           <AuthField label={t("auth.inviteCode")} lead={<Icon name="confirmation_number" class="text-[18px]" />} hint={t("auth.inviteHint")}>
             <input name="invite" autocomplete="off" spellcheck={false} placeholder={t("auth.invitePlaceholder")} {...bindValue(invite, setInvite)} />
           </AuthField>
+          <RecoverySetup
+            choice={recoveryChoice()}
+            onChoice={(next) => {
+              setRecoveryChoice(next);
+              if (next === "later") {
+                setRecoveryDraft(undefined);
+                setRecoverySaved(false);
+              }
+            }}
+            code={recoveryDraft()?.material.code}
+            saved={recoverySaved()}
+            onSaved={setRecoverySaved}
+          />
         </Show>
 
         <Show when={problem()}>

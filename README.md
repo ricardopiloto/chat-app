@@ -53,6 +53,7 @@ Lista do que a v2 faz hoje. A fonte de verdade, com 138 itens e o endpoint de ca
 - Login, logout com confirmação, restauro de sessão ao recarregar, troca de conta.
 - **Identidade criptográfica** gerada no navegador, protegida por um cofre cifrado com a palavra-passe (guardado no dispositivo e no servidor, sempre cifrado).
 - Desbloqueio em dispositivo novo (cofre remoto) e **recuperação de identidade** (nova identidade) quando a palavra-passe do cofre se perde.
+- **Esqueci a senha** (`/recover`, público): reset com código de uso único emitido pelo operador via CLI (`reset-code`, identidade nova) ou com **chave de recuperação** opcional criada no registo/convite ou em "Minha conta" (preserva a identidade e os Servidores). "Alterar senha" com a senha actual mantém a identidade e a sessão actual, revoga as outras. Não há recuperação por e-mail.
 - Perfil: nome a mostrar, avatar (JPEG, PNG ou WebP até 1 MiB), idioma **pt-BR / en** e tema **Sistema / Claro / Escuro**, todos persistentes.
 
 ### Servidores, membros e cargos
@@ -281,7 +282,13 @@ Só os contratos que a **v2** consome. O backend tem mais rotas (listadas em [Ro
 | `POST` | `/api/auth/logout` | — | sem corpo | Revoga a sessão |
 | `GET` | `/api/auth/me` | — | `Account` ou 204 | 204 quando não há sessão |
 | `PUT` | `/api/auth/identity-vault` | `IdentityVaultPayload` | sem corpo | Guarda o cofre cifrado |
-| `PUT` | `/api/auth/identity` | `{ identity_pubkey, identity_vault }` | `Account` | Recuperação: troca a identidade, apaga os envelopes e marca os handoffs como pendentes |
+| `PUT` | `/api/auth/identity` | `{ identity_pubkey, identity_vault }` | `Account` | Recuperação: troca a identidade, apaga os envelopes, marca os handoffs como pendentes e invalida a chave de recuperação anterior |
+| `PUT` | `/api/auth/password` | `{ current_password, new_password, identity_vault }` | sem corpo (204) | Autenticada. Mesma identidade; revoga as outras sessões, mantém a actual |
+| `POST` | `/api/auth/recovery/code/redeem` | `{ handle, code, password, identity_pubkey, identity_vault }` | `Account` | Sem sessão. Código de uso único emitido pelo operador (`reset-code`); troca identidade e senha, revoga todas as sessões. 401 uniforme para handle/código inválidos |
+| `POST` | `/api/auth/recovery/key/challenge` | `{ handle }` | `{ challenge_id, nonce }` | Sem sessão. Nunca revela se a conta existe |
+| `POST` | `/api/auth/recovery/key/start` | `{ handle, challenge_id, nonce, signature }` | `{ recovery_vault, ticket }` | Consome o desafio; devolve o cofre de recuperação só com assinatura válida |
+| `POST` | `/api/auth/recovery/key/redeem` | `{ handle, ticket, signature, password, identity_vault }` | `Account` | Consome o ticket; mantém `identity_pubkey` e envelopes, revoga todas as sessões |
+| `PUT` | `/api/auth/recovery-key` | `{ current_password, recovery_vault, recovery_verifier_pubkey }` | `Account` | Autenticada. Cria ou substitui a chave de recuperação; invalida desafios/tickets antigos |
 | `PATCH` | `/api/auth/display-name` | `{ display_name: string \| null }` | `Account` | Handle não muda |
 | `PUT` / `DELETE` | `/api/auth/avatar` | bytes + `X-Mesa-Media-Type` / — | `Account` / sem corpo | JPEG, PNG, WebP, 1 MiB |
 | `GET` | `/api/accounts/{id}/avatar` | — | imagem | Usada em `<img src>` |
@@ -360,8 +367,9 @@ Só os contratos que a **v2** consome. O backend tem mais rotas (listadas em [Ro
 
 | Método | Caminho | Pedido | Resposta | Notas |
 |--------|---------|--------|----------|-------|
-| `POST` | `/api/servers/{id}/key-envelopes` | `{ account_id, sealed_key }` | 201 sem corpo | `sealed_key` é Base64 da caixa selada (80 bytes). Marca o handoff como concluído e emite `key_handoff.completed` |
+| `POST` | `/api/servers/{id}/key-envelopes` | `{ account_id, sealed_key }` | 201 sem corpo | `sealed_key` é Base64 da caixa selada (80 bytes). Marca o handoff como concluído e emite `key_handoff.completed`. **409** `key already exists` quando o envelope próprio já existe com bytes diferentes, ou outro membro já tem envelope no escopo — primeiro escritor vence |
 | `GET` | `/api/servers/{id}/key-envelopes/me` | — | `{ server_id, account_id, sealed_key }` | 404 "key envelope not ready" enquanto o handoff está pendente |
+| `GET` | `/api/servers/{id}/key-envelopes/exists` | — | `{ exists: boolean }` | Indicador autoritativo de existência de envelope no Servidor, sem expor a chave; usado por `ensureServerKey` para não gerar chave nova quando já existe uma a sincronizar |
 
 ### Eventos WebSocket
 
@@ -396,7 +404,7 @@ Existem no backend por herança da v1 e estão fora do escopo da v2 (ver [`parit
 
 ### Política de alterações do backend
 
-O backend da v1 é reaproveitado como está. Alterações só são admitidas quando aditivas, retrocompatíveis, com tarefa própria, testes e registo em [`docs/v2/contracts/backend-change-policy.md`](docs/v2/contracts/backend-change-policy.md). Adições da v2 até agora: `GET /api/invites/{code}/handle-available` e `GET /api/channels/{id}/voice/channel-key`.
+O backend da v1 é reaproveitado como está. Alterações só são admitidas quando aditivas, retrocompatíveis, com tarefa própria, testes e registo em [`docs/v2/contracts/backend-change-policy.md`](docs/v2/contracts/backend-change-policy.md). Adições da v2 até agora: `GET /api/invites/{code}/handle-available`, `GET /api/channels/{id}/voice/channel-key`, e as rotas de recuperação de senha (`PUT /api/auth/password`, `POST /api/auth/recovery/code/redeem`, `POST /api/auth/recovery/key/{challenge,start,redeem}`, `PUT /api/auth/recovery-key`, `GET /api/servers/{id}/key-envelopes/exists`).
 
 ---
 

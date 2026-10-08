@@ -6,6 +6,9 @@ import { useSession } from "../session/session";
 import { t } from "../i18n";
 import { Badge, Button, Icon, Logo } from "../components/ui";
 import { ApiError, auth, invites } from "../api";
+import { RecoverySetup, type RecoveryChoice } from "../auth/RecoverySetup";
+import { generateIdentity, type Identity } from "../crypto/identity";
+import { createRecovery, type RecoveryMaterial } from "../crypto/recovery";
 
 const MIN_PASSWORD = 8;
 const HANDLE_PATTERN = /^[a-z0-9_]{3,32}$/;
@@ -59,6 +62,9 @@ export function Invite() {
   const [vault, setVault] = createSignal(true);
   const [busy, setBusy] = createSignal(false);
   const [problem, setProblem] = createSignal("");
+  const [recoveryChoice, setRecoveryChoice] = createSignal<RecoveryChoice>("later");
+  const [recoveryDraft, setRecoveryDraft] = createSignal<{ handle: string; identity: Identity; material: RecoveryMaterial }>();
+  const [recoverySaved, setRecoverySaved] = createSignal(false);
 
   const info = () => {
     const result = preview();
@@ -101,9 +107,34 @@ export function Invite() {
     setBusy(true);
     setProblem("");
     try {
-      const membership = signedIn()
-        ? await invites.accept(code())
-        : await session.joinWithInvite({ handle: cleanHandle(), password: password(), inviteCode: code() });
+      let membership;
+      if (signedIn()) membership = await invites.accept(code());
+      else if (recoveryChoice() === "now") {
+        const name = cleanHandle();
+        const current = recoveryDraft();
+        if (!current || current.handle !== name) {
+          const fresh = generateIdentity();
+          const material = await createRecovery(fresh, name);
+          setRecoveryDraft({ handle: name, identity: fresh, material });
+          setRecoverySaved(false);
+          setBusy(false);
+          return;
+        }
+        if (!recoverySaved()) {
+          setProblem(t("recover.savedRequired"));
+          setBusy(false);
+          return;
+        }
+        membership = await session.joinWithInvite({
+          handle: name,
+          password: password(),
+          inviteCode: code(),
+          identity: current.identity,
+          recovery: current.material,
+        });
+      } else {
+        membership = await session.joinWithInvite({ handle: cleanHandle(), password: password(), inviteCode: code() });
+      }
       const name = displayName().trim();
       if (name) await auth.setDisplayName(name).then((account) => session.updateAccount(account)).catch(() => undefined);
       navigate(`/servers/${membership.server_id}`, { replace: true });
@@ -218,6 +249,20 @@ export function Invite() {
                   </span>
                   <small>{t("mgmt.onboarding.passwordHint", { min: MIN_PASSWORD })}</small>
                 </label>
+
+                <RecoverySetup
+                  choice={recoveryChoice()}
+                  onChoice={(next) => {
+                    setRecoveryChoice(next);
+                    if (next === "later") {
+                      setRecoveryDraft(undefined);
+                      setRecoverySaved(false);
+                    }
+                  }}
+                  code={recoveryDraft()?.material.code}
+                  saved={recoverySaved()}
+                  onSaved={setRecoverySaved}
+                />
 
                 <label class="choice mg-vault">
                   <input type="checkbox" checked={vault()} onChange={(e) => setVault(e.currentTarget.checked)} />

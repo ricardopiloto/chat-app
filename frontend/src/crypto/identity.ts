@@ -82,10 +82,29 @@ export async function persistIdentity(accountId: string, identity: Identity, pas
  * Unlocks the account identity. The vault kept in this browser wins; otherwise the one held by the
  * server is used. A vault that opens is also kept locally so the next visit needs no server copy.
  */
+function samePublicKey(left: Uint8Array, right: ArrayLike<number>): boolean {
+  if (left.length !== right.length) return false;
+  return left.every((byte, index) => byte === right[index]);
+}
+
 export async function unlockIdentity(password: string, accountId: string, remoteVault?: IdentityVault | null): Promise<Identity> {
-  const vault = (await readLocalVault(accountId)) ?? remoteVault ?? undefined;
-  if (!vault) throw new IdentityUnlockError("missing_vault");
-  const identity = await unlockIdentityVault(vault, password);
-  await writeLocalVault(accountId, vault);
-  return identity;
+  const local = await readLocalVault(accountId);
+  const candidates = [local, remoteVault ?? undefined].filter((vault): vault is IdentityVault => vault !== undefined);
+  if (candidates.length === 0) throw new IdentityUnlockError("missing_vault");
+  let failure: IdentityUnlockError = new IdentityUnlockError("bad_password");
+  const seen = new Set<string>();
+  for (const vault of candidates) {
+    const fingerprint = JSON.stringify(vault);
+    if (seen.has(fingerprint)) continue;
+    seen.add(fingerprint);
+    try {
+      const identity = await unlockIdentityVault(vault, password);
+      if (!samePublicKey(identity.publicKey, vault.publicKey)) throw new IdentityUnlockError("bad_password");
+      await writeLocalVault(accountId, vault);
+      return identity;
+    } catch (error) {
+      failure = error instanceof IdentityUnlockError ? error : failure;
+    }
+  }
+  throw failure;
 }

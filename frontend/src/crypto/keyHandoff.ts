@@ -1,7 +1,7 @@
 // Distribution of a server's key: each member holds an envelope with the key sealed to their own
 // public key. The owner creates the first key and seals it for everyone; any member who holds the
 // key can answer a newcomer's request over the realtime channel.
-import { api, type Server, type ServerMember } from "../api/client";
+import { ApiError, api, type Server, type ServerMember } from "../api/client";
 import type { WsEnvelope } from "../api/ws";
 import { b64, fromB64, seal, unseal, type Identity } from "./identity";
 import { generateServerKey, getServerKey, rememberServerKey } from "./serverKey";
@@ -43,9 +43,16 @@ export async function ensureServerKey(serverId: string, identity: Identity, acco
 
   const owned = (await api<Server[]>("/api/servers")).some((s) => s.id === serverId && s.owner_account_id === accountId);
   if (!owned) return undefined;
+  // `exists` is computed from envelopes. Handoff status alone does not prove a key is stored.
+  if ((await api<{ exists: boolean }>(`${envelopesPath(serverId)}/exists`)).exists) return undefined;
 
   const fresh = generateServerKey();
-  await publishOwnEnvelope(serverId, accountId, identity, fresh);
+  try {
+    await publishOwnEnvelope(serverId, accountId, identity, fresh);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 409) return loadServerKey(serverId, identity);
+    throw error;
+  }
   const others = (await api<ServerMember[]>(`/api/servers/${serverId}/members`)).filter((m) => m.account_id !== accountId);
   await Promise.all(others.map((m) => sendEnvelope(serverId, m.account_id, fromB64(m.identity_pubkey), fresh)));
   return fresh;

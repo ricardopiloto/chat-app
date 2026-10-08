@@ -4,6 +4,8 @@ mod common;
 mod attachments;
 mod auth_rate_limit;
 mod auth_register;
+mod auth_recovery;
+mod auth_recovery_key;
 mod auth_session;
 mod avatars;
 mod channel_read_state;

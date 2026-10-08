@@ -1,7 +1,6 @@
 use crate::api::auth::session::AuthUser;
 use crate::api::authz::require_member;
 use crate::db;
-use crate::domain::key_envelope::KeyEnvelope;
 use crate::domain::membership::KeyHandoffStatus;
 use crate::domain::permissions;
 use crate::error::ApiError;
@@ -11,7 +10,9 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Json;
 use base64::Engine;
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use sqlx::Connection;
 use uuid::Uuid;
 
 #[derive(Debug, Deserialize)]
@@ -40,47 +41,104 @@ pub async fn post_envelope(
     if !db::membership::exists(&state.pool, body.account_id, server_id).await? {
         return Err(ApiError::bad_request("target is not a member"));
     }
-    if body.account_id != account.id {
-        let target = db::membership::find(&state.pool, body.account_id, server_id)
+    let mut conn = state.pool.acquire().await?;
+    let mut tx = conn.begin_with("BEGIN IMMEDIATE").await?;
+    let own = body.account_id == account.id;
+    let existing: Option<(Vec<u8>,)> = sqlx::query_as(
+        "SELECT sealed_key FROM key_envelope WHERE server_id = ? AND account_id = ?",
+    )
+    .bind(server_id.to_string())
+    .bind(body.account_id.to_string())
+    .fetch_optional(&mut *tx)
+    .await?;
+    let mut announce = true;
+    let mut rewrite = true;
+    if own {
+        if let Some((current,)) = existing {
+            if current == sealed {
+                announce = false;
+                rewrite = false;
+            } else {
+                return Err(ApiError::conflict("key already exists"));
+            }
+        } else {
+            let (others,): (i64,) = sqlx::query_as(
+                "SELECT COUNT(*) FROM key_envelope WHERE server_id = ? AND account_id != ?",
+            )
+            .bind(server_id.to_string())
+            .bind(account.id.to_string())
+            .fetch_one(&mut *tx)
+            .await?;
+            if others > 0 {
+                return Err(ApiError::conflict("key already exists"));
+            }
+        }
+    } else {
+        let target = db::membership::find(&mut *tx, body.account_id, server_id)
             .await?
             .ok_or_else(|| ApiError::bad_request("target is not a member"))?;
         if target.key_handoff_status != KeyHandoffStatus::Pending {
-            return Err(ApiError::forbidden(
-                "cannot overwrite a synced key envelope",
-            ));
+            return Err(ApiError::forbidden("cannot overwrite a synced key envelope"));
         }
-        let server = db::server::find_by_id(&state.pool, server_id)
+        let (owner_id,): (String,) = sqlx::query_as("SELECT owner_account_id FROM server WHERE id = ?")
+            .bind(server_id.to_string())
+            .fetch_optional(&mut *tx)
             .await?
             .ok_or_else(|| ApiError::not_found("server not found"))?;
-        let caller = db::membership::find(&state.pool, account.id, server_id)
+        let caller = db::membership::find(&mut *tx, account.id, server_id)
             .await?
             .ok_or_else(|| ApiError::forbidden("not a member of this server"))?;
-        let owner = permissions::is_server_owner(server.owner_account_id, account.id);
+        let owner = permissions::is_server_owner(
+            Uuid::parse_str(&owner_id).map_err(|e| ApiError::internal(e.to_string()))?,
+            account.id,
+        );
         let synced = caller.key_handoff_status == KeyHandoffStatus::Synced;
         if !owner && !synced {
-            return Err(ApiError::forbidden(
-                "only the owner or a synced member can complete handoff",
-            ));
+            return Err(ApiError::forbidden("only the owner or a synced member can complete handoff"));
         }
     }
-    db::key_envelope::upsert(
-        &state.pool,
-        &KeyEnvelope {
-            server_id,
-            account_id: body.account_id,
-            sealed_key: sealed,
-            sealed_by_account_id: account.id,
-        },
+    if rewrite {
+    sqlx::query(
+        "INSERT INTO key_envelope (server_id, account_id, sealed_key, sealed_by_account_id, created_at)
+         VALUES (?, ?, ?, ?, ?)
+         ON CONFLICT(server_id, account_id) DO UPDATE SET
+           sealed_key = excluded.sealed_key,
+           sealed_by_account_id = excluded.sealed_by_account_id,
+           created_at = excluded.created_at",
     )
+    .bind(server_id.to_string())
+    .bind(body.account_id.to_string())
+    .bind(&sealed)
+    .bind(account.id.to_string())
+    .bind(Utc::now().to_rfc3339())
+    .execute(&mut *tx)
     .await?;
-    db::membership::set_handoff_synced(&state.pool, body.account_id, server_id).await?;
-    state.ws.send_to_accounts(
-        &[body.account_id],
-        "key_handoff.completed",
-        server_id,
-        &serde_json::json!({ "account_id": body.account_id }),
-    );
+    }
+    sqlx::query("UPDATE membership SET key_handoff_status = 'synced' WHERE account_id = ? AND server_id = ?")
+        .bind(body.account_id.to_string())
+        .bind(server_id.to_string())
+        .execute(&mut *tx)
+        .await?;
+    tx.commit().await?;
+    if announce {
+        state.ws.send_to_accounts(
+            &[body.account_id],
+            "key_handoff.completed",
+            server_id,
+            &serde_json::json!({ "account_id": body.account_id }),
+        );
+    }
     Ok(StatusCode::CREATED)
+}
+
+pub async fn envelope_exists(
+    State(state): State<AppState>,
+    AuthUser(account): AuthUser,
+    Path(server_id): Path<Uuid>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    require_member(&state.pool, account.id, server_id).await?;
+    let exists = db::key_envelope::server_has_envelope(&state.pool, server_id).await?;
+    Ok(Json(serde_json::json!({ "exists": exists })))
 }
 
 pub async fn get_my_envelope(

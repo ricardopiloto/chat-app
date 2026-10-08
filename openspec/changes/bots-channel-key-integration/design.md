@@ -88,6 +88,17 @@ A UI de bots não introduz um novo padrão de navegação: adiciona-se um item *
 - **[Risco] Carregamento lazy (D4) introduz um estado de espera visível ("sincronizando chave do canal") que não existia por canal antes** → Mitigação: o padrão já existe hoje por Servidor (`Membership.key_handoff_status = pending`); replica-se o mesmo padrão de UI, só escopado a canal.
 - **[Trade-off] Sem forward secrecy**: remover um membro ou bot de um canal não invalida retroactivamente uma `channel_key` já sincronizada localmente por quem saiu → aceite como limitação conhecida (ver Non-Goals); documentar explicitamente na UI de remoção para não sugerir uma garantia que não existe.
 
+## Interacção com `password-recovery`
+
+O change `password-recovery` (aplicado antes deste, recomendado em `proposal.md`) introduziu, hoje escopados por Servidor, três mecanismos que este change precisa de adaptar em vez de duplicar:
+
+- `apply_identity_replacement(tx, account_id, pubkey, vault)` (`backend/src/api/mod.rs`): único ponto que substitui identidade, partilhado por `PUT /auth/identity` e pelo reset do operador. Hoje itera `membership` por Servidor (apaga `key_envelope` da conta, marca `key_handoff_status = pending`, calcula os `synced` a notificar). Tem de passar a iterar por Canal elegível (via ACL, D3) quando a PK de `key_envelope` mudar para `(channel_id, account_id)` — não é só trocar o identificador: a elegibilidade deixa de ser "todo membro do Servidor" e passa a depender da ACL por canal, inclusive privados.
+- Guarda transaccional de `post_envelope` (`backend/src/api/key_envelopes.rs`): verifica o envelope próprio existente, aceita repetição idempotente, recusa sobrescrita (409) e só depois verifica outros membros no mesmo escopo. A mesma lógica de "primeiro escritor vence" vale por Canal; só a consulta de escopo muda de `server_id` para `channel_id`.
+- `GET .../key-envelopes/exists` (indicador de existência sem expor a chave, consumido por `ensureServerKey`/`ensureChannelKey` no cliente): a mesma rota, reescopada por Canal.
+- Escala (5.x de `password-recovery`, incluindo `idx_key_envelope_account` e o fan-out de `key_handoff.requested`): os números medidos lá assumem Servidor; depois desta migração, a mesma conta tem potencialmente N× mais linhas/eventos (um por Canal em vez de um por Servidor) — vale medir de novo com o volume real de canais por Servidor antes de assumir que os critérios da spec `crypto/key-envelope-integrity` continuam a cumprir.
+
+Nenhum destes três mecanismos deve ser reescrito do zero; as tarefas 2.1–2.4 (§ acima) devem explicitamente reaproveitar/adaptar o código já existente dessas três peças.
+
 ## Migration Plan
 
 Dado o contexto de "sem dados de produção a preservar" (ver `proposal.md`):

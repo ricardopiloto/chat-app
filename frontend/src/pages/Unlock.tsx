@@ -138,6 +138,7 @@ export function Unlock() {
               {t("unlock.recoverTitle")}
             </h3>
             <p class="mt-1 text-body-sm text-on-surface-variant">{t("unlock.recoverText")}</p>
+            <p class="mt-2 text-body-sm text-on-surface-variant">{t("auth.forgotVaultHelp")}</p>
           </div>
           <Button disabled={busy()} onClick={() => setConfirming(true)}>
             <Icon name="autorenew" />
