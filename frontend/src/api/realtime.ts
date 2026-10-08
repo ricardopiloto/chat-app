@@ -37,6 +37,7 @@ export interface RealtimeOptions {
   onState?: (state: DeliveryState) => void;
   /** Called after a connection that follows an interruption, so the caller can fetch what it missed. */
   onResync?: () => void;
+  onSessionRevoked?: () => void;
 }
 
 export interface RealtimeConnection {
@@ -71,6 +72,7 @@ export function connectRealtime(options: RealtimeOptions): RealtimeConnection {
   let attempt = 0;
   let closedByCaller = false;
   let hadConnection = false;
+  let reconnectGeneration = 0;
 
   const report = (state: DeliveryState) => options.onState?.(state);
 
@@ -93,9 +95,26 @@ export function connectRealtime(options: RealtimeOptions): RealtimeConnection {
       socket = null;
       if (closedByCaller) return report("disconnected");
       report("reconnecting");
-      const ceiling = Math.min(MAX_DELAY_MS, FIRST_DELAY_MS * 2 ** attempt);
-      attempt += 1;
-      timer = setTimeout(open, ceiling / 2 + Math.random() * (ceiling / 2));
+      const generation = ++reconnectGeneration;
+      // Browser WebSocket hides the HTTP status of a failed upgrade (often close code 1006).
+      // Check the cookie session before retrying, regardless of the close code.
+      void fetch("/api/auth/me", { credentials: "same-origin" }).then((response) => {
+        if (closedByCaller || generation !== reconnectGeneration) return;
+        if (response.status === 204 || response.status === 401 || response.status === 403) {
+          closedByCaller = true;
+          report("disconnected");
+          options.onSessionRevoked?.();
+          return;
+        }
+        const ceiling = Math.min(MAX_DELAY_MS, FIRST_DELAY_MS * 2 ** attempt);
+        attempt += 1;
+        timer = setTimeout(open, ceiling / 2 + Math.random() * (ceiling / 2));
+      }).catch(() => {
+        if (closedByCaller || generation !== reconnectGeneration) return;
+        const ceiling = Math.min(MAX_DELAY_MS, FIRST_DELAY_MS * 2 ** attempt);
+        attempt += 1;
+        timer = setTimeout(open, ceiling / 2 + Math.random() * (ceiling / 2));
+      });
     };
   };
   open();
@@ -103,6 +122,7 @@ export function connectRealtime(options: RealtimeOptions): RealtimeConnection {
   return {
     close() {
       closedByCaller = true;
+      reconnectGeneration += 1;
       clearTimeout(timer);
       clearInterval(keepalive);
       socket?.close();

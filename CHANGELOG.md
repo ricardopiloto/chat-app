@@ -9,6 +9,20 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+### Added
+
+- **Password recovery** (item 18 of the backlog): there is now a way back in when the password is lost, without a server ever seeing the plaintext password or the identity's private key.
+  - **Operator-assisted reset** (new identity): `reset-code <handle> [--ttl-minutes N]` CLI subcommand (`backend`) issues a single-use, time-limited code, printed once and stored only as a hash. `POST /api/auth/recovery/code/redeem` swaps `password_hash` and identity atomically, clears any recovery key, revokes every session, and opens a new one; failed attempts are rate-limited per account (5/hour) in addition to the existing per-IP limit. Documented in [docs/operar-instancia.md](docs/operar-instancia.md).
+  - **Recovery key** (preserves identity): an optional client-generated recovery code (≥128 bits), shown once at registration or created later from "My account", wraps the identity vault independently of the password. `POST /api/auth/recovery/key/challenge`, `/key/start` and `/key/redeem` use single-use, short-lived challenge/ticket signatures so no reusable proof crosses the network; `PUT /api/auth/recovery-key` creates or rotates the key (requires the current password).
+  - **Change password** (`PUT /api/auth/password`, authenticated): re-wraps the same identity with a new password, keeps the calling session, revokes the others.
+  - Frontend: public `/recover` screen (both paths), recovery-key setup step in registration and invite acceptance (confirm "I saved it" before the account is created), "Change password" and "Recovery key" cards in "My account", corrected "Recover identity" warning copy on the unlock screen.
+  - Backend storage/routes are additive; an older client keeps registering, logging in and using the app unchanged.
+- **Server key-fork fix**: `POST /api/servers/{id}/key-envelopes` now checks, writes and updates handoff state in one transaction — first writer wins, identical resubmission is idempotent, anything else gets `409`. `GET /api/servers/{id}/key-envelopes/exists` lets the client know whether a key already exists in scope before deciding to mint one, so a member (in particular an owner who just reset their identity) waits for handoff instead of generating a diverging key. See [docs/e2ee-gaps.md](docs/e2ee-gaps.md).
+
+### Changed
+
+- The "Esqueceu o cofre?" link on the login screen is now "Esqueci a senha" / "Forgot password" and opens `/recover` — the old copy only explained unlocking, not recovery. The "Recover identity" confirmation no longer claims total history loss; it explains when history comes back (a synced member re-seals the key) and when it does not.
+
 ## [1.0.0] - 2026-10-03
 
 First release of the rewritten client. Frontend v2 replaces v1 as the production client; the backend stays compatible (same origin, same `Session` cookie, so existing sessions survive the switch) and only gains additive changes.

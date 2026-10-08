@@ -3,7 +3,18 @@
 // the identity is locked until the password opens the vault again.
 import { createContext, createSignal, useContext, type JSX } from "solid-js";
 import { auth, invites, queryClient, type Account, type Membership } from "../api";
-import { b64, generateIdentity, hasLocalVault, IdentityUnlockError, persistIdentity, unlockIdentity, wrapIdentity, type Identity } from "../crypto/identity";
+import { b64, fromB64, generateIdentity, hasLocalVault, IdentityUnlockError, persistIdentity, unlockIdentity, wrapIdentity, type Identity } from "../crypto/identity";
+import {
+  canonicalIdentityVaultJson,
+  createRecovery,
+  recoveryPayloadHash,
+  recoverySignMessage,
+  signWithRecoveryCode,
+  unwrapRecovery,
+  uuidToBytes,
+  type RecoveryMaterial,
+} from "../crypto/recovery";
+import { forgetServerKeys } from "../crypto/serverKey";
 
 export type SessionPhase = "loading" | "anonymous" | "locked" | "ready";
 
@@ -47,10 +58,15 @@ function createSession() {
     setAccount({ ...me, identity_vault: vault });
   }
 
+  function adopt(me: Account, id?: Identity): void {
+    if (account()?.id !== me.id) forgetServerKeys();
+    setAccount(me);
+    if (id) setIdentity(id);
+  }
+
   async function open(me: Account, password: string): Promise<void> {
     const id = await unlockIdentity(password, me.id, me.identity_vault);
-    setAccount(me);
-    setIdentity(id);
+    adopt(me, id);
     await backfillRemoteVault(me, password, id);
   }
 
@@ -61,14 +77,22 @@ function createSession() {
       await open(me, password);
     } catch (error) {
       if (!(error instanceof IdentityUnlockError)) throw error;
+      if (account()?.id !== me.id) forgetServerKeys();
+      setIdentity(undefined);
       setAccount(me);
       setLockReason(error.reason);
     }
   }
 
-  /** Creates the account: the identity is generated here and only its password-wrapped vault is sent. */
-  async function register({ handle, password, inviteCode }: Credentials & { inviteCode?: string }): Promise<void> {
-    const fresh = generateIdentity();
+  /** Creates the account. A recovery key, when present, was already shown and confirmed in memory. */
+  async function register({
+    handle,
+    password,
+    inviteCode,
+    identity,
+    recovery,
+  }: Credentials & { inviteCode?: string; identity?: Identity; recovery?: RecoveryMaterial }): Promise<void> {
+    const fresh = identity ?? generateIdentity();
     const vault = await wrapIdentity(fresh, password);
     const me = await auth.register({
       handle,
@@ -76,22 +100,35 @@ function createSession() {
       identity_pubkey: b64(fresh.publicKey),
       identity_vault: vault,
       invite_code: inviteCode || undefined,
+      recovery_vault: recovery?.vault,
+      recovery_verifier_pubkey: recovery ? b64(recovery.verifierPublicKey) : undefined,
     });
     await persistIdentity(me.id, fresh, password);
-    setAccount(me);
-    setIdentity(fresh);
+    adopt(me, fresh);
   }
 
   /** Accepts an invitation with no account yet: the same identity setup as `register`, in one call. */
-  async function joinWithInvite({ handle, password, inviteCode }: Credentials & { inviteCode: string }): Promise<Membership> {
-    const fresh = generateIdentity();
+  async function joinWithInvite({
+    handle,
+    password,
+    inviteCode,
+    identity,
+    recovery,
+  }: Credentials & { inviteCode: string; identity?: Identity; recovery?: RecoveryMaterial }): Promise<Membership> {
+    const fresh = identity ?? generateIdentity();
     const vault = await wrapIdentity(fresh, password);
-    const membership = await invites.accept(inviteCode, { handle, password, identity_pubkey: b64(fresh.publicKey), identity_vault: vault });
+    const membership = await invites.accept(inviteCode, {
+      handle,
+      password,
+      identity_pubkey: b64(fresh.publicKey),
+      identity_vault: vault,
+      recovery_vault: recovery?.vault,
+      recovery_verifier_pubkey: recovery ? b64(recovery.verifierPublicKey) : undefined,
+    });
     const me = await auth.me();
     if (!me) throw new Error("session missing after accepting the invitation");
     await persistIdentity(me.id, fresh, password);
-    setAccount(me);
-    setIdentity(fresh);
+    adopt(me, fresh);
     return membership;
   }
 
@@ -114,13 +151,92 @@ function createSession() {
     const fresh = generateIdentity();
     const vault = await wrapIdentity(fresh, password);
     const updated = await auth.replaceIdentity(b64(fresh.publicKey), vault);
+    forgetServerKeys();
     await persistIdentity(me.id, fresh, password);
     setAccount({ ...updated, identity_vault: vault });
     setIdentity(fresh);
   }
 
+  /** Operator reset: new identity, new session, servers wait for a handoff. */
+  async function recoverWithCode(handle: string, code: string, password: string): Promise<void> {
+    forgetServerKeys();
+    const fresh = generateIdentity();
+    const vault = await wrapIdentity(fresh, password);
+    const me = await auth.recoverWithCode({
+      handle,
+      code,
+      password,
+      identity_pubkey: b64(fresh.publicKey),
+      identity_vault: vault,
+    });
+    await persistIdentity(me.id, fresh, password);
+    setAccount({ ...me, identity_vault: vault });
+    setIdentity(fresh);
+    setLockReason("locked");
+  }
+
+  /** Recovery key: same identity, new password, servers stay sealed to this account. */
+  async function recoverWithKey(handle: string, code: string, password: string): Promise<void> {
+    const challenge = await auth.recoveryChallenge(handle);
+    const nonce = fromB64(challenge.nonce);
+    const startSignature = await signWithRecoveryCode(code, handle, recoverySignMessage("start", handle, uuidToBytes(challenge.challenge_id), nonce));
+    const started = await auth.recoveryStart({
+      handle,
+      challenge_id: challenge.challenge_id,
+      nonce: challenge.nonce,
+      signature: b64(startSignature),
+    });
+    const opened = await unwrapRecovery(started.recovery_vault, code, handle);
+    const vault = await wrapIdentity(opened, password);
+    const hash = await recoveryPayloadHash(password, canonicalIdentityVaultJson(vault));
+    const ticket = fromB64(started.ticket);
+    const redeemSignature = await signWithRecoveryCode(code, handle, recoverySignMessage("redeem", handle, ticket, hash));
+    const me = await auth.recoveryRedeem({
+      handle,
+      ticket: started.ticket,
+      signature: b64(redeemSignature),
+      password,
+      identity_vault: vault,
+    });
+    if (account()?.id !== me.id) forgetServerKeys();
+    await persistIdentity(me.id, opened, password);
+    setAccount({ ...me, identity_vault: vault });
+    setIdentity(opened);
+    setLockReason("locked");
+  }
+
+  /** Shows a new recovery code only after the caller has confirmed it was saved. */
+  async function saveRecoveryKey(currentPassword: string, material: RecoveryMaterial): Promise<void> {
+    const updated = await auth.putRecoveryKey(currentPassword, material.vault, b64(material.verifierPublicKey));
+    setAccount(updated);
+  }
+
+  /** Builds a recovery code for the unlocked identity. The code stays with the caller. */
+  async function prepareRecoveryKey(): Promise<RecoveryMaterial> {
+    const me = account();
+    const id = identity();
+    if (!me || !id) throw new Error("identity locked");
+    return createRecovery(id, me.handle);
+  }
+
+  /** Re-wraps the same identity. Other sessions end; this one stays. */
+  async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    const me = account();
+    const id = identity();
+    if (!me || !id) return;
+    const vault = await wrapIdentity(id, newPassword);
+    await auth.changePassword(currentPassword, newPassword, vault);
+    await persistIdentity(me.id, id, newPassword);
+    setAccount({ ...me, identity_vault: vault });
+  }
+
   async function logout(): Promise<void> {
     await auth.logout();
+    invalidate();
+  }
+
+  function invalidate(): void {
+    forgetServerKeys();
     setAccount(undefined);
     setIdentity(undefined);
     setLockReason("locked");
@@ -138,7 +254,13 @@ function createSession() {
     joinWithInvite,
     unlock,
     recover,
+    recoverWithCode,
+    recoverWithKey,
+    prepareRecoveryKey,
+    saveRecoveryKey,
+    changePassword,
     logout,
+    invalidate,
     /** Applies a changed account (display name, avatar) everywhere that reads it. */
     updateAccount: (next: Account) => setAccount(next),
   };

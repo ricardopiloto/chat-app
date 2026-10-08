@@ -13,7 +13,7 @@ Ver decisão [D5](../research.md#d5--e2ee-de-texto-e-mídia-uma-chave-simétrica
 ## Propriedades garantidas
 
 - O backend só manipula `sealed_key` (ciphertext assimétrico) — nunca decifra, nunca vê `server_key` em claro. Cumpre FR-015/SC-006.
-- Corrida entre múltiplos clientes `synced` respondendo ao mesmo `key_handoff.requested`: idempotente — `POST /servers/{id}/key-envelopes` faz upsert por `(server_id, account_id)`; o último envelope aceito vale (todos envelopam a mesma `server_key`, então não há divergência de conteúdo, só bytes de cifragem diferentes).
+- Corrida entre múltiplos clientes `synced` respondendo ao mesmo `key_handoff.requested`: o handoff para um membro pendente continua autorizado. A criação da primeira chave do servidor é o primeiro escritor. Repetir o próprio envelope com os mesmos bytes responde 201 e não emite `key_handoff.completed`. Bytes diferentes no próprio envelope, ou um segundo envelope quando o servidor já tem chave e a conta ainda não tem o seu, respondem 409 `{ "error": "key already exists" }`. `GET /servers/{id}/key-envelopes/exists` devolve `{ "exists": true|false }` sem a chave.
 
 ## Limitação conhecida (não bloqueia o done desta fase)
 

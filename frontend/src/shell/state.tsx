@@ -15,6 +15,7 @@ import { addNotice, clearNews, hasNews as anythingNew, loadNotices, noteNews, re
 import { mergeVoiceOccupancy, voiceOccupancyUpdates, type VoiceState } from "./voice-state";
 import { noteE2eeChange } from "../voice/e2eeState";
 import { accountTarget, channelTarget, lastChannel } from "./lastChannel";
+import { useSession } from "../session/session";
 
 export type Listener = (message: RealtimeEnvelope) => void;
 /** Told, per real-time occupancy event, who was in the channel before it (undefined: not known yet). */
@@ -40,6 +41,7 @@ function remembered(): boolean | undefined {
 }
 
 export function createShellState(props: { account: () => Account; identity: () => Identity }) {
+  const session = useSession();
   const where = useLocation();
   const navigate = useNavigate();
   const cache = useQueryClient();
@@ -120,6 +122,7 @@ export function createShellState(props: { account: () => Account; identity: () =
 
   createEffect(() => {
     const live = connectRealtime({
+      onSessionRevoked: () => session.invalidate(),
       onState: setDelivery,
       onResync: () => {
         void cache.invalidateQueries();

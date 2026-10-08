@@ -10,6 +10,7 @@ struct Row {
     password_hash: String,
     identity_pubkey: Vec<u8>,
     identity_vault: Option<Vec<u8>>,
+    has_recovery_key: i64,
     is_initial_operator: i64,
     created_at: String,
     avatar_filename: Option<String>,
@@ -24,6 +25,7 @@ fn map_row(row: Row) -> Result<AccountRecord, sqlx::Error> {
         password_hash: row.password_hash,
         identity_pubkey: row.identity_pubkey,
         identity_vault: row.identity_vault,
+        has_recovery_key: row.has_recovery_key != 0,
         is_initial_operator: row.is_initial_operator != 0,
         created_at: DateTime::parse_from_rfc3339(&row.created_at)
             .map_err(|e| sqlx::Error::Decode(Box::new(e)))?
@@ -35,7 +37,7 @@ fn map_row(row: Row) -> Result<AccountRecord, sqlx::Error> {
 }
 
 const COLS: &str =
-    "id, handle, password_hash, identity_pubkey, identity_vault, is_initial_operator, created_at, avatar_filename, avatar_content_type, display_name";
+    "id, handle, password_hash, identity_pubkey, identity_vault, (recovery_vault IS NOT NULL AND recovery_verifier_pubkey IS NOT NULL) AS has_recovery_key, is_initial_operator, created_at, avatar_filename, avatar_content_type, display_name";
 
 pub async fn count<'e, E>(executor: E) -> Result<i64, sqlx::Error>
 where

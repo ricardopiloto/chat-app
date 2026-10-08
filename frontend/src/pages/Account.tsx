@@ -1,5 +1,5 @@
 import { For, Show, createEffect, createSignal, onCleanup } from "solid-js";
-import { auth, avatarUrl } from "../api";
+import { ApiError, auth, avatarUrl } from "../api";
 import { MAX_IMAGE_BYTES, PROFILE_IMAGE_MEDIA_TYPES } from "../api/limits";
 import { Avatar, Badge, Button, Card, Icon, MonoLabel, Segmented } from "../components/ui";
 import { DISPLAY_NAME_MAX_CHARS } from "../lib/displayName";
@@ -25,6 +25,13 @@ export function Account() {
   const [editing, setEditing] = createSignal(false);
   const [busy, setBusy] = createSignal(false);
   const [note, setNote] = createSignal<{ tone: "error" | "info"; text: string }>();
+  const [currentPassword, setCurrentPassword] = createSignal("");
+  const [nextPassword, setNextPassword] = createSignal("");
+  const [confirmPassword, setConfirmPassword] = createSignal("");
+  const [recoveryPassword, setRecoveryPassword] = createSignal("");
+  const [recoveryCode, setRecoveryCode] = createSignal("");
+  const [recoverySaved, setRecoverySaved] = createSignal(false);
+  let recoveryMaterial: Awaited<ReturnType<typeof session.prepareRecoveryKey>> | undefined;
   // The avatar URL never changes, so a counter forces the browser to fetch the new image.
   const [revision, setRevision] = createSignal(0);
   const photo = () => (me().has_avatar ? `${avatarUrl(me().id)}?v=${revision()}` : undefined);
@@ -61,6 +68,57 @@ export function Account() {
       session.updateAccount(await auth.uploadAvatar(file, file.type));
       setRevision((n) => n + 1);
     }, "shell.avatarError");
+  }
+
+  async function savePassword(event: SubmitEvent) {
+    event.preventDefault();
+    if (nextPassword().length < 8) return setNote({ tone: "error", text: t("auth.passwordShort") });
+    if (nextPassword() !== confirmPassword()) return setNote({ tone: "error", text: t("account.passwordMismatch") });
+    await run(async () => {
+      try {
+        await session.changePassword(currentPassword(), nextPassword());
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 401) {
+          setNote({ tone: "error", text: t("account.passwordWrong") });
+          return;
+        }
+        throw error;
+      }
+      setCurrentPassword("");
+      setNextPassword("");
+      setConfirmPassword("");
+      setNote({ tone: "info", text: t("account.passwordSaved") });
+    }, "shell.saveError");
+  }
+
+  async function beginRecoveryKey() {
+    await run(async () => {
+      recoveryMaterial = await session.prepareRecoveryKey();
+      setRecoveryCode(recoveryMaterial.code);
+      setRecoverySaved(false);
+    }, "shell.saveError");
+  }
+
+  async function saveRecoveryKey(event: SubmitEvent) {
+    event.preventDefault();
+    if (!recoveryMaterial) return;
+    if (!recoverySaved()) return setNote({ tone: "error", text: t("recover.savedRequired") });
+    await run(async () => {
+      try {
+        await session.saveRecoveryKey(recoveryPassword(), recoveryMaterial!);
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 401) {
+          setNote({ tone: "error", text: t("account.passwordWrong") });
+          return;
+        }
+        throw error;
+      }
+      recoveryMaterial = undefined;
+      setRecoveryCode("");
+      setRecoveryPassword("");
+      setRecoverySaved(false);
+      setNote({ tone: "info", text: t("account.recoverySaved") });
+    }, "shell.saveError");
   }
 
   const removePhoto = () =>
@@ -141,6 +199,49 @@ export function Account() {
               </Button>
             </Show>
           </div>
+        </Card>
+
+        <Card icon="key" label={t("account.passwordLabel")} title={t("account.passwordTitle")}>
+          <form class="flex flex-col gap-3" onSubmit={(event) => void savePassword(event)}>
+            <label class="flex flex-col gap-1 text-body-sm">
+              {t("account.passwordCurrent")}
+              <input type="password" autocomplete="current-password" required class="rounded-md border border-outline-variant bg-surface-container-lowest px-3 py-2" value={currentPassword()} onInput={(event) => setCurrentPassword(event.currentTarget.value)} />
+            </label>
+            <label class="flex flex-col gap-1 text-body-sm">
+              {t("account.passwordNew")}
+              <input type="password" autocomplete="new-password" required minLength={8} class="rounded-md border border-outline-variant bg-surface-container-lowest px-3 py-2" value={nextPassword()} onInput={(event) => setNextPassword(event.currentTarget.value)} />
+            </label>
+            <label class="flex flex-col gap-1 text-body-sm">
+              {t("account.passwordConfirm")}
+              <input type="password" autocomplete="new-password" required minLength={8} class="rounded-md border border-outline-variant bg-surface-container-lowest px-3 py-2" value={confirmPassword()} onInput={(event) => setConfirmPassword(event.currentTarget.value)} />
+            </label>
+            <Button variant="primary" type="submit" disabled={busy()}>{t("account.passwordSave")}</Button>
+          </form>
+        </Card>
+
+        <Card icon="vpn_key" label={t("account.recoveryLabel")} title={t("account.recoveryTitle")}>
+          <p class="text-body-sm text-on-surface-variant">
+            {me().has_recovery_key ? t("account.recoveryReplace") : t("account.recoveryMissing")}
+          </p>
+          <Show when={recoveryCode()} fallback={
+            <Button disabled={busy()} onClick={() => void beginRecoveryKey()}>
+              {me().has_recovery_key ? t("account.recoveryReplaceButton") : t("account.recoveryCreate")}
+            </Button>
+          }>
+            <form class="flex flex-col gap-3" onSubmit={(event) => void saveRecoveryKey(event)}>
+              <code class="break-all rounded-md bg-surface-container-lowest px-3 py-2 font-code text-body-sm">{recoveryCode()}</code>
+              <p class="text-body-sm text-on-surface-variant">{t("recover.setupOnce")}</p>
+              <label class="flex flex-col gap-1 text-body-sm">
+                {t("account.passwordCurrent")}
+                <input type="password" autocomplete="current-password" required class="rounded-md border border-outline-variant bg-surface-container-lowest px-3 py-2" value={recoveryPassword()} onInput={(event) => setRecoveryPassword(event.currentTarget.value)} />
+              </label>
+              <label class="flex items-start gap-3 text-body-sm">
+                <input type="checkbox" class="mt-1" checked={recoverySaved()} onChange={(event) => setRecoverySaved(event.currentTarget.checked)} />
+                <span>{t("recover.saved")}</span>
+              </label>
+              <Button variant="primary" type="submit" disabled={busy()}>{t("account.recoverySave")}</Button>
+            </form>
+          </Show>
         </Card>
 
         <AudioVideoSettings />

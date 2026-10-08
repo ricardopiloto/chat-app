@@ -548,5 +548,67 @@
     "key": "U+L01E8xMCmvVATRBfDop9bDrbv+icffPzznizFy/ko=",
     "text": "Segunda mensagem https://example.com",
     "ciphertext": "gr0Nu2EUFT80i+hTSdwDZlqwk6aEbbCp5SVCDvJKd7o8AepytZfLIE83xs7j28jR1J2I3l5sfxV68IFBkQt2/A=="
+  },
+  "recovery": {
+    "code": "0123-4567-89AB-CDEF-GHJK-MNPQ-RS",
+    "handle": "alice",
+    "message": "AQAFc3RhcnQABWFsaWNlABADAwMDAwMDAwMDAwMDAwMDACAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBA==",
+    "signature": "dxCjA9RXvj+z7B0r7LsRoOKKAYqiNnLvYZtKKvj3+bIa7Z0swcTb4xsLUuIX6yohHpn7eO/RUyXR5hZBY880BA==",
+    "verifierPublicKey": "2pOKaSS5t7hzEvWIVE/2S8JcK8Ty6+cWQ/zPE/yft6M=",
+    "password": "newpassword1",
+    "vault": {
+      "v": 1,
+      "publicKey": [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3
+      ],
+      "salt": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "iv": [
+        5,
+        6,
+        7
+      ],
+      "wrapped": [
+        8,
+        9
+      ]
+    },
+    "canonicalVault": "{\"v\":1,\"publicKey\":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],\"salt\":[1,2,3,4],\"iv\":[5,6,7],\"wrapped\":[8,9]}",
+    "payloadHash": "WOQriz9O3B/Z+FNXo75QEDVl7SW6OMZF5NR8h+sdwCY="
   }
 }

@@ -18,6 +18,7 @@ export interface Account {
   handle: string;
   is_initial_operator: boolean;
   identity_vault: IdentityVaultPayload | null;
+  has_recovery_key?: boolean;
   has_avatar: boolean;
   display_name?: string;
 }
@@ -28,6 +29,8 @@ export interface RegisterBody {
   identity_pubkey: string;
   identity_vault?: IdentityVaultPayload;
   invite_code?: string;
+  recovery_vault?: { v: 1; publicKey: number[]; iv: number[]; wrapped: number[] };
+  recovery_verifier_pubkey?: string;
 }
 
 // --- servers, roles, members -----------------------------------------------------------------
@@ -247,6 +250,8 @@ export interface AcceptInviteBody {
   password?: string;
   identity_pubkey?: string;
   identity_vault?: IdentityVaultPayload;
+  recovery_vault?: { v: 1; publicKey: number[]; iv: number[]; wrapped: number[] };
+  recovery_verifier_pubkey?: string;
 }
 
 // --- voice, grid and scenes ------------------------------------------------------------------

@@ -4,12 +4,25 @@ use serde::Serialize;
 use sqlx::SqlitePool;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use tokio::sync::mpsc;
+use tokio::sync::{mpsc, watch};
 use uuid::Uuid;
 
 #[derive(Clone, Default)]
 pub struct WsHub {
-    inner: Arc<Mutex<HashMap<Uuid, Vec<mpsc::UnboundedSender<String>>>>>,
+    inner: Arc<Mutex<HashMap<Uuid, Vec<WsConnection>>>>,
+}
+
+struct WsConnection {
+    id: Uuid,
+    session_id: Uuid,
+    messages: mpsc::UnboundedSender<String>,
+    cancel: watch::Sender<bool>,
+}
+
+pub struct WsSubscription {
+    pub id: Uuid,
+    pub messages: mpsc::UnboundedReceiver<String>,
+    pub cancel: watch::Receiver<bool>,
 }
 
 impl WsHub {
@@ -17,17 +30,32 @@ impl WsHub {
         Self::default()
     }
 
-    pub fn subscribe(&self, account_id: Uuid) -> mpsc::UnboundedReceiver<String> {
-        let (tx, rx) = mpsc::unbounded_channel();
+    pub fn subscribe(&self, account_id: Uuid, session_id: Uuid) -> WsSubscription {
+        let (messages, rx) = mpsc::unbounded_channel();
+        let (cancel, cancel_rx) = watch::channel(false);
+        let id = Uuid::new_v4();
         let mut map = self.inner.lock().expect("ws hub");
-        map.entry(account_id).or_default().push(tx);
-        rx
+        map.entry(account_id).or_default().push(WsConnection { id, session_id, messages, cancel });
+        WsSubscription { id, messages: rx, cancel: cancel_rx }
     }
 
-    pub fn unsubscribe(&self, account_id: Uuid, remaining_ok: bool) {
+    pub fn unsubscribe(&self, account_id: Uuid, subscription_id: Uuid) {
         let mut map = self.inner.lock().expect("ws hub");
         if let Some(list) = map.get_mut(&account_id) {
-            list.retain(|tx| remaining_ok && !tx.is_closed());
+            list.retain(|connection| connection.id != subscription_id && !connection.messages.is_closed());
+            if list.is_empty() {
+                map.remove(&account_id);
+            }
+        }
+    }
+
+    pub fn close_sessions(&self, account_id: Uuid, session_ids: &[Uuid]) {
+        let mut map = self.inner.lock().expect("ws hub");
+        if let Some(list) = map.get_mut(&account_id) {
+            for connection in list.iter().filter(|connection| session_ids.contains(&connection.session_id)) {
+                let _ = connection.cancel.send(true);
+            }
+            list.retain(|connection| !session_ids.contains(&connection.session_id));
             if list.is_empty() {
                 map.remove(&account_id);
             }
@@ -37,13 +65,13 @@ impl WsHub {
     /// True when the account has at least one live WS sender.
     pub fn is_online(&self, account_id: Uuid) -> bool {
         let map = self.inner.lock().expect("ws hub");
-        map.get(&account_id).is_some_and(|list| !list.is_empty())
+        map.get(&account_id).is_some_and(|list| list.iter().any(|connection| !connection.messages.is_closed() && !*connection.cancel.borrow()))
     }
 
     pub fn online_account_ids(&self) -> Vec<Uuid> {
         let map = self.inner.lock().expect("ws hub");
         map.iter()
-            .filter(|(_, list)| !list.is_empty())
+            .filter(|(_, list)| list.iter().any(|connection| !connection.messages.is_closed() && !*connection.cancel.borrow()))
             .map(|(id, _)| *id)
             .collect()
     }
@@ -51,7 +79,7 @@ impl WsHub {
     pub fn send_to_account(&self, account_id: Uuid, payload: &str) {
         let mut map = self.inner.lock().expect("ws hub");
         if let Some(list) = map.get_mut(&account_id) {
-            list.retain(|tx| tx.send(payload.to_string()).is_ok());
+            list.retain(|connection| !*connection.cancel.borrow() && connection.messages.send(payload.to_string()).is_ok());
         }
     }
 

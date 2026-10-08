@@ -20,6 +20,7 @@ pub struct AccountRecord {
     pub identity_pubkey: Vec<u8>,
     /// Cofre opaco (JSON cifrado no cliente). O servidor não desenvelopa.
     pub identity_vault: Option<Vec<u8>>,
+    pub has_recovery_key: bool,
     pub is_initial_operator: bool,
     pub created_at: DateTime<Utc>,
     pub avatar_filename: Option<String>,
@@ -46,6 +47,7 @@ impl AccountRecord {
                 .identity_vault
                 .as_ref()
                 .and_then(|bytes| serde_json::from_slice(bytes).ok()),
+            has_recovery_key: self.has_recovery_key,
             has_avatar: self.avatar_filename.is_some(),
             display_name: self.display_name.clone(),
         }
@@ -62,6 +64,7 @@ pub struct AuthAccount {
     pub handle: String,
     pub is_initial_operator: bool,
     pub identity_vault: Option<serde_json::Value>,
+    pub has_recovery_key: bool,
     pub has_avatar: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub display_name: Option<String>,

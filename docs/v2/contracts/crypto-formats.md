@@ -76,6 +76,20 @@ Para uma chave de 32 bytes o resultado tem **80 bytes** (32 + 32 + 16).
 
 `docs/v2/contracts/vectors/crypto-vectors.json` contém, em Base64, para cada formato: entradas, saída esperada e casos negativos (password errada, caixa selada adulterada, pacote AES adulterado). A leitura é obrigatória (decifrar o vector); a escrita é verificada por ida-e-volta com a implementação de referência e com o oráculo.
 
-## 9. Nota de proveniência
+## 9. Chave de recuperação
+
+O código de recuperação tem 16 bytes aleatórios, apresentados em Crockford base32 (alfabeto `0123456789ABCDEFGHJKMNPQRSTVWXYZ`, 26 caracteres, agrupados de 4 com `-`). O servidor nunca recebe o código nem a `secretKey`.
+
+1. `salt = BLAKE2b-16("mesa-recovery-v1" ‖ UTF-8(lower(trim(handle))))`. Sem chave, `dkLen = 16`.
+2. `master = Argon2id` sobre o UTF-8 do código normalizado de 26 caracteres (sem hífenes), com esse `salt` e os mesmos parâmetros do cofre de identidade (p=1, t=3, m=32768 KiB, hashLength 32).
+3. `wrapKey = BLAKE2b-32(master, personalization = "wrap" preenchido com zeros até 16 bytes)` e `signSeed = BLAKE2b-32(master, personalization = "sign" do mesmo modo)`. A chave Ed25519 deriva de `signSeed` (`nacl.sign.keyPair.fromSeed`); só a chave pública de 32 bytes vai ao servidor, em Base64.
+4. `recovery_vault = { "v": 1, "publicKey": [32 octetos], "iv": [12 octetos], "wrapped": [48 octetos] }`. `wrapped` é AES-256-GCM da `secretKey` com `wrapKey` e `iv` aleatório, sem AAD e sem `salt`.
+5. Assinatura Ed25519 (`nacl.sign.detached`) sobre a mensagem versionada: byte `0x01`, depois cada parte com comprimento `u16` big-endian seguido dos bytes. Partes, por ordem: UTF-8 da operação (`start` ou `redeem`), UTF-8 de `lower(trim(handle))`, `left`, `right`.
+   - `start`: `left` = 16 bytes do UUID do desafio (ordem RFC 4122, a mesma de `Uuid::as_bytes`), `right` = nonce de 32 bytes.
+   - `redeem`: `left` = ticket de 16 bytes, `right` = `SHA-256(UTF-8(password) ‖ 0x00 ‖ UTF-8(cofre canónico))`.
+6. Cofre canónico da identidade, sem espaços: `{"v":1,"publicKey":[...],"salt":[...],"iv":[...],"wrapped":[...]}`. A ordem dos campos é fixa.
+7. Desafio e ticket duram 5 minutos, são de uso único e ficam ligados a `recovery_generation`. Não entram em logs.
+
+## 10. Nota de proveniência
 
 Os formatos acima foram confirmados de duas maneiras: observação dos dados reais gravados no backend (tamanhos e estrutura) e vectores produzidos pela aplicação anterior em execução, usada como oráculo. A estrutura exacta de encaixe (ordem `iv ‖ ct`, nonce derivado por BLAKE2b, parâmetros Argon2id) é confirmada pelos vectores: a implementação de referência, escrita a partir deste documento e das bibliotecas (`tweetnacl`, `@noble/hashes`, `hash-wasm`, WebCrypto), só passa se o documento estiver correcto e completo.
