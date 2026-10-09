@@ -53,6 +53,7 @@ backend/data/avatars/
 .specify
 .vscode
 .idea
+.opsx-tmp
 
 # OS
 .DS_Store

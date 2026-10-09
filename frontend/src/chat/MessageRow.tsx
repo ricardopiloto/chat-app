@@ -7,6 +7,7 @@ import { EmojiPicker } from "./EmojiPicker";
 import { LinkCards } from "./LinkCards";
 import { BY_CODE } from "./logic/emoji";
 import { splitMentions } from "./logic/mentions";
+import { pickPlacement, type PickerPlacement } from "./logic/popover";
 import type { ChatPerson } from "./logic/people";
 import type { ChatMessage, MessageReaction } from "./logic/timeline";
 
@@ -99,17 +100,37 @@ function ReactionPill(props: { reaction: MessageReaction; people: Map<string, Ch
 export function MessageRow(props: MessageRowProps) {
   const [armed, setArmed] = createSignal(false);
   const [picker, setPicker] = createSignal(false);
+  const [pickerPlace, setPickerPlace] = createSignal<PickerPlacement & { maxWidth?: number }>({ placement: "below" });
   let disarm = 0;
   let anchor: HTMLDivElement | undefined;
   onCleanup(() => window.clearTimeout(disarm));
   createEffect(() => {
     if (!picker()) return;
+    queueMicrotask(() => anchor?.querySelector<HTMLElement>("[data-autofocus]")?.focus());
     const close = (event: PointerEvent) => {
       if (anchor && !anchor.contains(event.target as Node)) setPicker(false);
     };
     document.addEventListener("pointerdown", close);
     onCleanup(() => document.removeEventListener("pointerdown", close));
   });
+  function measurePicker(): PickerPlacement & { maxWidth?: number } {
+    const node = anchor;
+    if (!node) return { placement: "below" };
+    const anchorRect = node.getBoundingClientRect();
+    const scroll = node.closest(".ch-scroll");
+    const frame = scroll ? scroll.getBoundingClientRect() : { top: 0, bottom: window.innerHeight, left: 0, right: window.innerWidth };
+    const place = pickPlacement({ below: frame.bottom - anchorRect.bottom, above: anchorRect.top - frame.top });
+    const span = anchorRect.right - frame.left;
+    return span < 320 ? { ...place, maxWidth: Math.max(0, span - 8) } : place;
+  }
+  function togglePicker() {
+    if (picker()) {
+      setPicker(false);
+      return;
+    }
+    setPickerPlace(measurePicker());
+    setPicker(true);
+  }
   const author = () => props.people.get(props.message.senderId ?? "");
   // Like the mockups, a member without a display name is shown as @handle.
   const authorName = () => {
@@ -197,10 +218,12 @@ export function MessageRow(props: MessageRowProps) {
           </Show>
           <Show when={props.canReact}>
             <div class="ch-react-anchor" ref={anchor}>
-              <button type="button" aria-expanded={picker()} onClick={() => setPicker((open) => !open)} title={t("txt.row.react")} aria-label={t("txt.row.react")}><Icon name="add_reaction" /></button>
+              <button type="button" aria-expanded={picker()} onClick={togglePicker} title={t("txt.row.react")} aria-label={t("txt.row.react")}><Icon name="add_reaction" /></button>
               <Show when={picker()}>
                 <EmojiPicker
-                  placement="below"
+                  placement={pickerPlace().placement}
+                  maxHeight={pickerPlace().maxHeight}
+                  maxWidth={pickerPlace().maxWidth}
                   onPick={() => undefined}
                   onPickItem={(emoji) => {
                     setPicker(false);

@@ -147,12 +147,13 @@
 
 .ch-picker-anchor { position: relative; }
 .ch-emoji { position: absolute; right: 0; bottom: 48px; z-index: 20; display: grid; gap: 8px; width: 320px; padding: 10px; border: 1px solid var(--outline-variant); border-radius: var(--radius-lg); background: var(--surface-container-high); box-shadow: var(--shadow-floating); }
+.ch-emoji.above { bottom: calc(100% + 4px); top: auto; }
 .ch-emoji.below { top: calc(100% + 4px); bottom: auto; }
 .ch-emoji input { padding: 8px 12px; border: 1px solid var(--outline-variant); border-radius: var(--radius-md); background: var(--surface-container-lowest); color: var(--on-surface); }
 .ch-emoji-groups { display: flex; gap: 2px; }
 .ch-emoji-groups button { flex: 1; padding: 6px 0; border: 0; border-radius: var(--radius-md); background: none; font-size: 18px; cursor: pointer; }
 .ch-emoji-groups button.active { background: var(--surface-container-highest); }
-.ch-emoji-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px; max-height: 220px; overflow-y: auto; }
+.ch-emoji-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px; max-height: max(0px, calc(var(--ch-emoji-h, 340px) - 120px)); overflow-y: auto; }
 .ch-emoji-grid button { aspect-ratio: 1; border: 0; border-radius: var(--radius-sm); background: none; font-size: 20px; cursor: pointer; }
 .ch-emoji-grid button:hover { background: var(--surface-container-highest); }
 .ch-emoji-grid .ch-muted { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; padding: 12px; }

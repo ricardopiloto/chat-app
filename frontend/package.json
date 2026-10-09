@@ -1,7 +1,7 @@
 {
   "name": "chat-frontend-v2",
   "private": true,
-  "version": "1.1.0",
+  "version": "1.1.1",
   "type": "module",
   "scripts": {
     "dev": "vite --host",
@@ -15,7 +15,8 @@
     "verify:i18n-keys": "node scripts/verify-i18n-keys.mjs",
     "verify:sound": "node scripts/verify-sound.mjs",
     "verify:last-channel": "node scripts/verify-last-channel.mjs",
-    "verify:mentions": "node scripts/verify-mentions.mjs"
+    "verify:mentions": "node scripts/verify-mentions.mjs",
+    "verify:picker-placement": "node scripts/verify-picker-placement.mjs"
   },
   "dependencies": {
     "@livekit/track-processors": "^0.7.2",
