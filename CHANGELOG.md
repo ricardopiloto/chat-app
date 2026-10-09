@@ -9,6 +9,26 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-10-09
+
+### Added
+
+- `npm run verify:picker-placement` checks which side the reaction emoji picker opens on.
+
+### Changed
+
+- Product version is now **1.1.1** for the backend crate and the frontend.
+
+### Fixed
+
+- The reaction emoji picker opens below the button when there is room and above it when there is not, without moving the message list. When neither side fits, it opens on the larger side at a reduced height and the emoji grid scrolls inside the picker.
+- On a narrow window the same picker stays inside the visible message list. It keeps its 320px width when that fits, and shrinks only when 320px would run off the left edge.
+
+### Removed
+
+- The disposable phase-0 `spike/` prototype (not part of the product).
+- The unused root copy `imgs/logo.png`. The logo served by the app remains `frontend/src/assets/logo.png`.
+
 ## [1.1.0] - 2026-10-09
 
 ### Added
