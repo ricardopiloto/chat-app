@@ -238,10 +238,7 @@ pub fn resolve_channel_access(
     // is done below if we get account_id. Add account_id param.
 
     AccessDecision {
-        access: EffectiveAccess {
-            view,
-            level,
-        },
+        access: EffectiveAccess { view, level },
         factors,
     }
 }

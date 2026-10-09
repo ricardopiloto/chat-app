@@ -53,15 +53,13 @@ fn map_activity(row: ActivityRow) -> Result<Server, sqlx::Error> {
 }
 
 pub async fn create(pool: &SqlitePool, server: &Server) -> Result<(), sqlx::Error> {
-    sqlx::query(
-        "INSERT INTO server (id, name, owner_account_id, created_at) VALUES (?, ?, ?, ?)",
-    )
-    .bind(server.id.to_string())
-    .bind(&server.name)
-    .bind(server.owner_account_id.to_string())
-    .bind(Utc::now().to_rfc3339())
-    .execute(pool)
-    .await?;
+    sqlx::query("INSERT INTO server (id, name, owner_account_id, created_at) VALUES (?, ?, ?, ?)")
+        .bind(server.id.to_string())
+        .bind(&server.name)
+        .bind(server.owner_account_id.to_string())
+        .bind(Utc::now().to_rfc3339())
+        .execute(pool)
+        .await?;
     Ok(())
 }
 

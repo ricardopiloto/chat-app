@@ -4,7 +4,7 @@ import { errorText } from "../../lib/errors";
 import { publicDisplayLabel } from "../../lib/displayName";
 import { t } from "../../i18n";
 import { Avatar, Badge, Button, Icon } from "../../components/ui";
-import { acl, avatarUrl, type AccessFactor, type Channel } from "../../api";
+import { acl, avatarUrl, useAuthedSrc, type AccessFactor, type Channel } from "../../api";
 
 // The backend names each step of the resolution by layer. The panel groups them by precedence:
 // a direct member override beats roles, which beat @everyone, with the channel base underneath.
@@ -72,15 +72,18 @@ export function InspectPanel(props: { channel: Channel; onEdit: () => void; onCl
           <section class="mg-card compact">
             <span class="mg-label">{t("mgmt.channel.inspect.member")}</span>
             <Show when={person()}>
-              {(member) => (
+              {(member) => {
+                const avatar = useAuthedSrc(() => (member().has_avatar ? avatarUrl(member().account_id) : undefined));
+                return (
                 <div class="mg-inspect-person">
-                  <Avatar name={publicDisplayLabel(member().handle, member().display_name)} src={member().has_avatar ? avatarUrl(member().account_id) : undefined} size="lg" />
+                  <Avatar name={publicDisplayLabel(member().handle, member().display_name)} src={avatar()} size="lg" />
                   <div>
                     <strong>{publicDisplayLabel(member().handle, member().display_name)}</strong>
                     <small>@{member().handle}</small>
                   </div>
                 </div>
-              )}
+                );
+              }}
             </Show>
             <select aria-label={t("mgmt.channel.inspect.pick")} value={accountId()} onChange={(event) => setAccountId(event.currentTarget.value)}>
               <For each={people()}>{(m) => <option value={m.account_id} selected={m.account_id === accountId()}>{publicDisplayLabel(m.handle, m.display_name)} (@{m.handle})</option>}</For>

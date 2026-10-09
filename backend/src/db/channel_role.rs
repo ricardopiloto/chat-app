@@ -14,8 +14,10 @@ struct Row {
 
 fn map_row(row: Row) -> Result<ChannelRoleRow, sqlx::Error> {
     Ok(ChannelRoleRow {
-        channel_id: Uuid::parse_str(&row.channel_id).map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
-        account_id: Uuid::parse_str(&row.account_id).map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
+        channel_id: Uuid::parse_str(&row.channel_id)
+            .map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
+        account_id: Uuid::parse_str(&row.account_id)
+            .map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
         role: row.role,
         granted_by_account_id: Uuid::parse_str(&row.granted_by_account_id)
             .map_err(|e| sqlx::Error::Decode(Box::new(e)))?,

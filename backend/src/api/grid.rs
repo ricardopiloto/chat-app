@@ -10,15 +10,16 @@ use uuid::Uuid;
 
 async fn active_layout(pool: &sqlx::SqlitePool, channel_id: Uuid) -> Result<GridLayout, ApiError> {
     let slots = db::grid::list(pool, channel_id).await?;
-    let (layout_key, slot_count) = if let Some(sid) = db::grid::active_scene_id(pool, channel_id).await? {
-        if let Some(scene) = db::scene::find_by_id(pool, sid).await? {
-            (scene.layout_key, scene.slot_count)
+    let (layout_key, slot_count) =
+        if let Some(sid) = db::grid::active_scene_id(pool, channel_id).await? {
+            if let Some(scene) = db::scene::find_by_id(pool, sid).await? {
+                (scene.layout_key, scene.slot_count)
+            } else {
+                (LayoutKey::Quad, 4)
+            }
         } else {
             (LayoutKey::Quad, 4)
-        }
-    } else {
-        (LayoutKey::Quad, 4)
-    };
+        };
     Ok(db::grid::to_layout(&slots, layout_key, slot_count))
 }
 

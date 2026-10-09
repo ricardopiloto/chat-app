@@ -52,8 +52,8 @@ pub async fn reactions_for_message(
     .await?;
     let mut summaries: Vec<ReactionSummary> = Vec::new();
     for (emoji_code, account_id) in rows {
-        let account_id = Uuid::parse_str(&account_id)
-            .map_err(|error| sqlx::Error::Decode(Box::new(error)))?;
+        let account_id =
+            Uuid::parse_str(&account_id).map_err(|error| sqlx::Error::Decode(Box::new(error)))?;
         if let Some(last) = summaries.last_mut() {
             if last.emoji_code == emoji_code {
                 last.account_ids.push(account_id);

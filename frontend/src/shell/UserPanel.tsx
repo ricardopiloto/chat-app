@@ -1,5 +1,5 @@
 import { Show, createSignal } from "solid-js";
-import { avatarUrl } from "../api";
+import { avatarUrl, useAuthedSrc } from "../api";
 import { Avatar, Icon } from "../components/ui";
 import { t } from "../i18n";
 import { useSession } from "../session/session";
@@ -12,11 +12,12 @@ export function UserPanel() {
   const [open, setOpen] = createSignal(false);
   const me = () => session.account()!;
   const name = () => me().display_name || me().handle;
+  const avatar = useAuthedSrc(() => (me().has_avatar ? avatarUrl(me().id) : undefined));
   return (
     <div class="relative border-t border-outline-variant bg-surface-container">
       <CallControls />
       <div class="flex items-center gap-3 px-3 py-3">
-      <Avatar name={name()} src={me().has_avatar ? avatarUrl(me().id) : undefined} online />
+      <Avatar name={name()} src={avatar()} online />
       <div class="flex min-w-0 flex-1 flex-col leading-tight">
         <strong class="truncate text-body-md">{name()}</strong>
         <small class="truncate font-code text-label-code-sm text-on-surface-variant">@{me().handle}</small>

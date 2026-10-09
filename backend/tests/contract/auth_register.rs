@@ -8,7 +8,8 @@ async fn first_account_open_signup() {
     assert_eq!(status, StatusCode::CREATED, "{body}");
     assert_eq!(body["handle"], "alice");
     assert_eq!(body["is_initial_operator"], true);
-    assert!(must_cookie(cookie).starts_with("Session="));
+    let token = body["session_token"].as_str().expect("session_token");
+    assert_eq!(must_cookie(cookie), format!("Session={token}"));
 }
 
 #[tokio::test]

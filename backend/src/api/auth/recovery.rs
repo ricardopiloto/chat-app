@@ -1,7 +1,14 @@
-use super::{apply_identity_replacement, register, session::current_session_id, session::hash_token, HandoffEvent};
+use super::{
+    apply_identity_replacement, register, session::current_session_id, session::hash_token,
+    HandoffEvent,
+};
 use crate::{db, domain::session::Session, error::ApiError, rate_limit::ClientIp, AppState};
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
-use axum::{extract::State, http::StatusCode, Json};
+use axum::{
+    extract::State,
+    http::{HeaderMap, StatusCode},
+    Json,
+};
 use axum_extra::extract::cookie::CookieJar;
 use base64::Engine;
 use chrono::{DateTime, Duration, Utc};
@@ -63,7 +70,11 @@ pub fn normalize_code(code: &str) -> Option<String> {
         .filter(|c| *c != '-' && !c.is_ascii_whitespace())
         .map(|c| c.to_ascii_uppercase())
         .collect();
-    (value.len() == 26 && value.bytes().all(|c| b"0123456789ABCDEFGHJKMNPQRSTVWXYZ".contains(&c))).then_some(value)
+    (value.len() == 26
+        && value
+            .bytes()
+            .all(|c| b"0123456789ABCDEFGHJKMNPQRSTVWXYZ".contains(&c)))
+    .then_some(value)
 }
 
 pub fn hash_code(code: &str) -> Option<String> {
@@ -101,7 +112,9 @@ pub fn format_code(code: &str) -> String {
 
 fn validate_new_password(password: &str) -> Result<(), ApiError> {
     if password.len() < 8 {
-        return Err(ApiError::bad_request("password must be at least 8 characters"));
+        return Err(ApiError::bad_request(
+            "password must be at least 8 characters",
+        ));
     }
     Ok(())
 }
@@ -171,22 +184,33 @@ pub(crate) async fn finish_credential_change(
         let Some((latest_hash, latest_pubkey)) = latest else {
             return Err(ApiError::unauthorized());
         };
-        if write.expected_password_hash.as_ref().is_some_and(|hash| hash != &latest_hash)
-            || write.expected_pubkey.as_ref().is_some_and(|key| key != &latest_pubkey)
+        if write
+            .expected_password_hash
+            .as_ref()
+            .is_some_and(|hash| hash != &latest_hash)
+            || write
+                .expected_pubkey
+                .as_ref()
+                .is_some_and(|key| key != &latest_pubkey)
         {
             return Err(ApiError::unauthorized());
         }
     }
     if let Some(pubkey) = &write.new_pubkey {
-        let events = apply_identity_replacement(&mut tx, write.account_id, pubkey, &write.vault).await?;
+        let events =
+            apply_identity_replacement(&mut tx, write.account_id, pubkey, &write.vault).await?;
         sqlx::query("UPDATE account SET password_hash = ? WHERE id = ?")
             .bind(&write.password_hash)
             .bind(&account_id)
-        .execute(&mut *tx)
-        .await?;
+            .execute(&mut *tx)
+            .await?;
         let (revoked, token) = apply_sessions(&mut tx, write.account_id, &write.sessions).await?;
         tx.commit().await?;
-        return Ok(CredentialDone { events, revoked, token });
+        return Ok(CredentialDone {
+            events,
+            revoked,
+            token,
+        });
     }
     sqlx::query("UPDATE account SET password_hash = ?, identity_vault = ? WHERE id = ?")
         .bind(&write.password_hash)
@@ -222,7 +246,8 @@ async fn accept_operator_code(
     };
     let fresh = expected_hash == code_hash
         && attempts < 5
-        && DateTime::parse_from_rfc3339(&expires_at).is_ok_and(|d| d.with_timezone(&Utc) > Utc::now());
+        && DateTime::parse_from_rfc3339(&expires_at)
+            .is_ok_and(|d| d.with_timezone(&Utc) > Utc::now());
     if fresh {
         sqlx::query("DELETE FROM password_reset WHERE account_id = ?")
             .bind(account_id)
@@ -332,7 +357,10 @@ pub async fn redeem_code(
         )
     };
     let outcome = redeem_authorized(&state, &body, &pubkey, &vault).await;
-    let failed_auth = outcome.as_ref().err().is_some_and(|err| err.status == StatusCode::UNAUTHORIZED);
+    let failed_auth = outcome
+        .as_ref()
+        .err()
+        .is_some_and(|err| err.status == StatusCode::UNAUTHORIZED);
     if !failed_auth {
         if let Some(slot) = attempt.as_mut() {
             slot.success();
@@ -342,8 +370,9 @@ pub async fn redeem_code(
     let account = db::account::find_by_id(&state.pool, account_id)
         .await?
         .ok_or_else(ApiError::unauthorized)?;
+    let body = account.auth_view().with_session_token(token.clone());
     let jar = register::with_session_cookie(jar, token, state.config.cookie_secure);
-    Ok((jar, Json(account.auth_view())))
+    Ok((jar, Json(body)))
 }
 
 async fn redeem_authorized(
@@ -372,7 +401,10 @@ async fn redeem_authorized(
         },
     )
     .await?;
-    let token = done.token.clone().ok_or_else(|| ApiError::internal("session missing"))?;
+    let token = done
+        .token
+        .clone()
+        .ok_or_else(|| ApiError::internal("session missing"))?;
     publish(state, account.id, pubkey, &done);
     Ok((token, account.id))
 }
@@ -381,6 +413,7 @@ pub async fn change_password(
     State(state): State<AppState>,
     super::session::AuthUser(account): super::session::AuthUser,
     jar: CookieJar,
+    headers: HeaderMap,
     Json(body): Json<ChangePasswordBody>,
 ) -> Result<StatusCode, ApiError> {
     validate_new_password(&body.new_password)?;
@@ -389,11 +422,14 @@ pub async fn change_password(
     }
     let vault = register::encode_identity_vault(Some(&body.identity_vault))?
         .ok_or_else(|| ApiError::bad_request("identity_vault required"))?;
-    let parsed = PasswordHash::new(&account.password_hash).map_err(|e| ApiError::internal(e.to_string()))?;
+    let parsed =
+        PasswordHash::new(&account.password_hash).map_err(|e| ApiError::internal(e.to_string()))?;
     Argon2::default()
         .verify_password(body.current_password.as_bytes(), &parsed)
         .map_err(|_| ApiError::unauthorized())?;
-    let current = current_session_id(&state, &jar).await?.ok_or_else(ApiError::unauthorized)?;
+    let current = current_session_id(&state, &jar, &headers)
+        .await?
+        .ok_or_else(ApiError::unauthorized)?;
     let pubkey = account.identity_pubkey.clone();
     let done = finish_credential_change(
         &state.pool,

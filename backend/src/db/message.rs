@@ -26,7 +26,8 @@ fn map_row(row: Row) -> Result<Message, sqlx::Error> {
     let is_system = kind == "system";
     Ok(Message {
         id: Uuid::parse_str(&row.id).map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
-        channel_id: Uuid::parse_str(&row.channel_id).map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
+        channel_id: Uuid::parse_str(&row.channel_id)
+            .map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
         // System rows omit sender in API; DB may store a real id for FK (account NOT NULL).
         sender_account_id: if is_system {
             Uuid::nil()
@@ -73,12 +74,10 @@ async fn enrich(pool: &SqlitePool, message: &mut Message) -> Result<(), sqlx::Er
 const SELECT_COLS: &str = "id, channel_id, sender_account_id, content_ciphertext, created_at, reply_to_message_id, kind, content_plaintext, mentions_everyone";
 
 async fn find_by_id_raw(pool: &SqlitePool, id: Uuid) -> Result<Option<Message>, sqlx::Error> {
-    let row = sqlx::query_as::<_, Row>(&format!(
-        "SELECT {SELECT_COLS} FROM message WHERE id = ?"
-    ))
-    .bind(id.to_string())
-    .fetch_optional(pool)
-    .await?;
+    let row = sqlx::query_as::<_, Row>(&format!("SELECT {SELECT_COLS} FROM message WHERE id = ?"))
+        .bind(id.to_string())
+        .fetch_optional(pool)
+        .await?;
     row.map(map_row).transpose()
 }
 
@@ -183,24 +182,21 @@ pub async fn insert_mentions(
     account_ids: &[Uuid],
 ) -> Result<(), sqlx::Error> {
     for account_id in account_ids {
-        sqlx::query(
-            "INSERT OR IGNORE INTO message_mention (message_id, account_id) VALUES (?, ?)",
-        )
-        .bind(message_id.to_string())
-        .bind(account_id.to_string())
-        .execute(pool)
-        .await?;
+        sqlx::query("INSERT OR IGNORE INTO message_mention (message_id, account_id) VALUES (?, ?)")
+            .bind(message_id.to_string())
+            .bind(account_id.to_string())
+            .execute(pool)
+            .await?;
     }
     Ok(())
 }
 
 pub async fn list_mentions(pool: &SqlitePool, message_id: Uuid) -> Result<Vec<Uuid>, sqlx::Error> {
-    let rows: Vec<(String,)> = sqlx::query_as(
-        "SELECT account_id FROM message_mention WHERE message_id = ?",
-    )
-    .bind(message_id.to_string())
-    .fetch_all(pool)
-    .await?;
+    let rows: Vec<(String,)> =
+        sqlx::query_as("SELECT account_id FROM message_mention WHERE message_id = ?")
+            .bind(message_id.to_string())
+            .fetch_all(pool)
+            .await?;
     rows.into_iter()
         .map(|(id,)| Uuid::parse_str(&id).map_err(|e| sqlx::Error::Decode(Box::new(e))))
         .collect()
@@ -220,11 +216,10 @@ pub async fn delete_by_id(
 }
 
 pub async fn any_contains_bytes(pool: &SqlitePool, needle: &[u8]) -> Result<bool, sqlx::Error> {
-    let (n,): (i64,) = sqlx::query_as(
-        "SELECT COUNT(*) FROM message WHERE instr(content_ciphertext, ?) > 0",
-    )
-    .bind(needle)
-    .fetch_one(pool)
-    .await?;
+    let (n,): (i64,) =
+        sqlx::query_as("SELECT COUNT(*) FROM message WHERE instr(content_ciphertext, ?) > 0")
+            .bind(needle)
+            .fetch_one(pool)
+            .await?;
     Ok(n > 0)
 }

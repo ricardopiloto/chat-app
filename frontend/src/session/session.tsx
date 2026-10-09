@@ -1,8 +1,9 @@
 // Who is signed in and whether their identity is unlocked. The server session (cookie) and the
 // identity (secret key, held only in memory) are separate: after a reload the account is known but
 // the identity is locked until the password opens the vault again.
-import { createContext, createSignal, useContext, type JSX } from "solid-js";
+import { createContext, createSignal, onMount, useContext, type JSX } from "solid-js";
 import { auth, invites, queryClient, type Account, type Membership } from "../api";
+import { clearSessionToken, isNative, loadInstance, saveSessionToken } from "../api/instance";
 import { b64, fromB64, generateIdentity, hasLocalVault, IdentityUnlockError, persistIdentity, unlockIdentity, wrapIdentity, type Identity } from "../crypto/identity";
 import {
   canonicalIdentityVaultJson,
@@ -71,9 +72,15 @@ function createSession() {
     await backfillRemoteVault(me, password, id);
   }
 
+  async function keepNativeSession(me: Account): Promise<void> {
+    if (!isNative() || !me.session_token) return;
+    await saveSessionToken(me.session_token);
+  }
+
   /** Signs in. An identity that cannot be opened leaves the account on the unlock screen. */
   async function login({ handle, password }: Credentials): Promise<void> {
     const me = await auth.login(handle, password);
+    await keepNativeSession(me);
     try {
       await open(me, password);
     } catch (error) {
@@ -104,6 +111,7 @@ function createSession() {
       recovery_vault: recovery?.vault,
       recovery_verifier_pubkey: recovery ? b64(recovery.verifierPublicKey) : undefined,
     });
+    await keepNativeSession(me);
     await persistIdentity(me.id, fresh, password);
     adopt(me, fresh);
   }
@@ -178,6 +186,7 @@ function createSession() {
       identity_pubkey: b64(fresh.publicKey),
       identity_vault: vault,
     });
+    await keepNativeSession(me);
     await persistIdentity(me.id, fresh, password);
     setAccount({ ...me, identity_vault: vault });
     setIdentity(fresh);
@@ -207,6 +216,7 @@ function createSession() {
       password,
       identity_vault: vault,
     });
+    await keepNativeSession(me);
     if (account()?.id !== me.id) forgetServerKeys();
     await persistIdentity(me.id, opened, password);
     setAccount({ ...me, identity_vault: vault });
@@ -241,6 +251,7 @@ function createSession() {
 
   async function logout(): Promise<void> {
     await auth.logout();
+    if (isNative()) await clearSessionToken();
     invalidate();
   }
 
@@ -281,7 +292,15 @@ const SessionContext = createContext<Session>();
 
 export function SessionProvider(props: { children: JSX.Element }) {
   const session = createSession();
-  void session.restore();
+  onMount(() => {
+    void (async () => {
+      if (isNative()) {
+        const saved = await loadInstance();
+        if (!saved.baseUrl) return;
+      }
+      await session.restore();
+    })();
+  });
   return <SessionContext.Provider value={session}>{props.children}</SessionContext.Provider>;
 }
 

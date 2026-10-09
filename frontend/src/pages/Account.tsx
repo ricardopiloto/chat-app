@@ -1,5 +1,5 @@
 import { For, Show, createEffect, createSignal, onCleanup } from "solid-js";
-import { ApiError, auth, avatarUrl } from "../api";
+import { ApiError, auth, avatarUrl, useAuthedSrc } from "../api";
 import { MAX_IMAGE_BYTES, PROFILE_IMAGE_MEDIA_TYPES } from "../api/limits";
 import { Avatar, Badge, Button, Card, Icon, MonoLabel, Segmented } from "../components/ui";
 import { DISPLAY_NAME_MAX_CHARS } from "../lib/displayName";
@@ -34,7 +34,7 @@ export function Account() {
   let recoveryMaterial: Awaited<ReturnType<typeof session.prepareRecoveryKey>> | undefined;
   // The avatar URL never changes, so a counter forces the browser to fetch the new image.
   const [revision, setRevision] = createSignal(0);
-  const photo = () => (me().has_avatar ? `${avatarUrl(me().id)}?v=${revision()}` : undefined);
+  const photo = useAuthedSrc(() => (me().has_avatar ? `${avatarUrl(me().id)}?v=${revision()}` : undefined));
 
   createEffect(() => {
     const leave = (event: KeyboardEvent) => event.key === "Escape" && !editing() && void shell.leaveAccount();

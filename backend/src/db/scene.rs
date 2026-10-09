@@ -23,12 +23,12 @@ struct SlotRow {
 }
 
 fn map_scene(row: SceneRow) -> Result<Scene, sqlx::Error> {
-    let layout_key = LayoutKey::parse(&row.layout_key).unwrap_or_else(|| {
-        LayoutKey::from_slot_count(row.slot_count)
-    });
+    let layout_key = LayoutKey::parse(&row.layout_key)
+        .unwrap_or_else(|| LayoutKey::from_slot_count(row.slot_count));
     Ok(Scene {
         id: Uuid::parse_str(&row.id).map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
-        channel_id: Uuid::parse_str(&row.channel_id).map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
+        channel_id: Uuid::parse_str(&row.channel_id)
+            .map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
         name: row.name,
         slot_count: row.slot_count,
         layout_key,
@@ -52,16 +52,18 @@ fn map_slot(channel_id: Uuid, row: SlotRow) -> Result<GridSlot, sqlx::Error> {
 const SCENE_COLS: &str = "id, channel_id, name, slot_count, layout_key, created_at, updated_at";
 
 pub async fn find_by_id(pool: &SqlitePool, id: Uuid) -> Result<Option<Scene>, sqlx::Error> {
-    let row = sqlx::query_as::<_, SceneRow>(&format!(
-        "SELECT {SCENE_COLS} FROM scene WHERE id = ?"
-    ))
-    .bind(id.to_string())
-    .fetch_optional(pool)
-    .await?;
+    let row =
+        sqlx::query_as::<_, SceneRow>(&format!("SELECT {SCENE_COLS} FROM scene WHERE id = ?"))
+            .bind(id.to_string())
+            .fetch_optional(pool)
+            .await?;
     row.map(map_scene).transpose()
 }
 
-pub async fn list_by_channel(pool: &SqlitePool, channel_id: Uuid) -> Result<Vec<Scene>, sqlx::Error> {
+pub async fn list_by_channel(
+    pool: &SqlitePool,
+    channel_id: Uuid,
+) -> Result<Vec<Scene>, sqlx::Error> {
     let rows = sqlx::query_as::<_, SceneRow>(&format!(
         "SELECT {SCENE_COLS} FROM scene WHERE channel_id = ? ORDER BY created_at"
     ))
@@ -106,7 +108,11 @@ pub async fn set_name(pool: &SqlitePool, scene_id: Uuid, name: &str) -> Result<(
     Ok(())
 }
 
-pub async fn set_slot_count(pool: &SqlitePool, scene_id: Uuid, slot_count: i64) -> Result<(), sqlx::Error> {
+pub async fn set_slot_count(
+    pool: &SqlitePool,
+    scene_id: Uuid,
+    slot_count: i64,
+) -> Result<(), sqlx::Error> {
     sqlx::query("UPDATE scene SET slot_count = ?, updated_at = ? WHERE id = ?")
         .bind(slot_count)
         .bind(Utc::now().to_rfc3339())
@@ -140,7 +146,11 @@ pub async fn delete(pool: &SqlitePool, scene_id: Uuid) -> Result<(), sqlx::Error
     Ok(())
 }
 
-pub async fn list_slots(pool: &SqlitePool, scene_id: Uuid, channel_id: Uuid) -> Result<Vec<GridSlot>, sqlx::Error> {
+pub async fn list_slots(
+    pool: &SqlitePool,
+    scene_id: Uuid,
+    channel_id: Uuid,
+) -> Result<Vec<GridSlot>, sqlx::Error> {
     let rows = sqlx::query_as::<_, SlotRow>(
         "SELECT slot_index, account_id, assigned_by FROM scene_slot
          WHERE scene_id = ? ORDER BY slot_index",
@@ -148,7 +158,9 @@ pub async fn list_slots(pool: &SqlitePool, scene_id: Uuid, channel_id: Uuid) -> 
     .bind(scene_id.to_string())
     .fetch_all(pool)
     .await?;
-    rows.into_iter().map(|row| map_slot(channel_id, row)).collect()
+    rows.into_iter()
+        .map(|row| map_slot(channel_id, row))
+        .collect()
 }
 
 pub async fn insert_empty_slots(

@@ -253,8 +253,7 @@ pub async fn join(
     let server = db::server::find_by_id(&state.pool, channel.server_id)
         .await?
         .ok_or_else(|| ApiError::not_found("channel not found"))?;
-    let caps =
-        db::server_role::aggregated_caps(&state.pool, channel.server_id, account.id).await?;
+    let caps = db::server_role::aggregated_caps(&state.pool, channel.server_id, account.id).await?;
     let caps = permissions::effective_role_caps(server.owner_account_id == account.id, caps);
     if !caps.can_connect_voice {
         return Err(ApiError::forbidden("sem permissão para entrar em voz"));
@@ -472,7 +471,9 @@ pub async fn channel_key(
         .await?
         .ok_or_else(|| ApiError::not_found("channel has no channel key"))?;
     if row.custodian_account_id != account.id {
-        return Err(ApiError::forbidden("only the key custodian can read the channel key"));
+        return Err(ApiError::forbidden(
+            "only the key custodian can read the channel key",
+        ));
     }
     Ok(Json(serde_json::json!({
         "channel_key_sealed": base64::engine::general_purpose::STANDARD.encode(&row.sealed_blob),

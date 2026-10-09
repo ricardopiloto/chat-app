@@ -7,7 +7,7 @@ import { errorText } from "../../lib/errors";
 import { publicDisplayLabel } from "../../lib/displayName";
 import { t } from "../../i18n";
 import { Avatar, Button, Icon, Toast } from "../../components/ui";
-import { avatarUrl, queryKeys, servers, type Member, type Server } from "../../api";
+import { avatarUrl, queryKeys, servers, useAuthedSrc, type Member, type Server } from "../../api";
 
 const PAGE_SIZE = 8;
 
@@ -30,6 +30,7 @@ function MemberRow(props: { member: Member; server: Server; online: boolean }) {
   const isOwner = () => props.member.account_id === props.server.owner_account_id;
   const isMe = () => props.member.account_id === shell.meId();
   const name = () => publicDisplayLabel(props.member.handle, props.member.display_name);
+  const avatar = useAuthedSrc(() => (props.member.has_avatar ? avatarUrl(props.member.account_id) : undefined));
   const roles = () => (shell.roles.data ?? []).filter((r) => !r.is_system);
   const current = () => (shell.roles.data ?? []).find((r) => !r.is_system && r.member_ids.includes(props.member.account_id))?.id ?? "";
   const canAssign = () => shell.can("can_manage_roles");
@@ -60,7 +61,7 @@ function MemberRow(props: { member: Member; server: Server; online: boolean }) {
   return (
     <li class="mg-member-row" data-member={props.member.handle}>
       <div class="mg-member-id">
-        <Avatar name={name()} src={props.member.has_avatar ? avatarUrl(props.member.account_id) : undefined} online={props.online} size="lg" />
+        <Avatar name={name()} src={avatar()} online={props.online} size="lg" />
         <div>
           <strong>{name()}{isMe() ? <small class="mg-you">{t("mgmt.members.you")}</small> : null}</strong>
           <span class="mg-handle">@{props.member.handle} <i classList={{ on: props.online }}>{props.online ? t("mgmt.members.online_") : t("mgmt.members.offline")}</i></span>

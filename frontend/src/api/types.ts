@@ -21,6 +21,8 @@ export interface Account {
   has_recovery_key?: boolean;
   has_avatar: boolean;
   display_name?: string;
+  /** Present only on responses that mint a session. The web client ignores it. */
+  session_token?: string;
 }
 
 export interface RegisterBody {

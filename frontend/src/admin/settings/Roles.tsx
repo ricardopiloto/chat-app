@@ -6,7 +6,7 @@ import { errorText } from "../../lib/errors";
 import { publicDisplayLabel } from "../../lib/displayName";
 import { t } from "../../i18n";
 import { Button, Icon, Toast } from "../../components/ui";
-import { roles as rolesApi, avatarUrl, type RoleCapabilities, type Server, type ServerRole } from "../../api";
+import { roles as rolesApi, avatarUrl, useAuthedSrc, type RoleCapabilities, type Server, type ServerRole } from "../../api";
 
 type Capability = keyof RoleCapabilities;
 
@@ -202,17 +202,20 @@ export function Roles(props: { server: Server }) {
                 <span class="mg-label">{t("mgmt.roles.matrixTitle")}<output>{t("mgmt.roles.matrixCount", { count: roleMembers().length, total: members().length })}</output></span>
                 <ul class="mg-matrix">
                   <For each={roleMembers()} fallback={<li class="mg-muted">{t("mgmt.roles.matrixEmpty")}</li>}>
-                    {(member) => (
+                    {(member) => {
+                      const face = useAuthedSrc(() => (member.has_avatar ? avatarUrl(member.account_id) : undefined));
+                      return (
                       <li>
                         <span class="mg-mini-avatar">
-                          <Show when={member.has_avatar} fallback={publicDisplayLabel(member.handle, member.display_name).slice(0, 1).toUpperCase()}><img src={avatarUrl(member.account_id)} alt="" /></Show>
+                          <Show when={face()} fallback={publicDisplayLabel(member.handle, member.display_name).slice(0, 1).toUpperCase()}><img src={face()} alt="" /></Show>
                         </span>
                         <span>{publicDisplayLabel(member.handle, member.display_name)}</span>
                         <Show when={canManage() && !role().is_system}>
                           <button type="button" title={t("mgmt.roles.matrixRemove", { name: member.handle })} aria-label={t("mgmt.roles.matrixRemove", { name: member.handle })} onClick={() => toggleMember(role(), member.account_id, true)}><Icon name="close" /></button>
                         </Show>
                       </li>
-                    )}
+                      );
+                    }}
                   </For>
                 </ul>
                 <Show when={canManage() && !role().is_system && candidates().length > 0}>

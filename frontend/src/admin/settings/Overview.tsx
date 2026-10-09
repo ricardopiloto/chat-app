@@ -6,7 +6,7 @@ import { createToast } from "../../lib/toast";
 import { errorText } from "../../lib/errors";
 import { t } from "../../i18n";
 import { Button, Icon, Toast } from "../../components/ui";
-import { queryKeys, servers, type Server } from "../../api";
+import { queryKeys, servers, useAuthedSrc, type Server } from "../../api";
 import { MAX_IMAGE_BYTES, PROFILE_IMAGE_MEDIA_TYPES } from "../../api/limits";
 
 const NAME_MAX = 32;
@@ -21,7 +21,7 @@ function ImageCard(props: { server: Server }) {
   const [problem, setProblem] = createSignal("");
   const [busy, setBusy] = createSignal(false);
 
-  const src = () => `${servers.imageUrl(props.server.id)}?v=${version()}`;
+  const src = useAuthedSrc(() => (props.server.has_image ? `${servers.imageUrl(props.server.id)}?v=${version()}` : undefined));
 
   async function change(file: File | undefined) {
     if (!file) return;
@@ -66,7 +66,7 @@ function ImageCard(props: { server: Server }) {
 
       <div class="mg-image-box">
         <span class="mg-image-preview">
-          <Show when={props.server.has_image} fallback={<b>{props.server.name.slice(0, 2).toUpperCase()}</b>}>
+          <Show when={src()} fallback={<b>{props.server.name.slice(0, 2).toUpperCase()}</b>}>
             <img src={src()} alt="" />
           </Show>
           <Show when={picked()}><Icon name="check_circle" filled class="mg-image-ok" /></Show>

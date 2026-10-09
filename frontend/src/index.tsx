@@ -1,5 +1,5 @@
 import { render } from "solid-js/web";
-import { Match, Switch, onCleanup, onMount } from "solid-js";
+import { Match, Switch, createSignal, onCleanup, onMount } from "solid-js";
 import { Route, Router, useLocation } from "@solidjs/router";
 import { AppQueryProvider } from "./api";
 import { AppShell } from "./shell/AppShell";
@@ -8,6 +8,8 @@ import { Recover } from "./pages/Recover";
 import { Foundation } from "./pages/Foundation";
 import { Invite } from "./pages/Invite";
 import { Unlock } from "./pages/Unlock";
+import { InstanceConnect } from "./auth/InstanceConnect";
+import { currentInstance, isNative, loadInstance, subscribeInstance } from "./api/instance";
 import { SessionProvider, useSession } from "./session/session";
 import { applyTheme, themeMode, watchSystemTheme } from "./shell/theme";
 import { t } from "./i18n";
@@ -28,13 +30,22 @@ applyTheme(themeMode());
 function Gate() {
   const session = useSession();
   const where = useLocation();
-  onMount(() => onCleanup(watchSystemTheme(themeMode)));
+  const [pickInstance, setPickInstance] = createSignal<boolean | null>(isNative() ? null : false);
+  onMount(() => {
+    onCleanup(watchSystemTheme(themeMode));
+    if (!isNative()) return;
+    void loadInstance().then((saved) => setPickInstance(!saved.baseUrl));
+    onCleanup(subscribeInstance(() => setPickInstance(!currentInstance().baseUrl)));
+  });
   return (
     <Switch>
       <Match when={where.pathname === "/__foundation"}>
         <Foundation />
       </Match>
-      <Match when={session.phase() === "loading"}>
+      <Match when={pickInstance() === true}>
+        <InstanceConnect onSaved={() => void session.restore()} />
+      </Match>
+      <Match when={pickInstance() === null || session.phase() === "loading"}>
         <main class="grid min-h-dvh place-items-center bg-background text-on-surface-variant">{t("auth.loading")}</main>
       </Match>
       <Match when={where.pathname.startsWith("/invite/") && !where.search.includes("signin") && ["anonymous", "ready"].includes(session.phase())}>

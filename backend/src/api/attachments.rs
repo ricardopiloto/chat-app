@@ -1,9 +1,7 @@
 use crate::api::auth::session::AuthUser;
 use crate::api::authz::{history_visible_since, require_member};
 use crate::db;
-use crate::domain::attachment::{
-    is_allowed_media_type, MessageAttachment, MAX_ATTACHMENT_BYTES,
-};
+use crate::domain::attachment::{is_allowed_media_type, MessageAttachment, MAX_ATTACHMENT_BYTES};
 use crate::domain::channel::ChannelType;
 use crate::error::ApiError;
 use crate::AppState;
@@ -24,7 +22,9 @@ async fn require_text_channel_member(
         .await?
         .ok_or_else(|| ApiError::not_found("channel not found"))?;
     if channel.kind != ChannelType::Text {
-        return Err(ApiError::bad_request("attachments only allowed on text channels"));
+        return Err(ApiError::bad_request(
+            "attachments only allowed on text channels",
+        ));
     }
     require_member(pool, account_id, channel.server_id).await?;
     Ok(channel)

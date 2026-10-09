@@ -86,19 +86,22 @@ async fn single_role_put_replaces_previous() {
     assert_eq!(status, StatusCode::OK, "{body}");
 
     let (status, roles, _) = app
-        .request("GET", &format!("/api/servers/{server_id}/roles"), None, Some(&owner))
+        .request(
+            "GET",
+            &format!("/api/servers/{server_id}/roles"),
+            None,
+            Some(&owner),
+        )
         .await;
     assert_eq!(status, StatusCode::OK, "{roles}");
     let roles = roles.as_array().unwrap();
     let a = roles.iter().find(|r| r["id"] == role_a_id).unwrap();
     let b = roles.iter().find(|r| r["id"] == role_b_id).unwrap();
-    assert!(
-        !a["member_ids"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .any(|id| id.as_str() == Some(member_id.as_str()))
-    );
+    assert!(!a["member_ids"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|id| id.as_str() == Some(member_id.as_str())));
     assert!(b["member_ids"]
         .as_array()
         .unwrap()
@@ -177,22 +180,21 @@ async fn set_role_members_enforces_single_role() {
     assert_eq!(status, StatusCode::OK);
 
     let (status, roles, _) = app
-        .request("GET", &format!("/api/servers/{server_id}/roles"), None, Some(&owner))
+        .request(
+            "GET",
+            &format!("/api/servers/{server_id}/roles"),
+            None,
+            Some(&owner),
+        )
         .await;
     assert_eq!(status, StatusCode::OK, "{roles}");
     let roles = roles.as_array().unwrap();
-    let in_a = roles
-        .iter()
-        .find(|r| r["id"] == role_a_id)
-        .unwrap()["member_ids"]
+    let in_a = roles.iter().find(|r| r["id"] == role_a_id).unwrap()["member_ids"]
         .as_array()
         .unwrap()
         .iter()
         .any(|id| id.as_str() == Some(member_id.as_str()));
-    let in_b = roles
-        .iter()
-        .find(|r| r["id"] == role_b_id)
-        .unwrap()["member_ids"]
+    let in_b = roles.iter().find(|r| r["id"] == role_b_id).unwrap()["member_ids"]
         .as_array()
         .unwrap()
         .iter()

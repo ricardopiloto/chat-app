@@ -1,0 +1,76 @@
+name: Desktop release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            bundles: --bundles deb,rpm,appimage
+          - os: windows-latest
+            bundles: ""
+          - os: macos-latest
+            bundles: ""
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Reject a tag that does not match the desktop version
+        if: github.ref_type == 'tag'
+        shell: bash
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          cargo_version="$(sed -n 's/^version = "\(.*\)"/\1/p' frontend/src-tauri/Cargo.toml | head -n 1)"
+          conf_version="$(sed -n 's/^  "version": "\(.*\)",/\1/p' frontend/src-tauri/tauri.conf.json | head -n 1)"
+          echo "tag=${tag} cargo=${cargo_version} tauri.conf=${conf_version}"
+          if [ "$tag" != "$cargo_version" ] || [ "$tag" != "$conf_version" ]; then
+            echo "A tag v* tem de ser exactamente a versão de frontend/src-tauri/Cargo.toml e tauri.conf.json."
+            exit 1
+          fi
+
+      - name: Install Linux dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            xdg-utils \
+            libfuse2 \
+            rpm
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build desktop bundles
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: frontend
+          args: ${{ matrix.bundles }}
+          uploadWorkflowArtifacts: true
+          uploadUpdaterJson: false
+          uploadUpdaterSignatures: false
+          tagName: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+          releaseName: ${{ github.ref_type == 'tag' && format('Mesa {0}', github.ref_name) || '' }}
+          releaseBody: "Rascunho gerado por .github/workflows/desktop-release.yml. Publicar manualmente depois de rever os instaladores."
+          releaseDraft: true

@@ -15,7 +15,11 @@ fn media_type_from_headers(headers: &HeaderMap) -> Result<String, ApiError> {
     let raw = headers
         .get("x-mesa-media-type")
         .and_then(|v| v.to_str().ok())
-        .or_else(|| headers.get(header::CONTENT_TYPE).and_then(|v| v.to_str().ok()))
+        .or_else(|| {
+            headers
+                .get(header::CONTENT_TYPE)
+                .and_then(|v| v.to_str().ok())
+        })
         .unwrap_or("")
         .trim();
     normalize_avatar_type(raw).ok_or_else(|| {
@@ -137,7 +141,9 @@ pub async fn put_server_image(
         .await?
         .ok_or_else(|| ApiError::not_found("server not found"))?;
     if account.id != server.owner_account_id {
-        return Err(ApiError::forbidden("only the owner can change the server image"));
+        return Err(ApiError::forbidden(
+            "only the owner can change the server image",
+        ));
     }
     validate_body(&body)?;
     let media_type = media_type_from_headers(&headers)?;
@@ -166,7 +172,9 @@ pub async fn delete_server_image(
         .await?
         .ok_or_else(|| ApiError::not_found("server not found"))?;
     if account.id != server.owner_account_id {
-        return Err(ApiError::forbidden("only the owner can change the server image"));
+        return Err(ApiError::forbidden(
+            "only the owner can change the server image",
+        ));
     }
     if let Some(old) = server.image_filename.as_deref() {
         remove_file(&server_path(&state.config.avatars_dir, old)).await;

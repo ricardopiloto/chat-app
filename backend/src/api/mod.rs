@@ -4,6 +4,7 @@ use crate::ws;
 use crate::{db, AppState};
 use axum::extract::ws::{Message, WebSocket};
 use axum::extract::{DefaultBodyLimit, State, WebSocketUpgrade};
+use axum::http::HeaderMap;
 use axum::response::IntoResponse;
 use axum::routing::{delete, get, patch, post, put};
 use axum::Router;
@@ -78,10 +79,7 @@ pub fn router(state: AppState) -> axum::Router {
                     "/servers/{server_id}/members/{account_id}/role",
                     put(roles::put_member_role),
                 )
-                .route(
-                    "/servers/{server_id}/presence",
-                    get(roles::get_presence),
-                )
+                .route("/servers/{server_id}/presence", get(roles::get_presence))
                 .route(
                     "/servers/{server_id}/members/{account_id}",
                     delete(roles::delete_member),
@@ -105,14 +103,8 @@ pub fn router(state: AppState) -> axum::Router {
                     "/channels/{channel_id}/messages",
                     get(messages::list_messages).post(messages::post_message),
                 )
-                .route(
-                    "/channels/{channel_id}/mutes/me",
-                    get(mute::get_my_mute),
-                )
-                .route(
-                    "/channels/{channel_id}/mutes",
-                    get(mute::list_mutes),
-                )
+                .route("/channels/{channel_id}/mutes/me", get(mute::get_my_mute))
+                .route("/channels/{channel_id}/mutes", get(mute::list_mutes))
                 .route(
                     "/channels/{channel_id}/mutes/{account_id}",
                     put(mute::put_mute).delete(mute::delete_mute),
@@ -133,10 +125,7 @@ pub fn router(state: AppState) -> axum::Router {
                     "/channels/{channel_id}/messages/{message_id}/reactions/{emoji_code}",
                     delete(messages::remove_reaction),
                 )
-                .route(
-                    "/notifications",
-                    get(notifications::list_notifications),
-                )
+                .route("/notifications", get(notifications::list_notifications))
                 .route(
                     "/notifications/read-all",
                     post(notifications::mark_all_notifications_read),
@@ -251,21 +240,29 @@ async fn ws_handler(
     State(state): State<AppState>,
     OptionalAuth(user): OptionalAuth,
     jar: CookieJar,
+    headers: HeaderMap,
 ) -> Result<impl IntoResponse, crate::error::ApiError> {
     let account = user.ok_or_else(crate::error::ApiError::unauthorized)?;
-    let session_id = auth::session::current_session_id(&state, &jar)
+    let session_id = auth::session::current_session_id(&state, &jar, &headers)
         .await?
         .ok_or_else(crate::error::ApiError::unauthorized)?;
     Ok(ws.on_upgrade(move |socket| handle_socket(state, account.id, session_id, socket)))
 }
 
-async fn handle_socket(state: AppState, account_id: uuid::Uuid, session_id: uuid::Uuid, mut socket: WebSocket) {
+async fn handle_socket(
+    state: AppState,
+    account_id: uuid::Uuid,
+    session_id: uuid::Uuid,
+    mut socket: WebSocket,
+) {
     let subscription = state.ws.subscribe(account_id, session_id);
     let session_valid = db::session::find_by_id(&state.pool, session_id)
         .await
         .ok()
         .flatten()
-        .is_some_and(|session| session.account_id == account_id && session.is_valid(chrono::Utc::now()));
+        .is_some_and(|session| {
+            session.account_id == account_id && session.is_valid(chrono::Utc::now())
+        });
     if !session_valid || *subscription.cancel.borrow() {
         state.ws.unsubscribe(account_id, subscription.id);
         let _ = socket.send(Message::Close(None)).await;
@@ -309,7 +306,11 @@ async fn handle_socket(state: AppState, account_id: uuid::Uuid, session_id: uuid
         }
     }
     state.ws.unsubscribe(account_id, subscription.id);
-    if was_cancelled { let _ = send_task.await; } else { send_task.abort(); }
+    if was_cancelled {
+        let _ = send_task.await;
+    } else {
+        send_task.abort();
+    }
     broadcast_presence_for_account(&state, account_id).await;
 }
 

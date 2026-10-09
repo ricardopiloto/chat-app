@@ -271,7 +271,10 @@ async fn session_clock_is_shared_not_personal() {
         )
         .await;
     assert_eq!(snap2["channels"][0]["call_started_at"], started);
-    assert_eq!(snap2["channels"][0]["occupants"].as_array().unwrap().len(), 2);
+    assert_eq!(
+        snap2["channels"][0]["occupants"].as_array().unwrap().len(),
+        2
+    );
 }
 
 #[tokio::test]
@@ -659,7 +662,9 @@ async fn join_cam_off_stays_off_grid_bank() {
         .await;
     let slots = grid["slots"].as_array().unwrap();
     assert!(
-        slots.iter().all(|s| s["account_id"].as_str() != Some(alice_id.as_str())),
+        slots
+            .iter()
+            .all(|s| s["account_id"].as_str() != Some(alice_id.as_str())),
         "cam_on false must not auto-assign a slot: {grid}"
     );
 }
@@ -730,7 +735,9 @@ async fn patch_cam_on_auto_assigns_when_auto_scene() {
         .await;
     let slots = grid["slots"].as_array().unwrap();
     assert!(
-        slots.iter().any(|s| s["account_id"].as_str() == Some(alice_id.as_str())),
+        slots
+            .iter()
+            .any(|s| s["account_id"].as_str() == Some(alice_id.as_str())),
         "turning cam on with auto scene must assign a slot: {grid}"
     );
 }
@@ -811,7 +818,9 @@ async fn patch_cam_on_stays_bank_when_owner_locked() {
         .await;
     let slots = grid["slots"].as_array().unwrap();
     assert!(
-        slots.iter().all(|s| s["account_id"].as_str() != Some(alice_id.as_str())),
+        slots
+            .iter()
+            .all(|s| s["account_id"].as_str() != Some(alice_id.as_str())),
         "owner-locked scene must keep bank on cam on: {grid}"
     );
     let _ = server_id;

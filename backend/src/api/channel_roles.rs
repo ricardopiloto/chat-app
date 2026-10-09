@@ -63,11 +63,15 @@ pub async fn put_roles(
         .await?
         .ok_or_else(|| ApiError::not_found("server not found"))?;
     if !permissions::is_channel_admin(server.owner_account_id, account.id) {
-        return Err(ApiError::forbidden("only the owner can assign co-directors"));
+        return Err(ApiError::forbidden(
+            "only the owner can assign co-directors",
+        ));
     }
     for id in &body.account_ids {
         if !db::membership::exists(&state.pool, *id, channel.server_id).await? {
-            return Err(ApiError::bad_request("account_id is not a member of this server"));
+            return Err(ApiError::bad_request(
+                "account_id is not a member of this server",
+            ));
         }
     }
     db::channel_role::replace_co_directors(&state.pool, channel_id, &body.account_ids, account.id)

@@ -198,9 +198,7 @@ async fn reply_to_self_does_not_notify() {
 async fn reply_parent_wrong_channel_is_400() {
     let app = TestApp::new().await;
     let (alice, _, _, _, channel_id) = setup_alice_bob(&app).await;
-    let (_, servers, _) = app
-        .request("GET", "/api/servers", None, Some(&alice))
-        .await;
+    let (_, servers, _) = app.request("GET", "/api/servers", None, Some(&alice)).await;
     let server_id = servers.as_array().unwrap()[0]["id"].as_str().unwrap();
     let (_, ch2, _) = app
         .request(

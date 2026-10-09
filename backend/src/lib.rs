@@ -31,7 +31,9 @@ pub fn router(state: AppState) -> Router {
     ))
 }
 
-pub async fn build_state(config: Config) -> Result<AppState, Box<dyn std::error::Error + Send + Sync>> {
+pub async fn build_state(
+    config: Config,
+) -> Result<AppState, Box<dyn std::error::Error + Send + Sync>> {
     tokio::fs::create_dir_all(&config.attachments_dir).await?;
     tokio::fs::create_dir_all(&config.avatars_dir).await?;
     tokio::fs::create_dir_all(config.avatars_dir.join("servers")).await?;

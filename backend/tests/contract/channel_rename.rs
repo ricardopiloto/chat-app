@@ -224,7 +224,10 @@ async fn channel_rename_creator_owner_manage_and_forbidden() {
     let (status, assigned, _) = app
         .request(
             "PUT",
-            &format!("/api/servers/{}/members/{}/role", setup.server_id, setup.third_id),
+            &format!(
+                "/api/servers/{}/members/{}/role",
+                setup.server_id, setup.third_id
+            ),
             Some(json!({ "role_id": gestores_id })),
             Some(&setup.owner),
         )

@@ -2,7 +2,7 @@ import { For, Match, Show, Switch, createEffect, createMemo, createResource, cre
 import { Portal } from "solid-js/web";
 import { useQueryClient } from "@tanstack/solid-query";
 import type { Notification } from "../api";
-import { avatarUrl } from "../api";
+import { avatarUrl, useAuthedSrc } from "../api";
 import { Avatar, Badge, Icon } from "../components/ui";
 import { t } from "../i18n";
 import { useShell } from "../shell/state";
@@ -11,6 +11,11 @@ import { messagesOf } from "./searching";
 import { allChannels, peopleOf, type ChannelRef } from "./directory";
 import { loadedMessages } from "./loaded";
 import { excerptOf } from "./MessageRow";
+
+function NoticeAvatar(props: { accountId: string; hasAvatar: boolean | undefined; name: string }) {
+  const src = useAuthedSrc(() => (props.hasAvatar ? avatarUrl(props.accountId) : undefined));
+  return <Avatar name={props.name} src={src()} size="md" />;
+}
 import { channelNews, markAllSeen, mentionNotices, unseenCount, type ChannelNews } from "./notices";
 
 type Tab = "all" | "mentions" | "news";
@@ -113,7 +118,7 @@ export function NotificationsPanel(props: { open: boolean; onClose: () => void; 
                       return (
                         <li class="ch-card unseen">
                           <button type="button" class="ch-card-main" onClick={() => go(notice.channel_id, notice.message_id)}>
-                            <Avatar name={actor()?.label ?? "?"} src={actor()?.hasAvatar ? avatarUrl(actor()!.accountId) : undefined} size="md" />
+                            <NoticeAvatar accountId={notice.actor_account_id} hasAvatar={actor()?.hasAvatar} name={actor()?.label ?? "?"} />
                             <span>
                               <span class="ch-card-head"><strong>{actor()?.label ?? t("txt.notices.someone")}</strong><time>{ago(notice.created_at)}</time></span>
                               <span class="ch-card-text">

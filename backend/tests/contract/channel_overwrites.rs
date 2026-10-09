@@ -33,7 +33,11 @@ async fn setup(app: &TestApp) -> Setup {
         .await;
     assert_eq!(status, StatusCode::CREATED, "{invite}");
     let (status, member_json, member_cookie) = app
-        .register("ow_bob", "password1", Some(invite["code"].as_str().unwrap()))
+        .register(
+            "ow_bob",
+            "password1",
+            Some(invite["code"].as_str().unwrap()),
+        )
         .await;
     assert_eq!(status, StatusCode::CREATED, "{member_json}");
     Setup {
@@ -235,10 +239,7 @@ async fn access_inspect_returns_factors() {
     let (status, body, _) = app
         .request(
             "GET",
-            &format!(
-                "/api/channels/{}/access/{}",
-                channel_id, setup.member_id
-            ),
+            &format!("/api/channels/{}/access/{}", channel_id, setup.member_id),
             None,
             Some(&setup.owner),
         )

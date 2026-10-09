@@ -145,7 +145,9 @@ async fn require_owner(
         .await?
         .ok_or_else(|| ApiError::not_found("server not found"))?;
     if account_id != server.owner_account_id {
-        return Err(ApiError::forbidden("only the owner can manage welcome settings"));
+        return Err(ApiError::forbidden(
+            "only the owner can manage welcome settings",
+        ));
     }
     Ok(server)
 }

@@ -1,7 +1,7 @@
+use crate::domain::reaction::ReactionSummary;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use crate::domain::reaction::ReactionSummary;
 
 fn default_kind() -> String {
     "user".to_string()

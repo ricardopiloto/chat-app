@@ -3,7 +3,7 @@ import { errorText } from "../../lib/errors";
 import { publicDisplayLabel } from "../../lib/displayName";
 import { t } from "../../i18n";
 import { Avatar, Badge, Button, Dialog, Icon } from "../../components/ui";
-import { avatarUrl, mutes, type Member, type Mute } from "../../api";
+import { avatarUrl, mutes, useAuthedSrc, type Member, type Mute } from "../../api";
 
 // The durations the application has always offered; "custom" takes any whole number of minutes.
 export const MUTE_PRESETS = [5, 10, 15, 30] as const;
@@ -50,6 +50,7 @@ export function MuteMemberDialog(props: {
   const valid = () => Number.isFinite(chosen()) && chosen() >= 1;
   const expires = () => new Date(now() + chosen() * 60_000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   const name = () => (props.member ? publicDisplayLabel(props.member.handle, props.member.display_name) : "");
+  const avatar = useAuthedSrc(() => (props.member?.has_avatar ? avatarUrl(props.member.account_id) : undefined));
 
   async function run(action: () => Promise<unknown>) {
     if (busy()) return;
@@ -72,7 +73,7 @@ export function MuteMemberDialog(props: {
           <div class="mg-form">
             <p class="mg-lead">{t("mgmt.channel.mute.lead")}</p>
             <div class="mg-card compact mg-mute-person">
-              <Avatar name={name()} src={member().has_avatar ? avatarUrl(member().account_id) : undefined} size="lg" />
+              <Avatar name={name()} src={avatar()} size="lg" />
               <div>
                 <strong>{name()}</strong>
                 <small>@{member().handle}</small>

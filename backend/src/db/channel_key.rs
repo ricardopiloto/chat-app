@@ -44,7 +44,10 @@ struct Row {
     sealed_blob: Vec<u8>,
 }
 
-pub async fn get(pool: &SqlitePool, channel_id: Uuid) -> Result<Option<ChannelKeyRow>, sqlx::Error> {
+pub async fn get(
+    pool: &SqlitePool,
+    channel_id: Uuid,
+) -> Result<Option<ChannelKeyRow>, sqlx::Error> {
     let row = sqlx::query_as::<_, Row>(
         "SELECT channel_id, custodian_account_id, sealed_blob FROM channel_key WHERE channel_id = ?",
     )
@@ -53,7 +56,8 @@ pub async fn get(pool: &SqlitePool, channel_id: Uuid) -> Result<Option<ChannelKe
     .await?;
     row.map(|r| {
         Ok(ChannelKeyRow {
-            channel_id: Uuid::parse_str(&r.channel_id).map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
+            channel_id: Uuid::parse_str(&r.channel_id)
+                .map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
             custodian_account_id: Uuid::parse_str(&r.custodian_account_id)
                 .map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
             sealed_blob: r.sealed_blob,

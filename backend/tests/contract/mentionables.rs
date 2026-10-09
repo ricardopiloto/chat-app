@@ -105,11 +105,7 @@ async fn mentionables_private_excludes_non_viewers() {
         )
         .await;
     let (_, bob_body, bob) = app
-        .register(
-            "priv_bob",
-            "password1",
-            Some(inv["code"].as_str().unwrap()),
-        )
+        .register("priv_bob", "password1", Some(inv["code"].as_str().unwrap()))
         .await;
     let bob = must_cookie(bob);
     let bob_id = bob_body["id"].as_str().unwrap();

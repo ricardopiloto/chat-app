@@ -5,12 +5,7 @@ use uuid::Uuid;
 pub const MAX_ATTACHMENT_BYTES: usize = 5 * 1024 * 1024;
 pub const MAX_ATTACHMENTS_PER_MESSAGE: usize = 10;
 
-pub const ALLOWED_MEDIA_TYPES: &[&str] = &[
-    "image/jpeg",
-    "image/png",
-    "image/webp",
-    "image/gif",
-];
+pub const ALLOWED_MEDIA_TYPES: &[&str] = &["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 pub fn is_allowed_media_type(value: &str) -> bool {
     ALLOWED_MEDIA_TYPES.iter().any(|t| *t == value)

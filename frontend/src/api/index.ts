@@ -1,4 +1,5 @@
 export { ApiError, http, request, requestBytes, MEDIA_TYPE_HEADER } from "./http";
+export { useAuthedSrc } from "./media";
 export type * from "./types";
 export * from "./endpoints";
 export * from "./realtime";

@@ -79,14 +79,22 @@ fn signature_ok(public_key: &[u8], message: &[u8], signature: &[u8]) -> bool {
 }
 
 pub fn canonical_vault_json(value: &serde_json::Value) -> Result<String, ApiError> {
-    let v = value.get("v").and_then(|n| n.as_u64()).ok_or_else(|| ApiError::bad_request("identity_vault"))?;
+    let v = value
+        .get("v")
+        .and_then(|n| n.as_u64())
+        .ok_or_else(|| ApiError::bad_request("identity_vault"))?;
     let public_key = compact(value.get("publicKey"))?;
     let iv = compact(value.get("iv"))?;
     let wrapped = compact(value.get("wrapped"))?;
-    let salt = value.get("salt").map(|part| compact(Some(part))).transpose()?;
+    let salt = value
+        .get("salt")
+        .map(|part| compact(Some(part)))
+        .transpose()?;
     // Field order matches JSON.stringify on the client. serde_json's map sorts keys, so this is built by hand.
     Ok(match salt {
-        Some(salt) => format!(r#"{{"v":{v},"publicKey":{public_key},"salt":{salt},"iv":{iv},"wrapped":{wrapped}}}"#),
+        Some(salt) => format!(
+            r#"{{"v":{v},"publicKey":{public_key},"salt":{salt},"iv":{iv},"wrapped":{wrapped}}}"#
+        ),
         None => format!(r#"{{"v":{v},"publicKey":{public_key},"iv":{iv},"wrapped":{wrapped}}}"#),
     })
 }
@@ -104,7 +112,11 @@ fn payload_hash(password: &str, vault_json: &str) -> [u8; 32] {
     hasher.finalize().into()
 }
 
-async fn failure_slot<'a>(state: &'a AppState, ip: Option<std::net::IpAddr>, handle: &str) -> Result<Option<crate::rate_limit::RecoveryAttempt<'a>>, ApiError> {
+async fn failure_slot<'a>(
+    state: &'a AppState,
+    ip: Option<std::net::IpAddr>,
+    handle: &str,
+) -> Result<Option<crate::rate_limit::RecoveryAttempt<'a>>, ApiError> {
     if state.config.rate_limit_disabled {
         return Ok(None);
     }
@@ -132,10 +144,11 @@ pub async fn challenge(
     let id = Uuid::new_v4();
     let account = db::account::find_by_handle(&state.pool, body.handle.trim()).await?;
     let (account_id, generation) = if let Some(account) = account {
-        let (generation,): (i64,) = sqlx::query_as("SELECT recovery_generation FROM account WHERE id = ?")
-            .bind(account.id.to_string())
-            .fetch_one(&state.pool)
-            .await?;
+        let (generation,): (i64,) =
+            sqlx::query_as("SELECT recovery_generation FROM account WHERE id = ?")
+                .bind(account.id.to_string())
+                .fetch_one(&state.pool)
+                .await?;
         (Some(account.id.to_string()), generation)
     } else {
         (None, 0)
@@ -185,7 +198,8 @@ pub async fn start(
         return Err(ApiError::unauthorized());
     };
     let fresh = hex::encode(Sha256::digest(&nonce)) == nonce_hash
-        && chrono::DateTime::parse_from_rfc3339(&expires_at).is_ok_and(|d| d.with_timezone(&Utc) > Utc::now());
+        && chrono::DateTime::parse_from_rfc3339(&expires_at)
+            .is_ok_and(|d| d.with_timezone(&Utc) > Utc::now());
     let verifier: Option<(Vec<u8>, Vec<u8>, i64)> = sqlx::query_as(
         "SELECT recovery_verifier_pubkey, recovery_vault, recovery_generation FROM account WHERE id = ? AND recovery_verifier_pubkey IS NOT NULL AND recovery_vault IS NOT NULL",
     )
@@ -196,8 +210,12 @@ pub async fn start(
         tx.commit().await?;
         return Err(ApiError::unauthorized());
     };
-    let message = recovery_sign_message("start", &body.handle, body.challenge_id.as_bytes(), &nonce);
-    if !fresh || current_generation != generation || !signature_ok(&public_key, &message, &signature) {
+    let message =
+        recovery_sign_message("start", &body.handle, body.challenge_id.as_bytes(), &nonce);
+    if !fresh
+        || current_generation != generation
+        || !signature_ok(&public_key, &message, &signature)
+    {
         tx.commit().await?;
         return Err(ApiError::unauthorized());
     }
@@ -232,11 +250,16 @@ pub async fn redeem(
     Json(body): Json<RedeemKeyBody>,
 ) -> Result<(CookieJar, Json<crate::domain::account::AuthAccount>), ApiError> {
     if body.password.len() < 8 {
-        return Err(ApiError::bad_request("password must be at least 8 characters"));
+        return Err(ApiError::bad_request(
+            "password must be at least 8 characters",
+        ));
     }
     let mut slot = failure_slot(&state, ip, &body.handle).await?;
     let outcome = redeem_authorized(&state, &body).await;
-    let failed_auth = outcome.as_ref().err().is_some_and(|err| err.status == StatusCode::UNAUTHORIZED);
+    let failed_auth = outcome
+        .as_ref()
+        .err()
+        .is_some_and(|err| err.status == StatusCode::UNAUTHORIZED);
     if !failed_auth {
         if let Some(slot) = slot.as_mut() {
             slot.success();
@@ -244,9 +267,12 @@ pub async fn redeem(
     }
     let (token, account_id, revoked) = outcome?;
     state.ws.close_sessions(account_id, &revoked);
-    let updated = db::account::find_by_id(&state.pool, account_id).await?.ok_or_else(ApiError::unauthorized)?;
+    let updated = db::account::find_by_id(&state.pool, account_id)
+        .await?
+        .ok_or_else(ApiError::unauthorized)?;
+    let body = updated.auth_view().with_session_token(token.clone());
     let jar = register::with_session_cookie(jar, token, state.config.cookie_secure);
-    Ok((jar, Json(updated.auth_view())))
+    Ok((jar, Json(body)))
 }
 
 async fn redeem_authorized(
@@ -287,7 +313,8 @@ async fn redeem_authorized(
     if !super::recovery::vault_matches(&body.identity_vault, &account.identity_pubkey) {
         return Err(ApiError::bad_request("identity_vault publicKey mismatch"));
     }
-    let vault = encode_identity_vault(Some(&body.identity_vault))?.ok_or_else(|| ApiError::bad_request("identity_vault required"))?;
+    let vault = encode_identity_vault(Some(&body.identity_vault))?
+        .ok_or_else(|| ApiError::bad_request("identity_vault required"))?;
     let done = finish_credential_change(
         &state.pool,
         CredentialWrite {
@@ -295,7 +322,9 @@ async fn redeem_authorized(
             password_hash: register::hash_password(&body.password)?,
             vault,
             new_pubkey: None,
-            sessions: SessionPolicy::ReplaceAll { ttl_secs: state.config.session_ttl_secs },
+            sessions: SessionPolicy::ReplaceAll {
+                ttl_secs: state.config.session_ttl_secs,
+            },
             operator_code_hash: None,
             expected_password_hash: None,
             expected_pubkey: Some(account.identity_pubkey.clone()),
@@ -303,7 +332,9 @@ async fn redeem_authorized(
         },
     )
     .await?;
-    let token = done.token.ok_or_else(|| ApiError::internal("session missing"))?;
+    let token = done
+        .token
+        .ok_or_else(|| ApiError::internal("session missing"))?;
     Ok((token, account.id, done.revoked))
 }
 
@@ -312,13 +343,20 @@ pub async fn put_recovery_key(
     AuthUser(account): AuthUser,
     Json(body): Json<PutRecoveryBody>,
 ) -> Result<Json<crate::domain::account::AuthAccount>, ApiError> {
-    let parsed = PasswordHash::new(&account.password_hash).map_err(|e| ApiError::internal(e.to_string()))?;
+    let parsed =
+        PasswordHash::new(&account.password_hash).map_err(|e| ApiError::internal(e.to_string()))?;
     Argon2::default()
         .verify_password(body.current_password.as_bytes(), &parsed)
         .map_err(|_| ApiError::unauthorized())?;
     let mut conn = state.pool.acquire().await?;
     let mut tx = conn.begin_with("BEGIN IMMEDIATE").await?;
-    register::store_recovery(&mut tx, account.id, Some(&body.recovery_vault), Some(&body.recovery_verifier_pubkey)).await?;
+    register::store_recovery(
+        &mut tx,
+        account.id,
+        Some(&body.recovery_vault),
+        Some(&body.recovery_verifier_pubkey),
+    )
+    .await?;
     sqlx::query("DELETE FROM recovery_challenge WHERE account_id = ?")
         .bind(account.id.to_string())
         .execute(&mut *tx)
@@ -328,6 +366,9 @@ pub async fn put_recovery_key(
         .execute(&mut *tx)
         .await?;
     tx.commit().await?;
-    let updated = db::account::find_by_id(&state.pool, account.id).await?.ok_or_else(ApiError::unauthorized)?;
+    let updated = db::account::find_by_id(&state.pool, account.id)
+        .await?
+        .ok_or_else(ApiError::unauthorized)?;
+    // Does not mint a session (uses the caller's AuthUser). Do not add `session_token` here.
     Ok(Json(updated.auth_view()))
 }

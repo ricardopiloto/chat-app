@@ -1,7 +1,9 @@
 // Transport for the REST API. Plain TypeScript: no framework imports, so any layer can call it.
-// The backend contract this implements: JSON bodies, 204 for "no content", cookie session on the
-// same origin, and errors shaped as { error, code?, message? } where `message` (when present)
-// is the human text and `error` then carries the machine code.
+// The backend contract this implements: JSON bodies, 204 for "no content", and errors shaped as
+// { error, code?, message? } where `message` (when present) is the human text and `error` then
+// carries the machine code. The web build sends the session cookie on the same origin. Native
+// mode resolves each path against the configured instance and sends Authorization instead.
+import { currentInstance, isNative, tauriBridge } from "./instance";
 
 export class ApiError extends Error {
   readonly status: number;
@@ -40,8 +42,13 @@ export type RequestOptions = {
   signal?: AbortSignal;
 };
 
-function toInit(opts: RequestOptions): RequestInit {
-  const headers = new Headers(opts.headers);
+interface PlannedRequest {
+  url: string;
+  transport: "browser" | "plugin";
+  init: RequestInit;
+}
+
+function toInit(opts: RequestOptions, credentials: RequestCredentials, headers: Headers): RequestInit {
   let body: BodyInit | undefined;
   if (opts.json !== undefined) {
     headers.set("content-type", "application/json");
@@ -50,18 +57,42 @@ function toInit(opts: RequestOptions): RequestInit {
     headers.set("content-type", "application/octet-stream");
     body = opts.bytes as BodyInit;
   }
-  return { method: opts.method ?? "GET", headers, body, credentials: "include", keepalive: opts.keepalive, signal: opts.signal };
+  return { method: opts.method ?? "GET", headers, body, credentials, keepalive: opts.keepalive, signal: opts.signal };
+}
+
+/** Relative path and cookie on the web. Absolute URL and bearer token when native. */
+export function planRequest(path: string, opts: RequestOptions = {}): PlannedRequest {
+  const headers = new Headers(opts.headers);
+  if (!isNative()) return { url: path, transport: "browser", init: toInit(opts, "include", headers) };
+  const base = currentInstance().baseUrl;
+  if (!base) throw new ApiError(0, "No Mesa instance is configured");
+  const token = currentInstance().sessionToken;
+  if (token) headers.set("authorization", `Bearer ${token}`);
+  return {
+    url: new URL(path, base).toString(),
+    transport: tauriBridge() ? "plugin" : "browser",
+    init: toInit(opts, "omit", headers),
+  };
+}
+
+async function send(path: string, opts: RequestOptions): Promise<Response> {
+  const planned = planRequest(path, opts);
+  if (planned.transport === "plugin") {
+    const { fetch } = await import("@tauri-apps/plugin-http");
+    return fetch(planned.url, planned.init);
+  }
+  return fetch(planned.url, planned.init);
 }
 
 export async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
-  const res = await fetch(path, toInit(opts));
+  const res = await send(path, opts);
   const raw = await res.text();
   if (!res.ok) throw describeFailure(res, raw);
   return (raw ? JSON.parse(raw) : undefined) as T;
 }
 
 export async function requestBytes(path: string, opts: RequestOptions = {}): Promise<{ bytes: Uint8Array; headers: Headers }> {
-  const res = await fetch(path, toInit(opts));
+  const res = await send(path, opts);
   if (!res.ok) throw describeFailure(res, await res.text());
   return { bytes: new Uint8Array(await res.arrayBuffer()), headers: res.headers };
 }

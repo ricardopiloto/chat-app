@@ -15,8 +15,10 @@ struct Row {
 
 fn map_row(row: Row) -> Result<ChannelMute, sqlx::Error> {
     Ok(ChannelMute {
-        channel_id: Uuid::parse_str(&row.channel_id).map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
-        account_id: Uuid::parse_str(&row.account_id).map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
+        channel_id: Uuid::parse_str(&row.channel_id)
+            .map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
+        account_id: Uuid::parse_str(&row.account_id)
+            .map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
         muted_by_account_id: Uuid::parse_str(&row.muted_by_account_id)
             .map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
         created_at: parse_time(&row.created_at)?,
@@ -25,10 +27,7 @@ fn map_row(row: Row) -> Result<ChannelMute, sqlx::Error> {
 }
 
 /// Upsert mute for (channel, account). Replaces duration/actor timestamps.
-pub async fn upsert(
-    pool: &SqlitePool,
-    mute: &ChannelMute,
-) -> Result<(), sqlx::Error> {
+pub async fn upsert(pool: &SqlitePool, mute: &ChannelMute) -> Result<(), sqlx::Error> {
     sqlx::query(
         "INSERT INTO channel_mute (channel_id, account_id, muted_by_account_id, created_at, ends_at)
          VALUES (?, ?, ?, ?, ?)

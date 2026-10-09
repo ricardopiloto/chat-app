@@ -35,14 +35,25 @@ impl WsHub {
         let (cancel, cancel_rx) = watch::channel(false);
         let id = Uuid::new_v4();
         let mut map = self.inner.lock().expect("ws hub");
-        map.entry(account_id).or_default().push(WsConnection { id, session_id, messages, cancel });
-        WsSubscription { id, messages: rx, cancel: cancel_rx }
+        map.entry(account_id).or_default().push(WsConnection {
+            id,
+            session_id,
+            messages,
+            cancel,
+        });
+        WsSubscription {
+            id,
+            messages: rx,
+            cancel: cancel_rx,
+        }
     }
 
     pub fn unsubscribe(&self, account_id: Uuid, subscription_id: Uuid) {
         let mut map = self.inner.lock().expect("ws hub");
         if let Some(list) = map.get_mut(&account_id) {
-            list.retain(|connection| connection.id != subscription_id && !connection.messages.is_closed());
+            list.retain(|connection| {
+                connection.id != subscription_id && !connection.messages.is_closed()
+            });
             if list.is_empty() {
                 map.remove(&account_id);
             }
@@ -52,7 +63,10 @@ impl WsHub {
     pub fn close_sessions(&self, account_id: Uuid, session_ids: &[Uuid]) {
         let mut map = self.inner.lock().expect("ws hub");
         if let Some(list) = map.get_mut(&account_id) {
-            for connection in list.iter().filter(|connection| session_ids.contains(&connection.session_id)) {
+            for connection in list
+                .iter()
+                .filter(|connection| session_ids.contains(&connection.session_id))
+            {
                 let _ = connection.cancel.send(true);
             }
             list.retain(|connection| !session_ids.contains(&connection.session_id));
@@ -65,13 +79,20 @@ impl WsHub {
     /// True when the account has at least one live WS sender.
     pub fn is_online(&self, account_id: Uuid) -> bool {
         let map = self.inner.lock().expect("ws hub");
-        map.get(&account_id).is_some_and(|list| list.iter().any(|connection| !connection.messages.is_closed() && !*connection.cancel.borrow()))
+        map.get(&account_id).is_some_and(|list| {
+            list.iter()
+                .any(|connection| !connection.messages.is_closed() && !*connection.cancel.borrow())
+        })
     }
 
     pub fn online_account_ids(&self) -> Vec<Uuid> {
         let map = self.inner.lock().expect("ws hub");
         map.iter()
-            .filter(|(_, list)| list.iter().any(|connection| !connection.messages.is_closed() && !*connection.cancel.borrow()))
+            .filter(|(_, list)| {
+                list.iter().any(|connection| {
+                    !connection.messages.is_closed() && !*connection.cancel.borrow()
+                })
+            })
             .map(|(id, _)| *id)
             .collect()
     }
@@ -79,7 +100,10 @@ impl WsHub {
     pub fn send_to_account(&self, account_id: Uuid, payload: &str) {
         let mut map = self.inner.lock().expect("ws hub");
         if let Some(list) = map.get_mut(&account_id) {
-            list.retain(|connection| !*connection.cancel.borrow() && connection.messages.send(payload.to_string()).is_ok());
+            list.retain(|connection| {
+                !*connection.cancel.borrow()
+                    && connection.messages.send(payload.to_string()).is_ok()
+            });
         }
     }
 
@@ -108,7 +132,13 @@ impl WsHub {
         }
     }
 
-    pub fn send_to_accounts<T: Serialize>(&self, account_ids: &[Uuid], event: &str, server_id: Uuid, payload: &T) {
+    pub fn send_to_accounts<T: Serialize>(
+        &self,
+        account_ids: &[Uuid],
+        event: &str,
+        server_id: Uuid,
+        payload: &T,
+    ) {
         let envelope = serde_json::json!({
             "event": event,
             "server_id": server_id,
@@ -140,7 +170,8 @@ pub async fn replay_pending_handoffs(state: &AppState, account_id: Uuid) {
             if let Ok(Some(account)) = db::account::find_by_id(&state.pool, member.account_id).await
             {
                 use base64::Engine;
-                let pubkey = base64::engine::general_purpose::STANDARD.encode(&account.identity_pubkey);
+                let pubkey =
+                    base64::engine::general_purpose::STANDARD.encode(&account.identity_pubkey);
                 state.ws.send_to_accounts(
                     &[account_id],
                     "key_handoff.requested",

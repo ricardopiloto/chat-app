@@ -15,7 +15,8 @@ struct Row {
 fn map_row(row: Row) -> Result<Session, sqlx::Error> {
     Ok(Session {
         id: Uuid::parse_str(&row.id).map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
-        account_id: Uuid::parse_str(&row.account_id).map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
+        account_id: Uuid::parse_str(&row.account_id)
+            .map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
         token_hash: row.token_hash,
         expires_at: DateTime::parse_from_rfc3339(&row.expires_at)
             .map_err(|e| sqlx::Error::Decode(Box::new(e)))?

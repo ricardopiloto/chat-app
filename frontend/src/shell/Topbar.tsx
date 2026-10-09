@@ -1,5 +1,5 @@
 import { Show } from "solid-js";
-import { avatarUrl } from "../api";
+import { avatarUrl, useAuthedSrc } from "../api";
 import { Avatar, Badge, Icon, Logo } from "../components/ui";
 import { t } from "../i18n";
 import { useSession } from "../session/session";
@@ -14,6 +14,7 @@ export function Topbar() {
   const shell = useShell();
   const session = useSession();
   const me = () => session.account()!;
+  const avatar = useAuthedSrc(() => (me().has_avatar ? avatarUrl(me().id) : undefined));
   return (
     <header class="flex h-14 shrink-0 items-center gap-3 border-b border-outline-variant bg-surface-container-lowest px-3 tablet:px-4">
       <button type="button" class={`${roundButton} tablet:hidden`} aria-label={t("shell.openNavigation")} aria-expanded={shell.drawerOpen()} onClick={() => shell.setDrawerOpen(true)}>
@@ -60,7 +61,7 @@ export function Topbar() {
       </button>
 
       <button type="button" class="rounded-full" title={t("shell.myAccount")} aria-label={t("shell.myAccount")} onClick={() => shell.go("/account")}>
-        <Avatar name={me().display_name || me().handle} src={me().has_avatar ? avatarUrl(me().id) : undefined} size="sm" />
+        <Avatar name={me().display_name || me().handle} src={avatar()} size="sm" />
       </button>
     </header>
   );

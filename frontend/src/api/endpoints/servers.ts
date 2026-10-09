@@ -1,3 +1,4 @@
+import { absoluteResource } from "../instance";
 import { MEDIA_TYPE_HEADER, http, request } from "../http";
 import type {
   AcceptInviteBody, CreateServerBody, Invite, InvitePreview, Member, Membership, Presence, RoleCapabilities,
@@ -8,7 +9,7 @@ export const servers = {
   list: () => http.get<Server[]>("/api/servers"),
   create: (body: CreateServerBody) => http.post<Server>("/api/servers", body),
   remove: (serverId: string) => http.delete(`/api/servers/${serverId}`),
-  imageUrl: (serverId: string) => `/api/servers/${serverId}/image`,
+  imageUrl: (serverId: string) => absoluteResource(`/api/servers/${serverId}/image`),
   setImage: (serverId: string, image: Blob | Uint8Array, mediaType: string) =>
     request<Server>(`/api/servers/${serverId}/image`, { method: "PUT", bytes: image, headers: { [MEDIA_TYPE_HEADER]: mediaType } }),
   removeImage: (serverId: string) => http.delete(`/api/servers/${serverId}/image`),

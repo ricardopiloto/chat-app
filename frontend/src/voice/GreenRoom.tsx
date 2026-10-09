@@ -3,7 +3,7 @@
 // microphone buttons here are what "Entrar" will use, so nobody is asked again on every join.
 import { For, Show, createSignal, onMount } from "solid-js";
 import { Button, Icon, Segmented } from "../components/ui";
-import { avatarUrl, type Channel } from "../api";
+import { avatarUrl, useAuthedSrc, type Channel } from "../api";
 import { publicDisplayLabel } from "../lib/displayName";
 import { t } from "../i18n";
 import { useShell } from "../shell/state";
@@ -201,11 +201,13 @@ export function GreenRoom(props: { channel: Channel }) {
             <h2>{t("call.green.now")}<span class="call-count">{t("call.green.session", { n: people().length })}</span></h2>
             <ul class="call-roster">
               <For each={people()}>
-                {(person) => (
+                {(person) => {
+                  const face = useAuthedSrc(() => (person.has_avatar ? avatarUrl(person.account_id) : undefined));
+                  return (
                   <li>
                     <span class="call-roster-avatar">
-                      <Show when={person.has_avatar} fallback={publicDisplayLabel(person.handle, person.display_name).slice(0, 1).toUpperCase()}>
-                        <img src={avatarUrl(person.account_id)} alt="" />
+                      <Show when={face()} fallback={publicDisplayLabel(person.handle, person.display_name).slice(0, 1).toUpperCase()}>
+                        <img src={face()} alt="" />
                       </Show>
                     </span>
                     <span class="call-roster-name">
@@ -217,7 +219,8 @@ export function GreenRoom(props: { channel: Channel }) {
                     <Icon name={person.screen_on ? "present_to_all" : person.mic_on ? "mic" : "mic_off"} class="text-[18px]" />
                     <Show when={person.cam_on}><Icon name="videocam" class="text-[18px]" /></Show>
                   </li>
-                )}
+                  );
+                }}
               </For>
               <Show when={people().length === 0}><li class="call-editor-hint">{t("call.green.empty")}</li></Show>
             </ul>

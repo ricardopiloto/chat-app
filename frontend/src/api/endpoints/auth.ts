@@ -1,3 +1,4 @@
+import { absoluteResource } from "../instance";
 import { MEDIA_TYPE_HEADER, http, request } from "../http";
 import type { Account, IdentityVaultPayload, RegisterBody } from "../types";
 import type { RecoveryVault } from "../../crypto/recovery";
@@ -34,4 +35,4 @@ export const auth = {
   removeAvatar: () => http.delete("/api/auth/avatar"),
 };
 
-export const avatarUrl = (accountId: string): string => `/api/accounts/${accountId}/avatar`;
+export const avatarUrl = (accountId: string): string => absoluteResource(`/api/accounts/${accountId}/avatar`);

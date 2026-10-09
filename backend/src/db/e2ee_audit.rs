@@ -25,7 +25,8 @@ struct Row {
 fn map_row(row: Row) -> Result<E2eeAuditEntry, sqlx::Error> {
     Ok(E2eeAuditEntry {
         id: Uuid::parse_str(&row.id).map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
-        channel_id: Uuid::parse_str(&row.channel_id).map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
+        channel_id: Uuid::parse_str(&row.channel_id)
+            .map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
         actor_account_id: Uuid::parse_str(&row.actor_account_id)
             .map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
         action: row.action,

@@ -89,9 +89,7 @@ pub async fn list_ids_for_message(
     .fetch_all(pool)
     .await?;
     rows.into_iter()
-        .map(|(id,)| {
-            Uuid::parse_str(&id).map_err(|e| sqlx::Error::Decode(Box::new(e)))
-        })
+        .map(|(id,)| Uuid::parse_str(&id).map_err(|e| sqlx::Error::Decode(Box::new(e))))
         .collect()
 }
 

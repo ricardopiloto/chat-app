@@ -3,6 +3,7 @@
 // these, so a person looks the same everywhere.
 import { Show, createEffect, onCleanup, type JSX } from "solid-js";
 import type { Track } from "livekit-client";
+import { useAuthedSrc } from "../api";
 import { Icon } from "../components/ui";
 import { t } from "../i18n";
 
@@ -55,6 +56,7 @@ export function Tile(props: {
 }) {
   const size = () => props.size ?? "grid";
   const initial = () => props.person.name.slice(0, 1).toUpperCase();
+  const avatar = useAuthedSrc(() => props.person.avatar);
   return (
     <figure
       class={`call-tile tone-${seatTone(props.person.id)} size-${size()}`}
@@ -66,8 +68,8 @@ export function Tile(props: {
         when={props.person.camera}
         fallback={
           <span class="call-tile-avatar" aria-hidden="true">
-            <Show when={props.person.avatar} fallback={initial()}>
-              <img src={props.person.avatar} alt="" />
+            <Show when={avatar()} fallback={initial()}>
+              <img src={avatar()} alt="" />
             </Show>
           </span>
         }

@@ -49,7 +49,8 @@ pub async fn mark_notification_read(
     if existing.account_id != account.id {
         return Err(ApiError::not_found("notification not found"));
     }
-    let _ = db::notification::mark_read(&state.pool, notification_id, account.id, Utc::now()).await?;
+    let _ =
+        db::notification::mark_read(&state.pool, notification_id, account.id, Utc::now()).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -57,6 +58,7 @@ pub async fn mark_all_notifications_read(
     State(state): State<AppState>,
     AuthUser(account): AuthUser,
 ) -> Result<StatusCode, ApiError> {
-    let _ = db::notification::mark_all_read_for_account(&state.pool, account.id, Utc::now()).await?;
+    let _ =
+        db::notification::mark_all_read_for_account(&state.pool, account.id, Utc::now()).await?;
     Ok(StatusCode::NO_CONTENT)
 }

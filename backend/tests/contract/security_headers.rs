@@ -5,9 +5,7 @@ use chat_backend::security_headers::CONTENT_SECURITY_POLICY;
 #[tokio::test]
 async fn health_includes_frame_deny_and_csp() {
     let app = TestApp::new().await;
-    let (status, _, _, headers) = app
-        .request_full("GET", "/health", None, None, &[])
-        .await;
+    let (status, _, _, headers) = app.request_full("GET", "/health", None, None, &[]).await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(headers.get("x-frame-options").unwrap(), "DENY");
     assert_eq!(headers.get("x-content-type-options").unwrap(), "nosniff");

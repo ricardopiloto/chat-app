@@ -1,3 +1,6 @@
+import { ApiError, request } from "./http";
+import { currentInstance, isNative, tauriBridge } from "./instance";
+
 // Real-time channel (GET /ws). The server pushes events to every member of the servers the
 // account belongs to; the client never publishes. This module keeps the socket alive and reports
 // connection health so screens can show "reconnecting" and re-sync what they missed.
@@ -46,14 +49,80 @@ export interface RealtimeConnection {
   close(): void;
 }
 
+interface LiveSocket {
+  send(data: string): void;
+  close(): void;
+  isOpen(): boolean;
+}
+
 const FIRST_DELAY_MS = 500;
 const MAX_DELAY_MS = 15_000;
 // The backend accepts the bare text "ping" as a keep-alive, which stops idle proxies closing the socket.
 const KEEPALIVE_MS = 25_000;
 
-function socketUrl(): string {
-  const scheme = location.protocol === "https:" ? "wss:" : "ws:";
-  return `${scheme}//${location.host}/ws`;
+export function socketUrl(): string {
+  if (!isNative()) {
+    const scheme = location.protocol === "https:" ? "wss:" : "ws:";
+    return `${scheme}//${location.host}/ws`;
+  }
+  const base = currentInstance().baseUrl;
+  if (!base) throw new Error("No Mesa instance is configured");
+  const url = new URL(base);
+  url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+  url.pathname = "/ws";
+  url.search = "";
+  url.hash = "";
+  return url.toString();
+}
+
+function browserSocket(url: string, events: { open(): void; message(data: unknown): void; close(): void }): LiveSocket {
+  const socket = new WebSocket(url);
+  socket.onopen = () => events.open();
+  socket.onmessage = (message) => events.message(message.data);
+  socket.onclose = () => events.close();
+  return {
+    send: (data) => socket.send(data),
+    close: () => socket.close(),
+    isOpen: () => socket.readyState === WebSocket.OPEN,
+  };
+}
+
+async function openSocket(url: string, events: { open(): void; message(data: unknown): void; close(): void }): Promise<LiveSocket> {
+  if (!(isNative() && tauriBridge())) return browserSocket(url, events);
+  const { default: TauriSocket } = await import("@tauri-apps/plugin-websocket");
+  const token = currentInstance().sessionToken;
+  const headers: Record<string, string> = {};
+  if (token) headers.authorization = `Bearer ${token}`;
+  const ws = await TauriSocket.connect(url, { headers });
+  let open = true;
+  let ended = false;
+  const end = () => {
+    if (ended) return;
+    ended = true;
+    open = false;
+    events.close();
+  };
+  ws.addListener((message) => {
+    // A clean close is `{ type: "Close" }`. A dropped socket arrives as an error string, which
+    // this plugin does not retag as Close. Either one means the session channel is gone.
+    if (message && typeof message === "object" && message.type === "Text") {
+      events.message(message.data);
+      return;
+    }
+    if (message && typeof message === "object" && (message.type === "Ping" || message.type === "Pong" || message.type === "Binary")) return;
+    end();
+  });
+  queueMicrotask(() => {
+    if (!ended) events.open();
+  });
+  return {
+    send: (data) => void ws.send(data),
+    close: () => {
+      open = false;
+      void ws.disconnect().finally(end);
+    },
+    isOpen: () => open && !ended,
+  };
 }
 
 function parse(data: unknown): RealtimeEnvelope | null {
@@ -68,7 +137,7 @@ function parse(data: unknown): RealtimeEnvelope | null {
 }
 
 export function connectRealtime(options: RealtimeOptions): RealtimeConnection {
-  let socket: WebSocket | null = null;
+  let socket: LiveSocket | null = null;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let keepalive: ReturnType<typeof setInterval> | undefined;
   let attempt = 0;
@@ -78,46 +147,78 @@ export function connectRealtime(options: RealtimeOptions): RealtimeConnection {
 
   const report = (state: DeliveryState) => options.onState?.(state);
 
+  const scheduleRetry = () => {
+    const ceiling = Math.min(MAX_DELAY_MS, FIRST_DELAY_MS * 2 ** attempt);
+    attempt += 1;
+    timer = setTimeout(open, ceiling / 2 + Math.random() * (ceiling / 2));
+  };
+
   const open = () => {
-    socket = new WebSocket(socketUrl());
-    socket.onopen = () => {
-      const resumed = hadConnection && attempt > 0;
-      attempt = 0;
-      hadConnection = true;
-      report("connected");
-      keepalive = setInterval(() => socket?.readyState === WebSocket.OPEN && socket.send("ping"), KEEPALIVE_MS);
-      if (resumed) options.onResync?.();
-    };
-    socket.onmessage = (message) => {
-      const envelope = parse(message.data);
-      if (envelope) options.onEvent(envelope);
-    };
-    socket.onclose = () => {
-      clearInterval(keepalive);
-      socket = null;
-      if (closedByCaller) return report("disconnected");
+    let url: string;
+    try {
+      url = socketUrl();
+    } catch {
       report("reconnecting");
-      const generation = ++reconnectGeneration;
-      // Browser WebSocket hides the HTTP status of a failed upgrade (often close code 1006).
-      // Check the cookie session before retrying, regardless of the close code.
-      void fetch("/api/auth/me", { credentials: "same-origin" }).then((response) => {
-        if (closedByCaller || generation !== reconnectGeneration) return;
-        if (response.status === 204 || response.status === 401 || response.status === 403) {
-          closedByCaller = true;
-          report("disconnected");
-          options.onSessionRevoked?.();
+      scheduleRetry();
+      return;
+    }
+    const generationAtOpen = reconnectGeneration;
+    void openSocket(url, {
+      open: () => {
+        if (closedByCaller || generationAtOpen !== reconnectGeneration) return;
+        const resumed = hadConnection && attempt > 0;
+        attempt = 0;
+        hadConnection = true;
+        report("connected");
+        keepalive = setInterval(() => socket?.isOpen() && socket.send("ping"), KEEPALIVE_MS);
+        if (resumed) options.onResync?.();
+      },
+      message: (data) => {
+        const envelope = parse(data);
+        if (envelope) options.onEvent(envelope);
+      },
+      close: () => {
+        clearInterval(keepalive);
+        socket = null;
+        if (closedByCaller) return report("disconnected");
+        report("reconnecting");
+        const generation = ++reconnectGeneration;
+        // A failed upgrade hides its HTTP status. Ask /api/auth/me before retrying.
+        void request<unknown>("/api/auth/me")
+          .then((body) => {
+            if (closedByCaller || generation !== reconnectGeneration) return;
+            if (body === undefined) {
+              closedByCaller = true;
+              report("disconnected");
+              options.onSessionRevoked?.();
+              return;
+            }
+            scheduleRetry();
+          })
+          .catch((error: unknown) => {
+            if (closedByCaller || generation !== reconnectGeneration) return;
+            if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+              closedByCaller = true;
+              report("disconnected");
+              options.onSessionRevoked?.();
+              return;
+            }
+            scheduleRetry();
+          });
+      },
+    })
+      .then((live) => {
+        if (closedByCaller || generationAtOpen !== reconnectGeneration) {
+          live.close();
           return;
         }
-        const ceiling = Math.min(MAX_DELAY_MS, FIRST_DELAY_MS * 2 ** attempt);
-        attempt += 1;
-        timer = setTimeout(open, ceiling / 2 + Math.random() * (ceiling / 2));
-      }).catch(() => {
-        if (closedByCaller || generation !== reconnectGeneration) return;
-        const ceiling = Math.min(MAX_DELAY_MS, FIRST_DELAY_MS * 2 ** attempt);
-        attempt += 1;
-        timer = setTimeout(open, ceiling / 2 + Math.random() * (ceiling / 2));
+        socket = live;
+      })
+      .catch(() => {
+        if (closedByCaller || generationAtOpen !== reconnectGeneration) return;
+        report("reconnecting");
+        scheduleRetry();
       });
-    };
   };
   open();
 

@@ -101,7 +101,13 @@ async fn sender_may_mention_everyone(
         .await?
         .ok_or_else(|| ApiError::not_found("channel not found"))?;
     let caps = db::server_role::aggregated_caps(&state.pool, channel.server_id, account_id).await?;
-    Ok(crate::domain::permissions::effective_role_caps(server.owner_account_id == account_id, caps).can_mention_everyone)
+    Ok(
+        crate::domain::permissions::effective_role_caps(
+            server.owner_account_id == account_id,
+            caps,
+        )
+        .can_mention_everyone,
+    )
 }
 
 pub async fn post_message(
@@ -153,7 +159,9 @@ pub async fn post_message(
             .await?
             .ok_or_else(|| ApiError::bad_request("reply parent not found"))?;
         if parent.channel_id != channel_id {
-            return Err(ApiError::bad_request("reply parent must be in the same channel"));
+            return Err(ApiError::bad_request(
+                "reply parent must be in the same channel",
+            ));
         }
         reply_parent = Some(parent);
     }
@@ -183,7 +191,9 @@ pub async fn post_message(
             if target == account.id || mention_targets.contains(&target) {
                 continue;
             }
-            if let Ok((_, access)) = crate::api::authz::channel_access(&state.pool, target, &channel).await {
+            if let Ok((_, access)) =
+                crate::api::authz::channel_access(&state.pool, target, &channel).await
+            {
                 if access.view {
                     everyone_targets.push(target);
                 }
@@ -242,12 +252,9 @@ pub async fn post_message(
             read_at: None,
         };
         db::notification::insert(&state.pool, &n).await?;
-        state.ws.send_to_accounts(
-            &[*target],
-            "notification.created",
-            channel.server_id,
-            &n,
-        );
+        state
+            .ws
+            .send_to_accounts(&[*target], "notification.created", channel.server_id, &n);
     }
 
     if !everyone_targets.is_empty() {
@@ -266,7 +273,12 @@ pub async fn post_message(
             .collect();
         db::notification::insert_many(&state.pool, &notices).await?;
         for n in &notices {
-            state.ws.send_to_accounts(&[n.account_id], "notification.created", channel.server_id, n);
+            state.ws.send_to_accounts(
+                &[n.account_id],
+                "notification.created",
+                channel.server_id,
+                n,
+            );
         }
     }
 
@@ -355,17 +367,10 @@ pub async fn delete_message(
         channel.created_by_account_id,
         server.owner_account_id,
         {
-            let caps = db::server_role::aggregated_caps(
-                &state.pool,
-                channel.server_id,
-                account.id,
-            )
-            .await?;
-            permissions::effective_role_caps(
-                server.owner_account_id == account.id,
-                caps,
-            )
-            .can_delete_messages
+            let caps = db::server_role::aggregated_caps(&state.pool, channel.server_id, account.id)
+                .await?;
+            permissions::effective_role_caps(server.owner_account_id == account.id, caps)
+                .can_delete_messages
         },
     ) {
         return Err(ApiError::forbidden("not allowed to delete this message"));
@@ -440,7 +445,8 @@ pub async fn add_reaction(
         return Err(ApiError::bad_request("invalid emoji_code"));
     }
     let channel = reaction_target(&state, account.id, channel_id, message_id).await?;
-    let inserted = db::reaction::add_reaction(&state.pool, message_id, account.id, &body.emoji_code).await?;
+    let inserted =
+        db::reaction::add_reaction(&state.pool, message_id, account.id, &body.emoji_code).await?;
     if inserted {
         let payload = ReactionEvent {
             message_id,
@@ -464,7 +470,8 @@ pub async fn remove_reaction(
         return Err(ApiError::bad_request("invalid emoji_code"));
     }
     let channel = reaction_target(&state, account.id, channel_id, message_id).await?;
-    let removed = db::reaction::remove_reaction(&state.pool, message_id, account.id, &emoji_code).await?;
+    let removed =
+        db::reaction::remove_reaction(&state.pool, message_id, account.id, &emoji_code).await?;
     if removed {
         let payload = ReactionEvent {
             message_id,

@@ -2,7 +2,10 @@ use crate::domain::grid::{AssignedBy, GridLayout, GridSlot, LayoutKey};
 use sqlx::SqlitePool;
 use uuid::Uuid;
 
-pub async fn active_scene_id(pool: &SqlitePool, channel_id: Uuid) -> Result<Option<Uuid>, sqlx::Error> {
+pub async fn active_scene_id(
+    pool: &SqlitePool,
+    channel_id: Uuid,
+) -> Result<Option<Uuid>, sqlx::Error> {
     let row: Option<(Option<String>,)> =
         sqlx::query_as("SELECT active_scene_id FROM channel WHERE id = ?")
             .bind(channel_id.to_string())
@@ -44,8 +47,15 @@ pub async fn replace_layout(
     let scene_id = active_scene_id(pool, channel_id)
         .await?
         .ok_or_else(|| sqlx::Error::RowNotFound)?;
-    crate::db::scene::replace_slots(pool, scene_id, layout_key, slot_count, slots, AssignedBy::Owner)
-        .await
+    crate::db::scene::replace_slots(
+        pool,
+        scene_id,
+        layout_key,
+        slot_count,
+        slots,
+        AssignedBy::Owner,
+    )
+    .await
 }
 
 pub fn to_layout(slots: &[GridSlot], layout_key: LayoutKey, slot_count: i64) -> GridLayout {
@@ -79,7 +89,10 @@ pub async fn auto_assign_first_empty(
     let Some(scene_id) = active_scene_id(pool, channel_id).await? else {
         return Ok(Vec::new());
     };
-    if find_account_slot(pool, channel_id, account_id).await?.is_some() {
+    if find_account_slot(pool, channel_id, account_id)
+        .await?
+        .is_some()
+    {
         return list(pool, channel_id).await;
     }
     let slots = list(pool, channel_id).await?;
@@ -113,14 +126,8 @@ pub async fn unassign_account(
         return Ok(Vec::new());
     };
     if let Some(slot) = find_account_slot(pool, channel_id, account_id).await? {
-        crate::db::scene::assign_slot(
-            pool,
-            scene_id,
-            slot.slot_index,
-            None,
-            slot.assigned_by,
-        )
-        .await?;
+        crate::db::scene::assign_slot(pool, scene_id, slot.slot_index, None, slot.assigned_by)
+            .await?;
     }
     list(pool, channel_id).await
 }

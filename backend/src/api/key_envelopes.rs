@@ -83,13 +83,16 @@ pub async fn post_envelope(
             .await?
             .ok_or_else(|| ApiError::bad_request("target is not a member"))?;
         if target.key_handoff_status != KeyHandoffStatus::Pending {
-            return Err(ApiError::forbidden("cannot overwrite a synced key envelope"));
+            return Err(ApiError::forbidden(
+                "cannot overwrite a synced key envelope",
+            ));
         }
-        let (owner_id,): (String,) = sqlx::query_as("SELECT owner_account_id FROM server WHERE id = ?")
-            .bind(server_id.to_string())
-            .fetch_optional(&mut *tx)
-            .await?
-            .ok_or_else(|| ApiError::not_found("server not found"))?;
+        let (owner_id,): (String,) =
+            sqlx::query_as("SELECT owner_account_id FROM server WHERE id = ?")
+                .bind(server_id.to_string())
+                .fetch_optional(&mut *tx)
+                .await?
+                .ok_or_else(|| ApiError::not_found("server not found"))?;
         let caller = db::membership::find(&mut *tx, account.id, server_id)
             .await?
             .ok_or_else(|| ApiError::forbidden("not a member of this server"))?;
@@ -99,11 +102,13 @@ pub async fn post_envelope(
         );
         let synced = caller.key_handoff_status == KeyHandoffStatus::Synced;
         if !owner && !synced {
-            return Err(ApiError::forbidden("only the owner or a synced member can complete handoff"));
+            return Err(ApiError::forbidden(
+                "only the owner or a synced member can complete handoff",
+            ));
         }
     }
     if rewrite {
-    sqlx::query(
+        sqlx::query(
         "INSERT INTO key_envelope (server_id, account_id, sealed_key, sealed_by_account_id, created_at)
          VALUES (?, ?, ?, ?, ?)
          ON CONFLICT(server_id, account_id) DO UPDATE SET

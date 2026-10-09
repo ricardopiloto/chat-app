@@ -1,5 +1,6 @@
 import { For, Show, createEffect, createSignal, onCleanup } from "solid-js";
-import { auth, avatarUrl } from "../api";
+import { auth, avatarUrl, useAuthedSrc } from "../api";
+import { clearInstance, isNative } from "../api/instance";
 import { Avatar, Button, Icon, MonoLabel } from "../components/ui";
 import { DISPLAY_NAME_MAX_CHARS } from "../lib/displayName";
 import { LOCALES, getLocale, setLocale, t } from "../i18n";
@@ -16,6 +17,7 @@ export function AccountMenu(props: { onClose: () => void }) {
   const session = useSession();
   const shell = useShell();
   const me = () => session.account()!;
+  const avatar = useAuthedSrc(() => (me().has_avatar ? avatarUrl(me().id) : undefined));
   let root: HTMLDivElement | undefined;
 
   const [name, setName] = createSignal(me().display_name ?? "");
@@ -50,7 +52,7 @@ export function AccountMenu(props: { onClose: () => void }) {
     <>
       <div ref={root} role="menu" class="absolute bottom-full left-2 z-40 mb-2 flex w-72 max-w-[calc(100vw-1rem)] flex-col gap-1 rounded-lg border border-outline-variant bg-surface-container-high p-2 shadow-floating">
         <div class="flex items-center gap-3 px-2 py-2">
-          <Avatar name={me().display_name || me().handle} src={me().has_avatar ? avatarUrl(me().id) : undefined} />
+          <Avatar name={me().display_name || me().handle} src={avatar()} />
           <div class="min-w-0">
             <p class="truncate text-body-md font-semibold">{me().display_name || me().handle}</p>
             <p class="truncate font-code text-label-code-sm text-on-surface-variant">@{me().handle}</p>
@@ -88,6 +90,27 @@ export function AccountMenu(props: { onClose: () => void }) {
         </div>
 
         <hr class="my-1 border-outline-variant" />
+        <Show when={isNative()}>
+          <button
+            type="button"
+            role="menuitem"
+            class={row}
+            onClick={() => {
+              void (async () => {
+                try {
+                  await session.logout();
+                } catch {
+                  session.invalidate();
+                }
+                await clearInstance();
+                props.onClose();
+              })();
+            }}
+          >
+            <Icon name="dns" class="text-[20px] text-on-surface-variant" />
+            {t("instance.switch")}
+          </button>
+        </Show>
         <button type="button" role="menuitem" class={`${row} !text-error`} onClick={() => setSigningOut(true)}>
           <Icon name="logout" class="text-[20px]" />
           {t("shell.signOut")}

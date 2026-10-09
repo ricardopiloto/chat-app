@@ -1,6 +1,6 @@
 use crate::common::{must_cookie, TestApp};
-use base64::Engine;
 use axum::http::StatusCode;
+use base64::Engine;
 use chrono::{DateTime, Utc};
 use serde_json::json;
 
@@ -283,7 +283,9 @@ async fn handle_available_reports_free_and_taken_handles() {
     assert_eq!(body["available"], true);
 
     // The owner registered as "alice" in owner_and_server; matching ignores case.
-    let (_, owner, _) = app.request("GET", "/api/auth/me", None, Some(&cookie)).await;
+    let (_, owner, _) = app
+        .request("GET", "/api/auth/me", None, Some(&cookie))
+        .await;
     let taken = owner["handle"].as_str().unwrap().to_uppercase();
     let (status, body, _) = app.request("GET", &url(&taken), None, None).await;
     assert_eq!(status, StatusCode::OK, "{body}");
@@ -306,7 +308,12 @@ async fn handle_available_requires_a_usable_invite() {
 
     let code = invite_code(&app, &cookie, &server_id).await;
     let (status, _, _) = app
-        .request("POST", &format!("/api/invites/{code}/revoke"), None, Some(&cookie))
+        .request(
+            "POST",
+            &format!("/api/invites/{code}/revoke"),
+            None,
+            Some(&cookie),
+        )
         .await;
     assert_eq!(status, StatusCode::NO_CONTENT);
     let (status, _, _) = app
@@ -378,11 +385,18 @@ async fn key_seed_is_stored_hidden_and_returned_only_on_accept() {
     let ttl = (expires - Utc::now()).num_seconds();
     assert!((86_390..=86_400).contains(&ttl), "seeded invite TTL {ttl}");
     let code = listed_shape["code"].as_str().unwrap();
-    let (status, preview, _) = app.request("GET", &format!("/api/invites/{code}"), None, None).await;
+    let (status, preview, _) = app
+        .request("GET", &format!("/api/invites/{code}"), None, None)
+        .await;
     assert_eq!(status, StatusCode::OK, "{preview}");
     assert!(preview.get("key_seed").is_none(), "{preview}");
     let (status, list, _) = app
-        .request("GET", &format!("/api/servers/{server_id}/invites"), None, Some(&cookie))
+        .request(
+            "GET",
+            &format!("/api/servers/{server_id}/invites"),
+            None,
+            Some(&cookie),
+        )
         .await;
     assert_eq!(status, StatusCode::OK, "{list}");
     assert!(list.to_string().contains(code));
@@ -415,7 +429,9 @@ async fn key_seed_is_stored_hidden_and_returned_only_on_accept() {
         .request(
             "POST",
             &format!("/api/servers/{server_id}/invites"),
-            Some(json!({ "key_seed": base64::engine::general_purpose::STANDARD.encode([9u8; 129]) })),
+            Some(
+                json!({ "key_seed": base64::engine::general_purpose::STANDARD.encode([9u8; 129]) }),
+            ),
             Some(&cookie),
         )
         .await;
@@ -440,13 +456,23 @@ async fn key_seed_is_stored_hidden_and_returned_only_on_accept() {
     assert_eq!(joined["key_handoff_status"], "pending");
     let bob = must_cookie(bob);
     let (status, again, _) = app
-        .request("POST", &format!("/api/invites/{code}/accept"), Some(json!({})), Some(&bob))
+        .request(
+            "POST",
+            &format!("/api/invites/{code}/accept"),
+            Some(json!({})),
+            Some(&bob),
+        )
         .await;
     assert_eq!(status, StatusCode::OK, "{again}");
     assert!(again.get("key_seed").is_none(), "{again}");
 
     let (_, server_two, _) = app
-        .request("POST", "/api/servers", Some(crate::common::create_server_body("Outra")), Some(&cookie))
+        .request(
+            "POST",
+            "/api/servers",
+            Some(crate::common::create_server_body("Outra")),
+            Some(&cookie),
+        )
         .await;
     let other = server_two["id"].as_str().unwrap();
     let (status, bridge, _) = app
@@ -458,17 +484,39 @@ async fn key_seed_is_stored_hidden_and_returned_only_on_accept() {
         )
         .await;
     assert_eq!(status, StatusCode::CREATED, "{bridge}");
-    let (_, _, carol) = app.register("carol_seed", "password1", Some(bridge["code"].as_str().unwrap())).await;
+    let (_, _, carol) = app
+        .register(
+            "carol_seed",
+            "password1",
+            Some(bridge["code"].as_str().unwrap()),
+        )
+        .await;
     let carol = must_cookie(carol);
     let (status, session_join, _) = app
-        .request("POST", &format!("/api/invites/{code}/accept"), Some(json!({})), Some(&carol))
+        .request(
+            "POST",
+            &format!("/api/invites/{code}/accept"),
+            Some(json!({})),
+            Some(&carol),
+        )
         .await;
     assert_eq!(status, StatusCode::OK, "{session_join}");
     assert_eq!(session_join["key_seed"], seed);
-    let (_, _, dave) = app.register("dave_seed", "password1", Some(bridge["code"].as_str().unwrap())).await;
+    let (_, _, dave) = app
+        .register(
+            "dave_seed",
+            "password1",
+            Some(bridge["code"].as_str().unwrap()),
+        )
+        .await;
     let dave = must_cookie(dave);
     let (status, plain_join, _) = app
-        .request("POST", &format!("/api/invites/{plain_code}/accept"), Some(json!({})), Some(&dave))
+        .request(
+            "POST",
+            &format!("/api/invites/{plain_code}/accept"),
+            Some(json!({})),
+            Some(&dave),
+        )
         .await;
     assert_eq!(status, StatusCode::OK, "{plain_join}");
     assert!(plain_join.get("key_seed").is_none(), "{plain_join}");

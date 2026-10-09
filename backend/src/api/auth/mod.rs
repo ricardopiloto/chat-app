@@ -4,11 +4,11 @@ use crate::db;
 use crate::domain::avatar::MAX_AVATAR_BYTES;
 use crate::error::ApiError;
 use crate::AppState;
-use axum::Json;
 use axum::extract::{DefaultBodyLimit, State};
-use axum::http::StatusCode;
+use axum::http::{HeaderMap, StatusCode};
 use axum::response::IntoResponse;
 use axum::routing::{get, patch, post, put};
+use axum::Json;
 use axum::Router;
 use axum_extra::extract::cookie::{Cookie, CookieJar};
 use base64::Engine;
@@ -38,7 +38,10 @@ pub fn router() -> Router<AppState> {
         .route("/auth/identity", put(put_identity))
         .route("/auth/password", put(recovery::change_password))
         .route("/auth/recovery/code/redeem", post(recovery::redeem_code))
-        .route("/auth/recovery/key/challenge", post(recovery_key::challenge))
+        .route(
+            "/auth/recovery/key/challenge",
+            post(recovery_key::challenge),
+        )
         .route("/auth/recovery/key/start", post(recovery_key::start))
         .route("/auth/recovery/key/redeem", post(recovery_key::redeem))
         .route("/auth/recovery-key", put(recovery_key::put_recovery_key))
@@ -47,10 +50,17 @@ pub fn router() -> Router<AppState> {
 
 async fn logout(
     State(state): State<AppState>,
+    headers: HeaderMap,
     jar: CookieJar,
 ) -> Result<impl IntoResponse, ApiError> {
-    if let Some(id) = current_session_id(&state, &jar).await? {
+    if let Some(id) = current_session_id(&state, &jar, &headers).await? {
+        let account_id = db::session::find_by_id(&state.pool, id)
+            .await?
+            .map(|session| session.account_id);
         db::session::revoke(&state.pool, id).await?;
+        if let Some(account_id) = account_id {
+            state.ws.close_sessions(account_id, &[id]);
+        }
     }
     let jar = jar.remove(Cookie::from(SESSION_COOKIE));
     Ok((StatusCode::NO_CONTENT, jar))
@@ -145,10 +155,11 @@ pub(crate) async fn apply_identity_replacement(
         .bind(account_id.to_string())
         .execute(&mut *conn)
         .await?;
-    let server_ids: Vec<(String,)> = sqlx::query_as("SELECT server_id FROM membership WHERE account_id = ?")
-        .bind(account_id.to_string())
-        .fetch_all(&mut *conn)
-        .await?;
+    let server_ids: Vec<(String,)> =
+        sqlx::query_as("SELECT server_id FROM membership WHERE account_id = ?")
+            .bind(account_id.to_string())
+            .fetch_all(&mut *conn)
+            .await?;
     let mut events = Vec::with_capacity(server_ids.len());
     for (server_id,) in server_ids {
         sqlx::query("UPDATE membership SET key_handoff_status = 'pending' WHERE account_id = ? AND server_id = ?")
@@ -161,8 +172,12 @@ pub(crate) async fn apply_identity_replacement(
             .fetch_all(&mut *conn)
             .await?;
         events.push(HandoffEvent {
-            server_id: Uuid::parse_str(&server_id).map_err(|e| ApiError::internal(e.to_string()))?,
-            synced_account_ids: synced.into_iter().map(|(id,)| Uuid::parse_str(&id).map_err(|e| ApiError::internal(e.to_string()))).collect::<Result<_, _>>()?,
+            server_id: Uuid::parse_str(&server_id)
+                .map_err(|e| ApiError::internal(e.to_string()))?,
+            synced_account_ids: synced
+                .into_iter()
+                .map(|(id,)| Uuid::parse_str(&id).map_err(|e| ApiError::internal(e.to_string())))
+                .collect::<Result<_, _>>()?,
         });
     }
     Ok(events)

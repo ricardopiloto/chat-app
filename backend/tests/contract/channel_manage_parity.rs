@@ -79,7 +79,12 @@ async fn setup_hierarchy_manage(app: &TestApp) -> ParitySetup {
         "mid above low"
     );
 
-    async fn invite_and_join(app: &TestApp, owner: &str, server_id: &str, handle: &str) -> (String, String) {
+    async fn invite_and_join(
+        app: &TestApp,
+        owner: &str,
+        server_id: &str,
+        handle: &str,
+    ) -> (String, String) {
         let (status, invite, _) = app
             .request(
                 "POST",
@@ -146,10 +151,14 @@ async fn channel_manage_acl_hierarchy_gate() {
     let setup = setup_hierarchy_manage(&app).await;
     let path = format!("/api/channels/{}/acl", setup.channel_id);
 
-    let (status, _, _) = app.request("GET", &path, None, Some(&setup.manager_high)).await;
+    let (status, _, _) = app
+        .request("GET", &path, None, Some(&setup.manager_high))
+        .await;
     assert_eq!(status, StatusCode::OK);
 
-    let (status, denied, _) = app.request("GET", &path, None, Some(&setup.manager_low)).await;
+    let (status, denied, _) = app
+        .request("GET", &path, None, Some(&setup.manager_low))
+        .await;
     assert_eq!(status, StatusCode::FORBIDDEN, "{denied}");
 
     let everyone = json!([{
@@ -158,7 +167,12 @@ async fn channel_manage_acl_hierarchy_gate() {
         "effect": "allow"
     }]);
     let (status, ok, _) = app
-        .request("PUT", &path, Some(everyone.clone()), Some(&setup.manager_high))
+        .request(
+            "PUT",
+            &path,
+            Some(everyone.clone()),
+            Some(&setup.manager_high),
+        )
         .await;
     assert_eq!(status, StatusCode::OK, "{ok}");
 

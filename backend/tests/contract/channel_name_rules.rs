@@ -24,7 +24,10 @@ async fn owner_and_channel(app: &TestApp) -> (String, String) {
         )
         .await;
     assert_eq!(status, StatusCode::OK, "{channels}");
-    let channel_id = channels.as_array().unwrap()[0]["id"].as_str().unwrap().to_string();
+    let channel_id = channels.as_array().unwrap()[0]["id"]
+        .as_str()
+        .unwrap()
+        .to_string();
     (owner, channel_id)
 }
 

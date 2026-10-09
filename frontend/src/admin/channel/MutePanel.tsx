@@ -4,7 +4,7 @@ import { useShell } from "../../shell/state";
 import { publicDisplayLabel } from "../../lib/displayName";
 import { t } from "../../i18n";
 import { Avatar, Badge, Button, Icon } from "../../components/ui";
-import { avatarUrl, mutes, type Channel, type Member, type Mute } from "../../api";
+import { avatarUrl, mutes, useAuthedSrc, type Channel, type Member, type Mute } from "../../api";
 
 // Members who can be muted in this channel, with the state of each one. The owner and the person
 // looking are never listed: neither can be muted.
@@ -36,9 +36,10 @@ export function MutePanel(props: { channel: Channel; onClose: () => void }) {
           <For each={candidates()} fallback={<li class="mg-empty">{t("mgmt.channel.mute.none")}</li>}>
             {(member) => {
               const label = () => publicDisplayLabel(member.handle, member.display_name);
+              const avatar = useAuthedSrc(() => (member.has_avatar ? avatarUrl(member.account_id) : undefined));
               return (
                 <li data-member={member.handle}>
-                  <Avatar name={label()} src={member.has_avatar ? avatarUrl(member.account_id) : undefined} />
+                  <Avatar name={label()} src={avatar()} />
                   <div><strong>{label()}</strong><small>@{member.handle}</small></div>
                   <Show when={muteOf(member.account_id)}>
                     {(active) => <Badge tone="danger" mono icon="timer">{t("mgmt.channel.mute.status", { remaining: remainingLabel(active().ends_at, now()) })}</Badge>}

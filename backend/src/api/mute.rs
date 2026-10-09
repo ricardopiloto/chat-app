@@ -154,6 +154,7 @@ pub async fn list_mutes(
 ) -> Result<Json<Vec<MuteResponse>>, ApiError> {
     let (channel, _, _) = require_channel_view(&state.pool, account.id, channel_id).await?;
     require_mute_permission(&state.pool, account.id, channel.server_id).await?;
-    let mutes = db::channel_mute::list_active_for_channel(&state.pool, channel_id, Utc::now()).await?;
+    let mutes =
+        db::channel_mute::list_active_for_channel(&state.pool, channel_id, Utc::now()).await?;
     Ok(Json(mutes.iter().map(to_response).collect()))
 }

@@ -1,7 +1,8 @@
 import { Show, createSignal } from "solid-js";
 import { AuthField, AuthFrame, bindValue } from "../auth/AuthFrame";
 import { Avatar, Badge, Button, Dialog, Icon, MonoLabel } from "../components/ui";
-import { avatarUrl } from "../api";
+import { avatarUrl, useAuthedSrc } from "../api";
+import { clearInstance, isNative } from "../api/instance";
 import { IdentityUnlockError } from "../crypto/identity";
 import { t } from "../i18n";
 import { useSession } from "../session/session";
@@ -14,6 +15,7 @@ const MIN_PASSWORD = 8;
 export function Unlock() {
   const session = useSession();
   const me = () => session.account()!;
+  const avatar = useAuthedSrc(() => (me().has_avatar ? avatarUrl(me().id) : undefined));
   const [password, setPassword] = createSignal("");
   const [revealed, setRevealed] = createSignal(false);
   const [busy, setBusy] = createSignal(false);
@@ -77,7 +79,7 @@ export function Unlock() {
 
         <div class="flex items-center justify-between gap-4 rounded-lg bg-surface-container p-4">
           <div class="flex items-center gap-3">
-            <Avatar name={name()} src={me().has_avatar ? avatarUrl(me().id) : undefined} size="lg" />
+            <Avatar name={name()} src={avatar()} size="lg" />
             <div class="flex flex-col">
               <span class="font-display text-headline-sm">{name()}</span>
               <span class="font-code text-label-code-sm text-secondary">
@@ -151,6 +153,25 @@ export function Unlock() {
           <button type="button" class="inline-flex min-h-6 items-center text-primary underline" onClick={() => void session.logout()}>
             {t("unlock.switchLink")}
           </button>
+          <Show when={isNative()}>
+            {" "}
+            <button
+              type="button"
+              class="inline-flex min-h-6 items-center text-primary underline"
+              onClick={() => {
+                void (async () => {
+                  try {
+                    await session.logout();
+                  } catch {
+                    session.invalidate();
+                  }
+                  await clearInstance();
+                })();
+              }}
+            >
+              {t("instance.switch")}
+            </button>
+          </Show>
         </p>
       </form>
 

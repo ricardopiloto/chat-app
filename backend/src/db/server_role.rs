@@ -240,10 +240,12 @@ pub async fn ensure_dono_role(
 }
 
 pub async fn backfill_dono_for_all_servers(pool: &SqlitePool) -> Result<(), sqlx::Error> {
-    let rows: Vec<(String, String)> =
-        sqlx::query_as("SELECT id, owner_account_id FROM server").fetch_all(pool).await?;
+    let rows: Vec<(String, String)> = sqlx::query_as("SELECT id, owner_account_id FROM server")
+        .fetch_all(pool)
+        .await?;
     for (server_id, owner_id) in rows {
-        let server_id = Uuid::parse_str(&server_id).map_err(|e| sqlx::Error::Decode(Box::new(e)))?;
+        let server_id =
+            Uuid::parse_str(&server_id).map_err(|e| sqlx::Error::Decode(Box::new(e)))?;
         let owner_id = Uuid::parse_str(&owner_id).map_err(|e| sqlx::Error::Decode(Box::new(e)))?;
         ensure_dono_role(pool, server_id, owner_id).await?;
     }

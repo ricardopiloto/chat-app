@@ -32,14 +32,25 @@ async fn invite_member(app: &TestApp, server_id: &str, owner: &str, handle: &str
     let code = inv["code"].as_str().unwrap().to_string();
     let (status, body, cookie) = app.register(handle, "password1", Some(&code)).await;
     assert_eq!(status, StatusCode::CREATED, "{body}");
-    Member { id: body["id"].as_str().unwrap().to_string(), cookie: must_cookie(cookie) }
+    Member {
+        id: body["id"].as_str().unwrap().to_string(),
+        cookie: must_cookie(cookie),
+    }
 }
 
 async fn world(app: &TestApp) -> World {
     let (_, alice_body, alice) = app.register("alice", "password1", None).await;
-    let alice = Member { id: alice_body["id"].as_str().unwrap().to_string(), cookie: must_cookie(alice) };
+    let alice = Member {
+        id: alice_body["id"].as_str().unwrap().to_string(),
+        cookie: must_cookie(alice),
+    };
     let (_, server, _) = app
-        .request("POST", "/api/servers", Some(create_server_body("Mesa")), Some(&alice.cookie))
+        .request(
+            "POST",
+            "/api/servers",
+            Some(create_server_body("Mesa")),
+            Some(&alice.cookie),
+        )
         .await;
     let server_id = server["id"].as_str().unwrap().to_string();
     let (_, ch, _) = app
@@ -53,22 +64,46 @@ async fn world(app: &TestApp) -> World {
     let channel_id = ch["id"].as_str().unwrap().to_string();
     let bob = invite_member(app, &server_id, &alice.cookie, "bob").await;
     let carol = invite_member(app, &server_id, &alice.cookie, "carol").await;
-    World { server_id, channel_id, alice, bob, carol }
+    World {
+        server_id,
+        channel_id,
+        alice,
+        bob,
+        carol,
+    }
 }
 
-async fn send(app: &TestApp, channel_id: &str, cookie: &str, everyone: bool, extra: Value) -> (StatusCode, Value) {
+async fn send(
+    app: &TestApp,
+    channel_id: &str,
+    cookie: &str,
+    everyone: bool,
+    extra: Value,
+) -> (StatusCode, Value) {
     let mut body = json!({ "content_ciphertext": b64("@todos olá"), "mention_everyone": everyone });
     if let (Some(map), Some(more)) = (body.as_object_mut(), extra.as_object()) {
         map.extend(more.clone());
     }
     let (status, msg, _) = app
-        .request("POST", &format!("/api/channels/{channel_id}/messages"), Some(body), Some(cookie))
+        .request(
+            "POST",
+            &format!("/api/channels/{channel_id}/messages"),
+            Some(body),
+            Some(cookie),
+        )
         .await;
     (status, msg)
 }
 
 async fn unread(app: &TestApp, cookie: &str) -> Vec<Value> {
-    let (status, list, _) = app.request("GET", "/api/notifications?unread_only=true", None, Some(cookie)).await;
+    let (status, list, _) = app
+        .request(
+            "GET",
+            "/api/notifications?unread_only=true",
+            None,
+            Some(cookie),
+        )
+        .await;
     assert_eq!(status, StatusCode::OK, "{list}");
     list.as_array().unwrap().clone()
 }
@@ -119,11 +154,26 @@ async fn capability_is_off_by_default_and_can_be_granted() {
     assert_eq!(updated["capabilities"]["can_mention_everyone"], true);
 
     let (_, roles, _) = app
-        .request("GET", &format!("/api/servers/{}/roles", w.server_id), None, Some(&w.alice.cookie))
+        .request(
+            "GET",
+            &format!("/api/servers/{}/roles", w.server_id),
+            None,
+            Some(&w.alice.cookie),
+        )
         .await;
-    let listed = roles.as_array().unwrap().iter().find(|r| r["id"] == role["id"]).unwrap();
+    let listed = roles
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|r| r["id"] == role["id"])
+        .unwrap();
     assert_eq!(listed["capabilities"]["can_mention_everyone"], true);
-    let dono = roles.as_array().unwrap().iter().find(|r| r["is_system"] == true).unwrap();
+    let dono = roles
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|r| r["is_system"] == true)
+        .unwrap();
     assert_eq!(dono["capabilities"]["can_mention_everyone"], true);
 }
 
@@ -159,9 +209,18 @@ async fn without_the_permission_it_is_plain_text() {
 
     // The flag also stays off in the message history.
     let (_, list, _) = app
-        .request("GET", &format!("/api/channels/{}/messages", w.channel_id), None, Some(&w.carol.cookie))
+        .request(
+            "GET",
+            &format!("/api/channels/{}/messages", w.channel_id),
+            None,
+            Some(&w.carol.cookie),
+        )
         .await;
-    assert!(list.as_array().unwrap().iter().all(|m| m.get("mentions_everyone").is_none()));
+    assert!(list
+        .as_array()
+        .unwrap()
+        .iter()
+        .all(|m| m.get("mentions_everyone").is_none()));
 }
 
 #[tokio::test]
@@ -188,7 +247,14 @@ async fn role_with_the_permission_can_notify_everyone() {
 async fn explicit_mention_and_everyone_do_not_double_notify() {
     let app = TestApp::new().await;
     let w = world(&app).await;
-    let (status, msg) = send(&app, &w.channel_id, &w.alice.cookie, true, json!({ "mentioned_account_ids": [w.bob.id] })).await;
+    let (status, msg) = send(
+        &app,
+        &w.channel_id,
+        &w.alice.cookie,
+        true,
+        json!({ "mentioned_account_ids": [w.bob.id] }),
+    )
+    .await;
     assert_eq!(status, StatusCode::CREATED, "{msg}");
     assert_eq!(unread(&app, &w.bob.cookie).await.len(), 1);
     assert_eq!(unread(&app, &w.carol.cookie).await.len(), 1);
@@ -232,7 +298,8 @@ async fn more_than_twenty_members_all_get_notified() {
     let w = world(&app).await;
     let mut extra = Vec::new();
     for i in 0..21 {
-        extra.push(invite_member(&app, &w.server_id, &w.alice.cookie, &format!("user{i:02}")).await);
+        extra
+            .push(invite_member(&app, &w.server_id, &w.alice.cookie, &format!("user{i:02}")).await);
     }
     let (status, msg) = send(&app, &w.channel_id, &w.alice.cookie, true, json!({})).await;
     assert_eq!(status, StatusCode::CREATED, "{msg}");

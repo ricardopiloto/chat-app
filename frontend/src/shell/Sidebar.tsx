@@ -1,5 +1,5 @@
 import { For, Show, createSignal } from "solid-js";
-import { channels as channelsApi, avatarUrl, type Channel, type ChannelKind } from "../api";
+import { channels as channelsApi, avatarUrl, useAuthedSrc, type Channel, type ChannelKind } from "../api";
 import { Badge, ContextMenu, Icon } from "../components/ui";
 import { canManageChannel } from "../lib/capabilities";
 import { normalizeChannelNameDraft, validateChannelName } from "../lib/channelName";
@@ -26,11 +26,13 @@ function VoiceRoster(props: { channelId: string }) {
     <Show when={people().length > 0}>
       <ul class="mb-1 ml-9 mt-0.5 flex flex-col gap-0.5">
         <For each={people()}>
-          {(person) => (
+          {(person) => {
+            const face = useAuthedSrc(() => (person.has_avatar ? avatarUrl(person.account_id) : undefined));
+            return (
             <li class="flex items-center gap-2 rounded-md px-2 py-1 text-body-sm text-on-surface-variant" classList={{ "text-secondary": speaking()?.has(person.account_id) }} title={speaking()?.has(person.account_id) ? t("call.speaking") : undefined}>
               <span class="grid h-5 w-5 shrink-0 place-items-center overflow-hidden rounded-full bg-surface-container-highest text-[10px] font-semibold" classList={{ "ring-2 ring-secondary": speaking()?.has(person.account_id) }}>
-                <Show when={person.has_avatar} fallback={publicDisplayLabel(person.handle, person.display_name).slice(0, 1).toUpperCase()}>
-                  <img src={avatarUrl(person.account_id)} alt="" class="h-full w-full object-cover" />
+                <Show when={face()} fallback={publicDisplayLabel(person.handle, person.display_name).slice(0, 1).toUpperCase()}>
+                  <img src={face()} alt="" class="h-full w-full object-cover" />
                 </Show>
               </span>
               <span class="min-w-0 flex-1 truncate">{publicDisplayLabel(person.handle, person.display_name)}</span>
@@ -38,7 +40,8 @@ function VoiceRoster(props: { channelId: string }) {
                 <Icon name="mic_off" label={t("call.micOff")} class="text-[14px] text-error" />
               </Show>
             </li>
-          )}
+            );
+          }}
         </For>
       </ul>
     </Show>

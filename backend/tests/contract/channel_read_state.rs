@@ -52,9 +52,7 @@ async fn unread_flag_clears_after_mark_read() {
     let bob = must_cookie(bob);
 
     // Bob caught up initially (no messages yet beyond join).
-    let (status, list, _) = app
-        .request("GET", "/api/servers", None, Some(&bob))
-        .await;
+    let (status, list, _) = app.request("GET", "/api/servers", None, Some(&bob)).await;
     assert_eq!(status, StatusCode::OK, "{list}");
     let _bob_server = list
         .as_array()
@@ -72,9 +70,7 @@ async fn unread_flag_clears_after_mark_read() {
         )
         .await;
 
-    let (status, list, _) = app
-        .request("GET", "/api/servers", None, Some(&bob))
-        .await;
+    let (status, list, _) = app.request("GET", "/api/servers", None, Some(&bob)).await;
     assert_eq!(status, StatusCode::OK, "{list}");
     let bob_server = list
         .as_array()
@@ -92,9 +88,7 @@ async fn unread_flag_clears_after_mark_read() {
     )
     .await;
 
-    let (status, list, _) = app
-        .request("GET", "/api/servers", None, Some(&bob))
-        .await;
+    let (status, list, _) = app.request("GET", "/api/servers", None, Some(&bob)).await;
     assert_eq!(status, StatusCode::OK, "{list}");
     let bob_server = list
         .as_array()
@@ -115,9 +109,7 @@ async fn unread_flag_clears_after_mark_read() {
         .await;
     assert_eq!(status, StatusCode::NO_CONTENT);
 
-    let (status, list, _) = app
-        .request("GET", "/api/servers", None, Some(&bob))
-        .await;
+    let (status, list, _) = app.request("GET", "/api/servers", None, Some(&bob)).await;
     assert_eq!(status, StatusCode::OK, "{list}");
     let bob_server = list
         .as_array()
@@ -160,15 +152,9 @@ async fn has_voice_when_occupant_present() {
         .unwrap()
         .to_string();
 
-    let (status, list, _) = app
-        .request("GET", "/api/servers", None, Some(&alice))
-        .await;
+    let (status, list, _) = app.request("GET", "/api/servers", None, Some(&alice)).await;
     assert_eq!(status, StatusCode::OK, "{list}");
-    assert_eq!(
-        list.as_array().unwrap()[0]["has_voice"],
-        false,
-        "{list}"
-    );
+    assert_eq!(list.as_array().unwrap()[0]["has_voice"], false, "{list}");
 
     let (status, join, _) = app
         .request(
@@ -180,9 +166,7 @@ async fn has_voice_when_occupant_present() {
         .await;
     assert_eq!(status, StatusCode::OK, "{join}");
 
-    let (status, list, _) = app
-        .request("GET", "/api/servers", None, Some(&alice))
-        .await;
+    let (status, list, _) = app.request("GET", "/api/servers", None, Some(&alice)).await;
     assert_eq!(status, StatusCode::OK, "{list}");
     assert_eq!(list.as_array().unwrap()[0]["has_voice"], true, "{list}");
 }

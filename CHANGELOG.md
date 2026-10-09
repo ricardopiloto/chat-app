@@ -5,9 +5,23 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-Product versions align with `frontend/package.json` and `backend/Cargo.toml` unless noted. Up to 0.8.1 `frontend/` was the v1 client; since 1.0.0 it holds the v2 client (the rewrite formerly developed as `frontend-v2/`).
+Product versions align with `frontend/package.json`, `backend/Cargo.toml` and `frontend/src-tauri/Cargo.toml` unless noted. Up to 0.8.1 `frontend/` was the v1 client; since 1.0.0 it holds the v2 client (the rewrite formerly developed as `frontend-v2/`).
 
 ## [Unreleased]
+
+## [1.2.0] - 2026-10-09
+
+### Added
+
+- **Desktop client**: a Tauri shell for Linux, Windows and macOS uses the existing frontend, with a native window, Mesa icons and network permissions for a user-selected server. The desktop app remains a client; the backend runs on the selected instance.
+- **Instance connection**: on first launch, the desktop app asks for an instance URL, checks its `/health` endpoint and remembers the choice. Signed-in users can switch instances. REST requests, protected images and realtime connections use the selected instance; the web app continues to use its own origin.
+- **Native session transport**: login, registration and both account-recovery paths include `session_token` in their JSON responses. REST and WebSocket authentication accept the same session through `Authorization: Bearer` when no valid session cookie is present. Logout and password changes revoke native sessions through the existing session mechanism.
+- **Desktop packaging configuration**: a GitHub Actions workflow is configured to build AppImage, deb and rpm packages on Linux, msi and exe installers on Windows, and app and dmg bundles on macOS. Tag-triggered releases are created as drafts; manual runs keep artifacts in the workflow. Release instructions are in [docs/desktop-release.md](docs/desktop-release.md). The project now declares the AGPL-3.0-only license. Cross-platform release artifacts have not yet been verified by a completed release run.
+
+### Changed
+
+- Product version is now **1.2.0** in the backend, web frontend and Tauri manifests.
+- Native HTTP and WebSocket traffic uses the configured instance and bearer token; the browser client retains cookie-based authentication. Protected avatar and server images load through authenticated requests in the native client.
 
 ## [1.1.1] - 2026-10-09
 

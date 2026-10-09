@@ -102,7 +102,11 @@ async fn author_can_delete_own_non_author_forbidden_idempotent_404() {
         )
         .await;
     let (status, body, carol_c) = app
-        .register("carol_del", "password1", Some(inv["code"].as_str().unwrap()))
+        .register(
+            "carol_del",
+            "password1",
+            Some(inv["code"].as_str().unwrap()),
+        )
         .await;
     assert_eq!(status, StatusCode::CREATED, "{body}");
     let carol = must_cookie(carol_c);

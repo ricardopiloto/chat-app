@@ -108,15 +108,19 @@ pub async fn register(
     if !state.config.rate_limit_disabled && !state.rate_limiter.allow_auth(ip) {
         return Err(ApiError::too_many_requests());
     }
-    let (account, jar) = register_inner(&state, jar, body).await?;
-    Ok((StatusCode::CREATED, jar, Json(account.auth_view())))
+    let (account, jar, token) = register_inner(&state, jar, body).await?;
+    Ok((
+        StatusCode::CREATED,
+        jar,
+        Json(account.auth_view().with_session_token(token)),
+    ))
 }
 
 pub async fn register_inner(
     state: &AppState,
     jar: CookieJar,
     body: RegisterBody,
-) -> Result<(AccountRecord, CookieJar), ApiError> {
+) -> Result<(AccountRecord, CookieJar, String), ApiError> {
     let handle = body.handle.trim().to_string();
     if handle.is_empty() {
         return Err(ApiError::bad_request("handle required"));
@@ -186,8 +190,15 @@ pub async fn register_inner(
                 display_name: None,
             };
             db::account::create(&mut *tx, &record).await?;
-            store_recovery(&mut tx, record.id, body.recovery_vault.as_ref(), body.recovery_verifier_pubkey.as_deref()).await?;
-            record.has_recovery_key = body.recovery_vault.is_some() && body.recovery_verifier_pubkey.is_some();
+            store_recovery(
+                &mut tx,
+                record.id,
+                body.recovery_vault.as_ref(),
+                body.recovery_verifier_pubkey.as_deref(),
+            )
+            .await?;
+            record.has_recovery_key =
+                body.recovery_vault.is_some() && body.recovery_verifier_pubkey.is_some();
 
             if let Some(inv) = &invite {
                 if !db::membership::exists(&mut *tx, record.id, inv.server_id).await? {
@@ -221,8 +232,8 @@ pub async fn register_inner(
             }
             let token =
                 persist_session(&state.pool, record.id, state.config.session_ttl_secs).await?;
-            let jar = with_session_cookie(jar, token, state.config.cookie_secure);
-            Ok((record, jar))
+            let jar = with_session_cookie(jar, token.clone(), state.config.cookie_secure);
+            Ok((record, jar, token))
         }
         Err(e) => {
             let _ = tx.rollback().await;
@@ -279,12 +290,15 @@ pub(crate) async fn store_recovery(
     match (vault, verifier) {
         (None, None) => Ok(()),
         (Some(vault), Some(verifier)) => {
-            let vault_bytes = encode_identity_vault(Some(vault))?.ok_or_else(|| ApiError::bad_request("recovery_vault required"))?;
+            let vault_bytes = encode_identity_vault(Some(vault))?
+                .ok_or_else(|| ApiError::bad_request("recovery_vault required"))?;
             let key = base64::engine::general_purpose::STANDARD
                 .decode(verifier.trim())
                 .map_err(|_| ApiError::bad_request("recovery_verifier_pubkey must be base64"))?;
             if key.len() != 32 {
-                return Err(ApiError::bad_request("recovery_verifier_pubkey must be 32 bytes"));
+                return Err(ApiError::bad_request(
+                    "recovery_verifier_pubkey must be 32 bytes",
+                ));
             }
             sqlx::query(
                 "UPDATE account SET recovery_vault = ?, recovery_verifier_pubkey = ?, recovery_generation = recovery_generation + 1, recovery_set_at = ? WHERE id = ?",
@@ -297,6 +311,8 @@ pub(crate) async fn store_recovery(
             .await?;
             Ok(())
         }
-        _ => Err(ApiError::bad_request("recovery_vault and recovery_verifier_pubkey are set together")),
+        _ => Err(ApiError::bad_request(
+            "recovery_vault and recovery_verifier_pubkey are set together",
+        )),
     }
 }

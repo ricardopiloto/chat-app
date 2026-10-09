@@ -149,10 +149,12 @@ async fn sqlite_datetime_from_migration_can_copy_scene() {
     let (_, _, alice) = app.register("alice", "password1", None).await;
     let alice = must_cookie(alice);
     let (_server_id, channel_id) = voice_channel(&app, &alice).await;
-    sqlx::query("UPDATE scene SET created_at = '2026-09-04 18:34:32', updated_at = '2026-09-04 18:34:32'")
-        .execute(&app.pool)
-        .await
-        .unwrap();
+    sqlx::query(
+        "UPDATE scene SET created_at = '2026-09-04 18:34:32', updated_at = '2026-09-04 18:34:32'",
+    )
+    .execute(&app.pool)
+    .await
+    .unwrap();
     let (status, created, _) = app
         .request(
             "POST",

@@ -115,7 +115,11 @@ async fn hierarchy_lower_cannot_kick_higher() {
         .await;
     assert_eq!(status, StatusCode::CREATED, "{invite}");
     let (status, carol_json, carol_cookie) = app
-        .register("hier_carol", "password1", Some(invite["code"].as_str().unwrap()))
+        .register(
+            "hier_carol",
+            "password1",
+            Some(invite["code"].as_str().unwrap()),
+        )
         .await;
     assert_eq!(status, StatusCode::CREATED, "{carol_json}");
     let carol = must_cookie(carol_cookie);
@@ -165,7 +169,11 @@ async fn hierarchy_lower_cannot_kick_higher() {
         .await;
     assert_eq!(status, StatusCode::CREATED, "{invite2}");
     let (status, dave_json, _) = app
-        .register("hier_dave", "password1", Some(invite2["code"].as_str().unwrap()))
+        .register(
+            "hier_dave",
+            "password1",
+            Some(invite2["code"].as_str().unwrap()),
+        )
         .await;
     assert_eq!(status, StatusCode::CREATED, "{dave_json}");
     let dave_id = dave_json["id"].as_str().unwrap();

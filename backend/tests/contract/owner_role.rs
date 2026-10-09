@@ -204,15 +204,13 @@ async fn backfill_assigns_dono_on_existing_server() {
         .execute(&app.pool)
         .await
         .unwrap();
-    sqlx::query(
-        "INSERT INTO server_role_member (role_id, account_id, server_id) VALUES (?, ?, ?)",
-    )
-    .bind(legacy_id)
-    .bind(owner_id)
-    .bind(server_id)
-    .execute(&app.pool)
-    .await
-    .unwrap();
+    sqlx::query("INSERT INTO server_role_member (role_id, account_id, server_id) VALUES (?, ?, ?)")
+        .bind(legacy_id)
+        .bind(owner_id)
+        .bind(server_id)
+        .execute(&app.pool)
+        .await
+        .unwrap();
 
     chat_backend::db::server_role::backfill_dono_for_all_servers(&app.pool)
         .await

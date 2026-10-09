@@ -1,6 +1,6 @@
 import { For, Show, createEffect, createSignal, onCleanup } from "solid-js";
 import { Avatar, Icon } from "../components/ui";
-import { avatarUrl } from "../api";
+import { avatarUrl, useAuthedSrc } from "../api";
 import { errorText } from "../lib/errors";
 import { t } from "../i18n";
 import { MAX_ATTACHMENTS_PER_MESSAGE } from "../api/limits";
@@ -246,14 +246,17 @@ export function Composer(props: {
       <Show when={listOpen()}>
         <ul class="ch-suggest" role="listbox" aria-label={t(completion()?.kind === "emoji" ? "txt.composer.emojiList" : "txt.composer.mentionList")}>
           <For each={suggestions().people} fallback={<Show when={completion()?.kind === "mention" && suggestions().emoji.length === 0}><li class="ch-muted">{t("txt.composer.noMembers")}</li></Show>}>
-            {(person, at) => (
+            {(person, at) => {
+              const face = useAuthedSrc(() => (person.hasAvatar && person.accountId !== EVERYONE_ID ? avatarUrl(person.accountId) : undefined));
+              return (
               <li role="option" aria-selected={active() === at()} classList={{ active: active() === at(), everyone: person.accountId === EVERYONE_ID }} onPointerDown={(e) => { e.preventDefault(); choose(at()); }}>
-                <Show when={person.accountId === EVERYONE_ID} fallback={<Avatar name={person.label} src={person.hasAvatar ? avatarUrl(person.accountId) : undefined} size="sm" />}>
+                <Show when={person.accountId === EVERYONE_ID} fallback={<Avatar name={person.label} src={face()} size="sm" />}>
                   <span class="ch-suggest-glyph"><Icon name="campaign" /></span>
                 </Show>
                 <strong>{person.label}</strong><small>{person.accountId === EVERYONE_ID ? t("txt.composer.everyoneHint") : `@${person.handle}`}</small>
               </li>
-            )}
+              );
+            }}
           </For>
           <For each={suggestions().emoji}>
             {(item, at) => (

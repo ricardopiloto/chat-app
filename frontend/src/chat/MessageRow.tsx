@@ -1,6 +1,6 @@
 import { For, Show, createEffect, createSignal, onCleanup } from "solid-js";
 import { Avatar, Badge, Icon } from "../components/ui";
-import { avatarUrl } from "../api";
+import { avatarUrl, useAuthedSrc } from "../api";
 import { getLocale, t } from "../i18n";
 import { AttachmentThumb } from "./AttachmentThumb";
 import { EmojiPicker } from "./EmojiPicker";
@@ -132,6 +132,7 @@ export function MessageRow(props: MessageRowProps) {
     setPicker(true);
   }
   const author = () => props.people.get(props.message.senderId ?? "");
+  const avatar = useAuthedSrc(() => (author()?.hasAvatar ? avatarUrl(author()!.accountId) : undefined));
   // Like the mockups, a member without a display name is shown as @handle.
   const authorName = () => {
     const found = author();
@@ -158,7 +159,7 @@ export function MessageRow(props: MessageRowProps) {
     <article ref={(el) => props.watch(el, props.message.id)} class="ch-msg" classList={{ grouped: !props.startsGroup, mine: props.mine, highlighted: props.highlighted }} data-msg={props.message.id}>
       <div class="ch-msg-gutter">
         <Show when={props.startsGroup}>
-          <Avatar name={author()?.label ?? "?"} src={author()?.hasAvatar ? avatarUrl(author()!.accountId) : undefined} size="lg" />
+          <Avatar name={author()?.label ?? "?"} src={avatar()} size="lg" />
         </Show>
         <time class="ch-msg-hover-time" datetime={props.message.createdAt}>{clockTime(props.message.createdAt)}</time>
       </div>

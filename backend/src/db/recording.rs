@@ -59,13 +59,11 @@ pub async fn mark_failed(pool: &SqlitePool, id: Uuid, error: &str) -> Result<(),
 }
 
 pub async fn mark_stopped(pool: &SqlitePool, id: Uuid) -> Result<(), sqlx::Error> {
-    sqlx::query(
-        "UPDATE recording_session SET status = 'stopped', stopped_at = ? WHERE id = ?",
-    )
-    .bind(Utc::now().to_rfc3339())
-    .bind(id.to_string())
-    .execute(pool)
-    .await?;
+    sqlx::query("UPDATE recording_session SET status = 'stopped', stopped_at = ? WHERE id = ?")
+        .bind(Utc::now().to_rfc3339())
+        .bind(id.to_string())
+        .execute(pool)
+        .await?;
     Ok(())
 }
 
@@ -96,8 +94,10 @@ pub async fn active_for_channel(
     row.map(|r| {
         Ok(RecordingSession {
             id: Uuid::parse_str(&r.id).map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
-            channel_id: Uuid::parse_str(&r.channel_id).map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
-            started_by: Uuid::parse_str(&r.started_by).map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
+            channel_id: Uuid::parse_str(&r.channel_id)
+                .map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
+            started_by: Uuid::parse_str(&r.started_by)
+                .map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
             egress_id: r.egress_id,
             status: r.status,
             error: r.error,

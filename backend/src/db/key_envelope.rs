@@ -14,7 +14,8 @@ struct Row {
 fn map_row(row: Row) -> Result<KeyEnvelope, sqlx::Error> {
     Ok(KeyEnvelope {
         server_id: Uuid::parse_str(&row.server_id).map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
-        account_id: Uuid::parse_str(&row.account_id).map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
+        account_id: Uuid::parse_str(&row.account_id)
+            .map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
         sealed_key: row.sealed_key,
         sealed_by_account_id: Uuid::parse_str(&row.sealed_by_account_id)
             .map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
@@ -73,11 +74,10 @@ pub async fn delete_for_account(pool: &SqlitePool, account_id: Uuid) -> Result<(
 }
 
 pub async fn any_contains_bytes(pool: &SqlitePool, needle: &[u8]) -> Result<bool, sqlx::Error> {
-    let (n,): (i64,) = sqlx::query_as(
-        "SELECT COUNT(*) FROM key_envelope WHERE instr(sealed_key, ?) > 0",
-    )
-    .bind(needle)
-    .fetch_one(pool)
-    .await?;
+    let (n,): (i64,) =
+        sqlx::query_as("SELECT COUNT(*) FROM key_envelope WHERE instr(sealed_key, ?) > 0")
+            .bind(needle)
+            .fetch_one(pool)
+            .await?;
     Ok(n > 0)
 }

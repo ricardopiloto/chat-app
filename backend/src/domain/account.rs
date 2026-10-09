@@ -50,6 +50,7 @@ impl AccountRecord {
             has_recovery_key: self.has_recovery_key,
             has_avatar: self.avatar_filename.is_some(),
             display_name: self.display_name.clone(),
+            session_token: None,
         }
     }
 
@@ -68,6 +69,20 @@ pub struct AuthAccount {
     pub has_avatar: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub display_name: Option<String>,
+    /// Clear session token, present only on responses that mint a session
+    /// (login, register, operator-code redeem, recovery-key redeem).
+    /// Native clients send it as `Authorization: Bearer <session_token>`.
+    /// The web client keeps using the HttpOnly cookie and ignores this field.
+    /// Consumed by the `frontend-instance-connect` change under this name.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub session_token: Option<String>,
+}
+
+impl AuthAccount {
+    pub fn with_session_token(mut self, token: String) -> Self {
+        self.session_token = Some(token);
+        self
+    }
 }
 
 /// Trim; strip control chars; empty → None; enforce max length when set.
@@ -107,7 +122,9 @@ mod tests {
     #[test]
     fn normalize_trims_and_keeps() {
         assert_eq!(
-            normalize_display_name(Some("  Alice  ")).unwrap().as_deref(),
+            normalize_display_name(Some("  Alice  "))
+                .unwrap()
+                .as_deref(),
             Some("Alice")
         );
     }

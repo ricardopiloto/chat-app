@@ -3,7 +3,9 @@ use crate::db;
 use crate::domain::channel::ChannelType;
 use crate::domain::grid::{validate_layout, AssignedBy, GridLayout};
 use crate::domain::permissions;
-use crate::domain::scene::{normalize_name, Scene, SceneSummary, SceneView, MAX_SCENES_PER_CHANNEL};
+use crate::domain::scene::{
+    normalize_name, Scene, SceneSummary, SceneView, MAX_SCENES_PER_CHANNEL,
+};
 use crate::error::ApiError;
 use crate::AppState;
 use axum::extract::{Path, State};
@@ -71,7 +73,10 @@ async fn can_activate(
     let server = db::server::find_by_id(pool, server_id)
         .await?
         .ok_or_else(|| ApiError::not_found("server not found"))?;
-    Ok(permissions::is_channel_admin(server.owner_account_id, account_id))
+    Ok(permissions::is_channel_admin(
+        server.owner_account_id,
+        account_id,
+    ))
 }
 
 async fn view_of(
@@ -90,7 +95,11 @@ async fn view_of(
     })
 }
 
-async fn summaries(pool: &SqlitePool, channel_id: Uuid, active_id: Uuid) -> Result<Vec<SceneSummary>, ApiError> {
+async fn summaries(
+    pool: &SqlitePool,
+    channel_id: Uuid,
+    active_id: Uuid,
+) -> Result<Vec<SceneSummary>, ApiError> {
     let scenes = db::scene::list_by_channel(pool, channel_id).await?;
     Ok(scenes
         .into_iter()
@@ -102,7 +111,12 @@ async fn summaries(pool: &SqlitePool, channel_id: Uuid, active_id: Uuid) -> Resu
         .collect())
 }
 
-async fn broadcast_scene_changed(state: &AppState, server_id: Uuid, channel_id: Uuid, active_id: Uuid) {
+async fn broadcast_scene_changed(
+    state: &AppState,
+    server_id: Uuid,
+    channel_id: Uuid,
+    active_id: Uuid,
+) {
     let scenes = summaries(&state.pool, channel_id, active_id)
         .await
         .unwrap_or_default();
@@ -213,7 +227,9 @@ pub async fn get_scene(
     let active_id = db::channel::active_scene_id(&state.pool, channel_id)
         .await?
         .ok_or_else(|| ApiError::not_found("no active scene"))?;
-    Ok(Json(view_of(&state.pool, &scene, active_id, channel_id).await?))
+    Ok(Json(
+        view_of(&state.pool, &scene, active_id, channel_id).await?,
+    ))
 }
 
 pub async fn patch_scene(
@@ -254,7 +270,9 @@ pub async fn patch_scene(
         .await?
         .ok_or_else(|| ApiError::not_found("scene not found"))?;
     broadcast_scene_changed(&state, channel.server_id, channel_id, active_id).await;
-    Ok(Json(view_of(&state.pool, &updated, active_id, channel_id).await?))
+    Ok(Json(
+        view_of(&state.pool, &updated, active_id, channel_id).await?,
+    ))
 }
 
 pub async fn delete_scene(
@@ -329,5 +347,7 @@ pub async fn activate_scene(
     let layout = db::grid::to_layout(&slots, scene.layout_key, scene.slot_count);
     broadcast_grid(&state, channel.server_id, channel_id, &layout).await;
     broadcast_scene_changed(&state, channel.server_id, channel_id, scene.id).await;
-    Ok(Json(view_of(&state.pool, &scene, scene.id, channel_id).await?))
+    Ok(Json(
+        view_of(&state.pool, &scene, scene.id, channel_id).await?,
+    ))
 }

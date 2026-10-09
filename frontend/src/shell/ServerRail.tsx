@@ -1,6 +1,6 @@
 import { For, Show } from "solid-js";
 import { Icon, Logo } from "../components/ui";
-import { servers as serversApi } from "../api";
+import { servers as serversApi, useAuthedSrc } from "../api";
 import { t } from "../i18n";
 import { useShell } from "./state";
 
@@ -18,6 +18,7 @@ export function ServerRail() {
       <span class="h-px w-8 bg-outline-variant" aria-hidden="true" />
       <For each={shell.servers.data ?? []}>
         {(server) => {
+          const mark = useAuthedSrc(() => (server.has_image ? serversApi.imageUrl(server.id) : undefined));
           const active = () => shell.serverId() === server.id;
           const inCall = () => Object.values(shell.voiceState()[server.id] ?? {}).some(Boolean);
           const unread = () => shell.unreadServers().includes(server.id) || server.has_unread;
@@ -33,8 +34,8 @@ export function ServerRail() {
                 class={`${base} hover:rounded-md`}
                 classList={{ "bg-primary-container text-on-primary-container": active(), "bg-surface-container-high text-on-surface hover:bg-surface-container-highest": !active() }}
               >
-                <Show when={server.has_image} fallback={server.name.slice(0, 2).toUpperCase()}>
-                  <img src={serversApi.imageUrl(server.id)} alt="" class="h-full w-full object-cover" />
+                <Show when={mark()} fallback={server.name.slice(0, 2).toUpperCase()}>
+                  <img src={mark()} alt="" class="h-full w-full object-cover" />
                 </Show>
               </button>
               <Show when={unread()}>

@@ -93,10 +93,10 @@ pub async fn unfurl(
     let title = meta_content(&html, "og:title")
         .or_else(|| meta_content(&html, "twitter:title"))
         .or_else(|| html_title(&html));
-    let description =
-        meta_content(&html, "og:description").or_else(|| meta_content(&html, "twitter:description"));
-    let image_url = meta_content(&html, "og:image")
-        .or_else(|| meta_content(&html, "twitter:image"));
+    let description = meta_content(&html, "og:description")
+        .or_else(|| meta_content(&html, "twitter:description"));
+    let image_url =
+        meta_content(&html, "og:image").or_else(|| meta_content(&html, "twitter:image"));
     let site_name =
         meta_content(&html, "og:site_name").or_else(|| parsed.host_str().map(str::to_string));
     let og_type = meta_content(&html, "og:type").unwrap_or_default();
@@ -224,10 +224,12 @@ pub async fn validate_public_url(url: &Url) -> Result<(), &'static str> {
     }
     let port = url.port_or_known_default().unwrap_or(80);
     let lookup = format!("{host}:{port}");
-    let addrs = tokio::task::spawn_blocking(move || lookup.to_socket_addrs().map(|i| i.collect::<Vec<_>>()))
-        .await
-        .map_err(|_| "private or local urls blocked")?
-        .map_err(|_| "private or local urls blocked")?;
+    let addrs = tokio::task::spawn_blocking(move || {
+        lookup.to_socket_addrs().map(|i| i.collect::<Vec<_>>())
+    })
+    .await
+    .map_err(|_| "private or local urls blocked")?
+    .map_err(|_| "private or local urls blocked")?;
     if addrs.is_empty() {
         return Err("private or local urls blocked");
     }

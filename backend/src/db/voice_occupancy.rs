@@ -30,8 +30,10 @@ struct OccupantViewRow {
 
 fn map_occupant(row: OccupantRow) -> Result<VoiceOccupant, sqlx::Error> {
     Ok(VoiceOccupant {
-        account_id: Uuid::parse_str(&row.account_id).map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
-        channel_id: Uuid::parse_str(&row.channel_id).map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
+        account_id: Uuid::parse_str(&row.account_id)
+            .map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
+        channel_id: Uuid::parse_str(&row.channel_id)
+            .map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
         server_id: Uuid::parse_str(&row.server_id).map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
         mic_on: row.mic_on != 0,
         cam_on: row.cam_on != 0,
@@ -43,7 +45,8 @@ fn map_occupant(row: OccupantRow) -> Result<VoiceOccupant, sqlx::Error> {
 
 fn map_view(row: OccupantViewRow) -> Result<OccupantView, sqlx::Error> {
     Ok(OccupantView {
-        account_id: Uuid::parse_str(&row.account_id).map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
+        account_id: Uuid::parse_str(&row.account_id)
+            .map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
         handle: row.handle,
         mic_on: row.mic_on != 0,
         cam_on: row.cam_on != 0,
@@ -67,10 +70,7 @@ pub async fn find_by_account(
     row.map(map_occupant).transpose()
 }
 
-pub async fn insert(
-    pool: &SqlitePool,
-    occupant: &VoiceOccupant,
-) -> Result<(), sqlx::Error> {
+pub async fn insert(pool: &SqlitePool, occupant: &VoiceOccupant) -> Result<(), sqlx::Error> {
     sqlx::query(
         "INSERT INTO voice_occupant
          (account_id, channel_id, server_id, mic_on, cam_on, screen_on, joined_at, last_seen_at)
@@ -223,12 +223,11 @@ pub async fn snapshot_for_server(
     pool: &SqlitePool,
     server_id: Uuid,
 ) -> Result<VoiceOccupancyResponse, sqlx::Error> {
-    let channel_ids: Vec<(String,)> = sqlx::query_as(
-        "SELECT DISTINCT channel_id FROM voice_occupant WHERE server_id = ?",
-    )
-    .bind(server_id.to_string())
-    .fetch_all(pool)
-    .await?;
+    let channel_ids: Vec<(String,)> =
+        sqlx::query_as("SELECT DISTINCT channel_id FROM voice_occupant WHERE server_id = ?")
+            .bind(server_id.to_string())
+            .fetch_all(pool)
+            .await?;
     let mut channels = Vec::new();
     for (id,) in channel_ids {
         let channel_id = Uuid::parse_str(&id).map_err(|e| sqlx::Error::Decode(Box::new(e)))?;

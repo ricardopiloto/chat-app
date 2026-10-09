@@ -181,11 +181,14 @@ async fn per_invite_welcome_channel_used_when_no_geral() {
         )
         .await;
     assert_eq!(status, StatusCode::OK, "{msgs_a}");
-    assert!(msgs_a
-        .as_array()
-        .unwrap()
-        .iter()
-        .any(|m| m["kind"] == "system" && m["content_plaintext"].as_str().unwrap().contains("bob")));
+    assert!(
+        msgs_a
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|m| m["kind"] == "system"
+                && m["content_plaintext"].as_str().unwrap().contains("bob"))
+    );
 
     let (status, msgs_b, _) = app
         .request(
@@ -256,7 +259,10 @@ async fn owner_welcome_template_and_non_owner_forbidden() {
         )
         .await;
     assert_eq!(status, StatusCode::OK, "{patched}");
-    assert_eq!(patched["welcome_message_template"], "Bem-vindo {nome} à mesa");
+    assert_eq!(
+        patched["welcome_message_template"],
+        "Bem-vindo {nome} à mesa"
+    );
 
     let (status, inv2, _) = app
         .request(
@@ -281,9 +287,11 @@ async fn owner_welcome_template_and_non_owner_forbidden() {
         )
         .await;
     assert_eq!(status, StatusCode::OK, "{msgs}");
-    assert!(msgs.as_array().unwrap().iter().any(|m| {
-        m["kind"] == "system" && m["content_plaintext"] == "Bem-vindo carol à mesa"
-    }));
+    assert!(msgs
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|m| { m["kind"] == "system" && m["content_plaintext"] == "Bem-vindo carol à mesa" }));
 }
 
 #[tokio::test]
@@ -337,11 +345,14 @@ async fn owner_welcome_channel_overrides_geral() {
         )
         .await;
     assert_eq!(status, StatusCode::OK, "{msgs_avisos}");
-    assert!(msgs_avisos
-        .as_array()
-        .unwrap()
-        .iter()
-        .any(|m| m["kind"] == "system" && m["content_plaintext"].as_str().unwrap().contains("bob")));
+    assert!(
+        msgs_avisos
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|m| m["kind"] == "system"
+                && m["content_plaintext"].as_str().unwrap().contains("bob"))
+    );
 
     let (status, msgs_geral, _) = app
         .request(

@@ -28,7 +28,8 @@ Pensado para mesas de RPG que gravam ou transmitem sessões, e para qualquer gru
 8. [Fluxos de integração](#fluxos-de-integração)
 9. [Arranque rápido (dev)](#arranque-rápido-dev)
 10. [Estrutura do repositório](#estrutura-do-repositório)
-11. [Fora de escopo e diferido](#fora-de-escopo-e-diferido)
+11. [Distribuição desktop](#distribuição-desktop)
+12. [Fora de escopo e diferido](#fora-de-escopo-e-diferido)
 
 ---
 
@@ -370,6 +371,12 @@ CHANGELOG.md      # Versionamento
 - Fidelidade visual: [`docs/v2/fidelity-protocol.md`](docs/v2/fidelity-protocol.md) e [`docs/v2/AUDIT-fidelity.md`](docs/v2/AUDIT-fidelity.md).
 
 ---
+
+## Distribuição desktop
+
+Os instaladores de Windows e macOS **não são assinados nem notarizados**. No primeiro arranque o Windows mostra o aviso do SmartScreen ("Windows protected your PC") e o macOS mostra o aviso do Gatekeeper ("developer cannot be verified"). A aplicação só abre depois de a pessoa confirmar que confia na origem. Isto não está resolvido: o projecto não tem certificado Authenticode nem conta Apple Developer, e o workflow de release não tenta assinar.
+
+O processo de publicar uma versão, os formatos (AppImage, deb, rpm, msi, exe, app, dmg) e o facto de a GitHub Release nascer em rascunho estão em [docs/desktop-release.md](docs/desktop-release.md).
 
 ## Fora de escopo e diferido
 

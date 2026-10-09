@@ -31,9 +31,7 @@ async fn require_manage_roles(
     }
     let caps = db::server_role::aggregated_caps(&state.pool, server_id, account_id).await?;
     if !caps.can_manage_roles {
-        return Err(ApiError::forbidden(
-            "missing permission to manage roles",
-        ));
+        return Err(ApiError::forbidden("missing permission to manage roles"));
     }
     Ok(server)
 }
@@ -91,7 +89,9 @@ pub async fn create_role(
     if is_dono_name(&name) {
         return Err(ApiError::bad_request("name Dono is reserved"));
     }
-    let mut caps = body.capabilities.unwrap_or_else(RoleCapabilities::open_defaults);
+    let mut caps = body
+        .capabilities
+        .unwrap_or_else(RoleCapabilities::open_defaults);
     if body.can_create_channels {
         caps.can_manage_channels = true;
     }
@@ -344,7 +344,9 @@ pub async fn put_member_role(
             return Err(ApiError::forbidden("server owner must remain on role Dono"));
         }
     } else if target_role.as_ref().is_some_and(|r| r.is_system) {
-        return Err(ApiError::forbidden("only the server owner may hold role Dono"));
+        return Err(ApiError::forbidden(
+            "only the server owner may hold role Dono",
+        ));
     }
     if let Some(role) = target_role.as_ref() {
         let actor_pos =

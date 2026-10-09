@@ -97,14 +97,11 @@ async fn announce_member_join_inner(
     invite: &InviteRecord,
     new_member: Uuid,
 ) -> Result<(), String> {
-    let channel_id = resolve_welcome_channel(
-        &state.pool,
-        invite.server_id,
-        invite.welcome_channel_id,
-    )
-    .await
-    .map_err(|e| e.to_string())?
-    .ok_or_else(|| "no welcome destination".to_string())?;
+    let channel_id =
+        resolve_welcome_channel(&state.pool, invite.server_id, invite.welcome_channel_id)
+            .await
+            .map_err(|e| e.to_string())?
+            .ok_or_else(|| "no welcome destination".to_string())?;
 
     let channel = db::channel::find_by_id(&state.pool, channel_id)
         .await

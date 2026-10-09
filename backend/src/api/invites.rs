@@ -98,8 +98,7 @@ pub async fn create_invite(
         .ok_or_else(|| ApiError::not_found("server not found"))?;
     require_member(&state.pool, account.id, server_id).await?;
     if !permissions::is_channel_admin(server.owner_account_id, account.id) {
-        let caps =
-            db::server_role::aggregated_caps(&state.pool, server_id, account.id).await?;
+        let caps = db::server_role::aggregated_caps(&state.pool, server_id, account.id).await?;
         if !caps.can_create_invites {
             return Err(ApiError::forbidden("sem permissão para criar convites"));
         }
@@ -133,12 +132,8 @@ pub async fn create_invite(
                 "welcome_channel_id required when server has no welcome destination and no text channel named geral",
             )
         })?;
-        if !crate::api::welcome::validate_text_channel_on_server(
-            &state.pool,
-            server_id,
-            channel_id,
-        )
-        .await?
+        if !crate::api::welcome::validate_text_channel_on_server(&state.pool, server_id, channel_id)
+            .await?
         {
             return Err(ApiError::bad_request(
                 "welcome_channel_id must be a text channel on this server",
@@ -146,12 +141,8 @@ pub async fn create_invite(
         }
         Some(channel_id)
     } else if let Some(channel_id) = body.welcome_channel_id {
-        if !crate::api::welcome::validate_text_channel_on_server(
-            &state.pool,
-            server_id,
-            channel_id,
-        )
-        .await?
+        if !crate::api::welcome::validate_text_channel_on_server(&state.pool, server_id, channel_id)
+            .await?
         {
             return Err(ApiError::bad_request(
                 "welcome_channel_id must be a text channel on this server",
@@ -190,8 +181,7 @@ pub async fn list_invites(
         .ok_or_else(|| ApiError::not_found("server not found"))?;
     require_member(&state.pool, account.id, server_id).await?;
     if !permissions::is_channel_admin(server.owner_account_id, account.id) {
-        let caps =
-            db::server_role::aggregated_caps(&state.pool, server_id, account.id).await?;
+        let caps = db::server_role::aggregated_caps(&state.pool, server_id, account.id).await?;
         if !caps.can_create_invites {
             return Err(ApiError::forbidden("sem permissão para listar convites"));
         }
@@ -304,7 +294,7 @@ pub async fn accept_invite(
         let identity_pubkey = body
             .identity_pubkey
             .ok_or_else(|| ApiError::bad_request("identity_pubkey required"))?;
-        let (record, jar) = register_inner(
+        let (record, jar, _token) = register_inner(
             &state,
             jar,
             RegisterBody {
@@ -322,7 +312,11 @@ pub async fn accept_invite(
             .await?
             .ok_or_else(|| ApiError::internal("membership missing after register"))?;
         log_accept(&invite);
-        return Ok((jar, Json(accept_body(&membership, invite.key_seed.as_deref()))).into_response());
+        return Ok((
+            jar,
+            Json(accept_body(&membership, invite.key_seed.as_deref())),
+        )
+            .into_response());
     };
 
     if db::membership::exists(&state.pool, account_id, invite.server_id).await? {

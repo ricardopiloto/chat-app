@@ -6,11 +6,11 @@ mod common;
 use std::time::Instant;
 
 use axum::http::StatusCode;
-use sqlx::Row;
 use base64::Engine;
 use chrono::Utc;
 use common::{must_cookie, TestApp};
 use serde_json::json;
+use sqlx::Row;
 use uuid::Uuid;
 
 const SEALED_LEN: usize = 80;
@@ -95,14 +95,16 @@ async fn handoff_scale_300_and_1000() {
         .unwrap();
     }
     for (index, server_id) in servers.iter().enumerate() {
-        sqlx::query("INSERT INTO server (id, name, owner_account_id, created_at) VALUES (?, ?, ?, ?)")
-            .bind(server_id)
-            .bind(format!("s{index}"))
-            .bind(&alice_id)
-            .bind(&now)
-            .execute(&mut *tx)
-            .await
-            .unwrap();
+        sqlx::query(
+            "INSERT INTO server (id, name, owner_account_id, created_at) VALUES (?, ?, ?, ?)",
+        )
+        .bind(server_id)
+        .bind(format!("s{index}"))
+        .bind(&alice_id)
+        .bind(&now)
+        .execute(&mut *tx)
+        .await
+        .unwrap();
         sqlx::query(
             "INSERT INTO membership (account_id, server_id, joined_at, key_handoff_status) VALUES (?, ?, ?, 'synced')",
         )
@@ -146,13 +148,15 @@ async fn handoff_scale_300_and_1000() {
             .unwrap();
         }
     }
-    sqlx::query("INSERT INTO server (id, name, owner_account_id, created_at) VALUES (?, 'big', ?, ?)")
-        .bind(&big)
-        .bind(&alice_id)
-        .bind(&now)
-        .execute(&mut *tx)
-        .await
-        .unwrap();
+    sqlx::query(
+        "INSERT INTO server (id, name, owner_account_id, created_at) VALUES (?, 'big', ?, ?)",
+    )
+    .bind(&big)
+    .bind(&alice_id)
+    .bind(&now)
+    .execute(&mut *tx)
+    .await
+    .unwrap();
     for member in &members {
         sqlx::query(
             "INSERT INTO membership (account_id, server_id, joined_at, key_handoff_status) VALUES (?, ?, ?, 'synced')",
@@ -175,13 +179,15 @@ async fn handoff_scale_300_and_1000() {
         .await
         .unwrap();
     }
-    sqlx::query("INSERT INTO server (id, name, owner_account_id, created_at) VALUES (?, 'herd', ?, ?)")
-        .bind(&herd_server)
-        .bind(&alice_id)
-        .bind(&now)
-        .execute(&mut *tx)
-        .await
-        .unwrap();
+    sqlx::query(
+        "INSERT INTO server (id, name, owner_account_id, created_at) VALUES (?, 'herd', ?, ?)",
+    )
+    .bind(&herd_server)
+    .bind(&alice_id)
+    .bind(&now)
+    .execute(&mut *tx)
+    .await
+    .unwrap();
     sqlx::query(
         "INSERT INTO membership (account_id, server_id, joined_at, key_handoff_status) VALUES (?, ?, ?, 'pending')",
     )
@@ -213,13 +219,15 @@ async fn handoff_scale_300_and_1000() {
     .execute(&mut *tx)
     .await
     .unwrap();
-    sqlx::query("INSERT INTO server (id, name, owner_account_id, created_at) VALUES (?, 'replay', ?, ?)")
-        .bind(&replay_server)
-        .bind(&replay_owner)
-        .bind(&now)
-        .execute(&mut *tx)
-        .await
-        .unwrap();
+    sqlx::query(
+        "INSERT INTO server (id, name, owner_account_id, created_at) VALUES (?, 'replay', ?, ?)",
+    )
+    .bind(&replay_server)
+    .bind(&replay_owner)
+    .bind(&now)
+    .execute(&mut *tx)
+    .await
+    .unwrap();
     sqlx::query(
         "INSERT INTO membership (account_id, server_id, joined_at, key_handoff_status) VALUES (?, ?, ?, 'synced')",
     )
@@ -253,21 +261,24 @@ async fn handoff_scale_300_and_1000() {
     }
     tx.commit().await.unwrap();
 
-    let (memberships,): (i64,) = sqlx::query_as("SELECT COUNT(*) FROM membership WHERE server_id = ?")
-        .bind(&servers[0])
-        .fetch_one(&app.pool)
-        .await
-        .unwrap();
-    let (big_envelopes,): (i64,) = sqlx::query_as("SELECT COUNT(*) FROM key_envelope WHERE server_id = ?")
-        .bind(&big)
-        .fetch_one(&app.pool)
-        .await
-        .unwrap();
-    let (subject_servers,): (i64,) = sqlx::query_as("SELECT COUNT(*) FROM membership WHERE account_id = ?")
-        .bind(&alice_id)
-        .fetch_one(&app.pool)
-        .await
-        .unwrap();
+    let (memberships,): (i64,) =
+        sqlx::query_as("SELECT COUNT(*) FROM membership WHERE server_id = ?")
+            .bind(&servers[0])
+            .fetch_one(&app.pool)
+            .await
+            .unwrap();
+    let (big_envelopes,): (i64,) =
+        sqlx::query_as("SELECT COUNT(*) FROM key_envelope WHERE server_id = ?")
+            .bind(&big)
+            .fetch_one(&app.pool)
+            .await
+            .unwrap();
+    let (subject_servers,): (i64,) =
+        sqlx::query_as("SELECT COUNT(*) FROM membership WHERE account_id = ?")
+            .bind(&alice_id)
+            .fetch_one(&app.pool)
+            .await
+            .unwrap();
     assert_eq!(memberships, 300, "server of 300");
     assert_eq!(big_envelopes, 1000, "1000 envelopes");
     assert_eq!(subject_servers, 20, "subject in 20 servers");
@@ -278,7 +289,10 @@ async fn handoff_scale_300_and_1000() {
     assert_eq!(seal_len, SEALED_LEN as i64);
 
     let mut conn = app.pool.acquire().await.unwrap();
-    sqlx::query("DROP INDEX idx_key_envelope_account").execute(&mut *conn).await.unwrap();
+    sqlx::query("DROP INDEX idx_key_envelope_account")
+        .execute(&mut *conn)
+        .await
+        .unwrap();
     let explain_without = explain_delete(&mut conn, &alice_id).await;
     let mut delete_without = Vec::new();
     for _ in 0..5 {
@@ -297,7 +311,11 @@ async fn handoff_scale_300_and_1000() {
 
     let mut sockets = Vec::new();
     for member in &members[..299] {
-        sockets.push(app.state.ws.subscribe(Uuid::parse_str(member).unwrap(), Uuid::new_v4()));
+        sockets.push(
+            app.state
+                .ws
+                .subscribe(Uuid::parse_str(member).unwrap(), Uuid::new_v4()),
+        );
     }
     let mut replacement = Vec::new();
     let mut event_count = 0usize;
@@ -328,7 +346,9 @@ async fn handoff_scale_300_and_1000() {
             "identity_vault": {"v": 1, "publicKey": vec![byte; 32], "salt": [1], "iv": [2], "wrapped": [3]},
         });
         let started = Instant::now();
-        let (status, response, _) = app.request("PUT", "/api/auth/identity", Some(body), Some(&cookie)).await;
+        let (status, response, _) = app
+            .request("PUT", "/api/auth/identity", Some(body), Some(&cookie))
+            .await;
         replacement.push(started.elapsed().as_secs_f64() * 1000.0);
         assert_eq!(status, StatusCode::OK, "{response}");
         if sample == 0 {
@@ -339,7 +359,11 @@ async fn handoff_scale_300_and_1000() {
             }
         }
     }
-    assert_eq!(event_count, 299 * 20, "one requested event per synced member on each of the 20 servers");
+    assert_eq!(
+        event_count,
+        299 * 20,
+        "one requested event per synced member on each of the 20 servers"
+    );
 
     let big_cookie_owner = mint_session(&app, Uuid::parse_str(&alice_id).unwrap()).await;
     sqlx::query(
@@ -393,20 +417,28 @@ async fn handoff_scale_300_and_1000() {
                 "account_id": herd_target,
                 "sealed_key": base64::engine::general_purpose::STANDARD.encode(blob(index as u8)),
             });
-            async move { app_ref.request("POST", &path, Some(body), Some(&session)).await }
+            async move {
+                app_ref
+                    .request("POST", &path, Some(body), Some(&session))
+                    .await
+            }
         })
         .collect();
     let started = Instant::now();
     let results = futures_util::future::join_all(posts).await;
     let herd_ms = started.elapsed().as_secs_f64() * 1000.0 / results.len() as f64;
-    let created = results.iter().filter(|(status, _, _)| *status == StatusCode::CREATED).count();
+    let created = results
+        .iter()
+        .filter(|(status, _, _)| *status == StatusCode::CREATED)
+        .count();
     let refused = results.len() - created;
-    let (stored,): (i64,) = sqlx::query_as("SELECT COUNT(*) FROM key_envelope WHERE server_id = ? AND account_id = ?")
-        .bind(&herd_server)
-        .bind(&herd_target)
-        .fetch_one(&app.pool)
-        .await
-        .unwrap();
+    let (stored,): (i64,) =
+        sqlx::query_as("SELECT COUNT(*) FROM key_envelope WHERE server_id = ? AND account_id = ?")
+            .bind(&herd_server)
+            .bind(&herd_target)
+            .fetch_one(&app.pool)
+            .await
+            .unwrap();
     assert_eq!(created, 1, "one handoff writer");
     assert_eq!(stored, 1);
 
@@ -422,16 +454,44 @@ async fn handoff_scale_300_and_1000() {
     while replay_socket.messages.try_recv().is_ok() {
         replay_events += 1;
     }
-    assert_eq!(replay_events, 50 * 5, "one event per pending member per replay");
-    assert!(!explain_without.contains("idx_key_envelope_account"), "{explain_without}");
-    assert!(explain_with.contains("idx_key_envelope_account"), "{explain_with}");
+    assert_eq!(
+        replay_events,
+        50 * 5,
+        "one event per pending member per replay"
+    );
+    assert!(
+        !explain_without.contains("idx_key_envelope_account"),
+        "{explain_without}"
+    );
+    assert!(
+        explain_with.contains("idx_key_envelope_account"),
+        "{explain_with}"
+    );
 
-    let (version,): (String,) = sqlx::query_as("SELECT sqlite_version()").fetch_one(&app.pool).await.unwrap();
+    let (version,): (String,) = sqlx::query_as("SELECT sqlite_version()")
+        .fetch_one(&app.pool)
+        .await
+        .unwrap();
     println!("SCALE sqlite={version}");
-    println!("SCALE delete_without_index_p95_ms={:.3} plan={explain_without}", p95(&mut delete_without));
-    println!("SCALE delete_with_index_p95_ms={:.3} plan={explain_with}", p95(&mut delete_with));
-    println!("SCALE identity_replacement_p95_ms={:.3} events_one_server={event_count}", p95(&mut replacement));
-    println!("SCALE own_envelope_guard_p95_ms={:.3} envelopes=1001", p95(&mut guard));
+    println!(
+        "SCALE delete_without_index_p95_ms={:.3} plan={explain_without}",
+        p95(&mut delete_without)
+    );
+    println!(
+        "SCALE delete_with_index_p95_ms={:.3} plan={explain_with}",
+        p95(&mut delete_with)
+    );
+    println!(
+        "SCALE identity_replacement_p95_ms={:.3} events_one_server={event_count}",
+        p95(&mut replacement)
+    );
+    println!(
+        "SCALE own_envelope_guard_p95_ms={:.3} envelopes=1001",
+        p95(&mut guard)
+    );
     println!("SCALE herd_mean_ms={herd_ms:.3} created={created} refused={refused}");
-    println!("SCALE replay_p95_ms={:.3} events={replay_events}", p95(&mut replay));
+    println!(
+        "SCALE replay_p95_ms={:.3} events={replay_events}",
+        p95(&mut replay)
+    );
 }

@@ -1,7 +1,7 @@
 import { For, Match, Show, Switch, createEffect, createMemo, createSignal, on, onCleanup } from "solid-js";
 import { Portal } from "solid-js/web";
 import { useQueryClient } from "@tanstack/solid-query";
-import { avatarUrl } from "../api";
+import { avatarUrl, useAuthedSrc } from "../api";
 import { Avatar, Badge, Icon } from "../components/ui";
 import { getLocale, t } from "../i18n";
 import { useSession } from "../session/session";
@@ -161,9 +161,10 @@ export function SearchPanel(props: { open: boolean; seed: string | null; seedNon
                   <For each={hits()}>
                     {(hit, at) => {
                       const sender = () => people().get(hit.message.senderId ?? "");
+                      const face = useAuthedSrc(() => (sender()?.hasAvatar ? avatarUrl(sender()!.accountId) : undefined));
                       return (
                         <button type="button" role="option" aria-selected={active() === at()} class="ch-result" classList={{ active: active() === at() }} onMouseEnter={() => setActive(at())} onClick={() => open(hit)}>
-                          <Avatar name={sender()?.label ?? "?"} src={sender()?.hasAvatar ? avatarUrl(sender()!.accountId) : undefined} size="sm" />
+                          <Avatar name={sender()?.label ?? "?"} src={face()} size="sm" />
                           <span class="ch-result-body">
                             <span class="ch-result-head">
                               <strong>{sender()?.label ?? t("txt.search.unknownSender")}</strong>

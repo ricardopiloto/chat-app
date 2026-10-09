@@ -26,13 +26,16 @@ pub async fn login(
     }
     let account = db::account::find_by_handle(&state.pool, body.handle.trim())
         .await?
-        .ok_or_else(|| ApiError::new(axum::http::StatusCode::UNAUTHORIZED, "invalid credentials"))?;
-    let parsed = PasswordHash::new(&account.password_hash)
-        .map_err(|e| ApiError::internal(e.to_string()))?;
+        .ok_or_else(|| {
+            ApiError::new(axum::http::StatusCode::UNAUTHORIZED, "invalid credentials")
+        })?;
+    let parsed =
+        PasswordHash::new(&account.password_hash).map_err(|e| ApiError::internal(e.to_string()))?;
     Argon2::default()
         .verify_password(body.password.as_bytes(), &parsed)
         .map_err(|_| ApiError::new(axum::http::StatusCode::UNAUTHORIZED, "invalid credentials"))?;
     let token = persist_session(&state.pool, account.id, state.config.session_ttl_secs).await?;
+    let body = account.auth_view().with_session_token(token.clone());
     let jar = with_session_cookie(jar, token, state.config.cookie_secure);
-    Ok((jar, Json(account.auth_view())))
+    Ok((jar, Json(body)))
 }
