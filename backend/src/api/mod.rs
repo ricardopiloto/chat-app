@@ -126,6 +126,14 @@ pub fn router(state: AppState) -> axum::Router {
                     delete(messages::delete_message),
                 )
                 .route(
+                    "/channels/{channel_id}/messages/{message_id}/reactions",
+                    post(messages::add_reaction),
+                )
+                .route(
+                    "/channels/{channel_id}/messages/{message_id}/reactions/{emoji_code}",
+                    delete(messages::remove_reaction),
+                )
+                .route(
                     "/notifications",
                     get(notifications::list_notifications),
                 )

@@ -79,3 +79,63 @@ async fn history_visible_when_invite_includes_it() {
     assert_eq!(status, StatusCode::OK, "{list}");
     assert_eq!(list.as_array().unwrap().len(), 1);
 }
+
+#[tokio::test]
+async fn outsider_history_is_forbidden_missing_channel_stays_not_found() {
+    let app = TestApp::new().await;
+    let (alice, _bob, channel_id) = two_members(&app, true).await;
+
+    let (status, _, _) = app
+        .request(
+            "GET",
+            &format!("/api/channels/{channel_id}/messages"),
+            None,
+            None,
+        )
+        .await;
+    assert_eq!(status, StatusCode::UNAUTHORIZED);
+
+    let missing = "00000000-0000-0000-0000-000000000000";
+    let (status, _, _) = app
+        .request(
+            "GET",
+            &format!("/api/channels/{missing}/messages"),
+            None,
+            Some(&alice),
+        )
+        .await;
+    assert_eq!(status, StatusCode::NOT_FOUND);
+
+    let (_, beta, _) = app
+        .request(
+            "POST",
+            "/api/servers",
+            Some(crate::common::create_server_body("Beta")),
+            Some(&alice),
+        )
+        .await;
+    let beta_id = beta["id"].as_str().unwrap();
+    let (_, inv, _) = app
+        .request(
+            "POST",
+            &format!("/api/servers/{beta_id}/invites"),
+            Some(json!({})),
+            Some(&alice),
+        )
+        .await;
+    let (status, _, cara) = app
+        .register("cara", "password1", Some(inv["code"].as_str().unwrap()))
+        .await;
+    assert_eq!(status, StatusCode::CREATED);
+    let cara = must_cookie(cara);
+
+    let (status, body, _) = app
+        .request(
+            "POST",
+            &format!("/api/channels/{channel_id}/messages"),
+            Some(json!({ "content_ciphertext": b64("nope") })),
+            Some(&cara),
+        )
+        .await;
+    assert_eq!(status, StatusCode::FORBIDDEN, "{body}");
+}

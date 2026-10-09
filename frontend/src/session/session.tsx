@@ -14,6 +14,7 @@ import {
   uuidToBytes,
   type RecoveryMaterial,
 } from "../crypto/recovery";
+import { claimInviteKey } from "../crypto/claimInvite";
 import { forgetServerKeys } from "../crypto/serverKey";
 
 export type SessionPhase = "loading" | "anonymous" | "locked" | "ready";
@@ -114,7 +115,8 @@ function createSession() {
     inviteCode,
     identity,
     recovery,
-  }: Credentials & { inviteCode: string; identity?: Identity; recovery?: RecoveryMaterial }): Promise<Membership> {
+    seedSecret,
+  }: Credentials & { inviteCode: string; identity?: Identity; recovery?: RecoveryMaterial; seedSecret?: Uint8Array | null }): Promise<Membership> {
     const fresh = identity ?? generateIdentity();
     const vault = await wrapIdentity(fresh, password);
     const membership = await invites.accept(inviteCode, {
@@ -129,6 +131,13 @@ function createSession() {
     if (!me) throw new Error("session missing after accepting the invitation");
     await persistIdentity(me.id, fresh, password);
     adopt(me, fresh);
+    await claimInviteKey({
+      serverId: membership.server_id,
+      accountId: me.id,
+      identity: fresh,
+      keySeed: membership.key_seed,
+      secret: seedSecret ?? null,
+    });
     return membership;
   }
 

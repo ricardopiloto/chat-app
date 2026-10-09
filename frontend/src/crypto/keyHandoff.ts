@@ -4,7 +4,10 @@
 import { ApiError, api, type Server, type ServerMember } from "../api/client";
 import type { WsEnvelope } from "../api/ws";
 import { b64, fromB64, seal, unseal, type Identity } from "./identity";
+import { createHandoffGate } from "./handoffGate.ts";
 import { generateServerKey, getServerKey, rememberServerKey } from "./serverKey";
+
+const handoffGate = createHandoffGate(4);
 
 const envelopesPath = (serverId: string) => `/api/servers/${serverId}/key-envelopes`;
 
@@ -73,8 +76,17 @@ export async function handleHandoffEvent(event: WsEnvelope, identity: Identity, 
 
   switch (event.event) {
     case "key_handoff.requested": {
-      const held = await loadServerKey(serverId, identity);
-      if (held) await sendEnvelope(serverId, subject, fromB64(String(payload.identity_pubkey)), held);
+      await handoffGate.run(`${serverId}:${subject}`, async () => {
+        const held = await loadServerKey(serverId, identity);
+        if (!held) return "error";
+        try {
+          await sendEnvelope(serverId, subject, fromB64(String(payload.identity_pubkey)), held);
+          return "ok";
+        } catch (error) {
+          if (error instanceof ApiError && error.status === 409) return "conflict";
+          return "error";
+        }
+      });
       return;
     }
     case "key_handoff.completed":

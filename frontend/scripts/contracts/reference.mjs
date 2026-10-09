@@ -78,6 +78,31 @@ export async function decryptBytes(serverKey, packed) {
   return new Uint8Array(await subtle.decrypt({ name: "AES-GCM", iv: packed.slice(0, 12) }, key, packed.slice(12)));
 }
 
+const SEED_DOMAIN = text.encode("mesa-invite-seed-v1");
+const seedCheck = (serverKey) => blake2b(concat(SEED_DOMAIN, serverKey), { dkLen: 16 });
+
+export function createInviteSeed(serverKey) {
+  const ephemeral = nacl.box.keyPair();
+  const sealed = seal(serverKey, ephemeral.publicKey);
+  return { blob: concat(new Uint8Array([1]), sealed, seedCheck(serverKey)), secret: ephemeral.secretKey };
+}
+
+export function openInviteSeed(blob, secret) {
+  if (blob.length !== 97 || blob[0] !== 1 || secret.length !== 32) return null;
+  const publicKey = nacl.box.keyPair.fromSecretKey(secret).publicKey;
+  const opened = unseal(blob.slice(1, 81), publicKey, secret);
+  if (!opened || opened.length !== 32) return null;
+  const expected = seedCheck(opened);
+  const given = blob.slice(81);
+  if (expected.some((byte, index) => byte !== given[index])) return null;
+  return opened;
+}
+
+export const encodeSeedBlob = (blob) => Buffer.from(blob).toString("base64");
+export const inviteFragment = (secret) => `k=${Buffer.from(secret).toString("base64url")}`;
+export const inviteUrl = (origin, code, secret) =>
+  `${String(origin).replace(/\/$/, "")}/invite/${encodeURIComponent(code)}#${inviteFragment(secret)}`;
+
 export const encryptMessage = async (serverKey, str) => Buffer.from(await encryptBytes(serverKey, text.encode(str))).toString("base64");
 export const decryptMessage = async (serverKey, b64) =>
   new TextDecoder().decode(await decryptBytes(serverKey, Uint8Array.from(Buffer.from(b64, "base64"))));

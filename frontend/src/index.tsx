@@ -11,6 +11,9 @@ import { Unlock } from "./pages/Unlock";
 import { SessionProvider, useSession } from "./session/session";
 import { applyTheme, themeMode, watchSystemTheme } from "./shell/theme";
 import { t } from "./i18n";
+import { captureInviteFragment } from "./crypto/inviteLink";
+
+captureInviteFragment();
 import "./tokens.css";
 import "./styles.css";
 import "./components/ui.css";

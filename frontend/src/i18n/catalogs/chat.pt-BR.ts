@@ -20,6 +20,8 @@ export const chatPtBR: MessageTree = {
       owner: "Dono",
       you: "você",
       reply: "Responder",
+      react: "Reagir",
+      reactMore: "e mais {count}",
       delete: "Apagar",
       unreadable: "Esta mensagem não pôde ser lida neste dispositivo.",
       quoteGone: "Mensagem original indisponível",
@@ -62,7 +64,7 @@ export const chatPtBR: MessageTree = {
     jump: "Saltar para o presente",
     state: {
       loading: "Carregando mensagens…",
-      noKey: "Esperando a chave deste servidor. Ela chega quando outro membro estiver online.",
+      noKey: "Aguardando um membro online. A chave deste servidor chega quando alguém que já a tem abrir o Mesa.",
       error: "Não foi possível carregar as mensagens.",
       retry: "Tentar de novo",
       empty: "Ainda não há mensagens. Diga olá!",

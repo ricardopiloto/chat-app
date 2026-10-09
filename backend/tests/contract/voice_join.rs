@@ -26,7 +26,9 @@ async fn voice_join_token_has_no_secret_and_uses_ids() {
         .await;
     let channel_id = ch["id"].as_str().unwrap().to_string();
     let account_id = {
-        let (_, me, _) = app.request("GET", "/api/auth/me", None, Some(&cookie)).await;
+        let (_, me, _) = app
+            .request("GET", "/api/auth/me", None, Some(&cookie))
+            .await;
         me["id"].as_str().unwrap().to_string()
     };
     let (status, body, _) = app
@@ -85,7 +87,10 @@ async fn voice_join_url_ignores_host_header() {
             &format!("/api/channels/{channel_id}/voice/join"),
             None,
             Some(&cookie),
-            &[("host", "evil.example"), ("x-forwarded-host", "evil.example")],
+            &[
+                ("host", "evil.example"),
+                ("x-forwarded-host", "evil.example"),
+            ],
         )
         .await;
     assert_eq!(status, StatusCode::OK, "{body}");
@@ -127,8 +132,6 @@ async fn voice_join_requires_membership() {
     let code = inv["code"].as_str().unwrap();
     let (_, _, bob) = app.register("bob", "password1", Some(code)).await;
     let bob = must_cookie(bob);
-    // bob is a member — should succeed. outsider: create another server owner charlie
-    // without invite to alice's server.
     let (status, _, _) = app
         .request(
             "POST",
@@ -138,4 +141,40 @@ async fn voice_join_requires_membership() {
         )
         .await;
     assert_eq!(status, StatusCode::OK);
+
+    let (_, beta, _) = app
+        .request(
+            "POST",
+            "/api/servers",
+            Some(crate::common::create_server_body("Beta")),
+            Some(&bob),
+        )
+        .await;
+    let beta_id = beta["id"].as_str().unwrap();
+    let (_, inv_b, _) = app
+        .request(
+            "POST",
+            &format!("/api/servers/{beta_id}/invites"),
+            Some(json!({})),
+            Some(&bob),
+        )
+        .await;
+    let (status, _, charlie) = app
+        .register(
+            "charlie",
+            "password1",
+            Some(inv_b["code"].as_str().unwrap()),
+        )
+        .await;
+    assert_eq!(status, StatusCode::CREATED);
+    let charlie = must_cookie(charlie);
+    let (status, _, _) = app
+        .request(
+            "POST",
+            &format!("/api/channels/{channel_id}/voice/join"),
+            None,
+            Some(&charlie),
+        )
+        .await;
+    assert_eq!(status, StatusCode::FORBIDDEN);
 }

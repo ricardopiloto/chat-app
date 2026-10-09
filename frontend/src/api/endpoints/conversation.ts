@@ -7,6 +7,10 @@ export const messages = {
     http.get<Message[]>(`/api/channels/${channelId}/messages${before ? `?before=${encodeURIComponent(before)}` : ""}`),
   post: (channelId: string, body: PostMessageBody) => http.post<Message>(`/api/channels/${channelId}/messages`, body),
   remove: (channelId: string, messageId: string) => http.delete(`/api/channels/${channelId}/messages/${messageId}`),
+  addReaction: (channelId: string, messageId: string, emojiCode: string) =>
+    http.post<unknown>(`/api/channels/${channelId}/messages/${messageId}/reactions`, { emoji_code: emojiCode }),
+  removeReaction: (channelId: string, messageId: string, emojiCode: string) =>
+    http.delete(`/api/channels/${channelId}/messages/${messageId}/reactions/${encodeURIComponent(emojiCode)}`),
 };
 
 export const attachments = {

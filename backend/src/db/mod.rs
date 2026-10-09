@@ -21,6 +21,7 @@ pub mod membership;
 pub mod message;
 pub mod notification;
 pub mod read_state;
+pub mod reaction;
 pub mod recording;
 pub mod scene;
 pub mod server;

@@ -6,10 +6,11 @@ Pensado para mesas de RPG que gravam ou transmitem sessões, e para qualquer gru
 
 | | |
 |--|--|
-| **Estado** | Backend `1.0.0` · Frontend `1.0.0` (reescrita v2 completa; corte de produção, ver [docs/deploy-producao.md § 14](docs/deploy-producao.md#14-corte-para-o-frontend-v2-e-rollback)) |
+| **Estado** | Backend `1.1.0` · Frontend `1.1.0` (cliente v2 em `frontend/`; ver [CHANGELOG.md](CHANGELOG.md)) |
 | **Stack** | Backend Rust (Axum + SQLite) · Frontend **v2** SolidJS (Vite, Tailwind) · LiveKit (voz/vídeo) |
-| **Frontend** | [`frontend-v2/`](frontend-v2/) é o cliente atual. [`frontend/`](frontend/) é a v1, mantida só como *rollback* durante e depois do corte |
+| **Frontend** | [`frontend/`](frontend/) é o cliente atual (v2). A versão 0.8.1 da v1 permanece no histórico Git para rollback |
 | **Operação** | [docs/operar-instancia.md](docs/operar-instancia.md) · [docs/deploy-producao.md](docs/deploy-producao.md) |
+| **Integração** | [docs/contratos-e-fluxos.md](docs/contratos-e-fluxos.md) |
 | **Arquitetura** | [docs/arquitetura-tecnica.md](docs/arquitetura-tecnica.md) |
 | **Produto** | [docs/product-brief.md](docs/product-brief.md) |
 
@@ -22,11 +23,12 @@ Pensado para mesas de RPG que gravam ou transmitem sessões, e para qualquer gru
 3. [Telas](#telas)
 4. [Arquitetura](#arquitetura)
 5. [Criptografia (E2EE)](#criptografia-e2ee)
-6. [Contratos Frontend ↔ Backend](#contratos-frontend--backend)
-7. [Fluxos de integração](#fluxos-de-integração)
-8. [Arranque rápido (dev)](#arranque-rápido-dev)
-9. [Estrutura do repositório](#estrutura-do-repositório)
-10. [Fora de escopo e diferido](#fora-de-escopo-e-diferido)
+6. [Reset de senha](#reset-de-senha)
+7. [Contratos Frontend ↔ Backend](#contratos-frontend--backend)
+8. [Fluxos de integração](#fluxos-de-integração)
+9. [Arranque rápido (dev)](#arranque-rápido-dev)
+10. [Estrutura do repositório](#estrutura-do-repositório)
+11. [Fora de escopo e diferido](#fora-de-escopo-e-diferido)
 
 ---
 
@@ -46,21 +48,21 @@ Não há federação entre instâncias: o que corre na tua máquina fica na tua 
 
 ## Funcionalidades
 
-Lista do que a v2 faz hoje. A fonte de verdade, com 138 itens e o endpoint de cada um, é [`docs/v2/parity-checklist.md`](docs/v2/parity-checklist.md); o comportamento exigido está nos specs em [`openspec/specs/frontend-v2/`](openspec/specs/frontend-v2/).
+Lista do que o cliente atual faz hoje. A checklist de paridade está em [`docs/v2/parity-checklist.md`](docs/v2/parity-checklist.md); o comportamento exigido está nos specs em [`openspec/specs/frontend-v2/`](openspec/specs/frontend-v2/).
 
 ### Conta e identidade
 - Registo (handle e palavra-passe de 8+ caracteres), com código de convite quando não é a primeira conta (`/invite/:code` ou `?invite=`).
 - Login, logout com confirmação, restauro de sessão ao recarregar, troca de conta.
 - **Identidade criptográfica** gerada no navegador, protegida por um cofre cifrado com a palavra-passe (guardado no dispositivo e no servidor, sempre cifrado).
 - Desbloqueio em dispositivo novo (cofre remoto) e **recuperação de identidade** (nova identidade) quando a palavra-passe do cofre se perde.
-- **Esqueci a senha** (`/recover`, público): reset com código de uso único emitido pelo operador via CLI (`reset-code`, identidade nova) ou com **chave de recuperação** opcional criada no registo/convite ou em "Minha conta" (preserva a identidade e os Servidores). "Alterar senha" com a senha actual mantém a identidade e a sessão actual, revoga as outras. Não há recuperação por e-mail.
+- **Esqueci a senha** (`/recover`): sem e-mail. Há alteração com a senha actual, chave de recuperação, ou código do operador. O passo a passo está em [Reset de senha](#reset-de-senha).
 - Perfil: nome a mostrar, avatar (JPEG, PNG ou WebP até 1 MiB), idioma **pt-BR / en** e tema **Sistema / Claro / Escuro**, todos persistentes.
 
 ### Servidores, membros e cargos
 - Criar servidor com **custódia da chave** obrigatória (cria também o canal de texto `geral` e o de voz `mesa`).
 - Imagem do servidor, mensagem e canal de boas-vindas, apagar servidor confirmando o nome.
 - Membros com pesquisa, mudança de cargo, remoção. **Cargos** com 12 permissões (ver canais, gerir canais, gerir cargos, criar convites, enviar mensagens, apagar mensagens, anexar ficheiros, mencionar @todos, remover membros, silenciar membros, ligar-se à voz, falar). Quem não tem cargo vê e escreve nos canais de texto e participa nos de voz; só um cargo, um canal privado ou o silenciamento reduzem isso, reordenação e cargo de sistema do dono.
-- **Convites** em dois passos, pré-visualização sem sessão, aceitar com registo inline ou com sessão.
+- **Convites** em dois passos, pré-visualização sem sessão, aceitar com registo inline ou com sessão. Os novos links levam a chave do servidor selada no fragmento `#` (não enviado ao backend), permitindo entrar mesmo sem outro membro online; convites antigos continuam com handoff online.
 - Painel de Membros com presença (online / offline) e aviso quando um convite é consumido.
 
 ### Canais e acesso
@@ -69,8 +71,9 @@ Lista do que a v2 faz hoje. A fonte de verdade, com 138 itens e o endpoint de ca
 - **Silenciar** membro num canal (5, 10, 15, 30 minutos ou outro valor) e dessilenciar.
 
 ### Chat de texto (E2EE)
-- Mensagens cifradas no cliente; só o *ciphertext* passa pela rede. Tempo real, agrupamento por remetente, separadores de dia, saltar para o presente.
+- O corpo das mensagens é cifrado no cliente; o servidor recebe o *ciphertext* e os metadados necessários. Tempo real, agrupamento por remetente em intervalos de até 5 minutos, separadores de dia, saltar para o presente.
 - Responder com citação, apagar por permissão, **menções** (`@`, e `@todos` para quem tem a permissão) e autocompletar de emoji (`:shortcode:`), selector de emoji.
+- **Reações com emoji** em mensagens de texto, com anexos ou com citação: pills com contagem e autores, alternância por clique e sincronização em tempo real. A reação é metadado visível ao servidor, enquanto o corpo da mensagem permanece cifrado.
 - **Anexos** de imagem (ficheiro ou colar), até 10 por mensagem e 5 MiB cada, cifrados no cliente, com *lightbox* (zoom, download, navegação).
 - Pré-visualização de links (até 5 por mensagem).
 - Marcar canal como lido e recuperar mensagens perdidas após reconexão.
@@ -93,7 +96,7 @@ Lista do que a v2 faz hoje. A fonte de verdade, com 138 itens e o endpoint de ca
 ### Efeitos sonoros
 - Dois sons curtos: **nova menção ou resposta** e **alguém entrou na chamada em que está**. Nunca são o único aviso, não tocam com o utilizador ensurdecido, usam a saída de áudio escolhida e falham em silêncio (autoplay recusado, ficheiro em falta).
 - A menção não toca se o canal está aberto e a janela em foco; rajadas contam como um só toque.
-- Interruptor e pré-escuta em **Áudio & Vídeo**; a escolha fica neste dispositivo. Os ficheiros vivem em `assets/audio/` e são copiados para `frontend-v2/public/audio/` quando o Vite arranca.
+- Interruptor e pré-escuta em **Áudio & Vídeo**; a escolha fica neste dispositivo. Os ficheiros vivem em `assets/audio/` e são copiados para `frontend/public/audio/` quando o Vite arranca.
 
 ### Transversal
 - Responsivo (gaveta abaixo de 768 px, sem scroll horizontal), modo claro e escuro com contraste verificado, português (pt-BR) e inglês, menu de contexto por clique direito e toque longo, faixa de reconexão do WebSocket, estados vazios e de erro por lista, diálogos com `Esc`.
@@ -156,7 +159,7 @@ As câmeras verdes são o dispositivo de vídeo falso do Chromium usado nos test
 
 ```mermaid
 flowchart LR
-    subgraph Browser["Navegador (frontend-v2, SolidJS)"]
+    subgraph Browser["Navegador (frontend, SolidJS)"]
         UI["UI e estado<br/>(TanStack Query)"]
         CR["Criptografia local<br/>identidade, chaves, cifra"]
         LK["livekit-client<br/>+ worker E2EE"]
@@ -192,7 +195,7 @@ flowchart LR
     CR --- LK
 ```
 
-- **Frontend v2** (`frontend-v2/`): SPA SolidJS. Faz REST em `/api/*` com o cookie `Session` (mesma origem), escuta o `/ws` e fala com o LiveKit por WebRTC. Toda a cifra acontece no navegador.
+- **Frontend v2** (`frontend/`): SPA SolidJS. Faz REST em `/api/*` com o cookie `Session` (mesma origem), escuta o `/ws` e fala com o LiveKit por WebRTC. Toda a cifra acontece no navegador.
 - **Backend** (`backend/`): API Axum sobre SQLite. Valida sessão e permissões, guarda *ciphertext* e metadados, difunde eventos por WebSocket e emite tokens do LiveKit. O segredo de API do LiveKit nunca sai do backend.
 - **LiveKit** (`infra/`): SFU em Docker Compose. A mídia chega cifrada (Insertable Streams), por isso o SFU não a lê.
 - **Em produção** o proxy do Vite é substituído por um *reverse proxy* da instância; o cliente continua a falar com uma única origem. Ver [docs/deploy-producao.md](docs/deploy-producao.md).
@@ -201,7 +204,7 @@ flowchart LR
 
 ```mermaid
 flowchart TB
-    subgraph app["frontend-v2/src"]
+    subgraph app["frontend/src"]
         shell["shell/ (rail, sidebar, topbar, estado do servidor)"]
         pages["pages/ e auth/ (rotas)"]
         chat["chat/ (timeline, composer, anexos, pesquisa)"]
@@ -257,453 +260,37 @@ flowchart TD
 
 ---
 
-## Contratos Frontend ↔ Backend
+## Reset de senha
 
-Só os contratos que a **v2** consome. O backend tem mais rotas (listadas em [Rotas do backend que a v2 não usa](#rotas-do-backend-que-a-v2-não-usa)). Tipos de referência: [`frontend-v2/src/api/types.ts`](frontend-v2/src/api/types.ts) e clientes em [`frontend-v2/src/api/endpoints/`](frontend-v2/src/api/endpoints/).
+Não há recuperação por e-mail. A senha abre o cofre da identidade neste dispositivo. Há três caminhos.
 
-### Convenções
+**Alterar senha**, quando a pessoa ainda sabe a actual. Em Minha conta. A identidade fica a mesma: o cliente volta a cifrar o cofre com a senha nova. As outras sessões terminam e esta continua. Mensagens e servidores não mudam.
 
-| Tema | Contrato |
-|------|----------|
-| **Base** | REST sob `/api/*`, JSON, mesma origem. WebSocket em `GET /ws`. Saúde em `GET /health` |
-| **Sessão** | Cookie `Session` (httpOnly, SameSite=Strict), emitido por *register* e *login*, revogado por *logout*. TTL por omissão 7 dias |
-| **Erros** | `{ "error": "...", "code"?: "...", "message"?: "..." }`. Com `message`, `error` é o código de máquina. Estados usados: 400, 401, 403, 404, 409, 429, 503 |
-| **Binários** | Corpo `application/octet-stream` e cabeçalho `X-Mesa-Media-Type` com o tipo real (avatares, imagens de servidor, anexos) |
-| **Limites** | Avatar e imagem de servidor 1 MiB (JPEG, PNG, WebP). Anexo 5 MiB (mais GIF). Até 10 anexos e 20 menções por mensagem |
-| **Datas** | RFC 3339 (`Timestamp`). Ids são UUID (`Id`) |
-| **204** | Respostas sem corpo (apagar, sair, marcar como lido) devolvem `undefined` no cliente |
+**Chave de recuperação**, quando a pessoa guardou o código. É opcional e cria-se no registo, ao aceitar um convite, ou depois em Minha conta. O código mostra-se uma vez. O servidor guarda só um cofre cifrado e uma chave pública de verificação, nunca o código em si. Em **Esqueci a senha**, a escolha é **Tenho a chave de recuperação**. O navegador abre o cofre com esse código, prova que o possui, e define a senha nova. A identidade e as chaves dos servidores mantêm-se, por isso o histórico continua legível. Substituir a chave invalida o código anterior.
 
-### Autenticação e conta
+**Código do operador**, quando não há chave de recuperação ou ela também se perdeu. Quem opera a instância emite um código de uso único no host:
 
-| Método | Caminho | Pedido | Resposta | Notas |
-|--------|---------|--------|----------|-------|
-| `POST` | `/api/auth/register` | `RegisterBody` `{ handle, password, identity_pubkey, identity_vault?, invite_code? }` | `Account` | A primeira conta é o operador inicial; as seguintes exigem convite. Emite o cookie |
-| `POST` | `/api/auth/login` | `{ handle, password }` | `Account` (inclui `identity_vault`) | Emite o cookie |
-| `POST` | `/api/auth/logout` | — | sem corpo | Revoga a sessão |
-| `GET` | `/api/auth/me` | — | `Account` ou 204 | 204 quando não há sessão |
-| `PUT` | `/api/auth/identity-vault` | `IdentityVaultPayload` | sem corpo | Guarda o cofre cifrado |
-| `PUT` | `/api/auth/identity` | `{ identity_pubkey, identity_vault }` | `Account` | Recuperação: troca a identidade, apaga os envelopes, marca os handoffs como pendentes e invalida a chave de recuperação anterior |
-| `PUT` | `/api/auth/password` | `{ current_password, new_password, identity_vault }` | sem corpo (204) | Autenticada. Mesma identidade; revoga as outras sessões, mantém a actual |
-| `POST` | `/api/auth/recovery/code/redeem` | `{ handle, code, password, identity_pubkey, identity_vault }` | `Account` | Sem sessão. Código de uso único emitido pelo operador (`reset-code`); troca identidade e senha, revoga todas as sessões. 401 uniforme para handle/código inválidos |
-| `POST` | `/api/auth/recovery/key/challenge` | `{ handle }` | `{ challenge_id, nonce }` | Sem sessão. Nunca revela se a conta existe |
-| `POST` | `/api/auth/recovery/key/start` | `{ handle, challenge_id, nonce, signature }` | `{ recovery_vault, ticket }` | Consome o desafio; devolve o cofre de recuperação só com assinatura válida |
-| `POST` | `/api/auth/recovery/key/redeem` | `{ handle, ticket, signature, password, identity_vault }` | `Account` | Consome o ticket; mantém `identity_pubkey` e envelopes, revoga todas as sessões |
-| `PUT` | `/api/auth/recovery-key` | `{ current_password, recovery_vault, recovery_verifier_pubkey }` | `Account` | Autenticada. Cria ou substitui a chave de recuperação; invalida desafios/tickets antigos |
-| `PATCH` | `/api/auth/display-name` | `{ display_name: string \| null }` | `Account` | Handle não muda |
-| `PUT` / `DELETE` | `/api/auth/avatar` | bytes + `X-Mesa-Media-Type` / — | `Account` / sem corpo | JPEG, PNG, WebP, 1 MiB |
-| `GET` | `/api/accounts/{id}/avatar` | — | imagem | Usada em `<img src>` |
-
-### Servidores, membros e cargos
-
-| Método | Caminho | Pedido | Resposta | Notas |
-|--------|---------|--------|----------|-------|
-| `GET` | `/api/servers` | — | `Server[]` | `has_unread`, `has_voice` por servidor |
-| `POST` | `/api/servers` | `{ name, custody_ack, channel_key_sealed }` | `Server` | Cria o servidor, o canal `geral` e o canal de voz `mesa` com chave |
-| `DELETE` | `/api/servers/{id}` | — | sem corpo | Só o dono. Emite `server.deleted` |
-| `GET` / `PUT` / `DELETE` | `/api/servers/{id}/image` | — / bytes / — | imagem / `Server` / sem corpo | Imagem do servidor |
-| `GET` / `PATCH` | `/api/servers/{id}/welcome` | `Partial<WelcomeSettings>` | `WelcomeSettings` | Canal e modelo de boas-vindas |
-| `GET` | `/api/servers/{id}/members` | — | `Member[]` | Inclui `identity_pubkey` (para selar envelopes) |
-| `GET` | `/api/servers/{id}/presence` | — | `{ online_account_ids }` | Complementa o evento `presence` |
-| `DELETE` | `/api/servers/{id}/members/{account}` | — | sem corpo | Remover membro |
-| `PUT` | `/api/servers/{id}/members/{account}/role` | `{ role_id: Id \| null }` | `{ account_id, role_id }` | Mudar cargo |
-| `GET` / `POST` | `/api/servers/{id}/roles` | — / `{ name, capabilities? }` | `ServerRole[]` / `ServerRole` | `RoleCapabilities` tem 12 permissões; `can_mention_everyone` (Mencionar @todos) vem desligada por omissão |
-| `PATCH` / `DELETE` | `/api/servers/{id}/roles/{role}` | `{ name?, capabilities? }` / — | `ServerRole` / sem corpo | O cargo de sistema do dono é só de leitura |
-| `PUT` | `/api/servers/{id}/roles/positions` | `{ roles: [{ id, position }] }` | `ServerRole[]` | Reordenar |
-| `PUT` | `/api/servers/{id}/roles/{role}/members` | `{ member_ids }` | `ServerRole` | Substitui os membros do cargo |
-
-### Convites
-
-| Método | Caminho | Pedido | Resposta | Notas |
-|--------|---------|--------|----------|-------|
-| `POST` | `/api/servers/{id}/invites` | `{ include_history?, welcome_channel_id?, expires_in_seconds? }` | `Invite` (201) | TTL por omissão 300 s |
-| `GET` | `/api/invites/{code}` | — | `InvitePreview` | Público, sem sessão. `requires_account_creation` diz se é preciso registo |
-| `GET` | `/api/invites/{code}/handle-available?handle=` | — | `{ available }` | Só para convite utilizável. Limitado por IP |
-| `POST` | `/api/invites/{code}/accept` | `{ handle?, password?, identity_pubkey?, identity_vault? }` | `Membership` `{ account_id, server_id, key_handoff_status }` | Com sessão: só entra. Sem sessão: regista e entra. Emite `invite.consumed` e `key_handoff.requested` |
-
-### Canais, acesso e silenciamento
-
-| Método | Caminho | Pedido | Resposta | Notas |
-|--------|---------|--------|----------|-------|
-| `GET` / `POST` | `/api/servers/{id}/channels` | — / `CreateChannelBody` `{ name, type, grid_slot_count?, visibility?, custody_ack?, channel_key_sealed? }` | `Channel[]` / `Channel` | Canal de voz exige `custody_ack` e `channel_key_sealed` |
-| `GET` | `/api/channels/{id}` | — | `Channel` | `my_permission`, `e2ee_enabled`, `has_channel_key` |
-| `PATCH` | `/api/channels/{id}` | `{ name?, visibility?, visible_to_new_members? }` | `Channel` | Renomear e visibilidade |
-| `DELETE` | `/api/channels/{id}` | — | sem corpo | **409** `last_channel_of_type` se for o último do tipo. Emite `channel.deleted` |
-| `GET` | `/api/channels/{id}/mentionables` | — | `Mentionable[]` | Membros que podem ser mencionados neste canal |
-| `PUT` | `/api/channels/{id}/read` | `{ last_read_at? }` | sem corpo | Marca o canal como lido |
-| `GET` / `PUT` | `/api/channels/{id}/acl` | — / `AclEntryInput[]` | `AclEntry[]` | Regras por membro, cargo ou todos |
-| `GET` | `/api/channels/{id}/access/{account}` | — | `AccessReport` | Acesso efetivo e fatores |
-| `GET` | `/api/channels/{id}/mutes` | — | `Mute[]` | Silenciamentos ativos |
-| `GET` | `/api/channels/{id}/mutes/me` | — | `MyMute` | Para o composer "silenciado até" |
-| `PUT` / `DELETE` | `/api/channels/{id}/mutes/{account}` | `{ duration_minutes }` / — | `Mute` / sem corpo | Silenciar e dessilenciar |
-
-### Mensagens, anexos, links e notificações
-
-| Método | Caminho | Pedido | Resposta | Notas |
-|--------|---------|--------|----------|-------|
-| `GET` | `/api/channels/{id}/messages?before=` | — | `Message[]` | Página mais recente primeiro. `before` pagina para trás. Só `content_ciphertext` |
-| `POST` | `/api/channels/{id}/messages` | `PostMessageBody` `{ content_ciphertext, attachment_ids?, mentioned_account_ids?, reply_to_message_id?, mention_everyone? }` | `Message` (201) | Cria notificações de menção e de resposta. Emite `message.new` |
-| `DELETE` | `/api/channels/{id}/messages/{mid}` | — | sem corpo | Por permissão. Emite `message.deleted` |
-| `POST` | `/api/channels/{id}/attachments` | bytes cifrados + `X-Mesa-Media-Type` | `Attachment` (201) | O backend guarda bytes opacos |
-| `GET` | `/api/attachments/{id}` | — | bytes + `X-Mesa-Media-Type` | Cifrados |
-| `POST` | `/api/unfurl` | `{ url }` | `LinkPreview` | O servidor busca o URL (ele vê o URL) |
-| `GET` | `/api/notifications?unread_only=&limit=` | — | `Notification[]` | `kind` é `mention` ou `reply` |
-| `POST` | `/api/notifications/{id}/read` | — | sem corpo | |
-| `POST` | `/api/notifications/read-all` | — | sem corpo | Ação "Limpar" |
-
-### Voz, grade e E2EE do canal
-
-| Método | Caminho | Pedido | Resposta | Notas |
-|--------|---------|--------|----------|-------|
-| `POST` | `/api/channels/{id}/voice/join` | `{ mic_on, cam_on }` | `VoiceJoin` `{ token, url, room }` | Token LiveKit. `can_publish` segue a permissão de falar. Faz *upsert* da ocupação e tira o utilizador de outra mesa |
-| `POST` | `/api/channels/{id}/voice/leave` | — | sem corpo | Liberta a posição na grade. Também chamado com `keepalive` ao fechar a aba |
-| `PATCH` | `/api/channels/{id}/voice/media` | `{ mic_on?, cam_on?, screen_on? }` | sem corpo | Sem corpo serve de *heartbeat*. 403 se não for ocupante |
-| `GET` | `/api/servers/{id}/voice-occupancy` | — | `VoiceOccupancy` | Snapshot, depois acompanhado por `voice.occupancy` |
-| `POST` | `/api/channels/{id}/voice/e2ee` | `{ enabled, intent? }` | `{ e2ee_enabled, audit_id, at }` | Só o dono e só com `has_channel_key`. Regista auditoria. Emite `channel.e2ee_changed` |
-| `GET` | `/api/channels/{id}/voice/channel-key` | — | `{ channel_key_sealed }` | Só o custodiante (403 caso contrário, 404 sem chave). Base da validação ao religar |
-| `GET` / `PUT` | `/api/channels/{id}/grid` | — / `GridLayout` | `GridLayout` | Layout e posições da cena. `PUT` emite `grid.updated` |
-| `GET` | `/api/channels/{id}/scenes` | — | `SceneList` | A v2 usa só a cena ativa |
-
-### Chaves (handoff)
-
-| Método | Caminho | Pedido | Resposta | Notas |
-|--------|---------|--------|----------|-------|
-| `POST` | `/api/servers/{id}/key-envelopes` | `{ account_id, sealed_key }` | 201 sem corpo | `sealed_key` é Base64 da caixa selada (80 bytes). Marca o handoff como concluído e emite `key_handoff.completed`. **409** `key already exists` quando o envelope próprio já existe com bytes diferentes, ou outro membro já tem envelope no escopo — primeiro escritor vence |
-| `GET` | `/api/servers/{id}/key-envelopes/me` | — | `{ server_id, account_id, sealed_key }` | 404 "key envelope not ready" enquanto o handoff está pendente |
-| `GET` | `/api/servers/{id}/key-envelopes/exists` | — | `{ exists: boolean }` | Indicador autoritativo de existência de envelope no Servidor, sem expor a chave; usado por `ensureServerKey` para não gerar chave nova quando já existe uma a sincronizar |
-
-### Eventos WebSocket
-
-Ligação `GET /ws` com o mesmo cookie. O cliente **só recebe**; a única mensagem que envia é o texto `ping` (a cada 25 s) como *keep-alive*. Envelope:
-
-```json
-{ "event": "message.new", "server_id": "uuid", "payload": { } }
+```bash
+chat-backend reset-code <handle>
 ```
 
-| Evento | Destinatários | Payload | Efeito no cliente |
-|--------|---------------|---------|-------------------|
-| `message.new` | Quem pode ver o canal | `Message` | Acrescenta à timeline, marca não lido |
-| `message.deleted` | Quem pode ver o canal | `{ id, channel_id }` | Remove da timeline |
-| `notification.created` | A conta notificada | `Notification` (sem `account_id`) | Sino e indicadores |
-| `presence` | Membros do servidor | `{ online_account_ids }` | Painel de Membros |
-| `voice.occupancy` | Membros do servidor | `{ channel_id, call_started_at, occupants[] }` | Roster da sidebar, duração, PiP |
-| `grid.updated` | Membros do servidor | `{ channel_id, grid: GridLayout }` | Palco e editor de cena |
-| `scene.changed` | Membros do servidor | `{ channel_id, active_scene_id, scenes[] }` | Cena ativa |
-| `channel.e2ee_changed` | Membros do servidor | `{ channel_id, e2ee_enabled, actor_account_id, at, intent }` | Chip, faixa "E2EE desligada", reinício da chamada |
-| `channel.deleted` | Membros do servidor | `{ channel_id, server_id }` | Sai do canal e da chamada |
-| `channel_role.changed` | Membros do servidor | `{ channel_id, roles }` | Papéis de canal |
-| `server.deleted` | Membros do servidor | `{ server_id }` | Limpa a seleção, encerra a chamada |
-| `invite.consumed` | Membros do servidor | `{ invite_code, new_member_account_id }` | Atualiza membros e cargos |
-| `key_handoff.requested` | Membros que já têm a chave | `{ account_id, identity_pubkey }` | Sela a chave para o novo membro |
-| `key_handoff.completed` | O membro novo | `{ account_id }` | Vai buscar o seu envelope |
+O comando imprime o código uma vez (30 minutos por omissão) e a base guarda só o hash. Entrega-se por um canal que já se use com essa pessoa. O procedimento completo está em [Senha esquecida](docs/operar-instancia.md#senha-esquecida-código-do-operador).
 
-O backend **não** emite eventos de criação de canal ou de servidor: o cliente refaz o pedido das listas. Após uma interrupção do socket o cliente reconecta com recuo exponencial (0,5 s a 15 s) e volta a pedir o que perdeu.
+A pessoa abre **Esqueci a senha**, escolhe **Tenho um código do operador**, escreve o handle, o código e a senha nova, e confirma que a identidade será nova. A Mesa gera um par de chaves novo, apaga a chave de recuperação se existia, e encerra todas as sessões. Os servidores voltam a abrir quando um membro que ainda tem a chave do servidor estiver online e voltar a selar o envelope. Servidores em que esta conta era a única com a chave, e a custódia da chave de voz, não voltam.
 
-### Rotas do backend que a v2 não usa
+Handle inexistente e código errado recebem a mesma resposta. Várias falhas seguidas invalidam o código: é preciso esperar ou pedir um código novo.
 
-Existem no backend por herança da v1 e estão fora do escopo da v2 (ver [`parity-checklist.md` §12](docs/v2/parity-checklist.md)): gravação (`POST /api/channels/{id}/egress/start` e `/stop`), cenas múltiplas (`POST`, `PATCH`, `DELETE` em `/scenes`, `/duplicate`, `/activate`), papéis de co-diretor (`GET`/`PUT /api/channels/{id}/roles`), e a listagem e revogação de convites (`GET /api/servers/{id}/invites`, `POST /api/invites/{code}/revoke`).
-
-### Política de alterações do backend
-
-O backend da v1 é reaproveitado como está. Alterações só são admitidas quando aditivas, retrocompatíveis, com tarefa própria, testes e registo em [`docs/v2/contracts/backend-change-policy.md`](docs/v2/contracts/backend-change-policy.md). Adições da v2 até agora: `GET /api/invites/{code}/handle-available`, `GET /api/channels/{id}/voice/channel-key`, e as rotas de recuperação de senha (`PUT /api/auth/password`, `POST /api/auth/recovery/code/redeem`, `POST /api/auth/recovery/key/{challenge,start,redeem}`, `PUT /api/auth/recovery-key`, `GET /api/servers/{id}/key-envelopes/exists`).
+As rotas destes três caminhos estão em [Autenticação e conta](docs/contratos-e-fluxos.md#autenticação-e-conta).
 
 ---
 
+## Contratos Frontend ↔ Backend
+
+Rotas REST, eventos WebSocket e a política de alteração do backend: [docs/contratos-e-fluxos.md](docs/contratos-e-fluxos.md#contratos-frontend--backend).
+
 ## Fluxos de integração
 
-### 1. Registo, login e desbloqueio
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor U as Utilizador
-    participant C as Cliente
-    participant B as Backend
-
-    Note over U,B: Registo
-    U->>C: handle e palavra-passe
-    C->>C: gerar identidade NaCl box
-    C->>C: Argon2id sobre a palavra-passe, AES-GCM da chave secreta = cofre
-    C->>B: POST /api/auth/register (handle, password, identity_pubkey, identity_vault)
-    B-->>C: Account + cookie Session
-    C->>C: guardar cofre no IndexedDB, identidade so em memoria
-
-    Note over U,B: Login no mesmo dispositivo
-    U->>C: handle e palavra-passe
-    C->>B: POST /api/auth/login
-    B-->>C: Account (com identity_vault) + cookie Session
-    C->>C: abrir cofre local com a palavra-passe
-
-    Note over U,B: Recarregar a pagina ou dispositivo novo
-    C->>B: GET /api/auth/me
-    B-->>C: Account ou 204
-    alt cofre local existe
-        C->>U: pedir palavra-passe
-        C->>C: abrir cofre local
-    else so existe o cofre remoto
-        C->>U: pedir palavra-passe
-        C->>C: abrir identity_vault vindo do servidor
-    else palavra-passe perdida
-        C->>C: gerar nova identidade
-        C->>B: PUT /api/auth/identity (nova pubkey + cofre)
-        B->>B: apagar envelopes, handoff pendente em cada servidor
-        B-->>C: Account
-    end
-```
-
-### 2. Criar servidor e distribuir a chave
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor O as Dono
-    participant C as Cliente
-    participant B as Backend
-
-    O->>C: nome do servidor e confirmar custodia
-    C->>C: gerar chave do servidor (32 bytes)
-    C->>C: gerar chave do canal de voz (32 bytes)
-    C->>O: mostrar a chave do canal uma vez para guardar
-    C->>C: channel_key_sealed = seal(chave do canal, pubkey do dono)
-    C->>B: POST /api/servers (name, custody_ack, channel_key_sealed)
-    B->>B: criar servidor, canal geral, canal de voz mesa, cargo Dono
-    B->>B: guardar channel_key.sealed_blob
-    B-->>C: Server
-    C->>C: envelope = seal(chave do servidor, pubkey do dono)
-    C->>B: POST /api/servers/id/key-envelopes (account_id do dono, sealed_key)
-    B-->>C: 201
-    C->>C: chave do servidor fica em memoria durante a sessao
-```
-
-### 3. Convite e entrada de um membro novo (handoff da chave)
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor A as Membro com permissao
-    actor N as Convidado
-    participant CA as Cliente A
-    participant CN as Cliente N
-    participant B as Backend
-    participant CM as Clientes que ja tem a chave
-
-    A->>CA: Convidar
-    CA->>B: POST /api/servers/id/invites
-    B-->>CA: Invite (code)
-    A-->>N: link /invite/code
-    N->>CN: abrir o link
-    CN->>B: GET /api/invites/code
-    B-->>CN: InvitePreview (server_name, requires_account_creation)
-    CN->>B: GET /api/invites/code/handle-available?handle=
-    B-->>CN: available
-    CN->>CN: gerar identidade e cofre
-    CN->>B: POST /api/invites/code/accept (handle, password, identity_pubkey, identity_vault)
-    B->>B: criar conta, membership com handoff pendente
-    B-->>CN: Membership (key_handoff_status pending) + cookie Session
-    B--)CM: WS invite.consumed
-    B--)CM: WS key_handoff.requested (account_id, identity_pubkey)
-    CM->>CM: envelope = seal(chave do servidor, pubkey de N)
-    CM->>B: POST /api/servers/id/key-envelopes
-    B->>B: handoff = synced
-    B--)CN: WS key_handoff.completed
-    CN->>B: GET /api/servers/id/key-envelopes/me
-    B-->>CN: sealed_key
-    CN->>CN: unseal com a identidade, chave do servidor em memoria
-```
-
-Se N abrir a app antes de alguém com a chave estar online, `GET .../key-envelopes/me` responde 404 "key envelope not ready" e o cliente espera pelo evento `key_handoff.completed`.
-
-### 4. Enviar e receber uma mensagem
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor A as Autor
-    participant CA as Cliente A
-    participant B as Backend
-    participant CB as Cliente B (destinatario)
-
-    opt anexos
-        CA->>CA: cifrar bytes com a chave do servidor (AES-GCM)
-        CA->>B: POST /api/channels/id/attachments (octet-stream + X-Mesa-Media-Type)
-        B-->>CA: Attachment (id)
-    end
-    A->>CA: escrever (com @mencoes e resposta)
-    CA->>CA: content_ciphertext = AES-GCM(chave do servidor, texto)
-    CA->>B: POST /api/channels/id/messages (content_ciphertext, attachment_ids, mentioned_account_ids, reply_to_message_id)
-    B->>B: guardar, criar notificacoes de mencao e de resposta
-    B-->>CA: 201 Message
-    B--)CB: WS message.new (Message)
-    B--)CB: WS notification.created (so para quem foi mencionado ou respondido)
-    CB->>CB: decifrar com a chave do servidor e mostrar
-    opt anexos na mensagem
-        CB->>B: GET /api/attachments/id
-        B-->>CB: bytes cifrados
-        CB->>CB: decifrar e mostrar miniatura
-    end
-    CB->>B: PUT /api/channels/id/read (ao ver a mensagem)
-    CB->>B: POST /api/notifications/id/read
-```
-
-Mensagens apagadas seguem o caminho `DELETE /api/channels/{id}/messages/{mid}` seguido de `message.deleted`. A pesquisa corre toda no cliente: usa as mensagens que os canais abertos já decifraram e busca e decifra a página mais recente dos outros canais de texto. O termo pesquisado nunca é enviado ao servidor.
-
-### 5. Entrar numa chamada de voz/vídeo
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor U as Utilizador
-    participant C as Cliente
-    participant B as Backend
-    participant L as LiveKit
-    participant O as Outros membros
-
-    U->>C: abrir canal de voz (pre-entrada)
-    C->>C: pre-visualizar camera, microfone e blur localmente
-    U->>C: Entrar (ou Entrar ouvir, ou Testar video)
-    C->>B: POST /api/channels/id/voice/join (mic_on, cam_on)
-    B->>B: upsert da ocupacao, sair de outra mesa, can_publish pela permissao de falar
-    B-->>C: token, url, room
-    opt chave do servidor ainda nao esta em memoria
-        C->>B: GET /api/servers/id/key-envelopes/me
-        B-->>C: sealed_key
-    end
-    C->>C: chave do servidor, E2EE de frames
-    C->>L: ligar (token) com ExternalE2EEKeyProvider
-    L-->>C: participantes e faixas cifradas
-    B--)O: WS voice.occupancy (ocupantes, mic, cam, call_started_at)
-
-    loop enquanto na chamada
-        C->>B: PATCH /api/channels/id/voice/media (heartbeat e estado mic, cam, ecra)
-        B--)O: WS voice.occupancy
-    end
-
-    U->>C: Terminar
-    C->>L: desligar
-    C->>B: POST /api/channels/id/voice/leave
-    B->>B: apagar ocupacao, libertar posicao da grade
-    B--)O: WS voice.occupancy e grid.updated
-```
-
-Ao fechar a aba, o cliente repete `voice/leave` com `keepalive`. Se a câmera falhar ou for negada, entra só com áudio e avisa. Se o canal ou o servidor forem apagados (`channel.deleted`, `server.deleted`), o cliente sai sozinho.
-
-```mermaid
-stateDiagram-v2
-    [*] --> idle
-    idle --> connecting: entrar
-    connecting --> live: LiveKit ligado
-    connecting --> idle: falhou (negado, sem chave, indisponivel)
-    live --> reconnecting: ligacao caiu
-    reconnecting --> live: voltou
-    reconnecting --> idle: nao voltou
-    live --> connecting: E2EE ligada ou desligada (rejoin)
-    live --> idle: terminar, canal ou servidor apagado
-```
-
-### 6. Desligar e religar a E2EE de um canal de voz
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor O as Dono
-    participant C as Cliente do dono
-    participant B as Backend
-    participant M as Outros clientes
-
-    O->>C: desligar E2EE
-    C->>B: POST /api/channels/id/voice/e2ee (enabled false)
-    B->>B: so o dono, so com has_channel_key, auditoria
-    B-->>C: e2ee_enabled false, audit_id, at
-    B--)C: WS channel.e2ee_changed
-    B--)M: WS channel.e2ee_changed (actor_account_id, at)
-    C->>C: faixa permanente E2EE desligada (quem e quando), reentrar na sala sem cifra
-    M->>M: faixa permanente, reentrar na sala sem cifra
-
-    O->>C: Religar E2EE
-    alt chave do canal ja no dispositivo
-        C->>C: confirmar
-    else nao esta no dispositivo
-        O->>C: colar a chave do canal (44 caracteres)
-        C->>C: validar o formato (32 bytes em Base64)
-    end
-    C->>B: GET /api/channels/id/voice/channel-key
-    B-->>C: channel_key_sealed
-    C->>C: unseal com a identidade e comparar com a chave fornecida
-    alt iguais
-        C->>B: POST /api/channels/id/voice/e2ee (enabled true, intent reenable)
-        B--)M: WS channel.e2ee_changed
-        C->>C: guardar a chave no dispositivo, reentrar na sala cifrada
-    else diferentes
-        C->>O: Esta nao e a chave deste canal (nada e enviado nem guardado)
-    end
-```
-
-### 7. Cena, composição e grade
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor D as Dono (editor)
-    participant CD as Cliente do dono
-    participant B as Backend
-    participant CM as Outros clientes
-
-    CD->>B: GET /api/channels/id/grid
-    B-->>CD: GridLayout (layout_key, slot_count, slots)
-    D->>CD: atribuir pessoas a posicoes, escolher layout e numero de posicoes
-    D->>CD: Salvar e aplicar
-    CD->>B: PUT /api/channels/id/grid (GridLayout)
-    B->>B: validar, guardar posicoes
-    B-->>CD: GridLayout
-    B--)CM: WS grid.updated (channel_id, grid)
-    CM->>CM: Composicao atualiza sem acao do utilizador
-
-    Note over B,CM: Quando alguem sai da chamada
-    B->>B: unassign_account (a posicao fica livre)
-    B--)CM: WS grid.updated
-```
-
-Quem não tem posição aparece na faixa "No banco". A vista Grade não depende da cena: mostra câmeras e partilhas de quem está na sala.
-
-### 8. Notificação de menção e resposta
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant A as Cliente do autor
-    participant B as Backend
-    participant D as Cliente mencionado
-
-    A->>B: POST /api/channels/id/messages (mentioned_account_ids, reply_to_message_id)
-    B->>B: UserNotification mention para cada mencionado
-    B->>B: UserNotification reply para o autor da mensagem respondida
-    B--)D: WS notification.created (kind, channel_id, message_id, actor_account_id)
-    D->>D: sino e indicadores, lista local
-    D->>B: GET /api/notifications?unread_only=true&limit=100 (carga inicial e apos reconexao)
-    B-->>D: Notification[]
-    D->>B: POST /api/notifications/id/read (ao ver a mensagem)
-    D->>B: POST /api/notifications/read-all (Limpar)
-```
-
-### 9. WebSocket: ligação, presença e reconexão
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant C as Cliente
-    participant B as Backend
-
-    C->>B: GET /ws (cookie Session)
-    B->>B: autenticar, registar a conta como online
-    B--)C: WS presence (online_account_ids) para os servidores da conta
-    loop a cada 25 s
-        C->>B: texto ping
-    end
-    B--)C: eventos do dominio (message.new, voice.occupancy, ...)
-    Note over C,B: A ligacao cai
-    C->>C: faixa de ligacao, recuo exponencial 0,5 s ate 15 s
-    C->>B: GET /ws
-    C->>B: refazer GET das listas, mensagens e ocupacao de voz
-```
+Registo, convite, mensagens, voz, E2EE e reconexão, em diagrama: [docs/contratos-e-fluxos.md](docs/contratos-e-fluxos.md#fluxos-de-integração).
 
 ---
 
@@ -726,7 +313,7 @@ export COOKIE_SECURE=false
 cargo run
 
 # 3) Frontend v2 (https://localhost:1421, aceitar o certificado de desenvolvimento)
-cd frontend-v2
+cd frontend
 npm install
 npm run dev
 ```
@@ -752,13 +339,13 @@ O Vite serve a SPA e faz proxy de `/api`, `/ws`, `/health` e `/rtc` para o backe
 ### Verificação
 
 ```bash
-cd frontend-v2
+cd frontend
 npm run build               # tsc + vite build
 npm run lint                # eslint
 npm run test:contracts      # vetores criptográficos (24 casos)
-npm run check:v1-overlap    # independência em relação ao código da v1
 npm run verify:i18n-keys    # chaves usadas = chaves em pt-BR e en
 npm run verify:sound        # chegadas, janela de repouso e preferência dos efeitos sonoros
+npm run verify:chat         # lógica de chat, incluindo agrupamento por tempo
 
 cd ../backend && cargo test # contratos e integração da API
 ```
@@ -769,13 +356,12 @@ cd ../backend && cargo test # contratos e integração da API
 
 ```text
 backend/          # API Axum, SQLite, tokens LiveKit, hub de WebSocket
-frontend-v2/      # SPA SolidJS (cliente atual)
-frontend/         # SPA da v1, só como rollback depois do corte
+frontend/         # SPA SolidJS v2 (cliente atual)
 infra/            # Docker Compose do LiveKit
 openspec/         # Specs e changes da v2 (specs/ = estado atual, changes/ = trabalho)
 docs/             # Produto, arquitetura, operação, contratos e mockups (docs/v2/)
 specs/            # Specs históricas da v1 (Speckit)
-assets/audio/     # Efeitos sonoros curtos (mention.mp3, call-join.mp3), copiados para o frontend-v2
+assets/audio/     # Efeitos sonoros curtos (mention.mp3, call-join.mp3), copiados para o frontend
 spike/            # Provas de conceito descartáveis
 CHANGELOG.md      # Versionamento
 ```
@@ -791,6 +377,6 @@ CHANGELOG.md      # Versionamento
 - Gravação de cenas (LiveKit Egress), incompatível com a E2EE; sem UI na v2.
 - Múltiplas cenas nomeadas por canal, co-diretor e *templates* de cena partilháveis.
 - MLS, multi-dispositivo, Passkeys e semente BIP-39.
-- Reações, rolagem de dados, ferramentas VTT, telemetria de rede e perfil estendido.
+- Rolagem de dados, ferramentas VTT, telemetria de rede e perfil estendido.
 - Outros sons além de menção e chegada à chamada, volume ajustável e notificações do sistema.
 - Cliente desktop empacotado (Tauri) como binário único cliente + servidor (visão de longo prazo).

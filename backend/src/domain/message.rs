@@ -1,6 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use crate::domain::reaction::ReactionSummary;
 
 fn default_kind() -> String {
     "user".to_string()
@@ -37,6 +38,8 @@ pub struct Message {
     pub content_plaintext: Option<String>,
     #[serde(default)]
     pub attachment_ids: Vec<Uuid>,
+    #[serde(default)]
+    pub reactions: Vec<ReactionSummary>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reply_to_message_id: Option<Uuid>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]

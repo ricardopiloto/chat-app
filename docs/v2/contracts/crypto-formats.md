@@ -90,6 +90,18 @@ O código de recuperação tem 16 bytes aleatórios, apresentados em Crockford b
 6. Cofre canónico da identidade, sem espaços: `{"v":1,"publicKey":[...],"salt":[...],"iv":[...],"wrapped":[...]}`. A ordem dos campos é fixa.
 7. Desafio e ticket duram 5 minutos, são de uso único e ficam ligados a `recovery_generation`. Não entram em logs.
 
-## 10. Nota de proveniência
+## 11. Semente de convite
+
+O link de convite pode transportar a `server_key` sem o backend a ver. O criador gera um par X25519 efémero (`nacl.box.keyPair`). A parte privada vive só no fragmento `#k=<base64url da secretKey, sem padding>`. O backend guarda um blob opaco, em Base64 padrão, de no máximo **128 bytes** depois de descodificado.
+
+Blob versão 1, 97 bytes:
+
+1. `0x01`.
+2. `seal(server_key, chave pública efémera)` — 80 bytes, secção 3.
+3. Valor de verificação: `BLAKE2b-16("mesa-invite-seed-v1" ‖ server_key)` — 16 bytes, sem chave. O cliente só publica o envelope se este valor bater certo com a chave aberta. Se o servidor já tiver uma mensagem cifrada, o cliente também a decifra com a chave aberta; se a decifra falhar, não publica e fica `pending`.
+
+Convite com semente e sem `expires_in_seconds` expira em 24 h. A recuperação por código do operador não usa esta semente: continua no handoff online.
+
+## 12. Nota de proveniência
 
 Os formatos acima foram confirmados de duas maneiras: observação dos dados reais gravados no backend (tamanhos e estrutura) e vectores produzidos pela aplicação anterior em execução, usada como oráculo. A estrutura exacta de encaixe (ordem `iv ‖ ct`, nonce derivado por BLAKE2b, parâmetros Argon2id) é confirmada pelos vectores: a implementação de referência, escrita a partir deste documento e das bibliotecas (`tweetnacl`, `@noble/hashes`, `hash-wasm`, WebCrypto), só passa se o documento estiver correcto e completo.

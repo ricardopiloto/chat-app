@@ -9,6 +9,8 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-09
+
 ### Added
 
 - **Password recovery** (item 18 of the backlog): there is now a way back in when the password is lost, without a server ever seeing the plaintext password or the identity's private key.
@@ -18,10 +20,18 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
   - Frontend: public `/recover` screen (both paths), recovery-key setup step in registration and invite acceptance (confirm "I saved it" before the account is created), "Change password" and "Recovery key" cards in "My account", corrected "Recover identity" warning copy on the unlock screen.
   - Backend storage/routes are additive; an older client keeps registering, logging in and using the app unchanged.
 - **Server key-fork fix**: `POST /api/servers/{id}/key-envelopes` now checks, writes and updates handoff state in one transaction — first writer wins, identical resubmission is idempotent, anything else gets `409`. `GET /api/servers/{id}/key-envelopes/exists` lets the client know whether a key already exists in scope before deciding to mint one, so a member (in particular an owner who just reset their identity) waits for handoff instead of generating a diverging key. See [docs/e2ee-gaps.md](docs/e2ee-gaps.md).
+- **Offline invitation key handoff**: new invitation links carry an ephemeral, sealed copy of the server key in the URL fragment, which never reaches the backend. Invitees can publish their own key envelope and start using the server without waiting for another member to connect. Old links and account recovery still use the online fallback; pending handoffs are replayed when a synced member connects. Backend migration `0024` adds an optional invite seed.
+- **Message reactions**: use the existing emoji picker on text, attachment, and reply messages. Reactions are grouped into pills with counts, author names, a highlight for your own reaction, and optimistic toggling. SQLite migration `0025`, new add/remove REST endpoints, and `reaction.added`/`reaction.removed` WebSocket events persist and synchronize them. The backend accepts only codes from the existing emoji set.
 
 ### Changed
 
 - The "Esqueceu o cofre?" link on the login screen is now "Esqueci a senha" / "Forgot password" and opens `/recover` — the old copy only explained unlocking, not recovery. The "Recover identity" confirmation no longer claims total history loss; it explains when history comes back (a synced member re-seals the key) and when it does not.
+- Consecutive messages from one sender remain in a visual group only while each gap is at most five minutes. A longer gap starts a new group with its own avatar and heading.
+- The current SolidJS client lives in `frontend/`; the former v1 client is available through Git history, not a separate source directory.
+
+### Fixed
+
+- An authenticated account outside a server now gets `403` when requesting an existing channel's history or performing another channel action, matching the server isolation rule. Missing channels and channels hidden from a member still return `404`. This changes the error status for nonmembers who previously received `404`.
 
 ## [1.0.0] - 2026-10-03
 

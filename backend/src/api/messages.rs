@@ -6,6 +6,7 @@ use crate::domain::channel::ChannelType;
 use crate::domain::message::Message;
 use crate::domain::notification::{NotificationKind, UserNotification};
 use crate::domain::permissions;
+use crate::domain::reaction::is_valid_emoji_code;
 use crate::error::ApiError;
 use crate::AppState;
 use axum::extract::{Path, Query, State};
@@ -391,5 +392,87 @@ pub async fn delete_message(
     };
     send_to_channel_viewers(&state, &channel, "message.deleted", &payload).await;
 
+    Ok(StatusCode::NO_CONTENT)
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ReactionBody {
+    pub emoji_code: String,
+}
+
+#[derive(Debug, Serialize)]
+struct ReactionEvent {
+    message_id: Uuid,
+    channel_id: Uuid,
+    account_id: Uuid,
+    emoji_code: String,
+}
+
+async fn reaction_target(
+    state: &AppState,
+    account_id: Uuid,
+    channel_id: Uuid,
+    message_id: Uuid,
+) -> Result<crate::domain::channel::Channel, ApiError> {
+    let (channel, _, _) = require_write_text(&state.pool, account_id, channel_id).await?;
+    if db::channel_mute::get_active(&state.pool, channel_id, account_id, Utc::now())
+        .await?
+        .is_some()
+    {
+        return Err(ApiError::forbidden("silenciado neste canal"));
+    }
+    let message = db::message::find_by_id(&state.pool, message_id)
+        .await?
+        .ok_or_else(|| ApiError::not_found("message not found"))?;
+    if message.channel_id != channel_id {
+        return Err(ApiError::not_found("message not found"));
+    }
+    Ok(channel)
+}
+
+pub async fn add_reaction(
+    State(state): State<AppState>,
+    AuthUser(account): AuthUser,
+    Path((channel_id, message_id)): Path<(Uuid, Uuid)>,
+    Json(body): Json<ReactionBody>,
+) -> Result<StatusCode, ApiError> {
+    if !is_valid_emoji_code(&body.emoji_code) {
+        return Err(ApiError::bad_request("invalid emoji_code"));
+    }
+    let channel = reaction_target(&state, account.id, channel_id, message_id).await?;
+    let inserted = db::reaction::add_reaction(&state.pool, message_id, account.id, &body.emoji_code).await?;
+    if inserted {
+        let payload = ReactionEvent {
+            message_id,
+            channel_id,
+            account_id: account.id,
+            emoji_code: body.emoji_code,
+        };
+        send_to_channel_viewers(&state, &channel, "reaction.added", &payload).await;
+        Ok(StatusCode::CREATED)
+    } else {
+        Ok(StatusCode::OK)
+    }
+}
+
+pub async fn remove_reaction(
+    State(state): State<AppState>,
+    AuthUser(account): AuthUser,
+    Path((channel_id, message_id, emoji_code)): Path<(Uuid, Uuid, String)>,
+) -> Result<StatusCode, ApiError> {
+    if !is_valid_emoji_code(&emoji_code) {
+        return Err(ApiError::bad_request("invalid emoji_code"));
+    }
+    let channel = reaction_target(&state, account.id, channel_id, message_id).await?;
+    let removed = db::reaction::remove_reaction(&state.pool, message_id, account.id, &emoji_code).await?;
+    if removed {
+        let payload = ReactionEvent {
+            message_id,
+            channel_id,
+            account_id: account.id,
+            emoji_code,
+        };
+        send_to_channel_viewers(&state, &channel, "reaction.removed", &payload).await;
+    }
     Ok(StatusCode::NO_CONTENT)
 }

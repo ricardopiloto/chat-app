@@ -20,6 +20,8 @@ export const chatEn: MessageTree = {
       owner: "Owner",
       you: "you",
       reply: "Reply",
+      react: "React",
+      reactMore: "and {count} more",
       delete: "Delete",
       unreadable: "This message could not be read on this device.",
       quoteGone: "Original message unavailable",
@@ -62,7 +64,7 @@ export const chatEn: MessageTree = {
     jump: "Jump to present",
     state: {
       loading: "Loading messages…",
-      noKey: "Waiting for this server's key. It arrives when another member is online.",
+      noKey: "Waiting for a member to come online. This server's key arrives when someone who already has it opens Mesa.",
       error: "Could not load the messages.",
       retry: "Try again",
       empty: "No messages yet. Say hello!",

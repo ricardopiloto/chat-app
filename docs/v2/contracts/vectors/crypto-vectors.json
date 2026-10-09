@@ -610,5 +610,11 @@
     },
     "canonicalVault": "{\"v\":1,\"publicKey\":[3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],\"salt\":[1,2,3,4],\"iv\":[5,6,7],\"wrapped\":[8,9]}",
     "payloadHash": "WOQriz9O3B/Z+FNXo75QEDVl7SW6OMZF5NR8h+sdwCY="
+  },
+  "inviteSeed": {
+    "code": "code",
+    "serverKey": "CQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQk=",
+    "secret": "6m0F4VdK9w64pUdVa7XbhKT/YyDegxFzUt3TzzK25HU=",
+    "blob": "AVrQhgkC+g9DOR1J+/fZYlSM7+lMeVdyN770lIkE8l5hzXt/Ioq4EBCEx95Y8HH/9/vUExK4Avakd4Oc5tE2DohCnNwej3BAcpKTUESSYOVnoZsiTEp/Xbbj6zKkY0SvlQ=="
   }
 }

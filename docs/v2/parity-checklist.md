@@ -210,7 +210,7 @@ Excluído em `docs/v2/TR-frontend-v2.md` §4.2/§7 e `docs/backlog/backlog.md`. 
 | EXC-03 | `GET/PUT /api/channels/{id}/roles` (co-director) | Co-director (código morto, backlog) |
 | EXC-04 | `GET /api/servers/{id}/invites`, `POST /api/invites/{code}/revoke` | Controlo de validade/permanência de convites (backlog); sem UI na aplicação actual |
 | EXC-05 | MLS, multi-dispositivo, Passkeys, cofre MLS, semente BIP-39 | TR §7 |
-| EXC-06 | Reações, rolagem de dados, ferramentas VTT, telemetria de rede, perfil estendido | Mockups fora de escopo (AUDIT §6) |
+| EXC-06 | Rolagem de dados, ferramentas VTT, telemetria de rede, perfil estendido | Mockups fora de escopo (AUDIT §6) |
 
 ## 13. Acréscimos à v1 (sem equivalente na aplicação anterior)
 

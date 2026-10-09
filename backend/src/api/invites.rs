@@ -13,6 +13,7 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Json;
 use axum_extra::extract::cookie::CookieJar;
+use base64::Engine;
 use chrono::{Duration, Utc};
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
@@ -27,6 +28,29 @@ pub struct CreateInviteBody {
     /// Required when server has no owner welcome destination and no text channel named `geral`.
     #[serde(default)]
     pub welcome_channel_id: Option<Uuid>,
+    /// Opaque sealed server key. Omitted by older clients.
+    #[serde(default)]
+    pub key_seed: Option<String>,
+}
+
+const KEY_SEED_MAX_BYTES: usize = 128;
+const SEEDED_INVITE_TTL_SECS: i64 = 24 * 60 * 60;
+
+fn normalize_key_seed(value: Option<String>) -> Result<Option<String>, ApiError> {
+    let Some(raw) = value else {
+        return Ok(None);
+    };
+    let trimmed = raw.trim();
+    if trimmed.is_empty() {
+        return Err(ApiError::bad_request("key_seed must be base64"));
+    }
+    let decoded = base64::engine::general_purpose::STANDARD
+        .decode(trimmed)
+        .map_err(|_| ApiError::bad_request("key_seed must be base64"))?;
+    if decoded.is_empty() || decoded.len() > KEY_SEED_MAX_BYTES {
+        return Err(ApiError::bad_request("key_seed exceeds the size limit"));
+    }
+    Ok(Some(trimmed.to_string()))
 }
 
 #[derive(Debug, Default)]
@@ -80,9 +104,15 @@ pub async fn create_invite(
             return Err(ApiError::forbidden("sem permissão para criar convites"));
         }
     }
+    let key_seed = normalize_key_seed(body.key_seed)?;
     let expires_at = match body.expires_in_seconds {
         MaybeExpires::Missing => {
-            Some(Utc::now() + Duration::seconds(state.config.default_invite_ttl_secs))
+            let secs = if key_seed.is_some() {
+                SEEDED_INVITE_TTL_SECS
+            } else {
+                state.config.default_invite_ttl_secs
+            };
+            Some(Utc::now() + Duration::seconds(secs))
         }
         MaybeExpires::Value(None) => {
             return Err(ApiError::bad_request(
@@ -144,6 +174,7 @@ pub async fn create_invite(
         revoked_at: None,
         use_count: 0,
         welcome_channel_id,
+        key_seed,
     };
     db::invite::create(&state.pool, &invite).await?;
     Ok((StatusCode::CREATED, Json(invite.public())))
@@ -287,22 +318,18 @@ pub async fn accept_invite(
             },
         )
         .await?;
-        return Ok((
-            jar,
-            Json(
-                db::membership::find(&state.pool, record.id, invite.server_id)
-                    .await?
-                    .ok_or_else(|| ApiError::internal("membership missing after register"))?,
-            ),
-        )
-            .into_response());
+        let membership = db::membership::find(&state.pool, record.id, invite.server_id)
+            .await?
+            .ok_or_else(|| ApiError::internal("membership missing after register"))?;
+        log_accept(&invite);
+        return Ok((jar, Json(accept_body(&membership, invite.key_seed.as_deref()))).into_response());
     };
 
     if db::membership::exists(&state.pool, account_id, invite.server_id).await? {
         let membership = db::membership::find(&state.pool, account_id, invite.server_id)
             .await?
             .expect("exists");
-        return Ok(Json(membership).into_response());
+        return Ok(Json(accept_body(&membership, None)).into_response());
     }
     let membership = Membership {
         account_id,
@@ -318,7 +345,24 @@ pub async fn accept_invite(
     }
     tx.commit().await?;
     emit_invite_consumed(&state, &invite, account_id).await;
-    Ok(Json(membership).into_response())
+    log_accept(&invite);
+    Ok(Json(accept_body(&membership, invite.key_seed.as_deref())).into_response())
+}
+
+fn log_accept(invite: &InviteRecord) {
+    tracing::info!(
+        has_key_seed = invite.key_seed.is_some(),
+        invite_code = %invite.code,
+        "invite accepted"
+    );
+}
+
+fn accept_body(membership: &Membership, key_seed: Option<&str>) -> serde_json::Value {
+    let mut body = serde_json::to_value(membership).expect("membership json");
+    if let Some(seed) = key_seed {
+        body["key_seed"] = serde_json::Value::String(seed.to_string());
+    }
+    body
 }
 
 async fn usable_invite(state: &AppState, code: &str) -> Result<InviteRecord, ApiError> {

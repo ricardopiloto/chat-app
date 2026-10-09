@@ -81,7 +81,8 @@ export const EMOJI_GROUPS: EmojiGroup[] = [
 ];
 
 const ALL: Emoji[] = EMOJI_GROUPS.flatMap((g) => g.items);
-const BY_CODE = new Map(ALL.map((e) => [e.code, e]));
+/** Canonical shortcode → emoji. The same codes the backend accepts in `EMOJI_CODES`. */
+export const BY_CODE = new Map(ALL.map((e) => [e.code, e]));
 
 /** Emoji whose code starts with the query first, then those that merely contain it. */
 export function searchEmoji(query: string, limit = 8): Emoji[] {

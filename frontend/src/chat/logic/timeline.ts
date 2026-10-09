@@ -1,6 +1,12 @@
 // Turns a chronological list of messages into the rows the list renders: day separators, system
 // lines and user messages, with consecutive messages of one sender grouped together.
 
+export interface MessageReaction {
+  emojiCode: string;
+  count: number;
+  accountIds: string[];
+}
+
 export interface ChatMessage {
   id: string;
   channelId: string;
@@ -9,6 +15,7 @@ export interface ChatMessage {
   createdAt: string;
   system: boolean;
   attachmentIds: string[];
+  reactions: MessageReaction[];
   replyToId: string | undefined;
   replySenderId: string | undefined;
   mentionedIds: string[];
@@ -31,6 +38,7 @@ export interface DayLabels {
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
+export const GROUP_WINDOW_MS = 5 * 60 * 1000;
 
 /** Calendar day in the viewer's time zone, as "YYYY-MM-DD". */
 export const dayKey = (date: Date): string => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
@@ -60,7 +68,7 @@ export function buildTimeline(messages: readonly ChatMessage[], now: Date, label
       previous = undefined;
       continue;
     }
-    const continues = previous !== undefined && previous.senderId === message.senderId && message.replyToId === undefined;
+    const continues = previous !== undefined && previous.senderId === message.senderId && message.replyToId === undefined && when.getTime() - new Date(previous.createdAt).getTime() <= GROUP_WINDOW_MS;
     rows.push({ type: "message", key: message.id, message, startsGroup: !continues });
     previous = message;
   }

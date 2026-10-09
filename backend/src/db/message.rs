@@ -44,6 +44,7 @@ fn map_row(row: Row) -> Result<Message, sqlx::Error> {
         kind,
         content_plaintext: row.content_plaintext,
         attachment_ids: Vec::new(),
+        reactions: Vec::new(),
         reply_to_message_id: row
             .reply_to_message_id
             .map(|id| Uuid::parse_str(&id).map_err(|e| sqlx::Error::Decode(Box::new(e))))
@@ -59,6 +60,7 @@ async fn enrich(pool: &SqlitePool, message: &mut Message) -> Result<(), sqlx::Er
         return Ok(());
     }
     message.attachment_ids = crate::db::attachment::list_ids_for_message(pool, message.id).await?;
+    message.reactions = crate::db::reaction::reactions_for_message(pool, message.id).await?;
     message.mentioned_account_ids = list_mentions(pool, message.id).await?;
     if let Some(parent_id) = message.reply_to_message_id {
         if let Some(parent) = find_by_id_raw(pool, parent_id).await? {

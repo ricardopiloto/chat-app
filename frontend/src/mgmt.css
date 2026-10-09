@@ -266,7 +266,7 @@
 .mg-history .switch > span:last-child { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .mg-destination { display: flex; align-items: center; gap: 8px; margin: 0; padding: 12px 14px; border-radius: var(--radius-md); background: var(--surface-container); color: var(--on-surface-variant); }
 .mg-destination b { margin-left: auto; font: 600 16px var(--font-display); color: var(--on-surface); }
-.mg-invite-link code { color: var(--on-surface); }
+.mg-invite-link code { max-width: 100%; overflow-wrap: anywhere; word-break: break-all; color: var(--on-surface); }
 .mg-invite-link button.copied { background: var(--secondary); color: var(--on-secondary); }
 
 /* --- invite onboarding page ---------------------------------------------------------------- */
