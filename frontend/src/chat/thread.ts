@@ -42,6 +42,11 @@ export async function toChatMessage(raw: Message, key: Uint8Array): Promise<Chat
     createdAt: raw.created_at,
     system,
     attachmentIds: raw.attachment_ids ?? [],
+    reactions: (raw.reactions ?? []).map((reaction) => ({
+      emojiCode: reaction.emoji_code,
+      count: reaction.count,
+      accountIds: reaction.account_ids,
+    })),
     replyToId: raw.reply_to_message_id,
     replySenderId: raw.reply_to_sender_account_id,
     mentionedIds: raw.mentioned_account_ids ?? [],
@@ -140,12 +145,34 @@ export function createThread(options: {
     publish(untrack(list).filter((m) => m.id !== messageId));
   }
 
+  /** Toggles this account's reaction and paints it before the server answers. */
+  async function react(messageId: string, emojiCode: string): Promise<void> {
+    const accountId = options.accountId();
+    const current = untrack(list).find((message) => message.id === messageId);
+    if (!current) return;
+    const mine = current.reactions.some((reaction) => reaction.emojiCode === emojiCode && reaction.accountIds.includes(accountId));
+    publish(applyReaction(untrack(list), messageId, emojiCode, accountId, !mine));
+    try {
+      if (mine) await messagesApi.removeReaction(options.channelId(), messageId, emojiCode);
+      else await messagesApi.addReaction(options.channelId(), messageId, emojiCode);
+    } catch {
+      void refresh();
+    }
+  }
+
   const onEvent = async (event: RealtimeEnvelope) => {
     const channelId = options.channelId();
     if (event.event === "message.new" && event.payload.channel_id === channelId && key) {
       publish(mergeMessage(untrack(list), await toChatMessage(event.payload as unknown as Message, key)));
     } else if (event.event === "message.deleted" && event.payload.channel_id === channelId) {
       publish(untrack(list).filter((m) => m.id !== event.payload.id));
+    } else if ((event.event === "reaction.added" || event.event === "reaction.removed") && event.payload.channel_id === channelId) {
+      const messageId = event.payload.message_id;
+      const accountId = event.payload.account_id;
+      const emojiCode = event.payload.emoji_code;
+      if (typeof messageId === "string" && typeof accountId === "string" && typeof emojiCode === "string") {
+        publish(applyReaction(untrack(list), messageId, emojiCode, accountId, event.event === "reaction.added"));
+      }
     } else if (event.event === "key_handoff.completed" && untrack(status) === "noKey") {
       void open();
     }
@@ -155,7 +182,27 @@ export function createThread(options: {
   createEffect(on(options.resync, () => void refresh(), { defer: true }));
   createEffect(() => onCleanup(options.subscribe((event) => void onEvent(event))));
 
-  return { messages: list, status, hasOlder, loadingOlder, loadOlder, send, remove, refresh, retry: open, serverKey: () => key };
+  return { messages: list, status, hasOlder, loadingOlder, loadOlder, send, remove, react, refresh, retry: open, serverKey: () => key };
+}
+
+/** Adds or drops one account on one emoji. Repeating the same change does not change the count. */
+export function applyReaction(messages: readonly ChatMessage[], messageId: string, emojiCode: string, accountId: string, present: boolean): ChatMessage[] {
+  return messages.map((message) => {
+    if (message.id !== messageId) return message;
+    const reactions = message.reactions.map((reaction) => ({ ...reaction, accountIds: [...reaction.accountIds] }));
+    const index = reactions.findIndex((reaction) => reaction.emojiCode === emojiCode);
+    if (present) {
+      if (index < 0) reactions.push({ emojiCode, count: 1, accountIds: [accountId] });
+      else if (!reactions[index]!.accountIds.includes(accountId)) reactions[index]!.accountIds.push(accountId);
+    } else if (index >= 0) {
+      reactions[index]!.accountIds = reactions[index]!.accountIds.filter((id) => id !== accountId);
+    }
+    const next = reactions
+      .map((reaction) => ({ ...reaction, count: reaction.accountIds.length }))
+      .filter((reaction) => reaction.count > 0)
+      .sort((a, b) => a.emojiCode.localeCompare(b.emojiCode));
+    return { ...message, reactions: next };
+  });
 }
 
 export type Thread = ReturnType<typeof createThread>;

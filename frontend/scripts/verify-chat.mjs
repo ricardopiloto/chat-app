@@ -24,11 +24,15 @@ const labels = { today: "Hoje", yesterday: "Ontem", full: (d) => d.toISOString()
 const msg = (id, sender, iso, extra = {}) => ({ id, channelId: "c", senderId: sender, text: id, createdAt: iso, system: false, attachmentIds: [], replyToId: undefined, replySenderId: undefined, mentionedIds: [], ...extra });
 const now = new Date(2026, 9, 24, 12, 0, 0);
 const at = (day, hour, min = 0) => new Date(2026, 9, day, hour, min).toISOString();
-const rows = c.buildTimeline([msg("a", "u1", at(23, 9)), msg("b", "u1", at(23, 10)), msg("c", "u1", at(23, 11)), msg("d", "u2", at(23, 12)), msg("e", "u1", at(24, 8)), msg("f", "u1", at(24, 9), { replyToId: "e" })], now, labels);
+const rows = c.buildTimeline([msg("a", "u1", at(23, 9)), msg("b", "u1", at(23, 9, 1)), msg("c", "u1", at(23, 9, 2)), msg("d", "u2", at(23, 9, 3)), msg("e", "u1", at(24, 8)), msg("f", "u1", at(24, 9), { replyToId: "e" })], now, labels);
 check("day separators appear once per day", rows.filter((r) => r.type === "day").length === 2);
 check("separator labels: yesterday then today", same(rows.filter((r) => r.type === "day").map((r) => r.label), ["Ontem", "Hoje"]));
 const starts = rows.filter((r) => r.type === "message").map((r) => r.startsGroup);
 check("three consecutive messages of one sender form one group", same(starts.slice(0, 3), [true, false, false]));
+const spacedRows = c.buildTimeline([msg("early", "u1", at(24, 9, 24)), msg("near", "u1", at(24, 9, 26)), msg("late", "u1", at(24, 9, 46))], now, labels);
+const spacedStarts = spacedRows.filter((r) => r.type === "message").map((r) => r.startsGroup);
+check("same sender stays grouped after two minutes", same(spacedStarts.slice(0, 2), [true, false]));
+check("same sender starts a new group after twenty minutes", spacedStarts[2] === true);
 check("another sender starts a new group", starts[3] === true);
 check("a new day starts a new group even for the same sender", starts[4] === true);
 check("a reply starts its own group", starts[5] === true);

@@ -3,6 +3,7 @@
 // Identity vault and sealed box come from src/crypto/vault.ts. The AES message/attachment functions
 // belong to the text-chat phase and are still taken from the reference implementation.
 export { wrapVault, unlockVault, seal, unseal } from "../../src/crypto/vault.ts";
+export { createInviteSeed, encodeSeedBlob, inviteUrl, openInviteSeed } from "../../src/crypto/inviteSeed.ts";
 export {
   canonicalIdentityVaultJson,
   deriveRecovery,

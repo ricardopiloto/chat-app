@@ -28,6 +28,8 @@ pub struct InviteRecord {
     pub revoked_at: Option<DateTime<Utc>>,
     pub use_count: i64,
     pub welcome_channel_id: Option<Uuid>,
+    /// Opaque sealed server key. Never copied into `public()`.
+    pub key_seed: Option<String>,
 }
 
 impl InviteRecord {

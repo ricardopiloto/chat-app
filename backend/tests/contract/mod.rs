@@ -31,6 +31,7 @@ mod member_join_welcome;
 mod no_e2ee_toggle;
 mod owner_role;
 mod permissions_acl;
+mod reactions;
 mod production_boot;
 mod scene_slot_count;
 mod scenes;

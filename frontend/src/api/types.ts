@@ -99,6 +99,8 @@ export interface Membership {
   account_id: Id;
   server_id: Id;
   key_handoff_status: "synced" | "pending";
+  /** Present only on the accept response of a new member, and only when the invite carried a seed. */
+  key_seed?: string;
 }
 
 export interface Presence {
@@ -172,6 +174,13 @@ export interface MyMute {
 }
 
 // --- messages, attachments, notifications ----------------------------------------------------
+/** One emoji on a message, in the clear. `emoji_code` is the shortcode, not the glyph. */
+export interface ReactionSummary {
+  emoji_code: string;
+  count: number;
+  account_ids: Id[];
+}
+
 export interface Message {
   id: Id;
   channel_id: Id;
@@ -181,6 +190,7 @@ export interface Message {
   kind?: string;
   content_plaintext?: string;
   attachment_ids: Id[];
+  reactions?: ReactionSummary[];
   reply_to_message_id?: Id;
   mentioned_account_ids?: Id[];
   reply_to_sender_account_id?: Id;

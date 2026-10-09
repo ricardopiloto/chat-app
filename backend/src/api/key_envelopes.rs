@@ -51,6 +51,11 @@ pub async fn post_envelope(
     .bind(body.account_id.to_string())
     .fetch_optional(&mut *tx)
     .await?;
+    let seed_eligible = if own && existing.is_none() {
+        pending_seed_member(&mut *tx, account.id, server_id).await?
+    } else {
+        false
+    };
     let mut announce = true;
     let mut rewrite = true;
     if own {
@@ -69,7 +74,7 @@ pub async fn post_envelope(
             .bind(account.id.to_string())
             .fetch_one(&mut *tx)
             .await?;
-            if others > 0 {
+            if others > 0 && !seed_eligible {
                 return Err(ApiError::conflict("key already exists"));
             }
         }
@@ -129,6 +134,26 @@ pub async fn post_envelope(
         );
     }
     Ok(StatusCode::CREATED)
+}
+
+async fn pending_seed_member<'e, E>(
+    executor: E,
+    account_id: Uuid,
+    server_id: Uuid,
+) -> Result<bool, ApiError>
+where
+    E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
+{
+    let row: Option<(Option<String>,)> = sqlx::query_as(
+        "SELECT i.key_seed FROM membership m
+         JOIN invite i ON i.id = m.joined_via_invite_id
+         WHERE m.account_id = ? AND m.server_id = ? AND m.key_handoff_status = 'pending'",
+    )
+    .bind(account_id.to_string())
+    .bind(server_id.to_string())
+    .fetch_optional(executor)
+    .await?;
+    Ok(row.is_some_and(|(seed,)| seed.is_some_and(|value| !value.is_empty())))
 }
 
 pub async fn envelope_exists(

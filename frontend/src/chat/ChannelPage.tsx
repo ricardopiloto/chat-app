@@ -287,11 +287,14 @@ export function ChannelPage(props: {
                                   roleBadge={roleBadge(m().senderId)}
                                   mine={m().senderId === props.me.id}
                                   canReply={canReplyTo(m()) && canWrite(props.channel) && !mutedUntil()}
+                                  canReact={canWrite(props.channel) && !mutedUntil()}
                                   canDelete={canDeleteMessage(m(), props.me.id, props.channel, props.server, props.roles)}
+                                  meId={props.me.id}
                                   quoted={m().replyToId ? byId().get(m().replyToId!) : undefined}
                                   highlighted={highlighted() === m().id}
                                   serverKey={thread.serverKey()}
                                   onReply={() => startReply(m())}
+                                  onReact={(code) => void thread.react(m().id, code)}
                                   onDelete={() => remove(m())}
                                   onOpenImage={(index) => setViewer({ ids: m().attachmentIds, start: index })}
                                   onFocusMember={shell.focusMember}

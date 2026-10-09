@@ -5,10 +5,10 @@ import basicSsl from "@vitejs/plugin-basic-ssl";
 import solid from "vite-plugin-solid";
 import { syncAudio } from "./scripts/sync-audio.mjs";
 
-const BACKEND_HTTP = "http://127.0.0.1:8080";
-const BACKEND_WS = "ws://127.0.0.1:8080";
+const BACKEND_HTTP = process.env.MESA_BACKEND ?? "http://127.0.0.1:8080";
+const BACKEND_WS = process.env.MESA_BACKEND_WS ?? "ws://127.0.0.1:8080";
 const LIVEKIT_HTTP = "http://127.0.0.1:7880";
-const DEV_PORT = 1421;
+const DEV_PORT = Number(process.env.MESA_DEV_PORT ?? 1421);
 
 const manifest = JSON.parse(
   readFileSync(fileURLToPath(new URL("./package.json", import.meta.url)), "utf8"),

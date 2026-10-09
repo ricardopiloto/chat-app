@@ -35,7 +35,7 @@ export const roles = {
 };
 
 export const invites = {
-  create: (serverId: string, options: { include_history?: boolean; welcome_channel_id?: string; expires_in_seconds?: number } = {}) =>
+  create: (serverId: string, options: { include_history?: boolean; welcome_channel_id?: string; expires_in_seconds?: number; key_seed?: string } = {}) =>
     http.post<Invite>(`/api/servers/${serverId}/invites`, options),
   preview: (code: string) => http.get<InvitePreview>(`/api/invites/${encodeURIComponent(code)}`),
   handleAvailable: (code: string, handle: string) =>

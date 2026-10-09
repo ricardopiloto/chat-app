@@ -4,6 +4,9 @@ import { createCopy } from "../lib/copy";
 import { t } from "../i18n";
 import { Badge, Button, Dialog, Icon, Radio, Switch } from "../components/ui";
 import { channels as channelsApi, invites, servers, type Channel } from "../api";
+import { useSession } from "../session/session";
+import { loadServerKey } from "../crypto/keyHandoff";
+import { SEED_TTL_SECONDS, createInviteSeed, encodeSeedBlob, inviteUrl } from "../crypto/inviteSeed";
 
 type Step = "loading" | "channel" | "link";
 
@@ -16,7 +19,9 @@ export function InviteDialog(props: { open: boolean; serverId: string; onClose: 
   const [history, setHistory] = createSignal(true);
   const [destination, setDestination] = createSignal("");
   const [url, setUrl] = createSignal("");
+  const [seeded, setSeeded] = createSignal(false);
   const [error, setError] = createSignal("");
+  const session = useSession();
   const [busy, setBusy] = createSignal(false);
   const { copied, copy } = createCopy();
 
@@ -24,13 +29,18 @@ export function InviteDialog(props: { open: boolean; serverId: string; onClose: 
     setBusy(true);
     setError("");
     try {
+      const identity = session.identity();
+      const serverKey = identity ? await loadServerKey(props.serverId, identity).catch(() => undefined) : undefined;
+      const seed = serverKey ? createInviteSeed(serverKey) : undefined;
       const invite = await invites.create(props.serverId, {
         include_history: history(),
         ...(welcomeChannelId ? { welcome_channel_id: welcomeChannelId } : {}),
+        ...(seed ? { key_seed: encodeSeedBlob(seed.blob), expires_in_seconds: SEED_TTL_SECONDS } : {}),
       });
       const target = textChannels().find((c) => c.id === (welcomeChannelId ?? invite.welcome_channel_id));
       setDestination(target?.name ?? textChannels().find((c) => c.name === "geral")?.name ?? "");
-      setUrl(`${location.origin}/invite/${invite.code}`);
+      setSeeded(Boolean(seed));
+      setUrl(seed ? inviteUrl(location.origin, invite.code, seed.secret) : `${location.origin}/invite/${invite.code}`);
       setStep("link");
     } catch (failure) {
       setError(errorText(failure, "mgmt.error"));
@@ -43,6 +53,7 @@ export function InviteDialog(props: { open: boolean; serverId: string; onClose: 
     setStep("loading");
     setError("");
     setUrl("");
+    setSeeded(false);
     setHistory(true);
     try {
       const text = (await channelsApi.listForServer(props.serverId)).filter((c) => c.type === "text");
@@ -145,11 +156,11 @@ export function InviteDialog(props: { open: boolean; serverId: string; onClose: 
               </button>
             </div>
           </div>
-          <section class="mg-card compact mg-tip">
-            <Icon name="shield_lock" />
+          <section class="mg-card compact mg-tip" role="status">
+            <Icon name={seeded() ? "shield_lock" : "hourglass_top"} />
             <div>
-              <h3>{t("mgmt.invite.custodyTitle")}</h3>
-              <p>{t("mgmt.invite.custodyText")}</p>
+              <h3>{t(seeded() ? "mgmt.invite.seedWarningTitle" : "mgmt.invite.pendingCreatorTitle")}</h3>
+              <p>{t(seeded() ? "mgmt.invite.seedWarning" : "mgmt.invite.pendingCreator")}</p>
             </div>
           </section>
           <footer class="mg-actions">

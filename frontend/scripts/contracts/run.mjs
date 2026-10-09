@@ -152,6 +152,30 @@ if (impl.wrapRecovery && impl.deriveRecovery && impl.signRecovery && impl.verify
   }
 }
 
+if (impl.openInviteSeed && impl.createInviteSeed && vectors.inviteSeed) {
+  const vector = vectors.inviteSeed;
+  check("inviteSeed: published vector", () => {
+    const opened = impl.openInviteSeed(bytes(vector.blob), bytes(vector.secret));
+    expect(opened && same(opened, bytes(vector.serverKey)), "opened key differs");
+  });
+  check("inviteSeed: tampered check rejected", () => {
+    const blob = bytes(vector.blob);
+    blob[blob.length - 1] ^= 1;
+    expect(impl.openInviteSeed(blob, bytes(vector.secret)) === null, "tampered check was accepted");
+  });
+  check("inviteSeed: round trip keeps the secret out of the request", () => {
+    const made = impl.createInviteSeed(bytes(vector.serverKey));
+    const opened = impl.openInviteSeed(made.blob, made.secret);
+    expect(opened && same(opened, bytes(vector.serverKey)), "round trip differs");
+    const url = impl.inviteUrl("https://mesa.example", vector.code ?? "code", made.secret);
+    const hash = url.slice(url.indexOf("#") + 1);
+    const body = JSON.stringify({ key_seed: impl.encodeSeedBlob(made.blob), expires_in_seconds: 86400 });
+    expect(url.includes("#k="), "fragment missing");
+    expect(!url.split("#")[0].includes(hash.slice(2)), "secret leaked into the path");
+    expect(!body.includes("#") && !body.includes(hash.slice(2)), "secret leaked into the body");
+  });
+}
+
 await Promise.all(pending);
 if (passed + failures.length === 0) {
   console.log("FAIL  no checks ran");

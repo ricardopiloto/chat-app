@@ -13,6 +13,7 @@ pub mod membership;
 pub mod message;
 pub mod notification;
 pub mod permissions;
+pub mod reaction;
 pub mod scene;
 pub mod server;
 pub mod server_role;

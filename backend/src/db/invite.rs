@@ -14,6 +14,7 @@ struct Row {
     revoked_at: Option<String>,
     use_count: i64,
     welcome_channel_id: Option<String>,
+    key_seed: Option<String>,
 }
 
 fn parse_dt(value: &str) -> Result<DateTime<Utc>, sqlx::Error> {
@@ -37,16 +38,17 @@ fn map_row(row: Row) -> Result<InviteRecord, sqlx::Error> {
             .welcome_channel_id
             .map(|id| Uuid::parse_str(&id).map_err(|e| sqlx::Error::Decode(Box::new(e))))
             .transpose()?,
+        key_seed: row.key_seed,
     })
 }
 
 const SELECT_COLS: &str =
-    "id, code, server_id, created_by_account_id, expires_at, include_history, revoked_at, use_count, welcome_channel_id";
+    "id, code, server_id, created_by_account_id, expires_at, include_history, revoked_at, use_count, welcome_channel_id, key_seed";
 
 pub async fn create(pool: &SqlitePool, invite: &InviteRecord) -> Result<(), sqlx::Error> {
     sqlx::query(
-        "INSERT INTO invite (id, code, server_id, created_by_account_id, expires_at, include_history, revoked_at, created_at, use_count, welcome_channel_id)
-         VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?)",
+        "INSERT INTO invite (id, code, server_id, created_by_account_id, expires_at, include_history, revoked_at, created_at, use_count, welcome_channel_id, key_seed)
+         VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?)",
     )
     .bind(invite.id.to_string())
     .bind(&invite.code)
@@ -57,6 +59,7 @@ pub async fn create(pool: &SqlitePool, invite: &InviteRecord) -> Result<(), sqlx
     .bind(Utc::now().to_rfc3339())
     .bind(invite.use_count)
     .bind(invite.welcome_channel_id.map(|id| id.to_string()))
+    .bind(&invite.key_seed)
     .execute(pool)
     .await?;
     Ok(())

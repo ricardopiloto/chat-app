@@ -8,6 +8,8 @@
 export const REALTIME_EVENTS = [
   "message.new",
   "message.deleted",
+  "reaction.added",
+  "reaction.removed",
   "presence",
   "voice.occupancy",
   "channel.e2ee_changed",

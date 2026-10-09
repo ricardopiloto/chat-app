@@ -41,7 +41,7 @@ pub async fn channel_access(
 ) -> Result<(Membership, EffectiveAccess), ApiError> {
     let membership = db::membership::find(pool, account_id, channel.server_id)
         .await?
-        .ok_or_else(|| ApiError::not_found("channel not found"))?;
+        .ok_or_else(|| ApiError::forbidden("not a member of this server"))?;
     let server = db::server::find_by_id(pool, channel.server_id)
         .await?
         .ok_or_else(|| ApiError::not_found("channel not found"))?;
@@ -162,9 +162,7 @@ pub async fn require_write_text(
     let caps = db::server_role::aggregated_caps(pool, result.0.server_id, account_id).await?;
     let caps = permissions::effective_role_caps(server.owner_account_id == account_id, caps);
     if !caps.can_send_messages {
-        return Err(ApiError::forbidden(
-            "sem permissão para enviar mensagens",
-        ));
+        return Err(ApiError::forbidden("sem permissão para enviar mensagens"));
     }
     Ok(result)
 }

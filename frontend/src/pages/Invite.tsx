@@ -1,4 +1,4 @@
-import { Match, Show, Switch, createEffect, createResource, createSignal, onCleanup } from "solid-js";
+import { Match, Show, Switch, createEffect, createResource, createSignal, onCleanup, onMount } from "solid-js";
 import { useLocation, useNavigate } from "@solidjs/router";
 import { ThemeSwitch } from "../shell/ThemeSwitch";
 import { LanguageSwitch } from "../shell/LanguageSwitch";
@@ -9,6 +9,8 @@ import { ApiError, auth, invites } from "../api";
 import { RecoverySetup, type RecoveryChoice } from "../auth/RecoverySetup";
 import { generateIdentity, type Identity } from "../crypto/identity";
 import { createRecovery, type RecoveryMaterial } from "../crypto/recovery";
+import { claimInviteKey } from "../crypto/claimInvite";
+import { readInviteFragment, takeInviteFragment } from "../crypto/inviteLink";
 
 const MIN_PASSWORD = 8;
 const HANDLE_PATTERN = /^[a-z0-9_]{3,32}$/;
@@ -65,6 +67,8 @@ export function Invite() {
   const [recoveryChoice, setRecoveryChoice] = createSignal<RecoveryChoice>("later");
   const [recoveryDraft, setRecoveryDraft] = createSignal<{ handle: string; identity: Identity; material: RecoveryMaterial }>();
   const [recoverySaved, setRecoverySaved] = createSignal(false);
+  const [seedSecret, setSeedSecret] = createSignal<Uint8Array | null>(null);
+  onMount(() => setSeedSecret(readInviteFragment()));
 
   const info = () => {
     const result = preview();
@@ -108,8 +112,20 @@ export function Invite() {
     setProblem("");
     try {
       let membership;
-      if (signedIn()) membership = await invites.accept(code());
-      else if (recoveryChoice() === "now") {
+      const held = seedSecret();
+      if (signedIn()) {
+        membership = await invites.accept(code());
+        const idn = session.identity();
+        if (idn) {
+          await claimInviteKey({
+            serverId: membership.server_id,
+            accountId: membership.account_id,
+            identity: idn,
+            keySeed: membership.key_seed,
+            secret: held,
+          });
+        }
+      } else if (recoveryChoice() === "now") {
         const name = cleanHandle();
         const current = recoveryDraft();
         if (!current || current.handle !== name) {
@@ -131,10 +147,13 @@ export function Invite() {
           inviteCode: code(),
           identity: current.identity,
           recovery: current.material,
+          seedSecret: held,
         });
       } else {
-        membership = await session.joinWithInvite({ handle: cleanHandle(), password: password(), inviteCode: code() });
+        membership = await session.joinWithInvite({ handle: cleanHandle(), password: password(), inviteCode: code(), seedSecret: held });
       }
+      setSeedSecret(null);
+      takeInviteFragment();
       const name = displayName().trim();
       if (name) await auth.setDisplayName(name).then((account) => session.updateAccount(account)).catch(() => undefined);
       navigate(`/servers/${membership.server_id}`, { replace: true });

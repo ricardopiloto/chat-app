@@ -1,0 +1,1 @@
+ALTER TABLE invite ADD COLUMN key_seed TEXT;

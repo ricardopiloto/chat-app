@@ -1,12 +1,17 @@
-import { For, Show, createSignal, onCleanup } from "solid-js";
+import { For, Show, createEffect, createSignal, onCleanup } from "solid-js";
 import { Avatar, Badge, Icon } from "../components/ui";
 import { avatarUrl } from "../api";
 import { getLocale, t } from "../i18n";
 import { AttachmentThumb } from "./AttachmentThumb";
+import { EmojiPicker } from "./EmojiPicker";
 import { LinkCards } from "./LinkCards";
+import { BY_CODE } from "./logic/emoji";
 import { splitMentions } from "./logic/mentions";
 import type { ChatPerson } from "./logic/people";
-import type { ChatMessage } from "./logic/timeline";
+import type { ChatMessage, MessageReaction } from "./logic/timeline";
+
+/** Names listed in a reaction tooltip before the rest collapse into "and N more". */
+const REACTION_NAMES = 8;
 
 const URL_SPLIT = /(https?:\/\/[^\s<>"]+)/gi;
 const TRAILING = /[.,;:!?)\]}'"]+$/;
@@ -45,11 +50,14 @@ export interface MessageRowProps {
   roleBadge: string | undefined;
   mine: boolean;
   canReply: boolean;
+  canReact: boolean;
   canDelete: boolean;
+  meId: string;
   quoted: ChatMessage | undefined;
   highlighted: boolean;
   serverKey: Uint8Array | undefined;
   onReply: () => void;
+  onReact: (emojiCode: string) => void;
   onDelete: () => Promise<void>;
   onOpenImage: (index: number) => void;
   onFocusMember: (accountId: string) => void;
@@ -57,10 +65,51 @@ export interface MessageRowProps {
   watch: (element: HTMLElement, messageId: string) => void;
 }
 
+function personName(people: Map<string, ChatPerson>, accountId: string): string {
+  const found = people.get(accountId);
+  if (!found) return t("txt.search.unknownSender");
+  return found.label === found.handle ? `@${found.handle}` : found.label;
+}
+
+function ReactionPill(props: { reaction: MessageReaction; people: Map<string, ChatPerson>; meId: string; canReact: boolean; onReact: (emojiCode: string) => void }) {
+  const glyph = () => BY_CODE.get(props.reaction.emojiCode)?.glyph ?? props.reaction.emojiCode;
+  const names = () => props.reaction.accountIds.map((id) => personName(props.people, id));
+  const shown = () => names().slice(0, REACTION_NAMES);
+  const extra = () => Math.max(0, names().length - REACTION_NAMES);
+  const mine = () => props.reaction.accountIds.includes(props.meId);
+  return (
+    <button
+      type="button"
+      class="ch-react-pill"
+      classList={{ mine: mine() }}
+      disabled={!props.canReact}
+      aria-pressed={mine()}
+      onClick={() => props.onReact(props.reaction.emojiCode)}
+    >
+      <span>{glyph()}</span>
+      <span>{props.reaction.count}</span>
+      <span class="ch-react-tip" role="tooltip">
+        {shown().join(", ")}
+        <Show when={extra() > 0}> {t("txt.row.reactMore", { count: extra() })}</Show>
+      </span>
+    </button>
+  );
+}
+
 export function MessageRow(props: MessageRowProps) {
   const [armed, setArmed] = createSignal(false);
+  const [picker, setPicker] = createSignal(false);
   let disarm = 0;
+  let anchor: HTMLDivElement | undefined;
   onCleanup(() => window.clearTimeout(disarm));
+  createEffect(() => {
+    if (!picker()) return;
+    const close = (event: PointerEvent) => {
+      if (anchor && !anchor.contains(event.target as Node)) setPicker(false);
+    };
+    document.addEventListener("pointerdown", close);
+    onCleanup(() => document.removeEventListener("pointerdown", close));
+  });
   const author = () => props.people.get(props.message.senderId ?? "");
   // Like the mockups, a member without a display name is shown as @handle.
   const authorName = () => {
@@ -133,11 +182,33 @@ export function MessageRow(props: MessageRowProps) {
           </Show>
           <Show when={props.message.text}><LinkCards text={props.message.text} /></Show>
         </Show>
+        <Show when={props.message.reactions.length > 0}>
+          <div class="ch-reacts">
+            <For each={props.message.reactions}>
+              {(reaction) => <ReactionPill reaction={reaction} people={props.people} meId={props.meId} canReact={props.canReact} onReact={props.onReact} />}
+            </For>
+          </div>
+        </Show>
       </div>
-      <Show when={props.canReply || props.canDelete}>
+      <Show when={props.canReply || props.canReact || props.canDelete}>
         <div class="ch-msg-actions" role="toolbar">
           <Show when={props.canReply}>
             <button type="button" onClick={props.onReply} title={t("txt.row.reply")} aria-label={t("txt.row.reply")}><Icon name="reply" /></button>
+          </Show>
+          <Show when={props.canReact}>
+            <div class="ch-react-anchor" ref={anchor}>
+              <button type="button" aria-expanded={picker()} onClick={() => setPicker((open) => !open)} title={t("txt.row.react")} aria-label={t("txt.row.react")}><Icon name="add_reaction" /></button>
+              <Show when={picker()}>
+                <EmojiPicker
+                  placement="below"
+                  onPick={() => undefined}
+                  onPickItem={(emoji) => {
+                    setPicker(false);
+                    props.onReact(emoji.code);
+                  }}
+                />
+              </Show>
+            </div>
           </Show>
           <Show when={props.canDelete}>
             <button type="button" class="danger" classList={{ armed: armed() }} onClick={pressDelete} title={t("txt.row.delete")} aria-label={t("txt.row.delete")}>

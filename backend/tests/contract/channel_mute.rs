@@ -242,10 +242,7 @@ async fn mute_requires_cap_and_valid_duration() {
     let (status, _, _) = app
         .request(
             "PUT",
-            &format!(
-                "/api/servers/{}/members/{}/role",
-                setup.server_id, carol_id
-            ),
+            &format!("/api/servers/{}/members/{}/role", setup.server_id, carol_id),
             Some(json!({ "role_id": role_id })),
             Some(&setup.owner),
         )
@@ -304,4 +301,46 @@ async fn mute_requires_cap_and_valid_duration() {
         )
         .await;
     assert_eq!(status, StatusCode::BAD_REQUEST, "{err}");
+}
+
+#[tokio::test]
+async fn non_member_cannot_mute() {
+    let app = TestApp::new().await;
+    let setup = setup(&app).await;
+    let (status, other, _) = app
+        .request(
+            "POST",
+            "/api/servers",
+            Some(create_server_body("Outro")),
+            Some(&setup.owner),
+        )
+        .await;
+    assert_eq!(status, StatusCode::CREATED, "{other}");
+    let other_id = other["id"].as_str().unwrap();
+    let (status, invite, _) = app
+        .request(
+            "POST",
+            &format!("/api/servers/{other_id}/invites"),
+            Some(json!({})),
+            Some(&setup.owner),
+        )
+        .await;
+    assert_eq!(status, StatusCode::CREATED, "{invite}");
+    let (status, _, cara) = app
+        .register("cara", "password1", Some(invite["code"].as_str().unwrap()))
+        .await;
+    assert_eq!(status, StatusCode::CREATED);
+    let cara = must_cookie(cara);
+    let (status, err, _) = app
+        .request(
+            "PUT",
+            &format!(
+                "/api/channels/{}/mutes/{}",
+                setup.channel_a, setup.member_id
+            ),
+            Some(json!({ "duration_minutes": 5 })),
+            Some(&cara),
+        )
+        .await;
+    assert_eq!(status, StatusCode::FORBIDDEN, "{err}");
 }
