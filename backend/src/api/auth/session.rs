@@ -58,7 +58,8 @@ async fn session_for_token(
 }
 
 /// Cookie wins when it names a valid session. An absent or invalid cookie falls
-/// through to `Authorization: Bearer <token>`, validated the same way.
+/// through to `Authorization: Bearer <token>`, then to a WebSocket sub-protocol
+/// token (`Sec-WebSocket-Protocol`). Each candidate is validated the same way.
 async fn resolve_session(
     state: &AppState,
     jar: &CookieJar,
@@ -74,7 +75,27 @@ async fn resolve_session(
             return Ok(Some(resolved));
         }
     }
+    for token in subprotocol_tokens(headers) {
+        if let Some(resolved) = session_for_token(state, &token).await? {
+            return Ok(Some(resolved));
+        }
+    }
     Ok(None)
+}
+
+/// Values of `Sec-WebSocket-Protocol`. The native client sends the session token
+/// as one of them. The upgrade response echoes the first offered name so the
+/// handshake completes; that echo does not choose the session.
+pub(crate) fn subprotocol_tokens(headers: &HeaderMap) -> Vec<String> {
+    headers
+        .get_all(axum::http::header::SEC_WEBSOCKET_PROTOCOL)
+        .iter()
+        .filter_map(|value| value.to_str().ok())
+        .flat_map(|value| value.split(','))
+        .map(str::trim)
+        .filter(|token| !token.is_empty())
+        .map(str::to_string)
+        .collect()
 }
 
 async fn load_user(

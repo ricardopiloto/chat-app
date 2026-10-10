@@ -1,17 +1,22 @@
 // Which Mesa instance this client talks to, and the session token used instead of the cookie.
 // The web build never reads or writes this: `isNative()` is false and every save is a no-op.
-// Inside Tauri the values live in the app store. A dev-only flag simulates native mode in a
-// browser and then uses localStorage, so the plugin import stays behind the real Tauri bridge.
-import { isTauri } from "@tauri-apps/api/core";
-
+// Inside Electron the values live in a JSON file owned by the main process. A dev-only flag
+// simulates native mode in a browser and then uses localStorage.
 const DEV_KEY = "mesa.dev.native";
 const LOCAL_URL = "mesa.instance.baseUrl";
 const LOCAL_TOKEN = "mesa.instance.sessionToken";
-const STORE_FILE = "mesa-instance.json";
 
 export interface InstanceState {
   baseUrl: string | null;
   sessionToken: string | null;
+}
+
+interface NativeBridge {
+  loadInstance(): Promise<InstanceState>;
+  saveInstanceUrl(url: string): Promise<void>;
+  saveSessionToken(token: string): Promise<void>;
+  clearSessionToken(): Promise<void>;
+  clearInstance(): Promise<void>;
 }
 
 let state: InstanceState = { baseUrl: null, sessionToken: null };
@@ -38,18 +43,17 @@ function emit(): void {
   for (const listener of listeners) listener();
 }
 
-/** True inside the Tauri webview, or in dev when `?native=1` / localStorage `mesa.dev.native=1`. */
-export function isNative(): boolean {
-  return tauriBridge() || devSimulation();
+function page(): { __MESA_NATIVE__?: boolean; mesaNative?: NativeBridge } | undefined {
+  return (globalThis as { window?: { __MESA_NATIVE__?: boolean; mesaNative?: NativeBridge } }).window;
 }
 
-/** True only when the Tauri IPC bridge is present. Dev simulation does not set this. */
-export function tauriBridge(): boolean {
-  try {
-    return isTauri();
-  } catch {
-    return false;
-  }
+/** True inside the Electron shell, or in dev when `?native=1` / localStorage `mesa.dev.native=1`. */
+export function isNative(): boolean {
+  return Boolean(page()?.__MESA_NATIVE__) || devSimulation();
+}
+
+function nativeBridge(): NativeBridge | null {
+  return page()?.mesaNative ?? null;
 }
 
 function devSimulation(): boolean {
@@ -71,11 +75,8 @@ function asString(value: unknown): string | null {
 }
 
 async function readPersisted(): Promise<InstanceState> {
-  if (tauriBridge()) {
-    const { load } = await import("@tauri-apps/plugin-store");
-    const store = await load(STORE_FILE, { autoSave: false });
-    return { baseUrl: asString(await store.get(LOCAL_URL)), sessionToken: asString(await store.get(LOCAL_TOKEN)) };
-  }
+  const bridge = nativeBridge();
+  if (bridge) return bridge.loadInstance();
   return {
     baseUrl: asString(globalThis.localStorage?.getItem(LOCAL_URL)),
     sessionToken: asString(globalThis.localStorage?.getItem(LOCAL_TOKEN)),
@@ -83,14 +84,12 @@ async function readPersisted(): Promise<InstanceState> {
 }
 
 async function writePersisted(next: InstanceState): Promise<void> {
-  if (tauriBridge()) {
-    const { load } = await import("@tauri-apps/plugin-store");
-    const store = await load(STORE_FILE, { autoSave: false });
-    if (next.baseUrl) await store.set(LOCAL_URL, next.baseUrl);
-    else await store.delete(LOCAL_URL);
-    if (next.sessionToken) await store.set(LOCAL_TOKEN, next.sessionToken);
-    else await store.delete(LOCAL_TOKEN);
-    await store.save();
+  const bridge = nativeBridge();
+  if (bridge) {
+    if (next.baseUrl) await bridge.saveInstanceUrl(next.baseUrl);
+    if (next.sessionToken) await bridge.saveSessionToken(next.sessionToken);
+    else await bridge.clearSessionToken();
+    if (!next.baseUrl) await bridge.clearInstance();
     return;
   }
   const storage = globalThis.localStorage;
@@ -139,7 +138,9 @@ export async function clearInstance(): Promise<void> {
   state = { baseUrl: null, sessionToken: null };
   if (isNative()) {
     try {
-      await writePersisted(state);
+      const bridge = nativeBridge();
+      if (bridge) await bridge.clearInstance();
+      else await writePersisted(state);
     } catch {
       /* the in-memory clear still wins */
     }
@@ -160,20 +161,12 @@ export function normalizeInstanceUrl(raw: string): string {
   return url.origin;
 }
 
-async function probe(url: string): Promise<Response> {
-  if (tauriBridge()) {
-    const { fetch } = await import("@tauri-apps/plugin-http");
-    return fetch(url);
-  }
-  return fetch(url);
-}
-
 /** Confirms `GET /health` returns `{ ok: true }` and returns the origin to store. */
 export async function checkInstance(raw: string): Promise<string> {
   const base = normalizeInstanceUrl(raw);
   let response: Response;
   try {
-    response = await probe(new URL("/health", base).toString());
+    response = await fetch(new URL("/health", base).toString());
   } catch {
     throw new Error("unreachable");
   }

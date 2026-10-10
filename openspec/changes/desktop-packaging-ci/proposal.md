@@ -2,33 +2,36 @@
 
 ## Why
 
-`desktop-tauri-shell` entrega um crate Tauri que já compila e corre localmente (`cargo tauri build`), mas só nesta máquina de desenvolvimento (Linux). O pedido original do utilizador é explícito: um binário compatível com Windows, Mac e Linux, com Linux focado em AppImage, `.deb` e `.rpm`. Compilar para Windows e macOS com os plugins/webview nativos do Tauri exige, na prática, runners nativos dessas plataformas — não é viável cross-compilar de forma fiável a partir desta máquina Linux. O repositório já está hospedado em `github.com/ricardopiloto/chat-app` (confirmado via `git remote -v`) mas não tem qualquer `.github/workflows/` — esta change introduz a primeira esteira de CI do projecto, e só por essa necessidade concreta (não como ceremónia adicional).
+Esta change já tinha produzido artefactos reais (`.rpm`/`.AppImage`) a partir do shell Tauri — testados numa máquina Fedora real, revelaram um bug irrecuperável do WebKitGTK em câmara/microfone/colar imagem (ver `desktop-electron-shell/proposal.md` para o diagnóstico completo). Decidido com o utilizador: o shell passa a ser Electron. Esta change precisa de ser revista para empacotar `frontend/electron/` com `electron-builder` em vez de `frontend/src-tauri/` com `cargo tauri`/`tauri-action` — o pedido original do utilizador (binário para Windows/Mac/Linux, com AppImage/`.deb`/`.rpm` no Linux) não muda, só a ferramenta de empacotamento por baixo. O repositório continua sem `.github/workflows/` — esta continua a ser a primeira esteira de CI do projecto.
+
+**O que se mantém desta change tal como já estava** (decisões tomadas antes da troca de shell, tecnologicamente neutras): licença AGPL-3.0, identificador `com.mesa.desktop`, convenção de sincronizar a versão em três manifestos antes de uma tag, disparo manual/por tag (não em cada push), publicação como GitHub Release em rascunho, e a decisão de não assinar/notarizar os binários nesta fase.
 
 ## What Changes
 
-- Workflow do GitHub Actions (`.github/workflows/desktop-release.yml`, nome indicativo) com matriz de três runners (`ubuntu-latest`, `windows-latest`, `macos-latest`), usando a acção oficial `tauri-apps/tauri-action` para compilar `frontend/src-tauri` em cada plataforma.
-- No runner `ubuntu-latest`: instalar as dependências de sistema do Tauri (webkit2gtk, etc.) e `rpm`/`rpmbuild` (não vem por omissão no runner), e pedir explicitamente os três formatos Linux decididos pelo utilizador — `--bundles deb,rpm,appimage`.
-- No runner `windows-latest`: instaladores `.msi` (WiX) e `.exe` (NSIS) — os dois formatos que o bundler do Tauri já produz por omissão, sem preferência expressa pelo utilizador por um dos dois.
-- No runner `macos-latest`: `.app` e `.dmg` — formato por omissão do Tauri.
-- Metadados de empacotamento em `tauri.conf.json`/`Cargo.toml` (descrição curta/longa, categoria, licença, identificador reverso `com.mesa.desktop` — corrigido de `com.mesa.app` durante a implementação, ver `design.md` Decisão 4) exigidos pelos bundlers `deb`/`rpm`, hoje ausentes.
-- Novo ficheiro `LICENSE` na raiz do repositório (AGPL-3.0, decisão tomada com o utilizador) e o campo `license`/`license-file` correspondente em `backend/Cargo.toml`, `frontend/package.json` e `frontend/src-tauri/Cargo.toml` — hoje nenhum manifesto do repositório declara licença.
-- Publicação dos artefactos (os binários/instaladores de cada runner) numa GitHub Release, accionada manualmente (`workflow_dispatch`) ou por tag de versão (`v*`) — não em cada push, para não gastar minutos de CI num projecto de lançamentos pouco frequentes e sem equipa de operação dedicada.
-- **Fora de escopo explícito**: assinatura de código para Windows (Authenticode) e notarização para macOS (Apple Developer Program) — ambas exigem certificados pagos que o projecto não tem hoje; os binários ficam por assinar, com os avisos de SmartScreen/Gatekeeper que isso implica, documentados como limitação conhecida, não escondida. Auto-update, canal de pré-lançamento/beta, publicação em lojas (Microsoft Store, Homebrew, Flathub, AUR) — nenhum pedido pelo utilizador.
+- Workflow do GitHub Actions (`.github/workflows/desktop-release.yml`) com matriz de três runners (`ubuntu-latest`, `windows-latest`, `macos-latest`), usando `electron-builder` (em vez de `tauri-apps/tauri-action`) para compilar `frontend/electron/` em cada plataforma.
+- No runner `ubuntu-latest`: `electron-builder` com `--linux AppImage deb rpm` — os três formatos decididos pelo utilizador. **`rpm`/`rpmbuild` continua a ser preciso** no runner (confirmado: o alvo rpm do `electron-builder` também depende de `rpmbuild` instalado no sistema, igual ao bundler do Tauri — não é uma simplificação que a troca de shell traga).
+- No runner `windows-latest`: `electron-builder` com `--win nsis msi`.
+- No runner `macos-latest`: `electron-builder` com `--mac dmg`, **e** as chaves `NSCameraUsageDescription`/`NSMicrophoneUsageDescription` no `Info.plist` (via `mac.extendInfo` da configuração do `electron-builder`) — sem isto, o pedido de câmara/microfone falha silenciosamente no macOS tal como falhava (por outro motivo) no WebKitGTK do Linux; achado da revisão cruzada com `desktop-electron-shell`.
+- Metadados de empacotamento (descrição curta/longa, categoria, licença, identificador `com.mesa.desktop`, publisher) passam de `tauri.conf.json`/`frontend/src-tauri/Cargo.toml` para o campo `build` do `frontend/electron/package.json` (ou `frontend/electron-builder.yml`) — mesmos valores já decididos, novo sítio de configuração.
+- `LICENSE` na raiz (AGPL-3.0) mantém-se; o campo de licença nos manifestos passa a existir em `frontend/electron/package.json` em vez de `frontend/src-tauri/Cargo.toml` (que deixou de existir — removido por `desktop-electron-shell`); `backend/Cargo.toml` e `frontend/package.json` continuam como estavam.
+- A convenção de "três manifestos a sincronizar antes de uma tag" muda de membro: `backend/Cargo.toml`, `frontend/package.json`, e agora `frontend/electron/package.json` (em vez de `frontend/src-tauri/Cargo.toml`).
+- **Removido desta change**: toda a investigação de GStreamer/WebKitGTK (plugins em falta, sandbox, X11/compositing) que estava registada como bloqueante — deixa de ser relevante, porque a causa raiz (motor WebKitGTK) deixa de existir no novo shell. Fica como registo histórico só no `proposal.md`/`design.md` de `desktop-electron-shell`, não repetida aqui.
+- **Fora de escopo explícito, inalterado**: assinatura de código/notarização, auto-update, canal beta, lojas (Microsoft Store/Homebrew/Flathub/AUR).
 
 ## Capabilities
 
 ### New Capabilities
 
-- `desktop/packaging`: a esteira de CI que compila e empacota o shell Tauri (`desktop/shell`) para as três plataformas, nos formatos decididos (AppImage/deb/rpm no Linux, msi/nsis no Windows, dmg no macOS), e publica os artefactos numa release do GitHub.
+(nenhuma nesta revisão — `desktop/packaging` já tinha sido proposta; esta revisão ajusta o mecanismo, não introduz uma capability nova)
 
 ### Modified Capabilities
 
-(nenhuma)
+- `desktop/packaging`: o bundler muda de `tauri-apps/tauri-action` para `electron-builder`; ganha o requisito de `Info.plist` para câmara/microfone no macOS (achado novo, não existia quando esta capability foi proposta pela primeira vez, porque o shell Tauri nem chegava a esse ponto de falha).
 
 ## Impact
 
-- **Novo** (`.github/workflows/`): primeiro workflow de CI do repositório.
-- **Novo** (raiz do repositório): `LICENSE` (AGPL-3.0).
-- **Modificado** (`backend/Cargo.toml`, `frontend/package.json`, `frontend/src-tauri/Cargo.toml`, `frontend/src-tauri/tauri.conf.json`): campos de licença/metadados de empacotamento antes ausentes.
-- **Depende de** `desktop-tauri-shell` (o crate e os ícones já têm de existir) e, transitivamente, das duas changes anteriores.
-- **Sem impacto**: comportamento em runtime da aplicação (esta change só empacota e distribui o que as três changes anteriores já produzem), `backend/` em termos de código (só o campo de licença no `Cargo.toml`).
+- **Novo** (`.github/workflows/`): primeiro workflow de CI do repositório — inalterado em propósito, revisto em mecanismo.
+- **Novo** (raiz do repositório): `LICENSE` (AGPL-3.0) — inalterado.
+- **Modificado** (`frontend/electron/package.json`, em vez de `frontend/src-tauri/Cargo.toml`/`tauri.conf.json`): campos de licença/metadados de empacotamento.
+- **Depende de** `desktop-electron-shell` (o `frontend/electron/` e os ícones reaproveitados têm de existir) em vez de `desktop-tauri-shell` (que ficou obsoleta, arquivada como registo histórico).
+- **Sem impacto**: comportamento em runtime da aplicação, `backend/` em termos de código (só o campo de licença, inalterado desta revisão).

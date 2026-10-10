@@ -3,7 +3,7 @@
 // { error, code?, message? } where `message` (when present) is the human text and `error` then
 // carries the machine code. The web build sends the session cookie on the same origin. Native
 // mode resolves each path against the configured instance and sends Authorization instead.
-import { currentInstance, isNative, tauriBridge } from "./instance";
+import { currentInstance, isNative } from "./instance";
 
 export class ApiError extends Error {
   readonly status: number;
@@ -44,7 +44,7 @@ export type RequestOptions = {
 
 interface PlannedRequest {
   url: string;
-  transport: "browser" | "plugin";
+  transport: "browser";
   init: RequestInit;
 }
 
@@ -70,17 +70,13 @@ export function planRequest(path: string, opts: RequestOptions = {}): PlannedReq
   if (token) headers.set("authorization", `Bearer ${token}`);
   return {
     url: new URL(path, base).toString(),
-    transport: tauriBridge() ? "plugin" : "browser",
+    transport: "browser",
     init: toInit(opts, "omit", headers),
   };
 }
 
 async function send(path: string, opts: RequestOptions): Promise<Response> {
   const planned = planRequest(path, opts);
-  if (planned.transport === "plugin") {
-    const { fetch } = await import("@tauri-apps/plugin-http");
-    return fetch(planned.url, planned.init);
-  }
   return fetch(planned.url, planned.init);
 }
 

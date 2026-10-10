@@ -4,50 +4,54 @@
 
 Ver `proposal.md` — Why. Pontos que ancoram este design:
 
-- `git remote -v` confirma o repositório em `github.com/ricardopiloto/chat-app` — GitHub Actions é a escolha natural, sem infra-estrutura nova a operar (coerente com "sem equipa de operação", já um princípio de `docs/arquitetura-tecnica.md`).
-- Não existe `.github/workflows/` hoje — esta é a primeira esteira de CI do repositório.
-- Compilar os três alvos de SO de um shell com webview nativo (WebKitGTK no Linux, WebView2 no Windows, WKWebView no macOS) não é razoavelmente cross-compilável a partir de uma única máquina — cada plataforma precisa do seu próprio runner.
-- Nenhum manifesto do repositório (`backend/Cargo.toml`, `frontend/package.json`) declara licença hoje; decidido com o utilizador: AGPL-3.0. Identificador reverso decidido: `com.mesa.desktop` (corrigido de `com.mesa.app` durante a implementação desta change — ver Decisão 4).
-- `desktop-tauri-shell` já decide ícones/janela/rede; esta change não reabre nenhuma dessas decisões, só consome o crate que elas produzem.
+- `git remote -v` confirma o repositório em `github.com/ricardopiloto/chat-app` — GitHub Actions continua a escolha natural, sem infra-estrutura nova a operar.
+- Não existe `.github/workflows/` hoje — continua a ser a primeira esteira de CI do repositório.
+- `desktop-electron-shell` substitui `frontend/src-tauri/` por `frontend/electron/`, reaproveitando os ícones (`frontend/electron/icons/`) e as decisões de licença/identificador já tomadas nesta change antes da troca de shell.
+- `electron-builder` continua a precisar de `rpmbuild` no runner Linux para o alvo rpm (confirmado — não é uma simplificação da troca de shell) e continua a precisar de três runners nativos (um por SO) — Electron não resolve a necessidade de compilar/empacotar em cada plataforma, só resolve o problema de fiabilidade de câmara/microfone/clipboard que motivou a troca.
+- Achado da revisão cruzada com `desktop-electron-shell`: no macOS, `getUserMedia()` exige `NSCameraUsageDescription`/`NSMicrophoneUsageDescription` no `Info.plist`, ou falha silenciosamente — mesma classe de problema que já gastou esforço considerável a diagnosticar no Linux, desta vez evitável à partida por ser conhecida.
 
 ## Goals / Non-Goals
 
 **Goals:**
-- Um comando (`workflow_dispatch`) ou uma tag `v*` produz os sete artefactos pedidos (AppImage, deb, rpm, msi, exe, app, dmg) sem intervenção manual em três máquinas diferentes.
-- Metadados de empacotamento (licença, descrição, identificador) correctos nos três formatos que os exigem (deb, rpm, e também msi/dmg, que também usam descrição/publisher).
+- Um comando (`workflow_dispatch`) ou uma tag `v*` produz os sete artefactos pedidos (AppImage, deb, rpm, nsis, msi, dmg — `.app` deixa de ser um artefacto publicado à parte, fica dentro do `.dmg`) sem intervenção manual em três máquinas diferentes.
+- Metadados de empacotamento (licença, descrição, identificador) correctos nos formatos que os exigem.
+- `Info.plist` do macOS declara o uso de câmara/microfone — novo Goal desta revisão, achado da troca de shell.
 
 **Non-Goals:**
-- Assinatura de código (Windows) ou notarização (macOS) — ver Decisão 3.
-- Auto-update, canal beta, publicação em lojas (Microsoft Store/Homebrew/Flathub/AUR).
-- Qualquer mudança ao comportamento em runtime da aplicação — esta change só compila/empacota/publica o que já existe.
+- Assinatura de código (Windows) ou notarização (macOS) — ver Decisão 3, inalterada.
+- Auto-update, canal beta, publicação em lojas.
+- Qualquer mudança ao comportamento em runtime da aplicação.
 
 ## Decisions
 
-### 1. `tauri-apps/tauri-action` em vez de passos manuais de `cargo tauri build`
+### 1. `electron-builder` em vez de `tauri-apps/tauri-action`
 
-Alternativa descartada: escrever cada passo (instalar toolchain Rust, Node, dependências de sistema, invocar `cargo tauri build --bundles ...`) manualmente em YAML por plataforma. Rejeitada porque a acção oficial já encapsula correctamente as diferenças por SO (instalação de toolchain, cache, invocação do bundler certo) e é o caminho documentado/mantido pelo próprio projecto Tauri — escrever manualmente duplicaria lógica que já existe e que ficaria por manter sempre que o Tauri mudar de versão. O único trabalho manual necessário é o que a acção não cobre: instalar `rpm`/`rpmbuild` no runner Linux (não vem por omissão em `ubuntu-latest`) e preencher os metadados de empacotamento.
+Decisão imposta pela troca de shell decidida em `desktop-electron-shell` — não uma escolha nova desta change. Alternativa descartada: escrever os passos manualmente por plataforma (instalar Node, invocar `electron-builder` com flags por SO). Rejeitada pelo mesmo motivo que já valia para o Tauri: `electron-builder` é a ferramenta padrão e mantida do ecossistema Electron para exactamente isto (os três alvos Linux, `nsis`/`msi` no Windows, `dmg` no macOS, numa única configuração declarativa em `package.json`/`electron-builder.yml`), evita duplicar lógica de empacotamento que já existe.
 
-### 2. Disparo manual/por tag, não em cada push
+### 2. Disparo manual/por tag, não em cada push (inalterado)
 
-Ver Requirement correspondente em `specs/desktop/packaging/spec.md`. Alternativa descartada: compilar em cada push para `main`, ao estilo de CI contínua. Rejeitada por custo (três runners, vários minutos cada, por cada commit) sem benefício proporcional — este projecto não tem lançamentos diários, e a verificação de que o código compila já pode ficar para um workflow mais leve (fora de escopo desta change, não pedido pelo utilizador) se algum dia for necessário.
+Ver Requirement em `specs/desktop/packaging/spec.md`. Sem alteração desde a versão anterior desta change — continua a ser a escolha certa pelo mesmo motivo (custo de três runners por commit, sem benefício proporcional para este projecto).
 
-### 3. Sem assinatura de código nem notarização
+### 3. Sem assinatura de código nem notarização (inalterado)
 
-Alternativa descartada: pedir/comprar um certificado Authenticode (Windows) e inscrever o projecto no Apple Developer Program (macOS, ~99 USD/ano) já nesta change. Rejeitada por custo recorrente não autorizado pelo utilizador e por não ser um bloqueio técnico — binários não assinados instalam-se perfeitamente, só com um aviso adicional (SmartScreen/Gatekeeper) que quem já usa outro software não-comercial/self-hosted já reconhece. Documentado explicitamente (Requirement correspondente) em vez de ser uma lacuna descoberta por quem instalar.
+Sem alteração desde a versão anterior — continua a ser aceite conscientemente, mesmo motivo (custo recorrente não autorizado, não é bloqueio técnico).
 
-### 4. Licença AGPL-3.0 e identificador `com.mesa.desktop`
+### 4. Licença AGPL-3.0 e identificador `com.mesa.desktop` (inalterado, novo sítio de configuração)
 
-Decididos directamente com o utilizador (ver histórico da conversa). `LICENSE` na raiz, e o campo de licença replicado nos três manifestos que o bundler Tauri e o `cargo`/`npm` esperam (`backend/Cargo.toml` por consistência do monorepo, mesmo não sendo embalado por este workflow; `frontend/package.json`; `frontend/src-tauri/Cargo.toml`, este sim lido directamente pelos bundlers deb/rpm).
+Decididos directamente com o utilizador antes da troca de shell — continuam válidos. Só o ficheiro onde vivem muda: de `frontend/src-tauri/Cargo.toml`/`tauri.conf.json` para `frontend/electron/package.json` (campo `build` do `electron-builder`, que usa `appId` para o identificador reverso e `license`/`author`/descrição do próprio `package.json` Node).
 
-O identificador reverso começou como `com.mesa.app` (valor indicativo aprovado antes de `desktop-tauri-shell` arrancar). Durante a implementação desta change, `cargo tauri build --bundles deb` avisou que terminar em `.app` coincide com o sufixo dos bundles de aplicação do macOS, risco de ambiguidade em ferramentas que assumam esse sufixo como extensão de bundle. Sem nenhuma release real publicada ainda, a troca para `com.mesa.desktop` foi decidida com o utilizador como gratuita agora e evitada mais tarde (uma mudança de identificador depois do primeiro lançamento é disruptiva — o macOS trata-a como uma aplicação diferente para efeitos de keychain/updates).
+### 5. `NSCameraUsageDescription`/`NSMicrophoneUsageDescription` explícitas no `Info.plist` (nova)
+
+Achado da revisão cruzada com `desktop-electron-shell`: sem estas duas chaves, `getUserMedia()` falha silenciosamente no macOS (o sistema nem mostra o diálogo de permissão), reproduzindo por um motivo diferente o mesmo sintoma (`NotAllowedError`) que motivou toda a troca de shell. Configurado via `mac.extendInfo` do `electron-builder`, com texto claro do porquê a app pede câmara/microfone (entrar em canais de voz/vídeo).
 
 ## Risks / Trade-offs
 
-- [Bundler `rpm` do Tauri precisa de `rpmbuild` instalado no runner — `ubuntu-latest` não o traz por omissão] → Mitigação: passo explícito de `apt-get install rpm` (ou equivalente) antes de invocar `tauri-action` no job Linux; verificado na Tarefa correspondente, não assumido.
-- [AppImage: o bundler do Tauri descarrega `linuxdeploy`/`appimagetool` em build-time — depende de rede disponível no runner e pode falhar de forma intermitente por indisponibilidade externa] → Mitigação aceite: comportamento já conhecido do ecossistema Tauri; sem acção adicional nesta change além de deixar o CI falhar visivelmente (não silenciosamente) quando acontecer, para re-tentar.
-- [Binários não assinados podem ser bloqueados por antivírus/SmartScreen mais agressivamente do que os assinados, afectando a adopção] → Mitigação: aceite conscientemente (Decisão 3); documentado para quem distribui/instala, não resolvido tecnicamente nesta change.
-- [Mudar a licença do projecto para AGPL-3.0 agora, depois de código já existir sem licença declarada, pode ter implicações sobre contribuições passadas] → Mitigação: fora do controlo desta change (decisão de produto/legal já tomada pelo utilizador); a tarefa correspondente só aplica a decisão, não a reabre.
+- [Bundler `rpm` continua a precisar de `rpmbuild` instalado no runner — `ubuntu-latest` não o traz por omissão] → Mitigação: passo explícito de `apt-get install rpm` antes de invocar `electron-builder` no job Linux; mesma mitigação da versão anterior desta change, confirmada como ainda necessária com o novo bundler.
+- [AppImage: `electron-builder` também descarrega ferramentas de empacotamento em build-time (ex. `appimagetool`) — mesma dependência de rede do runner que já existia com o Tauri] → Mitigação aceite: sem acção adicional além de deixar o CI falhar visivelmente quando acontecer.
+- [Binários não assinados podem ser bloqueados por antivírus/SmartScreen mais agressivamente do que os assinados] → Mitigação: aceite conscientemente (Decisão 3), inalterado.
+- [Mudar a licença do projecto para AGPL-3.0 agora] → Mitigação: fora do controlo desta change, inalterado.
+- [`frontend/electron/package.json` versus `frontend/package.json` (raiz do frontend) — dois `package.json` no mesmo projecto pode confundir qual guarda a versão "oficial" do produto] → Mitigação: a convenção já estabelecida de sincronizar versão entre manifestos (ver `tasks.md`) continua a tratar `frontend/package.json` como a fonte de verdade do número de versão do produto; `frontend/electron/package.json` segue-o, nunca o contrário.
 
 ## Migration Plan
 
-Mudança aditiva ao nível de ficheiros de configuração/CI — não altera código de runtime. Depende de `desktop-tauri-shell` estar implementada (o crate e os ícones têm de existir para haver algo a empacotar). Primeira execução recomendada via `workflow_dispatch` (sem criar tag) para validar os três runners antes de qualquer tag `v*` real accionar uma release pública.
+Mudança aditiva ao nível de ficheiros de configuração/CI — não altera código de runtime. Depende de `desktop-electron-shell` estar implementada (o `frontend/electron/` e os ícones têm de existir para haver algo a empacotar). Primeira execução recomendada via `workflow_dispatch` (sem criar tag) para validar os três runners antes de qualquer tag `v*` real accionar uma release pública.

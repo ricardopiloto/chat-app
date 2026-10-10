@@ -5,9 +5,27 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-Product versions align with `frontend/package.json`, `backend/Cargo.toml` and `frontend/src-tauri/Cargo.toml` unless noted. Up to 0.8.1 `frontend/` was the v1 client; since 1.0.0 it holds the v2 client (the rewrite formerly developed as `frontend-v2/`).
+Product versions align with `frontend/package.json` and `backend/Cargo.toml` unless noted. Up to 0.8.1 `frontend/` was the v1 client; since 1.0.0 it holds the v2 client (the rewrite formerly developed as `frontend-v2/`).
 
 ## [Unreleased]
+
+## [1.2.1] - 2026-10-10
+
+### Added
+
+- **Electron desktop shell**: the desktop client is now an Electron window (`frontend/electron/`) instead of Tauri. It opens at 1280×800 (minimum 960×640), uses the existing Mesa icons, and keeps the native window frame. The instance URL and session token are stored in `mesa-instance.json` under the app user-data directory. Requests to the configured instance receive `Authorization: Bearer`; links outside the app open in the system browser.
+- **WebSocket subprotocol session**: the backend accepts the same session token on `Sec-WebSocket-Protocol`, after the session cookie and `Authorization`. The native client opens the socket with `new WebSocket(url, [token])`. The upgrade response echoes the offered protocol name so Chromium completes the handshake; that echo does not choose the session.
+- **Local Electron package**: `npm run electron:build` produces an unpacked Linux build with `electron-builder` (`frontend/release/linux-unpacked/`). Installers for Linux, Windows and macOS are still the separate packaging work.
+
+### Changed
+
+- Native REST calls use the browser `fetch` and the bearer token. Realtime always uses the standard `WebSocket`. The web app still authenticates with the session cookie on its own origin.
+- `docs/arquitetura-tecnica.md` notes that a single Rust binary for client and server remains a long-term vision. The desktop client is Electron; only `backend/` is Rust.
+- The manifests in `frontend/package.json` and `backend/Cargo.toml` still say **1.2.0**. This changelog section is 1.3.0; those version fields were not changed.
+
+### Removed
+
+- The Tauri shell at `frontend/src-tauri/` and the `@tauri-apps/*` dependencies. The approved icons now live in `frontend/electron/icons/`.
 
 ## [1.2.0] - 2026-10-09
 

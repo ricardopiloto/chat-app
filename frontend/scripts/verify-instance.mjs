@@ -1,40 +1,14 @@
 #!/usr/bin/env node
-// Instance memory, native request planning, and the websocket URL. The Tauri plugins are stubbed
-// so this runs in Node; the dev-simulation path never loads the store plugin.
+// Instance memory, native request planning, and the websocket URL. Dev simulation uses
+// localStorage. The Electron bridge is a plain object on `window`, so this runs in Node.
 import { build } from "esbuild";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const dir = mkdtempSync(join(tmpdir(), "verify-instance-"));
-const stubs = join(dir, "stubs");
-mkdirSync(stubs);
-writeFileSync(
-  join(stubs, "plugin-http.mjs"),
-  `export async function fetch(url, init) {
-    const headers = new Headers(init?.headers);
-    globalThis.__pluginCalls.push({ url: String(url), authorization: headers.get("authorization"), credentials: init?.credentials });
-    return new Response("{}", { status: 200, headers: { "content-type": "application/json" } });
-  }
-`,
-);
-writeFileSync(
-  join(stubs, "plugin-store.mjs"),
-  `const data = {};
-  export async function load() {
-    globalThis.__storeLoads = (globalThis.__storeLoads ?? 0) + 1;
-    return {
-      get: async (key) => data[key],
-      set: async (key, value) => { data[key] = value; },
-      delete: async (key) => { delete data[key]; return true; },
-      save: async () => {},
-    };
-  }
-`,
-);
-writeFileSync(join(stubs, "plugin-websocket.mjs"), "export default class WebSocket { static async connect() { throw new Error('unused'); } }\n");
 
 await build({
   stdin: {
@@ -52,15 +26,9 @@ export { socketUrl } from "./src/api/realtime.ts";
   outfile: join(dir, "m.mjs"),
   logLevel: "error",
   define: { "import.meta.env.DEV": "true" },
-  alias: {
-    "@tauri-apps/plugin-http": join(stubs, "plugin-http.mjs"),
-    "@tauri-apps/plugin-store": join(stubs, "plugin-store.mjs"),
-    "@tauri-apps/plugin-websocket": join(stubs, "plugin-websocket.mjs"),
-  },
 });
 
 const browserCalls = [];
-globalThis.__pluginCalls = [];
 globalThis.fetch = async (url, init) => {
   const headers = new Headers(init?.headers);
   browserCalls.push({ url: String(url), authorization: headers.get("authorization"), credentials: init?.credentials });
@@ -73,7 +41,7 @@ globalThis.localStorage = {
   setItem: (key, value) => { store[key] = String(value); },
   removeItem: (key) => { delete store[key]; },
 };
-globalThis.isTauri = false;
+globalThis.window = {};
 
 const mod = await import(pathToFileURL(join(dir, "m.mjs")).href);
 let failed = 0;
@@ -83,14 +51,13 @@ check("browser is not native", mod.isNative() === false);
 await mod.saveInstanceUrl("http://192.168.1.50:8080");
 await mod.saveSessionToken("secret");
 check("web save is a no-op", (await mod.loadInstance()).baseUrl === null && (await mod.loadInstance()).sessionToken === null);
-check("store plugin stays unused off-bridge", (globalThis.__storeLoads ?? 0) === 0);
 const web = mod.planRequest("/api/auth/me");
 check("web path stays relative", web.url === "/api/auth/me" && web.transport === "browser" && web.init.credentials === "include");
 check("web socket uses the page", mod.socketUrl() === "wss://localhost:1421/ws");
 
 store["mesa.dev.native"] = "1";
 check("dev flag turns native on", mod.isNative() === true);
-check("dev flag is not the Tauri bridge", mod.tauriBridge() === false);
+check("dev flag is not the native shell", globalThis.window.__MESA_NATIVE__ !== true);
 await mod.saveInstanceUrl("http://192.168.1.50:8080");
 check("url stored before any token", mod.currentInstance().baseUrl === "http://192.168.1.50:8080" && mod.currentInstance().sessionToken === null);
 await mod.saveSessionToken("token-a");
@@ -109,15 +76,26 @@ let missing = false;
 try { mod.planRequest("/api/auth/me"); } catch { missing = true; }
 check("native without a url rejects", missing === true && browserCalls.length === 0);
 
-globalThis.isTauri = true;
+const bridge = { baseUrl: null, sessionToken: null };
+globalThis.window = {
+  __MESA_NATIVE__: true,
+  mesaNative: {
+    loadInstance: async () => ({ baseUrl: bridge.baseUrl, sessionToken: bridge.sessionToken }),
+    saveInstanceUrl: async (url) => { bridge.baseUrl = url; },
+    saveSessionToken: async (token) => { bridge.sessionToken = token; },
+    clearSessionToken: async () => { bridge.sessionToken = null; },
+    clearInstance: async () => { bridge.baseUrl = null; bridge.sessionToken = null; },
+  },
+};
 await mod.saveInstanceUrl("https://chat.exemplo.com");
 await mod.saveSessionToken("token-c");
-check("bridge uses the store plugin", (globalThis.__storeLoads ?? 0) > 0);
+check("bridge stores the instance", bridge.baseUrl === "https://chat.exemplo.com" && bridge.sessionToken === "token-c");
 const bridged = mod.planRequest("/api/servers");
-check("bridge selects the plugin fetch", bridged.transport === "plugin" && bridged.url === "https://chat.exemplo.com/api/servers");
+check("bridge uses fetch with the bearer", bridged.transport === "browser" && bridged.url === "https://chat.exemplo.com/api/servers");
 await mod.request("/api/servers");
-check("plugin fetch received the bearer", globalThis.__pluginCalls.length === 1 && globalThis.__pluginCalls[0].authorization === "Bearer token-c" && globalThis.__pluginCalls[0].url === "https://chat.exemplo.com/api/servers");
-check("browser fetch stayed unused", browserCalls.length === 0);
+check("fetch received the bearer", browserCalls.length === 1 && browserCalls[0].authorization === "Bearer token-c" && browserCalls[0].url === "https://chat.exemplo.com/api/servers");
 check("https instance uses wss", mod.socketUrl() === "wss://chat.exemplo.com/ws");
+await mod.clearInstance();
+check("bridge clear drops both", bridge.baseUrl === null && bridge.sessionToken === null);
 
 process.exit(failed ? 1 : 0);

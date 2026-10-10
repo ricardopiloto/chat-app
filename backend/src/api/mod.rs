@@ -4,7 +4,7 @@ use crate::ws;
 use crate::{db, AppState};
 use axum::extract::ws::{Message, WebSocket};
 use axum::extract::{DefaultBodyLimit, State, WebSocketUpgrade};
-use axum::http::HeaderMap;
+use axum::http::{HeaderMap, HeaderValue};
 use axum::response::IntoResponse;
 use axum::routing::{delete, get, patch, post, put};
 use axum::Router;
@@ -246,7 +246,21 @@ async fn ws_handler(
     let session_id = auth::session::current_session_id(&state, &jar, &headers)
         .await?
         .ok_or_else(crate::error::ApiError::unauthorized)?;
-    Ok(ws.on_upgrade(move |socket| handle_socket(state, account.id, session_id, socket)))
+    // Chromium and handshake clients fail the upgrade when the request offered a
+    // subprotocol and the 101 does not select one. Echo the first offered name so
+    // the socket opens; the session is still chosen by cookie, then bearer, then
+    // the protocol value — not by which name is echoed.
+    let offered = auth::session::subprotocol_tokens(&headers);
+    let mut response =
+        ws.on_upgrade(move |socket| handle_socket(state, account.id, session_id, socket));
+    if let Some(protocol) = offered.first() {
+        if let Ok(value) = HeaderValue::from_str(protocol) {
+            response
+                .headers_mut()
+                .insert(axum::http::header::SEC_WEBSOCKET_PROTOCOL, value);
+        }
+    }
+    Ok(response)
 }
 
 async fn handle_socket(

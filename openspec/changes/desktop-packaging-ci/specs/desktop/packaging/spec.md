@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Compila e empacota o shell Tauri da Mesa (`desktop/shell`) para Windows, macOS e Linux a partir de CI, nos formatos de instalador decididos, e publica os artefactos numa release do GitHub — sem exigir que o maintainer compile manualmente em cada plataforma.
+Compila e empacota o shell desktop da Mesa (`desktop/shell`, Electron desde `desktop-electron-shell`) para Windows, macOS e Linux a partir de CI, nos formatos de instalador decididos, e publica os artefactos numa release do GitHub — sem exigir que o maintainer compile manualmente em cada plataforma.
 
 ## ADDED Requirements
 
@@ -17,7 +17,7 @@ O sistema SHALL produzir, a partir de um runner Linux, um `.AppImage`, um pacote
 
 ### Requirement: Windows e macOS produzem instaladores nativos
 
-O sistema SHALL produzir, a partir de um runner Windows, um instalador `.msi` e um `.exe` (NSIS); e, a partir de um runner macOS, um `.app` e um `.dmg`.
+O sistema SHALL produzir, a partir de um runner Windows, um instalador `.msi` e um `.exe` (NSIS); e, a partir de um runner macOS, um `.dmg` (com a aplicação `.app` embrulhada dentro, para arrastar para Applications — não publicado como ficheiro à parte).
 
 #### Scenario: Instaladores Windows
 
@@ -27,7 +27,7 @@ O sistema SHALL produzir, a partir de um runner Windows, um instalador `.msi` e 
 #### Scenario: Instalador macOS
 
 - **WHEN** o workflow corre no runner macOS
-- **THEN** são produzidos um `.app` e um `.dmg`
+- **THEN** é produzido um `.dmg` contendo a aplicação
 
 ### Requirement: A compilação não é accionada em cada push
 
@@ -51,6 +51,15 @@ Quando o workflow é accionado por uma tag de versão, o sistema SHALL publicar 
 
 - **WHEN** uma tag `v*` acciona o workflow e as três plataformas terminam com sucesso
 - **THEN** existe uma GitHub Release para essa tag com os artefactos de Windows, macOS e Linux anexados
+
+### Requirement: O instalador macOS declara o uso de câmara e microfone
+
+O sistema SHALL incluir, no `Info.plist` do pacote macOS, as chaves `NSCameraUsageDescription` e `NSMicrophoneUsageDescription` com texto explicativo, e SHALL NOT depender do comportamento por omissão do empacotador (sem essas chaves, o macOS recusa o pedido de câmara/microfone sem sequer mostrar o diálogo de permissão ao utilizador).
+
+#### Scenario: Pedido de câmara mostra o diálogo do sistema
+
+- **WHEN** a aplicação instalada a partir do `.dmg`/`.app` pede acesso à câmara pela primeira vez
+- **THEN** o macOS mostra o diálogo de permissão do sistema (não recusa silenciosamente)
 
 ### Requirement: Binários sem assinatura são um limite documentado, não escondido
 

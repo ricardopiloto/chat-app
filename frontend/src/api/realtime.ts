@@ -1,5 +1,5 @@
 import { ApiError, request } from "./http";
-import { currentInstance, isNative, tauriBridge } from "./instance";
+import { currentInstance, isNative } from "./instance";
 
 // Real-time channel (GET /ws). The server pushes events to every member of the servers the
 // account belongs to; the client never publishes. This module keeps the socket alive and reports
@@ -75,8 +75,8 @@ export function socketUrl(): string {
   return url.toString();
 }
 
-function browserSocket(url: string, events: { open(): void; message(data: unknown): void; close(): void }): LiveSocket {
-  const socket = new WebSocket(url);
+function browserSocket(url: string, protocols: string[] | undefined, events: { open(): void; message(data: unknown): void; close(): void }): LiveSocket {
+  const socket = protocols && protocols.length > 0 ? new WebSocket(url, protocols) : new WebSocket(url);
   socket.onopen = () => events.open();
   socket.onmessage = (message) => events.message(message.data);
   socket.onclose = () => events.close();
@@ -88,41 +88,8 @@ function browserSocket(url: string, events: { open(): void; message(data: unknow
 }
 
 async function openSocket(url: string, events: { open(): void; message(data: unknown): void; close(): void }): Promise<LiveSocket> {
-  if (!(isNative() && tauriBridge())) return browserSocket(url, events);
-  const { default: TauriSocket } = await import("@tauri-apps/plugin-websocket");
-  const token = currentInstance().sessionToken;
-  const headers: Record<string, string> = {};
-  if (token) headers.authorization = `Bearer ${token}`;
-  const ws = await TauriSocket.connect(url, { headers });
-  let open = true;
-  let ended = false;
-  const end = () => {
-    if (ended) return;
-    ended = true;
-    open = false;
-    events.close();
-  };
-  ws.addListener((message) => {
-    // A clean close is `{ type: "Close" }`. A dropped socket arrives as an error string, which
-    // this plugin does not retag as Close. Either one means the session channel is gone.
-    if (message && typeof message === "object" && message.type === "Text") {
-      events.message(message.data);
-      return;
-    }
-    if (message && typeof message === "object" && (message.type === "Ping" || message.type === "Pong" || message.type === "Binary")) return;
-    end();
-  });
-  queueMicrotask(() => {
-    if (!ended) events.open();
-  });
-  return {
-    send: (data) => void ws.send(data),
-    close: () => {
-      open = false;
-      void ws.disconnect().finally(end);
-    },
-    isOpen: () => open && !ended,
-  };
+  const token = isNative() ? currentInstance().sessionToken : null;
+  return browserSocket(url, token ? [token] : undefined, events);
 }
 
 function parse(data: unknown): RealtimeEnvelope | null {

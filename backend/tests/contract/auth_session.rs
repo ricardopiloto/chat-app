@@ -726,3 +726,102 @@ async fn websocket_accepts_bearer_and_rejects_a_handshake_without_a_session() {
     assert!(tokio_tungstenite::connect_async(invalid).await.is_err());
     server.abort();
 }
+
+#[tokio::test]
+async fn websocket_accepts_the_session_token_as_a_subprotocol() {
+    let app = TestApp::new().await;
+    let (_, body, cookie) = app.register("alice", "password1", None).await;
+    let first_token = body["session_token"].as_str().unwrap().to_string();
+    let cookie = must_cookie(cookie);
+    let account_id = uuid::Uuid::parse_str(body["id"].as_str().unwrap()).unwrap();
+    let first_session = chat_backend::db::session::find_by_token_hash(
+        &app.pool,
+        &chat_backend::api::auth::session::hash_token(&first_token),
+    )
+    .await
+    .unwrap()
+    .unwrap()
+    .id;
+    let (_, again, _) = app.login("alice", "password1").await;
+    let second_token = again["session_token"].as_str().unwrap().to_string();
+
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let address = listener.local_addr().unwrap();
+    let router = app.router.clone();
+    let server = tokio::spawn(async move { axum::serve(listener, router).await });
+
+    let connect = |headers: Vec<(String, String)>| {
+        let address = address;
+        async move {
+            let mut request = format!("ws://{address}/ws").into_client_request().unwrap();
+            for (name, value) in headers {
+                request.headers_mut().insert(
+                    axum::http::HeaderName::from_bytes(name.as_bytes()).unwrap(),
+                    value.parse().unwrap(),
+                );
+            }
+            tokio_tungstenite::connect_async(request).await
+        }
+    };
+
+    let (mut cookie_socket, _) = connect(vec![("cookie".into(), cookie.clone())]).await.unwrap();
+    assert!(app.state.ws.is_online(account_id));
+    cookie_socket.close(None).await.unwrap();
+
+    let (mut bearer_socket, _) =
+        connect(vec![("authorization".into(), bearer(&first_token))]).await.unwrap();
+    assert!(app.state.ws.is_online(account_id));
+    bearer_socket.close(None).await.unwrap();
+
+    // Cookie names the first session; the sub-protocol names the second. Cookie wins,
+    // so closing the first session drops this socket.
+    let (mut mixed_socket, _) = connect(vec![
+        ("cookie".into(), cookie.clone()),
+        ("sec-websocket-protocol".into(), second_token.clone()),
+    ])
+    .await
+    .unwrap();
+    app.state.ws.close_sessions(account_id, &[first_session]);
+    let mixed_closed = tokio::time::timeout(std::time::Duration::from_secs(2), async {
+        loop {
+            match mixed_socket.next().await {
+                Some(Ok(tokio_tungstenite::tungstenite::Message::Close(_)))
+                | None
+                | Some(Err(_)) => break true,
+                _ => {}
+            }
+        }
+    })
+    .await
+    .unwrap();
+    assert!(mixed_closed, "cookie did not win over the sub-protocol");
+
+    let (mut protocol_socket, _) =
+        connect(vec![("sec-websocket-protocol".into(), second_token.clone())])
+            .await
+            .unwrap();
+    assert!(app.state.ws.is_online(account_id));
+    protocol_socket.close(None).await.unwrap();
+
+    let (status, _, _) = app
+        .request_with(
+            "POST",
+            "/api/auth/logout",
+            None,
+            None,
+            &[("authorization", &bearer(&second_token))],
+        )
+        .await;
+    assert_eq!(status, StatusCode::NO_CONTENT);
+    assert!(
+        connect(vec![("sec-websocket-protocol".into(), second_token.clone())])
+            .await
+            .is_err()
+    );
+    assert!(
+        connect(vec![("authorization".into(), bearer(&second_token))])
+            .await
+            .is_err()
+    );
+    server.abort();
+}

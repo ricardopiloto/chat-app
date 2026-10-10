@@ -1,7 +1,7 @@
 # Review — Desenvolvedor Fullstack
 
 **Change:** desktop-packaging-ci
-**Data:** 2026-10-09 (revisão 2)
+**Data:** 2026-10-09 (revisão 4)
 **Veredito geral:** Aprovado
 
 ## 1. Desenvolvimento do backend
@@ -14,13 +14,13 @@ N/A — sem alteração.
 
 ## 3. Deploy e operação
 
-Veredito: OK — sem alteração.
+Veredito: OK
+
+- `specs/desktop/packaging/spec.md` agora bate com `tasks.md`/`design.md` (só `.dmg` no macOS) — fecha o achado da revisão anterior.
 
 ## 4. Qualidade de código
 
-Veredito: OK
-
-- A Tarefa 1.2.1 fecha o achado de versão por omissão; a Tarefa 1.3 agora menciona `rpmbuild` localmente; a Tarefa 2.1 acrescenta a verificação tag↔manifesto. Nada mais a apontar.
+Veredito: OK — sem alteração.
 
 ## 5. Execução das decisões arquiteturais
 

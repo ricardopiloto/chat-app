@@ -73,6 +73,8 @@ Uma flag de execução (ex.: `--server` / `--headless`) determina o modo:
 - **Modo cliente:** inicializa a shell Tauri com a UI; se compilado para web, serve apenas a SPA estática.
 - **Modo servidor:** não inicializa UI; sobe a API, o hub WebSocket e as conexões com banco/LiveKit. É o processo que o Docker Compose do instalador avançado orquestra.
 
+> **Nota de reconciliação (desktop-electron-shell):** o parágrafo acima e a visão de «um único binário Rust» em §1 descrevem uma meta de longo prazo que não está implementada. O cliente desktop actual é um shell Electron (`frontend/electron/`, Node), não um binário Rust/Tauri. Só o backend (`backend/`) continua a ser Rust. O mesmo espírito já estava registado em `native-client-auth` para a troca «binário único → cliente só»: esta nota actualiza o motor desse cliente.
+
 ### 2.3 Autenticação e sessão
 
 - Conta local por Instância de Hospedagem (sem SSO externo no MVP).
