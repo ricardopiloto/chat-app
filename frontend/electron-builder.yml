@@ -1,5 +1,12 @@
 appId: com.mesa.desktop
 productName: Mesa
+copyright: Copyright © Mesa
+extraMetadata:
+  name: mesa
+  author: Mesa
+  description: Chat e vídeo self-hosted, com composição de câmaras e criptografia ponta a ponta.
+  homepage: https://github.com/ricardopiloto/chat-app
+  desktopName: mesa.desktop
 directories:
   output: release
 files:
@@ -9,6 +16,29 @@ files:
   - "!node_modules"
 linux:
   target:
-    - dir
+    - AppImage
+    - deb
+    - rpm
   icon: electron/icons/icon.png
+  category: Network
+  synopsis: Chat e vídeo self-hosted com cifra de ponta a ponta.
+  description: >
+    Chat e vídeo self-hosted, com composição de câmaras e criptografia ponta a
+    ponta. Pensado para mesas de RPG e grupos pequenos que querem uma instância
+    própria, sem o servidor ler o conteúdo das conversas.
   executableName: mesa
+  maintainer: Mesa
+  syncDesktopName: true
+win:
+  target:
+    - nsis
+    - msi
+  icon: electron/icons/icon.ico
+mac:
+  target:
+    - dmg
+  icon: electron/icons/icon.icns
+  category: public.app-category.social-networking
+  extendInfo:
+    NSCameraUsageDescription: A Mesa usa a câmara para os canais de voz e vídeo.
+    NSMicrophoneUsageDescription: A Mesa usa o microfone para os canais de voz e vídeo.

@@ -5,6 +5,7 @@ import { Badge, Button, Icon, Segmented } from "../components/ui";
 import type { Channel } from "../api";
 import { t } from "../i18n";
 import { useShell } from "../shell/state";
+import { CallElsewhere } from "./CallElsewhere";
 import { CompositionView } from "./CompositionView";
 import { E2eeChip, E2eeOffBanner } from "./E2ee";
 import { GridView } from "./GridView";
@@ -102,6 +103,9 @@ export function Stage(props: { channel: Channel }) {
 
       <div class="call-body">
         <Switch>
+          <Match when={call.popoutFor() === props.channel.id}>
+            <CallElsewhere />
+          </Match>
           <Match when={editing()}>
             <SceneEditor saved={store.scene()} name={store.name()} onSave={store.save} onClose={() => setEditing(false)} />
           </Match>

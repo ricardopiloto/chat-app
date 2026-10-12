@@ -4,6 +4,7 @@
 import { Show, createSignal } from "solid-js";
 import { Icon } from "../components/ui";
 import { t } from "../i18n";
+import { isNative } from "../api/instance";
 import { useCall } from "./callSession";
 import { prefs, type BlurLevel } from "./devices";
 import { callView } from "./view";
@@ -93,6 +94,17 @@ export function CallControls() {
             onClick={() => void call.setScreen(!call.screen())}
           >
             <Icon name={call.screen() ? "stop_screen_share" : "screen_share"} />
+          </button>
+        </Show>
+        <Show when={isNative() && !call.popoutFor()}>
+          <button
+            type="button"
+            class={toggle}
+            title={t("call.popout.open")}
+            aria-label={t("call.popout.open")}
+            onClick={() => void call.openPopout()}
+          >
+            <Icon name="open_in_new" />
           </button>
         </Show>
         <button type="button" class={`${toggle} hangup`} title={t("call.hangup")} aria-label={t("call.hangup")} onClick={() => void call.leave()}>

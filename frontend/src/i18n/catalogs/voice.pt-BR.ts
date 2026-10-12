@@ -26,6 +26,14 @@ export const voicePtBR: MessageTree = {
     camOn: "Ligar câmera",
     camOff: "Desligar câmera",
     hangup: "Terminar chamada",
+    popout: {
+      open: "Abrir em nova janela",
+      elsewhere: "A chamada está noutra janela",
+      bringBack: "Trazer de volta",
+      unavailable: "Não foi possível abrir a chamada nesta janela.",
+      retry: "Tentar de novo",
+      close: "Fechar janela",
+    },
     listenOnlyWhy: "Você só tem permissão para ouvir neste canal.",
     editScene: "Editar cena",
     invite: "Convidar",
@@ -52,6 +60,7 @@ export const voicePtBR: MessageTree = {
       cameraFailed: "Não foi possível usar a câmera. Você continua na chamada só com áudio.",
       deviceMissing: "O dispositivo guardado não está disponível. Usando o padrão.",
       encryption: "Um participante enviou mídia que não pôde ser decifrada.",
+      popoutKey: "A chave deste canal não está neste dispositivo, por isso a janela não abre.",
     },
     problem: {
       denied: "Você não tem permissão para entrar neste canal de voz.",

@@ -4,6 +4,7 @@ import type { GridLayout, KeyEnvelope, MediaFlags, SceneList, VoiceJoin, VoiceOc
 export const voice = {
   join: (channelId: string, flags: Pick<MediaFlags, "mic_on" | "cam_on">) => http.post<VoiceJoin>(`/api/channels/${channelId}/voice/join`, flags),
   leave: (channelId: string) => http.post<void>(`/api/channels/${channelId}/voice/leave`),
+  popoutToken: (channelId: string) => http.post<VoiceJoin>(`/api/channels/${channelId}/voice/popout-token`),
   /** Leave that survives the page closing (fire and forget). */
   leaveOnUnload: (channelId: string) => {
     void request<void>(`/api/channels/${channelId}/voice/leave`, { method: "POST", keepalive: true }).catch(() => undefined);

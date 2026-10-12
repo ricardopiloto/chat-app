@@ -205,3 +205,7 @@ button.call-bench-chip{cursor:grab}
 .call-av-help{display:flex;gap:12px;padding:12px 14px;border-radius:var(--radius-md);background:var(--surface-container-high);color:var(--on-surface)}
 .call-av-help p{margin:2px 0 8px;font:400 13px/20px var(--font-body);color:var(--on-surface-variant)}
 @media (max-width:900px){.call-av-grid,.call-av-camera{grid-template-columns:1fr}}
+
+.call-popout{min-height:100vh;background:var(--background);padding:12px}
+.call-popout-status,.call-elsewhere{display:grid;min-height:240px;place-items:center;align-content:center;gap:12px;padding:24px;text-align:center}
+.call-popout-status{min-height:100vh}

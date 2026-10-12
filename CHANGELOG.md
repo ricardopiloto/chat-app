@@ -9,6 +9,28 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [1.2.2] - 2026-10-11
+
+### Added
+
+- **Call popout**: in the desktop app, "Open in a new window" opens a second operating-system window with the call grid. That window joins the same LiveKit room on its own, view only, and does not take a seat or publish media. While it is open, the main window shows that the call is elsewhere and can bring it back. The web app does not offer the button.
+- **Popout viewer token**: `POST /api/channels/{id}/voice/popout-token` issues a hidden, subscribe-only LiveKit token for an account that is already in the channel. It does not register occupancy, assign a grid slot, or broadcast `grid.updated`. The popout identity is `{account_id}:popout`.
+- **Screen share picker**: on X11 the desktop app lists screens and windows in its own picker. On Wayland it keeps the system portal.
+- **Desktop installers**: `electron-builder` is configured for Linux AppImage, deb and rpm, Windows NSIS and msi, and a macOS dmg. The Desktop release workflow builds the Electron app, checks that a `v*` tag matches `frontend/electron/package.json`, and attaches the installers to a draft GitHub Release. A manual run only uploads workflow artifacts.
+- `npm run verify:http-timeout` checks the default JSON request timeout.
+
+### Changed
+
+- The Desktop release workflow packages the Electron shell. It no longer expects the Tauri project removed in 1.2.1. Release notes are in [docs/desktop-release.md](docs/desktop-release.md).
+- `frontend/package.json`, `backend/Cargo.toml` and `frontend/electron/package.json` still say **1.2.0**. This changelog section is 1.2.2; those version fields were not changed.
+
+### Fixed
+
+- Opening the call popout no longer depends on the channel custody key. The window uses the server key of the live call, so a call with E2EE off can open it, and a call with E2EE on opens it when that key is already on the device.
+- JSON requests that do not bring their own abort signal stop after 15 seconds. A saved instance that never answers no longer leaves the desktop app on "Loading…". Attachment, avatar and server-image uploads are not cut off by that timer.
+- When the popout cannot join the room, the window shows the call error, with "Try again" and "Close window", instead of an empty grid.
+- The desktop app disables HTTP/3. On this Chromium build a request to a Cloudflare instance could sit for about a minute and return HTTP 524, which held startup on the loading screen. HTTP/2 answers immediately. Voice and video still use WebRTC.
+
 ## [1.2.1] - 2026-10-10
 
 ### Added

@@ -7,70 +7,168 @@ on:
       - "v*"
 
 jobs:
-  build:
-    permissions:
-      contents: write
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            bundles: --bundles deb,rpm,appimage
-          - os: windows-latest
-            bundles: ""
-          - os: macos-latest
-            bundles: ""
-    runs-on: ${{ matrix.os }}
+  linux:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
       - name: Reject a tag that does not match the desktop version
         if: github.ref_type == 'tag'
-        shell: bash
+        working-directory: frontend/electron
         run: |
           tag="${GITHUB_REF_NAME#v}"
-          cargo_version="$(sed -n 's/^version = "\(.*\)"/\1/p' frontend/src-tauri/Cargo.toml | head -n 1)"
-          conf_version="$(sed -n 's/^  "version": "\(.*\)",/\1/p' frontend/src-tauri/tauri.conf.json | head -n 1)"
-          echo "tag=${tag} cargo=${cargo_version} tauri.conf=${conf_version}"
-          if [ "$tag" != "$cargo_version" ] || [ "$tag" != "$conf_version" ]; then
-            echo "A tag v* tem de ser exactamente a versão de frontend/src-tauri/Cargo.toml e tauri.conf.json."
+          version="$(node -p "require('./package.json').version")"
+          echo "tag=${tag} electron/package.json=${version}"
+          if [ "$tag" != "$version" ]; then
+            echo "A tag v* tem de ser exactamente a versão de frontend/electron/package.json."
             exit 1
           fi
 
-      - name: Install Linux dependencies
-        if: matrix.os == 'ubuntu-latest'
+      - name: Install Linux packaging tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            libwebkit2gtk-4.1-dev \
-            libayatana-appindicator3-dev \
-            librsvg2-dev \
-            patchelf \
-            xdg-utils \
-            libfuse2 \
-            rpm
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-
-      - uses: dtolnay/rust-toolchain@stable
+          sudo apt-get install -y rpm
 
       - name: Install frontend dependencies
         working-directory: frontend
         run: npm ci
 
-      - name: Build desktop bundles
-        uses: tauri-apps/tauri-action@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build the app and the Electron main process
+        working-directory: frontend
+        run: |
+          npm run build
+          npx tsc -p electron/tsconfig.json
+          npx tsc -p electron/tsconfig.preload.json
+          mv -f electron/dist/preload.js electron/dist/preload.cjs
+          cp electron/screen-picker.html electron/dist/screen-picker.html
+
+      - name: Package Linux installers
+        working-directory: frontend/electron
+        run: npx --prefix .. electron-builder --projectDir .. --config "${GITHUB_WORKSPACE}/frontend/electron-builder.yml" --linux AppImage deb rpm --publish never
+
+      - uses: actions/upload-artifact@v4
         with:
-          projectPath: frontend
-          args: ${{ matrix.bundles }}
-          uploadWorkflowArtifacts: true
-          uploadUpdaterJson: false
-          uploadUpdaterSignatures: false
-          tagName: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
-          releaseName: ${{ github.ref_type == 'tag' && format('Mesa {0}', github.ref_name) || '' }}
-          releaseBody: "Rascunho gerado por .github/workflows/desktop-release.yml. Publicar manualmente depois de rever os instaladores."
-          releaseDraft: true
+          name: mesa-linux
+          path: frontend/release/*
+          if-no-files-found: error
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Reject a tag that does not match the desktop version
+        if: github.ref_type == 'tag'
+        shell: bash
+        working-directory: frontend/electron
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          version="$(node -p "require('./package.json').version")"
+          echo "tag=${tag} electron/package.json=${version}"
+          if [ "$tag" != "$version" ]; then
+            echo "A tag v* tem de ser exactamente a versão de frontend/electron/package.json."
+            exit 1
+          fi
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build the app and the Electron main process
+        working-directory: frontend
+        shell: bash
+        run: |
+          npm run build
+          npx tsc -p electron/tsconfig.json
+          npx tsc -p electron/tsconfig.preload.json
+          mv -f electron/dist/preload.js electron/dist/preload.cjs
+          cp electron/screen-picker.html electron/dist/screen-picker.html
+
+      - name: Package Windows installers
+        working-directory: frontend/electron
+        shell: bash
+        run: npx --prefix .. electron-builder --projectDir .. --config "${GITHUB_WORKSPACE}/frontend/electron-builder.yml" --win nsis msi --publish never
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mesa-windows
+          path: frontend/release/*
+          if-no-files-found: error
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Reject a tag that does not match the desktop version
+        if: github.ref_type == 'tag'
+        working-directory: frontend/electron
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          version="$(node -p "require('./package.json').version")"
+          echo "tag=${tag} electron/package.json=${version}"
+          if [ "$tag" != "$version" ]; then
+            echo "A tag v* tem de ser exactamente a versão de frontend/electron/package.json."
+            exit 1
+          fi
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build the app and the Electron main process
+        working-directory: frontend
+        run: |
+          npm run build
+          npx tsc -p electron/tsconfig.json
+          npx tsc -p electron/tsconfig.preload.json
+          mv -f electron/dist/preload.js electron/dist/preload.cjs
+          cp electron/screen-picker.html electron/dist/screen-picker.html
+
+      - name: Package the macOS disk image
+        working-directory: frontend/electron
+        run: npx --prefix .. electron-builder --projectDir .. --config "${GITHUB_WORKSPACE}/frontend/electron-builder.yml" --mac dmg --publish never
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mesa-macos
+          path: frontend/release/*
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [linux, windows, macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: mesa-*
+          path: artifacts
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          name: Mesa ${{ github.ref_name }}
+          body: Rascunho gerado por .github/workflows/desktop-release.yml. Publicar manualmente depois de rever os instaladores.
+          files: artifacts/**

@@ -165,6 +165,10 @@ pub fn router(state: AppState) -> axum::Router {
                 .route("/channels/{channel_id}/voice/join", post(voice::join))
                 .route("/channels/{channel_id}/voice/leave", post(voice::leave))
                 .route(
+                    "/channels/{channel_id}/voice/popout-token",
+                    post(voice::popout_token),
+                )
+                .route(
                     "/channels/{channel_id}/voice/media",
                     patch(voice::patch_media),
                 )

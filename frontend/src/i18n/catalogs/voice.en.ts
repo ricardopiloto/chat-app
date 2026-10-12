@@ -26,6 +26,14 @@ export const voiceEn: MessageTree = {
     camOn: "Turn camera on",
     camOff: "Turn camera off",
     hangup: "End call",
+    popout: {
+      open: "Open in a new window",
+      elsewhere: "The call is in another window",
+      bringBack: "Bring it back",
+      unavailable: "This window could not open the call.",
+      retry: "Try again",
+      close: "Close window",
+    },
     listenOnlyWhy: "You only have permission to listen in this channel.",
     editScene: "Edit scene",
     invite: "Invite",
@@ -52,6 +60,7 @@ export const voiceEn: MessageTree = {
       cameraFailed: "The camera could not be used. You stay in the call with audio only.",
       deviceMissing: "The saved device is not available. Using the default.",
       encryption: "A participant sent media that could not be decrypted.",
+      popoutKey: "This channel's key is not on this device, so the window did not open.",
     },
     problem: {
       denied: "You do not have permission to join this voice channel.",

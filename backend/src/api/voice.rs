@@ -304,6 +304,40 @@ pub async fn join(
         &channel_id.to_string(),
         &account.public_label(),
         can_speak,
+        false,
+    )
+    .map_err(ApiError::internal)?;
+    Ok(Json(VoiceJoinResponse {
+        token: minted.token,
+        url: state.config.livekit_url.clone(),
+        room: minted.room,
+    }))
+}
+
+pub async fn popout_token(
+    State(state): State<AppState>,
+    AuthUser(account): AuthUser,
+    Path(channel_id): Path<Uuid>,
+) -> Result<Json<VoiceJoinResponse>, ApiError> {
+    let (channel, _, _) =
+        crate::api::authz::require_channel_view(&state.pool, account.id, channel_id).await?;
+    if channel.kind != ChannelType::VoiceVideo {
+        return Err(ApiError::not_found("channel not found"));
+    }
+    expire_stale(&state).await?;
+    let in_this_call = db::voice_occupancy::find_by_account(&state.pool, account.id)
+        .await?
+        .is_some_and(|occupant| occupant.channel_id == channel.id);
+    if !in_this_call {
+        return Err(ApiError::forbidden("not in this voice call"));
+    }
+    let minted = token::mint(
+        &state.config,
+        &format!("{}:popout", account.id),
+        &channel_id.to_string(),
+        &account.public_label(),
+        false,
+        true,
     )
     .map_err(ApiError::internal)?;
     Ok(Json(VoiceJoinResponse {

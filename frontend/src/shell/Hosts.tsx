@@ -5,6 +5,7 @@ import { ChannelSettingsDialog } from "../admin/ChannelSettingsDialog";
 import { InviteDialog } from "../admin/InviteDialog";
 import { NotificationsPanel } from "../chat/NotificationsPanel";
 import { SearchPanel, type SearchHit } from "../chat/SearchPanel";
+import { CallElsewhere } from "../voice/CallElsewhere";
 import { FloatingPlayer } from "../voice/FloatingPlayer";
 import { useCall } from "../voice/callSession";
 import { useSession } from "../session/session";
@@ -76,7 +77,9 @@ export function Hosts() {
   return (
     <>
       <Show when={voice.live() && voice.channelId() !== null && voice.channelId() !== shell.route().channelId}>
-        <FloatingPlayer />
+        <Show when={voice.popoutFor() === voice.channelId()} fallback={<FloatingPlayer />}>
+          <CallElsewhere />
+        </Show>
       </Show>
       <CreateServerDialog
         open={creatingServer()}

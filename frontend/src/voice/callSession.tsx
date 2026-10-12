@@ -4,10 +4,12 @@
 // keeps playing and the floating player can show the same state. Screens never touch the room; they
 // read `participants()` and call the actions. Video is declarative: each participant carries its tracks
 // and a tile attaches a track to its own element (see `TrackVideo`), nothing is moved around the DOM.
-import { createContext, createEffect, createSignal, onCleanup, useContext, type Accessor, type JSX } from "solid-js";
+import { createContext, createEffect, createSignal, onCleanup, onMount, useContext, type Accessor, type JSX } from "solid-js";
 import type { Participant as LkParticipant, Room, RemoteTrack, Track, LocalTrackPublication, RemoteTrackPublication } from "livekit-client";
 import { voice as voiceApi, type Channel, type MediaFlags, type RealtimeEnvelope } from "../api";
+import { b64 } from "../crypto/identity";
 import { loadServerKey } from "../crypto/keyHandoff";
+import { getServerKey } from "../crypto/serverKey";
 import { useSession } from "../session/session";
 import type { Identity } from "../crypto/identity";
 import { devices, prefs, refreshDevices, resolveDevice, type BlurLevel } from "./devices";
@@ -78,6 +80,9 @@ function createCall() {
   let heartbeat = 0;
   /** Bumped by every join/leave so a slow, superseded join can tell it lost the race. */
   let epoch = 0;
+  /** This renderer is the view-only popout, not the call that owns the seat. */
+  let viewer = false;
+  const [popoutFor, setPopoutFor] = createSignal<string | null>(null);
   let lastRequest: JoinRequest | null = null;
   /** Blur level currently running on the live camera track, so choosing it again does nothing. */
   let appliedBlur: BlurLevel = "off";
@@ -92,7 +97,9 @@ function createCall() {
   function snapshot(): CallParticipant[] {
     if (!room || !lk) return [];
     const { Track: T } = lk;
-    const everyone: LkParticipant[] = [room.localParticipant, ...room.remoteParticipants.values()];
+    const everyone: LkParticipant[] = [room.localParticipant, ...room.remoteParticipants.values()].filter(
+      (participant) => !(viewer && participant.isLocal),
+    );
     return everyone.map((p) => {
       const camPub = p.getTrackPublication(T.Source.Camera);
       const micPub = p.getTrackPublication(T.Source.Microphone);
@@ -278,11 +285,109 @@ function createCall() {
     epoch++;
     const left = channel();
     const wasActive = status() !== "idle";
+    const wasViewer = viewer;
+    const openPopout = popoutFor();
+    viewer = false;
     teardown();
     setStatus("idle");
     setChannel(null);
     setProblem(null);
-    if (left && wasActive) await voiceApi.leave(left.id).catch(() => undefined);
+    if (!wasViewer && openPopout) {
+      setPopoutFor(null);
+      void window.mesaNative?.closeCallPopout();
+    }
+    if (left && wasActive && !wasViewer) await voiceApi.leave(left.id).catch(() => undefined);
+  }
+
+  async function watch(request: { channelId: string; serverId: string; e2ee: boolean }): Promise<boolean> {
+    if (status() !== "idle") await leave();
+    viewer = true;
+    const mine = ++epoch;
+    setProblem(null);
+    setNotice(null);
+    const target: Channel = {
+      id: request.channelId,
+      server_id: request.serverId,
+      name: "",
+      type: "voice_video",
+      grid_slot_count: null,
+      created_by_account_id: "",
+      e2ee_enabled: request.e2ee,
+      has_channel_key: true,
+      visibility: "public",
+      visible_to_new_members: true,
+    };
+    setChannel(target);
+    setStatus("connecting");
+    setCanSpeak(false);
+    const identity = session.identity();
+    const carried = request.e2ee ? getServerKey(request.serverId) : undefined;
+    const key = carried ?? (request.e2ee && identity ? ((await mediaKeyFor(target, identity)) ?? null) : null);
+    if (request.e2ee && !key) {
+      viewer = false;
+      setStatus("idle");
+      setChannel(null);
+      setProblem("noKey");
+      return false;
+    }
+    try {
+      lk = await loadLiveKit();
+      const options: ConstructorParameters<LiveKit["Room"]>[0] = { adaptiveStream: true, dynacast: true };
+      let provider: InstanceType<LiveKit["ExternalE2EEKeyProvider"]> | null = null;
+      if (key) {
+        provider = new lk.ExternalE2EEKeyProvider();
+        options.e2ee = { keyProvider: provider, worker: new Worker(new URL("livekit-client/e2ee-worker", import.meta.url), { type: "module" }) };
+      }
+      const next = new lk.Room(options);
+      const granted = await voiceApi.popoutToken(request.channelId);
+      if (mine !== epoch) return false;
+      room = next;
+      wire(next, lk, mine);
+      if (provider) {
+        await provider.setKey(key!.buffer.slice(key!.byteOffset, key!.byteOffset + key!.byteLength) as ArrayBuffer);
+        await next.setE2EEEnabled(true);
+        setE2eeOn(true);
+      }
+      await next.connect(granted.url, granted.token);
+      if (mine !== epoch) return false;
+      setStartedAt(Date.now());
+      setStatus("live");
+      setAudioBlocked(!next.canPlaybackAudio);
+      refresh();
+      return true;
+    } catch {
+      if (mine === epoch) {
+        teardown();
+        viewer = false;
+        setStatus("idle");
+        setChannel(null);
+        setProblem("failed");
+      }
+      return false;
+    }
+  }
+
+  async function openPopout(): Promise<void> {
+    const current = channel();
+    const native = window.mesaNative;
+    if (!current || !native) return;
+    const serverKey = getServerKey(current.server_id);
+    if (current.e2ee_enabled && !serverKey) {
+      setNotice("popoutKey");
+      return;
+    }
+    await native.openCallPopout({
+      channelId: current.id,
+      serverId: current.server_id,
+      e2ee: current.e2ee_enabled,
+      serverKey: serverKey ? b64(serverKey) : null,
+    });
+    setPopoutFor(current.id);
+  }
+
+  async function closePopout(): Promise<void> {
+    await window.mesaNative?.closeCallPopout();
+    setPopoutFor(null);
   }
 
   /** The room dropped us without being asked (network gone, kicked, channel closed). */
@@ -459,9 +564,12 @@ function createCall() {
   // Closing the tab must free the seat: a keepalive leave plus a local disconnect.
   const onPageHide = () => {
     const current = channel();
-    if (current && status() !== "idle") voiceApi.leaveOnUnload(current.id);
+    if (current && status() !== "idle" && !viewer) voiceApi.leaveOnUnload(current.id);
     teardown();
   };
+  if (window.mesaNative && !location.pathname.startsWith("/call-popout") && !location.hash.includes("/call-popout/")) {
+    onCleanup(window.mesaNative.onCallPopoutClosed(() => setPopoutFor(null)));
+  }
   window.addEventListener("pagehide", onPageHide);
   onCleanup(() => {
     window.removeEventListener("pagehide", onPageHide);
@@ -492,6 +600,10 @@ function createCall() {
     blurError,
     join,
     leave,
+    watch,
+    popoutFor,
+    openPopout,
+    closePopout,
     setMic,
     setCam,
     setScreen,
@@ -509,9 +621,16 @@ export type CallSession = ReturnType<typeof createCall>;
 
 const Context = createContext<CallSession>();
 
-export function CallProvider(props: { subscribe: (handler: (m: RealtimeEnvelope) => void) => () => void; children: JSX.Element }) {
+export function CallProvider(props: {
+  subscribe: (handler: (m: RealtimeEnvelope) => void) => () => void;
+  watch?: { channelId: string; serverId: string; e2ee: boolean };
+  children: JSX.Element;
+}) {
   const call = createCall();
   const stop = props.subscribe((message) => call.onRealtime(message));
+  onMount(() => {
+    if (props.watch) void call.watch(props.watch);
+  });
   onCleanup(() => stop?.());
   return <Context.Provider value={call}>{props.children}</Context.Provider>;
 }

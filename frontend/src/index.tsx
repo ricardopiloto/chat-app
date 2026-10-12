@@ -7,6 +7,7 @@ import { Auth } from "./pages/Auth";
 import { Recover } from "./pages/Recover";
 import { Foundation } from "./pages/Foundation";
 import { Invite } from "./pages/Invite";
+import { CallPopoutWindow } from "./voice/CallPopoutWindow";
 import { Unlock } from "./pages/Unlock";
 import { InstanceConnect } from "./auth/InstanceConnect";
 import { currentInstance, isNative, loadInstance, subscribeInstance } from "./api/instance";
@@ -27,6 +28,13 @@ applyTheme(themeMode());
 
 // The screen follows the session: no account → sign in, account without an unlocked identity →
 // unlock, both → the application. `/__foundation` is the component gallery and needs no session.
+function popoutChannelId(pathname: string, hash: string): string | null {
+  const path = pathname.match(/^\/call-popout\/([^/]+)/);
+  if (path?.[1]) return decodeURIComponent(path[1]);
+  const hashed = hash.match(/^#\/call-popout\/([^/]+)/);
+  return hashed?.[1] ? decodeURIComponent(hashed[1]) : null;
+}
+
 function Gate() {
   const session = useSession();
   const where = useLocation();
@@ -56,6 +64,9 @@ function Gate() {
       </Match>
       <Match when={session.phase() === "anonymous"}>
         <Auth />
+      </Match>
+      <Match when={(session.phase() === "locked" || session.phase() === "ready") && popoutChannelId(where.pathname, where.hash)}>
+        {(channelId) => <CallPopoutWindow channelId={channelId()} />}
       </Match>
       <Match when={session.phase() === "locked"}>
         <Unlock />

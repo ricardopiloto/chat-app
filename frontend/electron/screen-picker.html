@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="pt">
+  <head>
+    <meta charset="utf-8" />
+    <title>Compartilhar a tela</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: sans-serif;
+      }
+      body {
+        margin: 0;
+        background: #10131c;
+        color: #e8eaf2;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 16px 20px 8px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+      }
+      button {
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+      }
+      #cancel {
+        border: 1px solid #3a4158;
+        background: transparent;
+        border-radius: 8px;
+        padding: 6px 12px;
+      }
+      main {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 12px;
+        padding: 12px 20px 20px;
+        max-height: calc(100vh - 64px);
+        overflow: auto;
+      }
+      .source {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: stretch;
+        text-align: left;
+        border: 1px solid #2a3148;
+        background: #171b28;
+        border-radius: 10px;
+        padding: 8px;
+      }
+      .source img,
+      .placeholder {
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        object-fit: cover;
+        border-radius: 6px;
+        background: #0b0e16;
+      }
+      .source span {
+        font-size: 13px;
+        line-height: 1.3;
+      }
+      .empty {
+        grid-column: 1 / -1;
+        color: #a8b0c8;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Compartilhar a tela</h1>
+      <button id="cancel" type="button">Cancelar</button>
+    </header>
+    <main id="list"></main>
+    <script>
+      const { ipcRenderer } = require("electron");
+      const list = document.getElementById("list");
+      document.getElementById("cancel").addEventListener("click", () => {
+        ipcRenderer.send("mesa:screen-pick", null);
+      });
+      ipcRenderer.on("mesa:screen-sources", (_event, sources) => {
+        list.replaceChildren();
+        if (!Array.isArray(sources) || sources.length === 0) {
+          const empty = document.createElement("p");
+          empty.className = "empty";
+          empty.textContent = "Nenhuma tela ou janela disponível.";
+          list.append(empty);
+          return;
+        }
+        for (const source of sources) {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "source";
+          if (source.thumbnail) {
+            const img = document.createElement("img");
+            img.alt = "";
+            img.src = source.thumbnail;
+            button.append(img);
+          } else {
+            const placeholder = document.createElement("div");
+            placeholder.className = "placeholder";
+            button.append(placeholder);
+          }
+          const name = document.createElement("span");
+          name.textContent = String(source.name || "Tela");
+          button.append(name);
+          button.addEventListener("click", () => ipcRenderer.send("mesa:screen-pick", source.id));
+          list.append(button);
+        }
+      });
+    </script>
+  </body>
+</html>

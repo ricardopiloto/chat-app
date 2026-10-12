@@ -1,9 +1,10 @@
-import { app, BrowserWindow, ipcMain, session, shell } from "electron";
+import { app, BrowserWindow, desktopCapturer, ipcMain, net, protocol, session, shell } from "electron";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { dirname, join, normalize, sep } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const DEV_URL = "https://127.0.0.1:1421";
+const APP_ORIGIN = "mesa://app";
 const BACKGROUND = "#10131c";
 const INSTANCE_FILE = "mesa-instance.json";
 
@@ -55,15 +56,38 @@ function applyAuthFilter(): void {
   });
 }
 
-function isAppDocument(url: string): boolean {
-  if (isDev) {
+function distDirectory(): string {
+  const root = fileURLToPath(new URL("../../dist/", import.meta.url));
+  return root.endsWith(sep) ? root : `${root}${sep}`;
+}
+
+// Production loads the Vite build, whose script and stylesheet URLs are absolute (`/assets/...`).
+// `file://` resolves those against the filesystem root, so the window stays blank. A standard
+// scheme keeps the same URLs and maps them onto the packaged `dist` directory.
+function registerAppProtocol(): void {
+  const root = distDirectory();
+  protocol.handle("mesa", (request) => {
+    let pathname: string;
     try {
-      return new URL(url).origin === new URL(DEV_URL).origin;
+      pathname = decodeURIComponent(new URL(request.url).pathname);
     } catch {
-      return false;
+      return new Response("bad request", { status: 400 });
     }
+    const file = normalize(join(root, pathname.replace(/^\/+/, "")));
+    if (file !== root.slice(0, -1) && !file.startsWith(root)) {
+      return new Response("not found", { status: 404 });
+    }
+    return net.fetch(pathToFileURL(file).href);
+  });
+}
+
+function isAppDocument(url: string): boolean {
+  try {
+    const origin = isDev ? new URL(DEV_URL).origin : APP_ORIGIN;
+    return new URL(url).origin === origin;
+  } catch {
+    return false;
   }
-  return url.startsWith("file:");
 }
 
 function openOutside(url: string): void {
@@ -105,9 +129,196 @@ function createWindow(): BrowserWindow {
   if (isDev) {
     void win.loadURL(DEV_URL);
   } else {
-    void win.loadFile(fileURLToPath(new URL("../../dist/index.html", import.meta.url)));
+    void win.loadURL(`${APP_ORIGIN}/index.html`);
   }
   return win;
+}
+
+function onWayland(): boolean {
+  return Boolean(process.env.WAYLAND_DISPLAY);
+}
+
+// Chromium inside Electron has no screen picker of its own. getDisplayMedia stays
+// refused until this process hands back a DesktopCapturer source. On Wayland the
+// system portal is already that picker, so a single returned source is granted.
+// On X11 the capturer lists every screen and window, and this window is the picker.
+function installScreenShare(): void {
+  let queue: Promise<void> = Promise.resolve();
+  session.defaultSession.setDisplayMediaRequestHandler((request, callback) => {
+    const run = queue.then(() => fulfillScreenShare(request, callback));
+    queue = run.then(
+      () => undefined,
+      () => undefined,
+    );
+  });
+}
+
+async function fulfillScreenShare(
+  request: Electron.DisplayMediaRequestHandlerHandlerRequest,
+  callback: (streams: Electron.Streams) => void,
+): Promise<void> {
+  if (!request.videoRequested) {
+    callback({});
+    return;
+  }
+  let sources: Electron.DesktopCapturerSource[];
+  try {
+    sources = await desktopCapturer.getSources({
+      types: ["screen", "window"],
+      thumbnailSize: onWayland() ? { width: 0, height: 0 } : { width: 320, height: 180 },
+      fetchWindowIcons: false,
+    });
+  } catch (error) {
+    console.error("screen share sources failed", error);
+    callback({});
+    return;
+  }
+  const chosen =
+    onWayland() && sources.length === 1 ? sources[0] : await pickScreenSource(sources);
+  if (!chosen) {
+    callback({});
+    return;
+  }
+  callback({ video: { id: chosen.id, name: chosen.name } });
+}
+
+function pickScreenSource(
+  sources: Electron.DesktopCapturerSource[],
+): Promise<Electron.DesktopCapturerSource | undefined> {
+  const parent = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0];
+  const picker = new BrowserWindow({
+    parent,
+    modal: Boolean(parent),
+    width: 760,
+    height: 560,
+    minWidth: 480,
+    minHeight: 360,
+    backgroundColor: BACKGROUND,
+    autoHideMenuBar: true,
+    title: "Compartilhar a tela",
+    webPreferences: {
+      // Local dialog only. Navigation away from this file is refused below.
+      nodeIntegration: true,
+      contextIsolation: false,
+      sandbox: false,
+    },
+  });
+  picker.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+  picker.webContents.on("will-navigate", (event) => event.preventDefault());
+
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (source: Electron.DesktopCapturerSource | undefined) => {
+      if (settled) return;
+      settled = true;
+      ipcMain.removeListener("mesa:screen-pick", onPick);
+      resolve(source);
+      if (!picker.isDestroyed()) picker.close();
+    };
+    const onPick = (event: Electron.IpcMainEvent, id: unknown) => {
+      if (event.sender.id !== picker.webContents.id) return;
+      finish(typeof id === "string" ? sources.find((source) => source.id === id) : undefined);
+    };
+    ipcMain.on("mesa:screen-pick", onPick);
+    picker.on("closed", () => finish(undefined));
+    void picker.loadFile(fileURLToPath(new URL("./screen-picker.html", import.meta.url))).then(() => {
+      if (picker.isDestroyed()) return;
+      picker.webContents.send(
+        "mesa:screen-sources",
+        sources.map((source) => ({
+          id: source.id,
+          name: source.name,
+          thumbnail: source.thumbnail.isEmpty() ? "" : source.thumbnail.toDataURL(),
+        })),
+      );
+    });
+  });
+}
+
+interface PopoutRequest {
+  channelId: string;
+  serverId: string;
+  e2ee: boolean;
+  serverKey: string | null;
+}
+
+let popout: BrowserWindow | null = null;
+let popoutHandoff: PopoutRequest | null = null;
+let popoutOpener: Electron.WebContents | null = null;
+
+function readPopoutRequest(value: unknown): PopoutRequest | null {
+  if (!value || typeof value !== "object") return null;
+  const raw = value as Record<string, unknown>;
+  if (typeof raw.channelId !== "string" || raw.channelId.length === 0) return null;
+  if (typeof raw.serverId !== "string" || raw.serverId.length === 0) return null;
+  if (typeof raw.e2ee !== "boolean") return null;
+  const serverKey = typeof raw.serverKey === "string" && raw.serverKey.length > 0 ? raw.serverKey : null;
+  if (raw.serverKey != null && serverKey === null) return null;
+  return { channelId: raw.channelId, serverId: raw.serverId, e2ee: raw.e2ee, serverKey };
+}
+
+function tellOpener(channel: "mesa:call-popout-opened" | "mesa:call-popout-closed", channelId: string): void {
+  if (popoutOpener && !popoutOpener.isDestroyed()) popoutOpener.send(channel, channelId);
+}
+
+function registerPopoutIpc(): void {
+  ipcMain.handle("mesa:open-call-popout", (event, payload: unknown) => {
+    const request = readPopoutRequest(payload);
+    if (!request) throw new Error("invalid call popout request");
+    popoutHandoff = request;
+    popoutOpener = event.sender;
+    const route = `/call-popout/${encodeURIComponent(request.channelId)}`;
+    if (popout && !popout.isDestroyed()) {
+      if (isDev) void popout.loadURL(`${DEV_URL}${route}`);
+      else void popout.loadURL(`${APP_ORIGIN}/index.html#${route}`);
+      popout.focus();
+      tellOpener("mesa:call-popout-opened", request.channelId);
+      return;
+    }
+    const icon = join(dirname(fileURLToPath(import.meta.url)), "../icons/icon.png");
+    const window = new BrowserWindow({
+      width: 960,
+      height: 640,
+      minWidth: 640,
+      minHeight: 480,
+      backgroundColor: BACKGROUND,
+      icon,
+      webPreferences: {
+        contextIsolation: true,
+        nodeIntegration: false,
+        webSecurity: false,
+        preload: fileURLToPath(new URL("./preload.cjs", import.meta.url)),
+      },
+    });
+    popout = window;
+    window.on("closed", () => {
+      const channelId = popoutHandoff?.channelId ?? request.channelId;
+      popout = null;
+      popoutHandoff = null;
+      tellOpener("mesa:call-popout-closed", channelId);
+    });
+    window.webContents.setWindowOpenHandler(({ url }) => {
+      openOutside(url);
+      return { action: "deny" };
+    });
+    window.webContents.on("will-navigate", (nav, url) => {
+      if (isAppDocument(url)) return;
+      nav.preventDefault();
+      openOutside(url);
+    });
+    if (isDev) {
+      void window.loadURL(`${DEV_URL}${route}`);
+    } else {
+      void window.loadURL(`${APP_ORIGIN}/index.html#${route}`);
+    }
+    tellOpener("mesa:call-popout-opened", request.channelId);
+  });
+
+  ipcMain.handle("mesa:close-call-popout", () => {
+    if (popout && !popout.isDestroyed()) popout.close();
+  });
+
+  ipcMain.handle("mesa:take-call-popout", () => popoutHandoff);
 }
 
 function registerInstanceIpc(): void {
@@ -118,6 +329,25 @@ function registerInstanceIpc(): void {
   ipcMain.handle("mesa:clear-instance", () => writeInstance({ baseUrl: null, sessionToken: null }));
 }
 
+if (process.platform === "linux") {
+  // Wayland screen capture goes through PipeWire. The switch is ignored where X11 is the capturer.
+  app.commandLine.appendSwitch("enable-features", "WebRTCPipeWireCapturer");
+}
+
+// This Chromium build's HTTP/3 can take about a minute to deliver a response that
+// HTTP/2 returns immediately. Session restore waits on that request, so the window
+// stays on the loading screen. WebRTC media does not use QUIC.
+app.commandLine.appendSwitch("disable-quic");
+
+if (!isDev) {
+  protocol.registerSchemesAsPrivileged([
+    {
+      scheme: "mesa",
+      privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, stream: true },
+    },
+  ]);
+}
+
 app.whenReady().then(async () => {
   if (isDev) {
     session.defaultSession.setCertificateVerifyProc((request, callback) => {
@@ -125,9 +355,12 @@ app.whenReady().then(async () => {
       else callback(-3);
     });
   }
+  if (!isDev) registerAppProtocol();
   instance = await readInstance();
   applyAuthFilter();
+  installScreenShare();
   registerInstanceIpc();
+  registerPopoutIpc();
   createWindow();
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

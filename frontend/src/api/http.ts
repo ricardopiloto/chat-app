@@ -42,13 +42,18 @@ export type RequestOptions = {
   signal?: AbortSignal;
 };
 
+/** JSON calls abort after this long when the caller did not pass `signal`. Uploads (`bytes`) do not. */
+export const JSON_REQUEST_TIMEOUT_MS = 15_000;
+
 interface PlannedRequest {
   url: string;
   transport: "browser";
   init: RequestInit;
+  /** Clears the default JSON timeout. Absent when the caller owns `signal` or the body is an upload. */
+  settle?: () => void;
 }
 
-function toInit(opts: RequestOptions, credentials: RequestCredentials, headers: Headers): RequestInit {
+function toInit(opts: RequestOptions, credentials: RequestCredentials, headers: Headers): { init: RequestInit; settle?: () => void } {
   let body: BodyInit | undefined;
   if (opts.json !== undefined) {
     headers.set("content-type", "application/json");
@@ -57,13 +62,21 @@ function toInit(opts: RequestOptions, credentials: RequestCredentials, headers: 
     headers.set("content-type", "application/octet-stream");
     body = opts.bytes as BodyInit;
   }
-  return { method: opts.method ?? "GET", headers, body, credentials, keepalive: opts.keepalive, signal: opts.signal };
+  let signal = opts.signal;
+  let settle: (() => void) | undefined;
+  if (!opts.signal && opts.bytes === undefined) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), JSON_REQUEST_TIMEOUT_MS);
+    signal = controller.signal;
+    settle = () => clearTimeout(timer);
+  }
+  return { init: { method: opts.method ?? "GET", headers, body, credentials, keepalive: opts.keepalive, signal }, settle };
 }
 
 /** Relative path and cookie on the web. Absolute URL and bearer token when native. */
 export function planRequest(path: string, opts: RequestOptions = {}): PlannedRequest {
   const headers = new Headers(opts.headers);
-  if (!isNative()) return { url: path, transport: "browser", init: toInit(opts, "include", headers) };
+  if (!isNative()) return { url: path, transport: "browser", ...toInit(opts, "include", headers) };
   const base = currentInstance().baseUrl;
   if (!base) throw new ApiError(0, "No Mesa instance is configured");
   const token = currentInstance().sessionToken;
@@ -71,13 +84,17 @@ export function planRequest(path: string, opts: RequestOptions = {}): PlannedReq
   return {
     url: new URL(path, base).toString(),
     transport: "browser",
-    init: toInit(opts, "omit", headers),
+    ...toInit(opts, "omit", headers),
   };
 }
 
 async function send(path: string, opts: RequestOptions): Promise<Response> {
   const planned = planRequest(path, opts);
-  return fetch(planned.url, planned.init);
+  try {
+    return await fetch(planned.url, planned.init);
+  } finally {
+    planned.settle?.();
+  }
 }
 
 export async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {

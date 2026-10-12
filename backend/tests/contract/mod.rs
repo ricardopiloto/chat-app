@@ -41,4 +41,5 @@ mod servers;
 mod single_role_presence;
 mod unfurl;
 mod voice_join;
+mod voice_popout;
 mod voice_occupancy;

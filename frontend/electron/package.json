@@ -1,0 +1,9 @@
+{
+  "name": "mesa",
+  "version": "1.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Chat e vídeo self-hosted, com composição de câmaras e criptografia ponta a ponta.",
+  "author": "Mesa",
+  "license": "AGPL-3.0-only"
+}

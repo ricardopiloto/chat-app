@@ -46,6 +46,10 @@ Alternativa descartada: usar o pacote `electron-store` (popular no ecossistema E
 
 Alternativa descartada: detectar Electron por `navigator.userAgent.includes("Electron")` (técnica comum, mas falsificável por qualquer página e frágil a mudanças de versão). Em vez disso, o preload script define explicitamente `window.__MESA_NATIVE__ = true` via `contextBridge.exposeInMainWorld` antes da página carregar — o equivalente directo ao que `isTauri()` já fazia (verificar a presença de uma ponte injectada pelo processo nativo), só que explícito em vez de genérico. `frontend/src/api/instance.ts` troca `isTauri()` de `@tauri-apps/api/core` por esta verificação.
 
+### 5. Captura de ecrã entregue pelo processo principal
+
+O Chromium do Electron não abre o selector de ecrã do browser. `navigator.mediaDevices.getDisplayMedia` (o que o LiveKit usa em `setScreenShareEnabled`) fica recusado até `session.setDisplayMediaRequestHandler` devolver uma fonte de `desktopCapturer`. No Wayland o portal do sistema já é esse selector: quando devolve uma única fonte, essa fonte é concedida. No X11 o capturer lista ecrãs e janelas sem perguntar, e uma janela local (`electron/screen-picker.html`) faz a escolha. Áudio de sistema por `loopback` fica de fora: a API só o oferece no Windows. Cancelar o selector chama o callback vazio, que o compositor já trata como picker dispensado.
+
 ## Risks / Trade-offs
 
 - [`webSecurity: false` é uma configuração sensível, fácil de copiar incorrectamente para outro contexto (ex. se no futuro a app alguma vez carregar conteúdo de terceiros numa `BrowserWindow`)] → Mitigação: aplicado só à janela principal, que nunca carrega outra coisa senão `frontend/dist`; documentado explicitamente no código (comentário) e nesta decisão, não escondido.

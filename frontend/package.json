@@ -20,8 +20,9 @@
     "verify:mentions": "node scripts/verify-mentions.mjs",
     "verify:picker-placement": "node scripts/verify-picker-placement.mjs",
     "verify:instance": "node scripts/verify-instance.mjs",
-    "electron:dev": "tsc -p electron/tsconfig.json && tsc -p electron/tsconfig.preload.json && mv -f electron/dist/preload.js electron/dist/preload.cjs && MESA_ELECTRON_DEV=1 electron electron/dist/main.js",
-    "electron:build": "npm run build && tsc -p electron/tsconfig.json && tsc -p electron/tsconfig.preload.json && mv -f electron/dist/preload.js electron/dist/preload.cjs && electron-builder --config electron-builder.yml"
+    "verify:http-timeout": "node scripts/verify-http-timeout.mjs",
+    "electron:dev": "tsc -p electron/tsconfig.json && tsc -p electron/tsconfig.preload.json && mv -f electron/dist/preload.js electron/dist/preload.cjs && cp electron/screen-picker.html electron/dist/screen-picker.html && MESA_ELECTRON_DEV=1 electron electron/dist/main.js",
+    "electron:build": "npm run build && tsc -p electron/tsconfig.json && tsc -p electron/tsconfig.preload.json && mv -f electron/dist/preload.js electron/dist/preload.cjs && cp electron/screen-picker.html electron/dist/screen-picker.html && electron-builder --config electron-builder.yml"
   },
   "dependencies": {
     "@livekit/track-processors": "^0.7.2",
