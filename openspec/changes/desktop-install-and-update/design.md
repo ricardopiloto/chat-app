@@ -23,6 +23,7 @@ Ver `proposal.md` — Why, incluindo as descobertas técnicas já confirmadas (m
 - Auto-update em Windows MSI — não suportado pelo `electron-updater`; o `.msi` continua disponível sem auto-update, documentado como tal.
 - Assinatura de código, notarização, canal beta, publicação em lojas (Microsoft Store/Homebrew/Flathub/AUR) — inalterado de `desktop-packaging-ci`.
 - Telemetria de adopção/contagem de instalações.
+- `PKGBUILD`/publicação no AUR para Arch Linux e derivadas (CachyOS, Manjaro, etc.) — decidido explicitamente com o utilizador: o script genérico (`install-mesa.sh`, AppImage) já serve como via oficial de instalação por linha de comando para estas distros, sem precisar de um pacote nativo `pacman`. Mantém a decisão já tomada em `desktop-packaging-ci` de não publicar em lojas/AUR.
 
 ## Decisions
 

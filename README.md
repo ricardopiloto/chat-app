@@ -7,6 +7,7 @@ Pensado para mesas de RPG que gravam ou transmitem sessões, e para qualquer gru
 | | |
 |--|--|
 | **Estado** | Backend `1.1.0` · Frontend `1.1.0` (cliente v2 em `frontend/`; ver [CHANGELOG.md](CHANGELOG.md)) |
+| **Baixar** | [Instaladores desktop (Windows/macOS/Linux)](https://github.com/ricardopiloto/chat-app/releases) — ver [Distribuição desktop](#distribuição-desktop) |
 | **Stack** | Backend Rust (Axum + SQLite) · Frontend **v2** SolidJS (Vite, Tailwind) · LiveKit (voz/vídeo) |
 | **Frontend** | [`frontend/`](frontend/) é o cliente atual (v2). A versão 0.8.1 da v1 permanece no histórico Git para rollback |
 | **Operação** | [docs/operar-instancia.md](docs/operar-instancia.md) · [docs/deploy-producao.md](docs/deploy-producao.md) |
@@ -374,9 +375,21 @@ CHANGELOG.md      # Versionamento
 
 ## Distribuição desktop
 
+### Baixar
+
+Os instaladores de cada versão ficam em **[github.com/ricardopiloto/chat-app/releases](https://github.com/ricardopiloto/chat-app/releases)**. Escolha o ficheiro da sua plataforma:
+
+| Sistema | Formatos | Observação |
+|---|---|---|
+| **Linux** | `mesa-chat-app-<versão>-x86_64.AppImage`, `mesa-chat-app-<versão>-amd64.deb`, `mesa-chat-app-<versão>-x86_64.rpm` | O `.deb`/`.rpm` instalam o binário como `mesa-chat-app` (não `mesa`) para não colidir com os pacotes da biblioteca gráfica Mesa 3D (`mesa-libgallium`, `mesa-vulkan-drivers`, etc.) já presentes na maioria das distribuições. O `.AppImage` não precisa de instalação — torná-lo executável e correr. |
+| **Windows** | `.exe` (NSIS) ou `.msi` | Qualquer um dos dois instala a aplicação; use o `.msi` se precisar de implantação silenciosa/empresarial. |
+| **macOS** | `.dmg` | Contém a `.app` para arrastar para `Applications`. |
+
+### Instaladores sem assinatura
+
 Os instaladores de Windows e macOS **não são assinados nem notarizados**. No primeiro arranque o Windows mostra o aviso do SmartScreen ("Windows protected your PC") e o macOS mostra o aviso do Gatekeeper ("developer cannot be verified"). A aplicação só abre depois de a pessoa confirmar que confia na origem. Isto não está resolvido: o projecto não tem certificado Authenticode nem conta Apple Developer, e o workflow de release não tenta assinar.
 
-O processo de publicar uma versão, os formatos (AppImage, deb, rpm, msi, exe, app, dmg) e o facto de a GitHub Release nascer em rascunho estão em [docs/desktop-release.md](docs/desktop-release.md).
+O processo de publicar uma versão, os formatos (AppImage, deb, rpm, msi, exe, dmg) e o facto de a GitHub Release nascer em rascunho estão em [docs/desktop-release.md](docs/desktop-release.md).
 
 ## Fora de escopo e diferido
 

@@ -12,7 +12,7 @@ Veredito: N/A — inalterado.
 
 Veredito: OK
 
-- O achado da ronda anterior está resolvido: `tasks.md` 4.1.1 agora cobre a integração de menu/ícone do AppImage, ao mesmo nível do `.deb`/`.rpm`.
+- Tarefa 4.1.2 é directamente implementável como escrita — só pede um teste manual numa máquina Arch-based já disponível (CachyOS do utilizador), sem código novo específico para essa distro.
 
 ## 3. Deploy e operação
 
