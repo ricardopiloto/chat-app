@@ -4,6 +4,7 @@ import { createCopy } from "../lib/copy";
 import { t } from "../i18n";
 import { Badge, Button, Dialog, Icon, Radio, Switch } from "../components/ui";
 import { channels as channelsApi, invites, servers, type Channel } from "../api";
+import { inviteLinkOrigin } from "../api/instance";
 import { useSession } from "../session/session";
 import { loadServerKey } from "../crypto/keyHandoff";
 import { SEED_TTL_SECONDS, createInviteSeed, encodeSeedBlob, inviteUrl } from "../crypto/inviteSeed";
@@ -26,6 +27,13 @@ export function InviteDialog(props: { open: boolean; serverId: string; onClose: 
   const { copied, copy } = createCopy();
 
   async function generate(welcomeChannelId?: string) {
+    const origin = inviteLinkOrigin();
+    if (!origin) {
+      setUrl("");
+      setError(t("mgmt.error"));
+      setStep("channel");
+      return;
+    }
     setBusy(true);
     setError("");
     try {
@@ -40,7 +48,7 @@ export function InviteDialog(props: { open: boolean; serverId: string; onClose: 
       const target = textChannels().find((c) => c.id === (welcomeChannelId ?? invite.welcome_channel_id));
       setDestination(target?.name ?? textChannels().find((c) => c.name === "geral")?.name ?? "");
       setSeeded(Boolean(seed));
-      setUrl(seed ? inviteUrl(location.origin, invite.code, seed.secret) : `${location.origin}/invite/${invite.code}`);
+      setUrl(seed ? inviteUrl(origin, invite.code, seed.secret) : `${origin}/invite/${invite.code}`);
       setStep("link");
     } catch (failure) {
       setError(errorText(failure, "mgmt.error"));

@@ -1,4 +1,4 @@
-import { Show, createEffect, onCleanup } from "solid-js";
+import { Show, createEffect, createSignal, onCleanup, onMount } from "solid-js";
 import { t } from "../i18n";
 import { useSession } from "../session/session";
 import { CallProvider } from "../voice/callSession";
@@ -16,7 +16,16 @@ import { Topbar } from "./Topbar";
 // content from 768px up; below that it is a drawer over the content with a backdrop that closes it.
 function Frame() {
   const shell = useShell();
+  const [availableUpdate, setAvailableUpdate] = createSignal<{ version: string; url: string } | null>(null);
   useSoundEffects();
+
+  onMount(() => {
+    const native = window.mesaNative;
+    if (!native) return;
+    const unsubscribe = native.onUpdateAvailable(setAvailableUpdate);
+    void native.availableUpdate().then(setAvailableUpdate).catch(() => undefined);
+    onCleanup(unsubscribe);
+  });
 
   createEffect(() => {
     if (!shell.drawerOpen()) return;
@@ -28,6 +37,12 @@ function Frame() {
   return (
     <div class="app-shell flex h-dvh flex-col overflow-hidden bg-background text-on-surface">
       <Topbar />
+      <Show when={availableUpdate()}>{(update) =>
+        <div class="flex items-center justify-center gap-3 bg-surface-container-high px-4 py-1.5 text-body-sm text-on-surface-variant" role="status">
+          <span>{t("shell.updateAvailable", { version: update().version })}</span>
+          <a class="font-semibold underline" href={update().url} target="_blank" rel="noopener noreferrer">{t("shell.updateManually")}</a>
+        </div>
+      }</Show>
       <Show when={shell.delivery() !== "connected"}>
         <p class="bg-surface-container-high px-4 py-1.5 text-center text-body-sm text-on-surface-variant" role="status">
           {t("shell.reconnecting")}

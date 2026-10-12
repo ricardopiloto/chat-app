@@ -7,6 +7,8 @@ const DEV_URL = "https://127.0.0.1:1421";
 const APP_ORIGIN = "mesa://app";
 const BACKGROUND = "#10131c";
 const INSTANCE_FILE = "mesa-instance.json";
+const LATEST_RELEASE = "https://api.github.com/repos/ricardopiloto/chat-app/releases/latest";
+const UPDATE_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
 interface InstanceState {
   baseUrl: string | null;
@@ -15,6 +17,45 @@ interface InstanceState {
 
 const isDev = process.env.MESA_ELECTRON_DEV === "1";
 let instance: InstanceState = { baseUrl: null, sessionToken: null };
+let availableUpdate: { version: string; url: string } | null = null;
+
+function versionParts(value: string): number[] | null {
+  const match = /^v?(\d+)\.(\d+)\.(\d+)$/.exec(value);
+  return match ? match.slice(1).map(Number) : null;
+}
+
+function isNewerVersion(candidate: string, current: string): boolean {
+  const next = versionParts(candidate);
+  const installed = versionParts(current);
+  if (!next || !installed) return false;
+  for (let index = 0; index < 3; index++) {
+    if (next[index] !== installed[index]) return next[index] > installed[index];
+  }
+  return false;
+}
+
+async function checkForUpdate(): Promise<void> {
+  try {
+    const response = await net.fetch(LATEST_RELEASE, {
+      headers: { Accept: "application/vnd.github+json", "Cache-Control": "no-cache" },
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!response.ok) throw new Error(`GitHub releases returned ${response.status}`);
+    const release = await response.json() as { tag_name?: unknown; html_url?: unknown; draft?: unknown; prerelease?: unknown };
+    if (release.draft || release.prerelease || typeof release.tag_name !== "string" || typeof release.html_url !== "string") return;
+    if (!isNewerVersion(release.tag_name, app.getVersion())) return;
+    const url = new URL(release.html_url);
+    if (url.protocol !== "https:" || url.hostname !== "github.com" || !url.pathname.startsWith("/ricardopiloto/chat-app/releases/tag/")) return;
+    availableUpdate = { version: release.tag_name.replace(/^v/, ""), url: url.href };
+    for (const window of BrowserWindow.getAllWindows()) window.webContents.send("mesa:update-available", availableUpdate);
+  } catch (error) {
+    console.warn("update check failed", error);
+  }
+}
+
+function registerUpdateIpc(): void {
+  ipcMain.handle("mesa:available-update", () => availableUpdate);
+}
 
 function instancePath(): string {
   return join(app.getPath("userData"), INSTANCE_FILE);
@@ -361,7 +402,13 @@ app.whenReady().then(async () => {
   installScreenShare();
   registerInstanceIpc();
   registerPopoutIpc();
+  registerUpdateIpc();
   createWindow();
+  if (!isDev) {
+    void checkForUpdate();
+    const timer = setInterval(() => void checkForUpdate(), UPDATE_INTERVAL_MS);
+    app.on("before-quit", () => clearInterval(timer));
+  }
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });

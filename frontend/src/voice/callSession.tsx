@@ -83,6 +83,11 @@ function createCall() {
   /** This renderer is the view-only popout, not the call that owns the seat. */
   let viewer = false;
   const [popoutFor, setPopoutFor] = createSignal<string | null>(null);
+  let popoutGeneration = 0;
+  let pendingClose: { channelId: string; generation: number; finish: () => void } | null = null;
+  const timedOutCloses: string[] = [];
+  let popoutClosing: Promise<void> | null = null;
+  let joining = false;
   let lastRequest: JoinRequest | null = null;
   /** Blur level currently running on the live camera track, so choosing it again does nothing. */
   let appliedBlur: BlurLevel = "off";
@@ -161,15 +166,16 @@ function createCall() {
     lp?.trackPublications.forEach((pub: LocalTrackPublication) => pub.track?.stop());
   }
 
-  function teardown() {
+  function teardown(): Promise<void> {
     window.clearInterval(heartbeat);
     heartbeat = 0;
     const closing = room;
     releaseHardware();
     room = null;
+    let disconnected: Promise<void> = Promise.resolve();
     if (closing) {
       closing.removeAllListeners();
-      void closing.disconnect(true);
+      disconnected = closing.disconnect(true).catch(() => undefined);
     }
     audioHost.replaceChildren();
     setParticipants([]);
@@ -181,6 +187,7 @@ function createCall() {
     setE2eeOn(false);
     setAudioBlocked(false);
     setBlurError(false);
+    return disconnected;
   }
 
   const report = (flags: MediaFlags = {}) => {
@@ -288,14 +295,14 @@ function createCall() {
     const wasViewer = viewer;
     const openPopout = popoutFor();
     viewer = false;
-    teardown();
+    const disconnected = teardown();
     setStatus("idle");
     setChannel(null);
     setProblem(null);
     if (!wasViewer && openPopout) {
-      setPopoutFor(null);
-      void window.mesaNative?.closeCallPopout();
+      await closePopout();
     }
+    await disconnected;
     if (left && wasActive && !wasViewer) await voiceApi.leave(left.id).catch(() => undefined);
   }
 
@@ -368,6 +375,7 @@ function createCall() {
   }
 
   async function openPopout(): Promise<void> {
+    if (popoutClosing) await popoutClosing;
     const current = channel();
     const native = window.mesaNative;
     if (!current || !native) return;
@@ -382,12 +390,40 @@ function createCall() {
       e2ee: current.e2ee_enabled,
       serverKey: serverKey ? b64(serverKey) : null,
     });
+    popoutGeneration++;
     setPopoutFor(current.id);
   }
 
-  async function closePopout(): Promise<void> {
-    await window.mesaNative?.closeCallPopout();
-    setPopoutFor(null);
+  function closePopout(): Promise<void> {
+    if (popoutClosing) return popoutClosing;
+    const closing = closePopoutOnce();
+    popoutClosing = closing.finally(() => { popoutClosing = null; });
+    return popoutClosing;
+  }
+
+  async function closePopoutOnce(): Promise<void> {
+    const native = window.mesaNative;
+    const channelId = popoutFor();
+    if (!native || !channelId) return;
+    const generation = popoutGeneration;
+    const closed = new Promise<void>((resolve) => {
+      const timer = window.setTimeout(() => {
+        timedOutCloses.push(channelId);
+        finish();
+      }, 5_000);
+      function finish() {
+        window.clearTimeout(timer);
+        if (pendingClose?.generation === generation) pendingClose = null;
+        resolve();
+      }
+      pendingClose = { channelId, generation, finish };
+    });
+    try {
+      await native.closeCallPopout();
+    } finally {
+      await closed;
+      if (popoutGeneration === generation) setPopoutFor(null);
+    }
   }
 
   /** The room dropped us without being asked (network gone, kicked, channel closed). */
@@ -397,6 +433,16 @@ function createCall() {
   }
 
   async function join(request: JoinRequest): Promise<boolean> {
+    if (joining) return false;
+    joining = true;
+    try {
+      return await joinOnce(request);
+    } finally {
+      joining = false;
+    }
+  }
+
+  async function joinOnce(request: JoinRequest): Promise<boolean> {
     if (status() !== "idle") await leave();
     const mine = ++epoch;
     lastRequest = request;
@@ -510,7 +556,9 @@ function createCall() {
     }
     next.on(E.TrackSubscribed, (track: RemoteTrack, _pub: RemoteTrackPublication) => {
       if (!alive()) return;
-      if (track.kind === kit.Track.Kind.Audio) attachAudio(track);
+      // The viewer room is picture only. Playing audio here would echo the speaker
+      // and play everyone else a second time, on top of the main window.
+      if (track.kind === kit.Track.Kind.Audio && !viewer) attachAudio(track);
       refresh();
     });
     next.on(E.TrackUnsubscribed, (track: RemoteTrack) => {
@@ -568,7 +616,20 @@ function createCall() {
     teardown();
   };
   if (window.mesaNative && !location.pathname.startsWith("/call-popout") && !location.hash.includes("/call-popout/")) {
-    onCleanup(window.mesaNative.onCallPopoutClosed(() => setPopoutFor(null)));
+    onCleanup(window.mesaNative.onCallPopoutClosed((channelId) => {
+      const timedOut = timedOutCloses.indexOf(channelId);
+      if (timedOut !== -1) {
+        timedOutCloses.splice(timedOut, 1);
+        return;
+      }
+      if (pendingClose?.channelId === channelId) {
+        const closing = pendingClose;
+        closing.finish();
+        if (popoutGeneration === closing.generation) setPopoutFor(null);
+      } else if (popoutFor() === channelId) {
+        setPopoutFor(null);
+      }
+    }));
   }
   window.addEventListener("pagehide", onPageHide);
   onCleanup(() => {

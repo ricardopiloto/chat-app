@@ -83,6 +83,10 @@ export function createShellState(props: { account: () => Account; identity: () =
   const [delivery, setDelivery] = createSignal<DeliveryState>("connected");
   // Counts reconnections, so a thread that is open knows to fetch what it missed.
   const [resync, setResync] = createSignal(0);
+  // A REST snapshot covers a server, while live updates can change individual channels.
+  // Use a monotonic generation so equal-clock timestamps cannot reorder the two paths.
+  let occupancyGeneration = 0;
+  const lastLiveOccupancy = new Map<string, number>();
 
   const applyOccupancy = (forServer: string, updates: ChannelOccupancy[]) => {
     setVoiceState((now) => mergeVoiceOccupancy(now, forServer, updates));
@@ -93,9 +97,16 @@ export function createShellState(props: { account: () => Account; identity: () =
   createEffect(() => {
     let stale = false;
     for (const each of servers.data ?? []) {
+      const startedAtGeneration = occupancyGeneration;
       void voiceApi
         .occupancy(each.id)
-        .then((snapshot) => !stale && applyOccupancy(each.id, snapshot.channels))
+        .then((snapshot) => {
+          if (stale) return;
+          const current = snapshot.channels.filter(
+            (channel) => (lastLiveOccupancy.get(channel.channel_id) ?? 0) <= startedAtGeneration,
+          );
+          if (current.length > 0) applyOccupancy(each.id, current);
+        })
         .catch(() => undefined);
     }
     onCleanup(() => (stale = true));
@@ -119,6 +130,15 @@ export function createShellState(props: { account: () => Account; identity: () =
     void loadNotices();
     void loadAllServerKeys(props.identity(), meId());
   });
+
+  let realtime: ReturnType<typeof connectRealtime> | undefined;
+  const sendTyping = (channelId: string, active: boolean) => {
+    try {
+      realtime?.sendTyping(channelId, active);
+    } catch {
+      /* the socket reports its own reconnect; typing is not queued */
+    }
+  };
 
   createEffect(() => {
     const live = connectRealtime({
@@ -161,6 +181,9 @@ export function createShellState(props: { account: () => Account; identity: () =
           case "voice.occupancy":
             if (about) {
               const updates = voiceOccupancyUpdates(message.payload);
+              for (const update of updates) {
+                lastLiveOccupancy.set(update.channel_id, ++occupancyGeneration);
+              }
               const known = voiceRoster();
               const changes = updates.map((u) => ({
                 channelId: u.channel_id,
@@ -210,7 +233,11 @@ export function createShellState(props: { account: () => Account; identity: () =
         listeners.forEach((handler) => handler(message));
       },
     });
-    onCleanup(() => live.close());
+    realtime = live;
+    onCleanup(() => {
+      if (realtime === live) realtime = undefined;
+      live.close();
+    });
   });
 
   // --- chrome state
@@ -295,7 +322,7 @@ export function createShellState(props: { account: () => Account; identity: () =
     route, serverId, servers, channels, roles, members, presence, server, channel, meId, owner, can, canAdminServer,
     voiceState, voiceRoster, voiceCalls, unreadServers, delivery, resync, subscribe, subscribeOccupancy, listeners,
     createChannelKind, setCreateChannelKind, settingsChannel, setSettingsChannel, settingsDelete, setSettingsDelete,
-    drawerOpen, setDrawerOpen, narrow, membersOpen, toggleMembers, focusMember, hasNews, go, leaveServerSettings, leaveAccount,
+    drawerOpen, setDrawerOpen, narrow, membersOpen, toggleMembers, focusMember, hasNews, go, leaveServerSettings, leaveAccount, sendTyping,
     refreshServers: () => cache.invalidateQueries({ queryKey: queryKeys.servers }),
     refreshChannels: () => cache.invalidateQueries({ queryKey: queryKeys.channels(serverId()) }),
     refreshRoles: () => cache.invalidateQueries({ queryKey: queryKeys.roles(serverId()) }),

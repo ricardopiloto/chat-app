@@ -121,6 +121,7 @@ import {
   UserCog,
   UserMinus,
   UserPlus,
+  UserRoundGroup,
   Users,
   UsersRound,
   Video,
@@ -190,7 +191,7 @@ export const iconMap: Record<string, LucideIcon> = {
   fit_screen: Fullscreen,
   graphic_eq: AudioLines,
   grid_view: LayoutGrid,
-  group: Users,
+  group: UserRoundGroup,
   // groups: closest: one group of people, not several clusters
   groups: UsersRound,
   headphones: Headphones,

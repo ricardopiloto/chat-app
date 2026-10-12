@@ -1,5 +1,11 @@
 # Release do cliente desktop
 
+## Manifesto de integridade e aviso de versão
+
+O job de release gera `SHA256SUMS` a partir dos seis instaladores e anexa o manifesto à mesma GitHub Release em rascunho. Antes de publicar, confirme que os seis ficheiros e o manifesto estão presentes. Os scripts `scripts/install-mesa.sh` e `scripts/install-mesa.ps1` só instalam releases publicadas com esse manifesto e verificam o SHA-256 antes de executar o instalador. Reexecutar o script reinstala a versão publicada mais recente. Uma release antiga sem manifesto continua a poder ser instalada por download direto.
+
+O aplicativo empacotado consulta a última release publicada no arranque e a cada seis horas. Se houver versão mais recente, mostra uma faixa com ligação para a release. A aplicação da atualização é manual em todos os formatos; não há feed `latest*.yml` nem `electron-updater` neste fluxo.
+
 O workflow [`.github/workflows/desktop-release.yml`](../.github/workflows/desktop-release.yml) empacota o shell Electron com `electron-builder`. Não corre em cada push.
 
 ## Bater a versão

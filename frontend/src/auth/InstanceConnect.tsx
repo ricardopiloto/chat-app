@@ -12,6 +12,7 @@ const features = () => [
 function failureText(error: unknown): string {
   const code = error instanceof Error ? error.message : "";
   if (code === "empty") return t("instance.empty");
+  if (code === "https") return t("instance.https");
   if (code === "protocol") return t("instance.protocol");
   if (code === "invalid") return t("instance.invalid");
   if (code === "unreachable") return t("instance.unreachable");
@@ -49,8 +50,10 @@ export function InstanceConnect(props: { onSaved: () => void }) {
         <AuthField label={t("instance.address")} error={problem()} lead={<Icon name="link" class="text-[18px]" />}>
           <input
             class="min-w-0 flex-1 bg-transparent py-3 text-body-md outline-none"
-            type="url"
+            type="text"
             inputMode="url"
+            autocapitalize="none"
+            spellcheck={false}
             autocomplete="url"
             placeholder={t("instance.placeholder")}
             required

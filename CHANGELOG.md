@@ -9,6 +9,32 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [1.3.2] - 2026-10-12
+
+### Added
+
+- **Typing indicator**: on an open text channel, the names of other members who are typing appear in a reserved line just above the composer. The line does not cover messages, the reply bar, mention suggestions, or "Jump to present". The person typing does not see their own name. The signal carries only the channel, the signed-in account and whether they are typing. It is not stored. It stops when the field is cleared, the message is sent, the window is hidden, the channel changes, or a few seconds pass without a renewal. A member who cannot write, or who is muted, does not announce typing, and a member who cannot read the channel does not receive it.
+- `npm run verify:typing` checks the announce cadence, who is shown, and that a closed socket does not queue a typing frame.
+- **Manual desktop update**: the packaged app checks the latest published GitHub release at startup and every six hours. When a newer version exists, a persistent bar links to that release. The app does not download or run an installer.
+- **Install scripts**: `scripts/install-mesa.sh` (Linux and macOS) and `scripts/install-mesa.ps1` (Windows) install the latest published release and can be run again to update. They check the installer SHA-256 against `SHA256SUMS` before installing. A release without that file is installed by downloading it directly.
+- The desktop release workflow writes `SHA256SUMS` for the six installers and attaches it to the draft GitHub Release.
+- On the desktop sign-in and create-account screens, "Switch instance" forgets the saved address and session and returns to the instance address screen. The account menu and the unlock screen already offered this. The browser client served by an instance does not show it.
+
+### Changed
+
+- An instance address without a scheme is read as HTTPS. An `http://` address is refused. The field placeholder is a host name, such as `chat.exemplo.com`.
+- Product version is now **1.3.2** in `frontend/package.json`, `backend/Cargo.toml` and `frontend/electron/package.json`.
+
+### Fixed
+
+- Invite links created in the desktop app use the saved instance address (`https://…`), so the person who opens the link can create an account. They are no longer `mesa://` links.
+- When someone joins a voice channel, or turns a camera on, the people already in that channel see it immediately. Leaving the channel and coming back is not required. A slower occupancy reply that started earlier cannot replace that live update.
+- The call popout no longer plays the room audio. The person speaking no longer hears themselves back, and the other participants are not heard a second time on top of the main window.
+- Closing the popout waits until that window has closed before the main window treats the call as local again. A late close notice does not clear a popout that was opened afterwards. While the call is in the popout and you are looking at another channel, the main window no longer shows the "call is elsewhere" card.
+- The members button uses the three-person icon from the design. The icon for several groups is unchanged.
+- The resting account strip at the bottom of the channel list matches the design: smaller avatar, display name in the display face, handle in the variant color, and a square settings button.
+- Linux packages take their icon from `frontend/electron/icons/`.
+
 ## [1.3.1] - 2026-10-12
 
 ### Changed

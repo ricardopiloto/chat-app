@@ -2,13 +2,13 @@
 
 ## Purpose
 
-Permite que a mesma aplicação SolidJS, quando carregada dentro do shell Tauri (em vez de um browser), escolha e recorde a que instância Mesa se liga, e troque o transporte de autenticação e de tempo real em conformidade — sem alterar nada do comportamento existente quando é servida por um browser na mesma origem do backend.
+Permite que a mesma aplicação SolidJS, quando carregada dentro do shell nativo (em vez de um browser), escolha e recorde a que instância Mesa se liga, e troque o transporte de autenticação e de tempo real em conformidade — sem alterar nada do comportamento existente quando é servida por um browser na mesma origem do backend.
 
 ## Requirements
 
 ### Requirement: O build web nunca mostra selecção de instância
 
-Quando a aplicação corre num browser comum (não dentro do Tauri), o sistema SHALL NOT apresentar qualquer ecrã de selecção/configuração de instância, e SHALL continuar a assumir que o backend está na mesma origem de onde a aplicação foi servida, exactamente como antes desta change.
+Quando a aplicação corre num browser comum (não dentro do shell nativo), o sistema SHALL NOT apresentar qualquer ecrã de selecção/configuração de instância, e SHALL continuar a assumir que o backend está na mesma origem de onde a aplicação foi servida, exactamente como antes desta change.
 
 #### Scenario: Acesso normal pelo browser
 
@@ -17,7 +17,7 @@ Quando a aplicação corre num browser comum (não dentro do Tauri), o sistema S
 
 ### Requirement: Primeira execução no shell nativo pede a instância
 
-Quando a aplicação corre dentro do shell Tauri e não há nenhuma instância guardada, o sistema SHALL apresentar um ecrã que pede o endereço base de uma instância Mesa antes de qualquer ecrã de autenticação, SHALL validar o endereço contactando `GET /health` dessa instância, e SHALL recusar avançar enquanto essa validação não for bem-sucedida, mostrando o motivo da falha (endereço inacessível, resposta inesperada, etc.).
+Quando a aplicação corre dentro do shell nativo e não há nenhuma instância guardada, o sistema SHALL apresentar um ecrã que pede o endereço base de uma instância Mesa antes de qualquer ecrã de autenticação, SHALL validar o endereço contactando `GET /health` dessa instância, e SHALL recusar avançar enquanto essa validação não for bem-sucedida, mostrando o motivo da falha (endereço inacessível, resposta inesperada, etc.).
 
 #### Scenario: Primeira execução, endereço válido
 
@@ -31,7 +31,7 @@ Quando a aplicação corre dentro do shell Tauri e não há nenhuma instância g
 
 ### Requirement: A instância guardada é reutilizada em arranques seguintes
 
-Quando a aplicação corre dentro do Tauri e já existe uma instância guardada de uma execução anterior, o sistema SHALL ir directamente para o ecrã de autenticação dessa instância, sem repetir o passo de selecção.
+Quando a aplicação corre dentro do shell nativo e já existe uma instância guardada de uma execução anterior, o sistema SHALL ir directamente para o ecrã de autenticação dessa instância, sem repetir o passo de selecção.
 
 #### Scenario: Arranque seguinte com instância guardada
 
@@ -40,16 +40,26 @@ Quando a aplicação corre dentro do Tauri e já existe uma instância guardada 
 
 ### Requirement: Trocar de instância é uma acção explícita e termina a sessão
 
-O sistema SHALL oferecer, a partir de um ponto acessível depois de autenticado (junto de onde já existe "Trocar de conta"), uma acção "Trocar de instância" que termina a sessão corrente e volta ao ecrã de selecção de instância. O sistema SHALL NOT guardar mais do que uma instância activa em simultâneo.
+No cliente nativo, com uma instância já guardada, o sistema SHALL oferecer "Trocar de instância" no ecrã de entrar e no de criar conta, antes de autenticar, e SHALL continuar a oferecê-la depois de autenticado, junto de "Trocar de conta" e de terminar sessão, e no ecrã de desbloqueio. Escolher a acção SHALL terminar a sessão corrente, quando existir, SHALL esquecer a instância guardada e SHALL voltar ao ecrã que pede o endereço. O sistema SHALL NOT guardar mais do que uma instância activa em simultâneo. O browser servido pela própria instância SHALL NOT mostrar esta acção.
 
 #### Scenario: Trocar de instância
 
 - **WHEN** um utilizador autenticado escolhe "Trocar de instância"
 - **THEN** a sessão corrente termina (equivalente a logout), a instância guardada é substituída pela escolha seguinte, e os dados em cache da instância anterior deixam de ser usados
 
+#### Scenario: Trocar antes de entrar
+
+- **WHEN** o cliente nativo já tem uma instância guardada e a pessoa está no ecrã de entrar ou de criar conta e escolhe "Trocar de instância"
+- **THEN** o endereço guardado é esquecido e o ecrã que pede a instância volta a aparecer, sem usar o endereço anterior
+
+#### Scenario: O browser não mostra a acção
+
+- **WHEN** a aplicação é aberta num browser servido pela própria instância
+- **THEN** não existe "Trocar de instância" no ecrã de entrar
+
 ### Requirement: Modo nativo autentica por token, não por cookie
 
-Quando a aplicação corre dentro do Tauri com uma instância configurada, o sistema SHALL autenticar todos os pedidos REST com o header `Authorization: Bearer <token>`, usando o `session_token` devolvido pelo login/registo/recuperação (ver `native-client-auth`), e SHALL NOT depender de cookies de sessão para esse transporte.
+Quando a aplicação corre dentro do shell nativo com uma instância configurada, o sistema SHALL autenticar todos os pedidos REST com o header `Authorization: Bearer <token>`, usando o `session_token` devolvido pelo login/registo/recuperação (ver `native-client-auth`), e SHALL NOT depender de cookies de sessão para esse transporte.
 
 #### Scenario: Pedido autenticado em modo nativo
 
@@ -58,7 +68,7 @@ Quando a aplicação corre dentro do Tauri com uma instância configurada, o sis
 
 ### Requirement: A ligação de tempo real em modo nativo transporta o mesmo token
 
-Quando a aplicação corre dentro do Tauri, o sistema SHALL estabelecer a ligação de tempo real (hoje `/ws`) com o mesmo token de sessão, usando um transporte capaz de definir o header `Authorization` na negociação (o `WebSocket` do browser não permite isto). O comportamento observável de reconexão, re-sincronização e detecção de sessão terminada SHALL permanecer o mesmo que no build web.
+Quando a aplicação corre dentro do shell nativo, o sistema SHALL estabelecer a ligação de tempo real (hoje `/ws`) autenticada com o mesmo token de sessão, usando um mecanismo compatível com a API `WebSocket` padrão (o `WebSocket` de um browser/Chromium não permite definir o header `Authorization` directamente na negociação, mas permite declarar sub-protocolos, enviados no header `Sec-WebSocket-Protocol` — ver `auth/session-tokens`). O comportamento observável de reconexão, re-sincronização e detecção de sessão terminada SHALL permanecer o mesmo que no build web.
 
 #### Scenario: Ligação de tempo real autenticada por token
 
@@ -69,3 +79,22 @@ Quando a aplicação corre dentro do Tauri, o sistema SHALL estabelecer a ligaç
 
 - **WHEN** a sessão usada pela aplicação nativa deixa de ser válida (logout noutro local, expiração)
 - **THEN** a aplicação detecta a perda de sessão e volta ao ecrã de autenticação, tal como já acontece hoje no build web
+
+### Requirement: O endereço da instância assume HTTPS
+
+Quando a pessoa indica a instância, no primeiro arranque ou ao trocar de instância, o sistema SHALL aceitar um host sem esquema (por exemplo `chat.1nodado.com.br`) e SHALL tratá-lo como `https://` nesse host. SHALL aceitar um endereço que já comece por `https://` e SHALL guardar só a origem. SHALL recusar um endereço `http://` e SHALL NOT avançar nem guardá-lo. A validação continua a ser `GET /health` com `{ "ok": true }` antes de guardar.
+
+#### Scenario: Host sem esquema
+
+- **WHEN** a pessoa escreve `chat.1nodado.com.br` e o `GET /health` dessa origem HTTPS responde `{ "ok": true }`
+- **THEN** a instância guardada é `https://chat.1nodado.com.br` e o ecrã de autenticação dessa instância aparece a seguir
+
+#### Scenario: Endereço HTTPS colado
+
+- **WHEN** a pessoa cola `https://chat.1nodado.com.br` e o `/health` responde com sucesso
+- **THEN** a instância guardada é `https://chat.1nodado.com.br`
+
+#### Scenario: HTTP recusado
+
+- **WHEN** a pessoa indica um endereço que começa por `http://`
+- **THEN** o sistema explica que a instância tem de ser HTTPS, não guarda o endereço e não avança para a autenticação

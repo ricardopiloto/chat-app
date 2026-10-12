@@ -27,6 +27,7 @@ pub mod notifications;
 pub mod roles;
 pub mod scenes;
 pub mod servers;
+pub mod typing;
 pub mod unfurl;
 pub mod voice;
 pub mod welcome;
@@ -317,6 +318,7 @@ async fn handle_socket(
             msg = receiver.next() => {
                 match msg {
                     Some(Ok(Message::Text(t))) if t == "ping" => {}
+                    Some(Ok(Message::Text(t))) => typing::accept(&state, account_id, &t).await,
                     Some(Ok(Message::Close(_))) | None | Some(Err(_)) => break,
                     _ => {}
                 }

@@ -1,4 +1,4 @@
-import { For, Show, createEffect, createSignal, onCleanup } from "solid-js";
+import { For, Show, createEffect, createSignal, on, onCleanup, onMount } from "solid-js";
 import { Avatar, Icon } from "../components/ui";
 import { avatarUrl, useAuthedSrc } from "../api";
 import { errorText } from "../lib/errors";
@@ -10,6 +10,7 @@ import { applyCompletion, detectCompletion, type Completion } from "./logic/auto
 import { expandShortcodes, searchEmoji } from "./logic/emoji";
 import { EVERYONE_HANDLE, mentionedAccountIds, mentionsEveryone } from "./logic/mentions";
 import { matchPeople, type ChatPerson } from "./logic/people";
+import { idleAnnounce, reduceAnnounce, type AnnounceEvent, type AnnounceState } from "./logic/typing";
 import type { Thread } from "./thread";
 
 interface Pending {
@@ -48,6 +49,8 @@ export function Composer(props: {
   onCancelReply: () => void;
   onSent: () => void;
   focusSignal: number;
+  /** Announces ephemeral typing for this channel. Omitted in tests that only render the field. */
+  onTyping?: (channelId: string, active: boolean) => void;
 }) {
   const [text, setText] = createSignal("");
   const [pending, setPending] = createSignal<Pending[]>([]);
@@ -59,6 +62,35 @@ export function Composer(props: {
   let field: HTMLTextAreaElement | undefined;
   let fileInput: HTMLInputElement | undefined;
   let pickerBox: HTMLDivElement | undefined;
+  let announce: AnnounceState = idleAnnounce();
+
+  const note = (event: AnnounceEvent) => {
+    const result = reduceAnnounce(announce, event, Date.now());
+    announce = result.state;
+    if (result.send !== null) props.onTyping?.(props.channelId, result.send);
+  };
+  const stopAnnouncing = (channelId: string) => {
+    if (!announce.announced) return;
+    announce = idleAnnounce();
+    props.onTyping?.(channelId, false);
+  };
+
+  onMount(() => {
+    const tick = window.setInterval(() => note({ type: "tick" }), 1_000);
+    const onVis = () => {
+      if (document.visibilityState === "hidden") note({ type: "stop" });
+      else if (text().trim()) note({ type: "input", text: text() });
+    };
+    document.addEventListener("visibilitychange", onVis);
+    onCleanup(() => {
+      clearInterval(tick);
+      document.removeEventListener("visibilitychange", onVis);
+    });
+  });
+  createEffect(on(() => props.channelId, (channelId, prev) => {
+    if (prev && prev !== channelId) stopAnnouncing(prev);
+  }));
+  onCleanup(() => stopAnnouncing(props.channelId));
 
   const suggestions = () => {
     const open = completion();
@@ -83,6 +115,7 @@ export function Composer(props: {
   };
   const edit = (value: string, caret?: number) => {
     setText(value);
+    note({ type: "input", text: value });
     queueMicrotask(() => {
       if (!field) return;
       field.value = value;
@@ -163,6 +196,7 @@ export function Composer(props: {
       files.forEach((p) => URL.revokeObjectURL(p.preview));
       setPending([]);
       setText("");
+      note({ type: "stop" });
       props.onCancelReply();
       setCompletion(undefined);
       queueMicrotask(() => {
@@ -278,11 +312,17 @@ export function Composer(props: {
           value={text()}
           placeholder={t("txt.composer.placeholder", { name: props.channelName })}
           aria-label={t("txt.composer.placeholder", { name: props.channelName })}
-          onInput={(e) => { setText(e.currentTarget.value); resize(); refreshCompletion(); }}
+          onInput={(e) => { setText(e.currentTarget.value); note({ type: "input", text: e.currentTarget.value }); resize(); refreshCompletion(); }}
           onKeyDown={onKeyDown}
           onKeyUp={(e) => ["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key) && refreshCompletion()}
           onClick={refreshCompletion}
-          onBlur={() => setTimeout(() => setCompletion(undefined), 120)}
+          onFocus={() => { if (text().trim()) note({ type: "input", text: text() }); }}
+          onBlur={() => setTimeout(() => {
+            setCompletion(undefined);
+            const composer = field?.closest(".ch-composer");
+            if (composer?.contains(document.activeElement)) return;
+            note({ type: "stop" });
+          }, 120)}
           onPaste={onPaste}
           data-autofocus
         />

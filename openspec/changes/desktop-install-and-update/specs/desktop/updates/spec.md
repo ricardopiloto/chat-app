@@ -2,68 +2,46 @@
 
 ## ADDED Requirements
 
-### Requirement: Instalação por linha de comando em todas as plataformas
+### Requirement: Instalação por linha de comando com integridade verificada
 
-O sistema SHALL fornecer um script de instalação por linha de comando para Linux e macOS (`scripts/install-mesa.sh`) e para Windows (`scripts/install-mesa.ps1`) que detecta o sistema operativo e a arquitectura, consulta a última release publicada (não-rascunho) do repositório, descarrega o artefacto apropriado, verifica o seu hash contra o publicado pelo empacotador, e instala a aplicação sem exigir interacção gráfica.
+O sistema SHALL fornecer scripts/install-mesa.sh para Linux/macOS e scripts/install-mesa.ps1 para Windows. Cada script SHALL consultar a última GitHub Release publicada, selecionar o instalador adequado à plataforma e arquitetura, verificar seu SHA-256 contra o manifesto publicado na mesma release e interromper antes de instalar em caso de divergência. Reexecutar o script SHALL instalar a versão publicada mais recente. Linux SHALL criar entrada de menu com ícone para o AppImage.
 
-#### Scenario: Instalar em Linux por linha de comando
+#### Scenario: Instalação Linux
+- **WHEN** o script corre em Linux x86_64
+- **THEN** instala o AppImage verificado e cria atalho com ícone
 
-- **WHEN** o script `install-mesa.sh` corre numa máquina Linux sem a aplicação instalada
-- **THEN** descarrega o AppImage da última release publicada, verifica o hash, e deixa a aplicação pronta a correr
+#### Scenario: Instalação macOS
+- **WHEN** o script corre em macOS numa arquitetura suportada
+- **THEN** monta o DMG verificado e copia a aplicação para Applications
 
-#### Scenario: Instalar em macOS por linha de comando
+#### Scenario: Instalação Windows
+- **WHEN** o script corre em Windows numa arquitetura suportada
+- **THEN** executa o instalador NSIS verificado
 
-- **WHEN** o script `install-mesa.sh` corre numa máquina macOS
-- **THEN** descarrega o `.dmg` da última release publicada, verifica o hash, e copia a aplicação para `/Applications`
+#### Scenario: Hash inválido
+- **WHEN** o SHA-256 descarregado difere do manifesto
+- **THEN** o script falha com mensagem clara sem executar ou instalar o artefacto
 
-#### Scenario: Instalar em Windows por linha de comando
+### Requirement: Aviso persistente de nova versão
 
-- **WHEN** o script `install-mesa.ps1` corre num PowerShell do Windows
-- **THEN** descarrega o instalador NSIS da última release publicada, verifica o hash, e corre a instalação
+Em aplicação empacotada, o sistema SHALL consultar a última release publicada no arranque e a cada seis horas. Quando ela for mais recente que a versão instalada, SHALL apresentar faixa persistente com versão, ligação à release e instrução de atualização manual. Erros de rede SHALL manter a aplicação funcional. O sistema SHALL NOT descarregar ou aplicar automaticamente uma atualização, em qualquer plataforma.
 
-#### Scenario: Hash inválido interrompe a instalação
+#### Scenario: Nova release
+- **WHEN** uma release publicada tem versão posterior à instalada
+- **THEN** o aviso permanece visível durante a sessão
 
-- **WHEN** o artefacto descarregado não corresponde ao hash publicado
-- **THEN** o script interrompe antes de instalar e explica o motivo, sem executar o ficheiro descarregado
+#### Scenario: Sem versão nova
+- **WHEN** a versão publicada é igual ou anterior à instalada
+- **THEN** não há aviso
 
-### Requirement: Actualização automática onde a plataforma suporta
+#### Scenario: Falha de rede
+- **WHEN** a API de releases não responde
+- **THEN** a aplicação continua e tenta novamente no próximo intervalo
 
-O sistema SHALL verificar, no arranque e periodicamente a cada 6 horas enquanto a aplicação corre, se existe uma release mais recente publicada (não-rascunho), e SHALL descarregar e validar essa actualização (hash SHA-512 dos ficheiros de feed do empacotador) nas combinações de plataforma/formato suportadas pelo mecanismo de actualização em uso (Linux: AppImage, `.deb`, `.rpm`; Windows: apenas o instalador NSIS). O sistema SHALL NOT tentar nem simular actualização automática em macOS nem na instalação por `.msi` do Windows — nesses casos SHALL apresentar uma indicação clara de como actualizar manualmente (o mesmo script de instalação por linha de comando, ou a página de releases).
+### Requirement: Documentação de instalação e atualização
 
-#### Scenario: Actualização automática disponível (Linux ou Windows NSIS)
+O README SHALL cobrir script, AppImage/deb/rpm, NSIS/MSI e DMG, deixando claro que a atualização é manual em todos os formatos.
 
-- **WHEN** existe uma release mais recente publicada e a instalação actual é Linux (qualquer formato) ou Windows NSIS
-- **THEN** a actualização é descarregada e validada em segundo plano, sem interromper o uso da aplicação
-
-#### Scenario: Sem actualização automática em macOS
-
-- **WHEN** a aplicação corre em macOS e existe uma release mais recente
-- **THEN** a aplicação indica que há uma versão nova e como a obter manualmente, sem tentar descarregar/aplicar automaticamente
-
-#### Scenario: Sem actualização automática em instalação MSI
-
-- **WHEN** a aplicação foi instalada via `.msi` no Windows e existe uma release mais recente
-- **THEN** a aplicação indica que há uma versão nova e como a obter manualmente, sem tentar descarregar/aplicar automaticamente
-
-### Requirement: Nunca reiniciar ou instalar sem aviso visível
-
-Quando uma actualização tiver sido descarregada e validada com sucesso, o sistema SHALL mostrar uma indicação visível e persistente antes de a aplicar, com uma acção explícita para reiniciar e aplicar agora, e SHALL NOT reiniciar a aplicação nem substituir ficheiros instalados sem essa acção do utilizador.
-
-#### Scenario: Actualização descarregada mostra aviso
-
-- **WHEN** uma actualização é descarregada e validada com sucesso
-- **THEN** aparece uma indicação visível com uma acção para reiniciar e aplicar, e a aplicação continua a funcionar normalmente até essa acção
-
-#### Scenario: Aplicar ao reiniciar manualmente
-
-- **WHEN** o utilizador não reinicia pela acção explícita, mas fecha e volta a abrir a aplicação mais tarde
-- **THEN** a actualização já descarregada é aplicada nesse arranque
-
-### Requirement: Documentação cobre todas as vias de instalação e actualização
-
-O `README.md` SHALL descrever, numa secção dedicada, todas as vias de instalação disponíveis (linha de comando, `.deb`/`.rpm` directo, `.msi`/instalador NSIS, `.dmg`) e o comportamento de actualização de cada uma (automática, manual, ou sem suporte), sem apresentar uma via como mais completa do que realmente é.
-
-#### Scenario: README descreve todas as vias
-
-- **WHEN** alguém lê a secção de instalação do `README.md`
-- **THEN** encontra as quatro vias de instalação e, para cada uma, se a actualização é automática, manual, ou não suportada
+#### Scenario: Consulta das opções
+- **WHEN** alguém lê a seção de instalação
+- **THEN** encontra formatos, passos de atualização e limites de cada plataforma

@@ -19,7 +19,7 @@ linux:
     - AppImage
     - deb
     - rpm
-  icon: electron/icons/icon.png
+  icon: electron/icons/
   category: Network
   synopsis: Chat e vídeo self-hosted com cifra de ponta a ponta.
   description: >

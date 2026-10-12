@@ -17,6 +17,8 @@ interface MesaNativeBridge {
   openCallPopout(request: CallPopoutRequest): Promise<void>;
   closeCallPopout(): Promise<void>;
   takeCallPopout(): Promise<CallPopoutRequest | null>;
+  availableUpdate(): Promise<{ version: string; url: string } | null>;
+  onUpdateAvailable(listener: (update: { version: string; url: string }) => void): () => void;
   onCallPopoutClosed(listener: (channelId: string) => void): () => void;
 }
 

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Define como o token de sessão de uma conta é transportado entre o cliente e o backend — por cookie (cliente web, same-origin) ou por header `Authorization` (clientes nativos, cross-origin) — mantendo uma única sessão subjacente por token em ambos os casos.
+Define como o token de sessão de uma conta é transportado entre o cliente e o backend — por cookie (cliente web, same-origin), por header `Authorization` (clientes nativos, cross-origin) ou, no handshake WebSocket, por sub-protocolo — mantendo uma única sessão subjacente por token em todos os casos.
 
 ## Requirements
 
@@ -60,7 +60,7 @@ O sistema SHALL autenticar a abertura de uma ligação de WebSocket usando o coo
 
 #### Scenario: Ligação WebSocket sem transporte válido é recusada
 
-- **WHEN** um cliente tenta abrir a ligação de WebSocket sem cookie de sessão válido e sem header Authorization válido
+- **WHEN** um cliente tenta abrir a ligação de WebSocket sem cookie de sessão válido, sem header Authorization válido e sem token válido por sub-protocolo
 - **THEN** a ligação é recusada da mesma forma que já é hoje para um pedido sem sessão
 
 ### Requirement: Logout invalida o token para ambos os transportes
@@ -76,3 +76,22 @@ Quando uma conta termina sessão, o sistema SHALL invalidar o token de sessão s
 
 - **WHEN** uma conta termina sessão e, a seguir, um pedido usa o cookie dessa sessão
 - **THEN** o pedido é tratado como não autenticado, tal como já acontece hoje
+
+### Requirement: O handshake de WebSocket aceita o token como sub-protocolo
+
+O sistema SHALL autenticar a abertura de uma ligação de WebSocket usando o token de sessão quando enviado como um dos valores do header `Sec-WebSocket-Protocol` (negociação de sub-protocolo do `WebSocket`), com a mesma validação usada para o cookie e para o header `Authorization` (mesmo hash, mesma tabela de sessões, mesma verificação de validade). Este transporte é uma alternativa aos já existentes (cookie, header `Authorization`) — nenhum dos dois muda de comportamento.
+
+#### Scenario: Ligação WebSocket autenticada por sub-protocolo
+
+- **WHEN** um cliente abre a ligação de WebSocket declarando o token de sessão como sub-protocolo (`Sec-WebSocket-Protocol`), sem cookie de sessão e sem header `Authorization`
+- **THEN** a ligação é estabelecida autenticada com a conta dessa sessão
+
+#### Scenario: Precedência quando mais de um transporte está presente
+
+- **WHEN** um pedido de ligação WebSocket chega com mais do que um dos três transportes (cookie, header `Authorization`, sub-protocolo)
+- **THEN** o sistema usa o primeiro que corresponder a uma sessão válida, pela mesma ordem já estabelecida (cookie primeiro, depois header), com o sub-protocolo como última alternativa
+
+#### Scenario: Logout invalida também o uso por sub-protocolo
+
+- **WHEN** uma conta termina sessão e, a seguir, um pedido de ligação WebSocket usa o token dessa sessão como sub-protocolo
+- **THEN** a ligação é recusada da mesma forma que já acontece hoje para os outros dois transportes

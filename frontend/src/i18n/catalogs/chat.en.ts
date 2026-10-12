@@ -59,6 +59,12 @@ export const chatEn: MessageTree = {
       everyoneHint: "Notifies every member of the channel",
       emojiList: "Emoji suggestions",
     },
+    typing: {
+      one: "{name} is typing",
+      two: "{name} and {other} are typing",
+      more: "{name} and {count} more are typing",
+      twoMore: "{name}, {other} and {count} more are typing",
+    },
     readOnly: "You can only read this channel.",
     muted: "You are muted in this channel until {time}.",
     jump: "Jump to present",

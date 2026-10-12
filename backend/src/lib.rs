@@ -8,6 +8,7 @@ pub mod security_headers;
 pub mod token;
 pub mod ws;
 
+use crate::api::typing::TypingLimiter;
 use crate::config::Config;
 use crate::rate_limit::RateLimiter;
 use crate::ws::WsHub;
@@ -21,6 +22,7 @@ pub struct AppState {
     pub config: Arc<Config>,
     pub ws: WsHub,
     pub rate_limiter: Arc<RateLimiter>,
+    pub typing: TypingLimiter,
 }
 
 pub fn router(state: AppState) -> Router {
@@ -43,5 +45,6 @@ pub async fn build_state(
         config: Arc::new(config),
         ws: WsHub::new(),
         rate_limiter: Arc::new(RateLimiter::new()),
+        typing: TypingLimiter::default(),
     })
 }

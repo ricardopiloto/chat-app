@@ -15,6 +15,8 @@ await build({
     contents: `export * from "./src/api/instance.ts";
 export { planRequest, request } from "./src/api/http.ts";
 export { socketUrl } from "./src/api/realtime.ts";
+export { ptBR } from "./src/i18n/catalogs/pt-BR.ts";
+export { en } from "./src/i18n/catalogs/en.ts";
 `,
     resolveDir: root,
     sourcefile: "verify-instance-entry.ts",
@@ -34,7 +36,7 @@ globalThis.fetch = async (url, init) => {
   browserCalls.push({ url: String(url), authorization: headers.get("authorization"), credentials: init?.credentials });
   return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "content-type": "application/json" } });
 };
-globalThis.location = { protocol: "https:", host: "localhost:1421", search: "" };
+globalThis.location = { protocol: "https:", host: "localhost:1421", origin: "https://localhost:1421", search: "" };
 const store = {};
 globalThis.localStorage = {
   getItem: (key) => (key in store ? store[key] : null),
@@ -48,6 +50,19 @@ let failed = 0;
 const check = (name, cond) => { console.log(`${cond ? "ok  " : "FAIL"}  ${name}`); if (!cond) failed++; };
 
 check("browser is not native", mod.isNative() === false);
+check("bare host becomes https", mod.normalizeInstanceUrl("chat.1nodado.com.br") === "https://chat.1nodado.com.br");
+check("pasted https drops the path", mod.normalizeInstanceUrl("https://chat.1nodado.com.br/caminho") === "https://chat.1nodado.com.br");
+check("bare host keeps the port", mod.normalizeInstanceUrl("chat.exemplo.com:8443") === "https://chat.exemplo.com:8443");
+let refusedHttp = false;
+try { mod.normalizeInstanceUrl("http://chat.1nodado.com.br"); } catch (error) { refusedHttp = error.message === "https"; }
+check("http is refused", refusedHttp);
+let refusedMesa = false;
+try { mod.normalizeInstanceUrl("mesa://app"); } catch (error) { refusedMesa = error.message === "protocol"; }
+check("mesa scheme stays invalid", refusedMesa);
+check("web invite origin is the page", mod.inviteLinkOrigin() === "https://localhost:1421");
+const asksForScheme = (text) => text.includes("http://") || text.includes("https://");
+check("pt placeholder is a host", mod.ptBR.instance.placeholder === "chat.exemplo.com" && !asksForScheme(mod.ptBR.instance.placeholder) && !asksForScheme(mod.ptBR.instance.https));
+check("en placeholder is a host", mod.en.instance.placeholder === "chat.example.com" && !asksForScheme(mod.en.instance.placeholder) && !asksForScheme(mod.en.instance.https));
 await mod.saveInstanceUrl("http://192.168.1.50:8080");
 await mod.saveSessionToken("secret");
 check("web save is a no-op", (await mod.loadInstance()).baseUrl === null && (await mod.loadInstance()).sessionToken === null);
@@ -95,7 +110,12 @@ check("bridge uses fetch with the bearer", bridged.transport === "browser" && br
 await mod.request("/api/servers");
 check("fetch received the bearer", browserCalls.length === 1 && browserCalls[0].authorization === "Bearer token-c" && browserCalls[0].url === "https://chat.exemplo.com/api/servers");
 check("https instance uses wss", mod.socketUrl() === "wss://chat.exemplo.com/ws");
+await mod.saveInstanceUrl("https://chat.1nodado.com.br");
+check("native invite origin is the instance", mod.inviteLinkOrigin() === "https://chat.1nodado.com.br");
+const plain = `${mod.inviteLinkOrigin()}/invite/abc`;
+check("native plain invite uses the instance", plain.startsWith("https://chat.1nodado.com.br/invite/") && !plain.includes("mesa://"));
 await mod.clearInstance();
 check("bridge clear drops both", bridge.baseUrl === null && bridge.sessionToken === null);
+check("native invite without an instance is empty", mod.inviteLinkOrigin() === null);
 
 process.exit(failed ? 1 : 0);

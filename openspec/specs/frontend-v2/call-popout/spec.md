@@ -53,6 +53,25 @@ Fechar a janela de popout (pela acção de trazer de volta, ou pelo botão de fe
 - **WHEN** o utilizador fecha a janela de popout directamente (botão de fechar do sistema operativo)
 - **THEN** a chamada continua activa na janela principal, sem interrupção
 
+### Requirement: O popout não devolve o áudio de quem fala
+
+Enquanto a janela de popout está aberta, ela SHALL NOT reproduzir áudio de nenhum participante, incluindo o microfone da pessoa que abriu o popout. O som da chamada SHALL continuar a sair só da janela principal. Fechar o popout SHALL NOT cortar esse som. A grade de vídeo do popout SHALL continuar a mostrar câmaras e partilhas de ecrã.
+
+#### Scenario: Quem fala não se ouve pelo popout
+
+- **WHEN** uma pessoa está na chamada com o microfone ligado e abre o popout
+- **THEN** não ouve a própria voz a sair pela janela de popout
+
+#### Scenario: Os outros continuam a ouvir-se na janela principal
+
+- **WHEN** o popout está aberto e outro participante fala
+- **THEN** essa voz ouve-se uma vez, na janela principal, e a janela de popout não a reproduz outra vez
+
+#### Scenario: Fechar o popout mantém o som
+
+- **WHEN** a pessoa fecha a janela de popout durante a chamada
+- **THEN** a chamada continua e o áudio dos outros participantes continua na janela principal
+
 ### Requirement: A grade do popout divide o espaço disponível em partes iguais
 
 Dentro da janela de popout, quando a grade não tem nenhum ecrã partilhado em destaque, o sistema SHALL dimensionar todos os tiles de participantes (com ou sem câmara ligada) com exactamente o mesmo tamanho, SHALL distribuí-los de forma a preencher toda a área disponível da janela (sem espaço vazio sobrante nem scroll), e SHALL recalcular esse tamanho sempre que o número de participantes ou o tamanho da janela mudar — reduzindo o tamanho dos tiles conforme a janela encolhe, em vez de cortar conteúdo ou introduzir barras de deslocamento.

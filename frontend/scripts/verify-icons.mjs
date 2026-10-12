@@ -37,7 +37,9 @@ for (const path of walk(src)) {
 const dir = mkdtempSync(join(tmpdir(), "verify-icons-"));
 await build({
   stdin: {
-    contents: `export { iconMap } from "./src/components/ui/icon-map.ts";\n`,
+    contents: `export { iconMap } from "./src/components/ui/icon-map.ts";
+export { UserRoundGroup, UsersRound } from "lucide-solid";
+`,
     resolveDir: root,
     sourcefile: "verify-icons-entry.ts",
     loader: "ts",
@@ -49,7 +51,7 @@ await build({
   logLevel: "error",
 });
 
-const { iconMap } = await import(pathToFileURL(join(dir, "m.mjs")).href);
+const { iconMap, UserRoundGroup, UsersRound } = await import(pathToFileURL(join(dir, "m.mjs")).href);
 const missing = [...used].filter((name) => typeof iconMap[name] !== "function").sort();
 let failed = 0;
 const check = (name, cond) => {
@@ -59,6 +61,8 @@ const check = (name, cond) => {
 
 check(`${used.size} icon names in use`, used.size > 0);
 check("every used name is in the map", missing.length === 0);
+check("members glyph is three people", iconMap.group === UserRoundGroup);
+check("groups glyph is unchanged", iconMap.groups === UsersRound);
 if (missing.length) console.error("missing:", missing.join(", "));
 
 if (failed) {

@@ -1,6 +1,7 @@
 import { Show, createSignal } from "solid-js";
 import { A, useLocation } from "@solidjs/router";
 import { ApiError } from "../api";
+import { clearInstance, isNative } from "../api/instance";
 import { AuthField, AuthFrame, bindValue } from "../auth/AuthFrame";
 import { RecoverySetup, type RecoveryChoice } from "../auth/RecoverySetup";
 import { Button, Icon, Segmented } from "../components/ui";
@@ -177,6 +178,12 @@ export function Auth() {
         >
           {registering() ? t("auth.haveAccount") : t("auth.newAccount")}
         </Button>
+
+        <Show when={isNative()}>
+          <button type="button" class="self-center inline-flex min-h-6 items-center text-body-sm text-primary underline" onClick={() => void clearInstance()}>
+            {t("instance.switch")}
+          </button>
+        </Show>
 
         <p class="flex items-center justify-between gap-3 font-code text-label-code-sm text-on-surface-variant">
           <span class="flex items-center gap-1.5">

@@ -15,6 +15,10 @@ import { captureInviteFragment, ingestDeepLink, readInviteFragment, takeInviteFr
 const serverKey = new Uint8Array(32).fill(4);
 const seed = createInviteSeed(serverKey);
 const url = inviteUrl("https://mesa.example", "abc", seed.secret);
+const nativeUrl = inviteUrl("https://chat.1nodado.com.br", "abc", seed.secret);
+assert.ok(nativeUrl.startsWith("https://chat.1nodado.com.br/invite/"));
+assert.ok(nativeUrl.includes("#k="));
+assert.equal(nativeUrl.includes("mesa://"), false);
 const body = JSON.stringify({ key_seed: encodeSeedBlob(seed.blob), expires_in_seconds: SEED_TTL_SECONDS });
 const secretText = inviteFragment(seed.secret).slice(2);
 assert.equal(SEED_TTL_SECONDS, 86400);

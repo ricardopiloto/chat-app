@@ -59,6 +59,12 @@ export const chatPtBR: MessageTree = {
       everyoneHint: "Notifica todos os membros do canal",
       emojiList: "Sugestões de emoji",
     },
+    typing: {
+      one: "{name} está a digitar",
+      two: "{name} e {other} estão a digitar",
+      more: "{name} e mais {count} estão a digitar",
+      twoMore: "{name}, {other} e mais {count} estão a digitar",
+    },
     readOnly: "Você só pode ler este canal.",
     muted: "Você está silenciado neste canal até {time}.",
     jump: "Saltar para o presente",

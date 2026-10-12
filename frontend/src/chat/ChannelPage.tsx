@@ -6,10 +6,12 @@ import { errorText } from "../lib/errors";
 import { getLocale, t } from "../i18n";
 import { useShell } from "../shell/state";
 import { Composer, type ReplyTarget } from "./Composer";
+import { TypingIndicator } from "./TypingIndicator";
 import { Lightbox } from "./Lightbox";
 import { MessageRow, SystemLine, clockTime, excerptOf } from "./MessageRow";
 import { canDeleteMessage, canReplyTo, canWrite } from "./logic/permissions";
 import { toPerson, type ChatPerson } from "./logic/people";
+import { applyTyping, expireTypers, namedTypers, type Typer } from "./logic/typing";
 import { buildTimeline, type ChatMessage } from "./logic/timeline";
 import { clearNews, markSeen } from "./notices";
 import { createThread } from "./thread";
@@ -52,6 +54,31 @@ export function ChannelPage(props: {
   const everyone = createMemo(() => [...people().values()]);
   // Suggestions come from who can be mentioned in this channel; chips resolve against every member.
   const suggestible = createMemo(() => (mentionables()?.length ? mentionables()!.map(toPerson).filter((p) => p.accountId !== props.me.id) : everyone().filter((p) => p.accountId !== props.me.id)));
+  const [typers, setTypers] = createSignal<Typer[]>([]);
+  const typingNames = createMemo(() => namedTypers(typers(), new Map([...people()].map(([id, person]) => [id, person.label])), Date.now()));
+  createEffect(on(() => props.channel.id, () => setTypers([])));
+  createEffect(on(() => shell.resync(), () => setTypers([])));
+  createEffect(() => {
+    if (shell.delivery() !== "connected") setTypers([]);
+  });
+  onMount(() => {
+    const stop = props.subscribe((message) => {
+      if (message.event !== "typing.updated") return;
+      setTypers((current) => applyTyping(current, {
+        channelId: String(message.payload.channel_id ?? ""),
+        accountId: String(message.payload.account_id ?? ""),
+        active: message.payload.active === true,
+      }, props.channel.id, props.me.id, Date.now()));
+    });
+    const timer = window.setInterval(() => setTypers((current) => {
+      const next = expireTypers(current, Date.now());
+      return next.length === current.length ? current : next;
+    }), 1_000);
+    onCleanup(() => {
+      stop();
+      window.clearInterval(timer);
+    });
+  });
   const roleBadge = (accountId: string | undefined): string | undefined => {
     if (!accountId) return undefined;
     if (props.server?.owner_account_id === accountId) return t("txt.row.owner");
@@ -331,6 +358,7 @@ export function ChannelPage(props: {
       </div>
 
       <footer class="ch-foot">
+        <TypingIndicator names={typingNames()} narrow={shell.narrow()} />
         <Switch>
           <Match when={!canWrite(props.channel)}><p class="ch-locked"><Icon name="visibility" />{t("txt.readOnly")}</p></Match>
           <Match when={mutedUntil()}>{(until) => <p class="ch-locked"><Icon name="volume_off" />{t("txt.muted", { time: clockTime(until().toISOString()) })}</p>}</Match>
@@ -347,6 +375,7 @@ export function ChannelPage(props: {
               onCancelReply={() => setReply(undefined)}
               onSent={() => settle(() => toBottom(true))}
               focusSignal={focusComposer()}
+              onTyping={shell.sendTyping}
             />
           </Match>
         </Switch>

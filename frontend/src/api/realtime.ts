@@ -1,9 +1,11 @@
 import { ApiError, request } from "./http";
 import { currentInstance, isNative } from "./instance";
+import { deliverTyping } from "./typingFrame";
 
 // Real-time channel (GET /ws). The server pushes events to every member of the servers the
-// account belongs to; the client never publishes. This module keeps the socket alive and reports
-// connection health so screens can show "reconnecting" and re-sync what they missed.
+// account belongs to. The client publishes only ephemeral typing frames, and only while the
+// socket is open. This module keeps the socket alive and reports connection health so screens
+// can show "reconnecting" and re-sync what they missed.
 
 // Events the backend actually emits (checked against backend/src). Note the presence event is named
 // plain "presence" and carries { online_account_ids }; the older docs call it "presence.update".
@@ -25,6 +27,7 @@ export const REALTIME_EVENTS = [
   "key_handoff.requested",
   "key_handoff.completed",
   "notification.created",
+  "typing.updated",
 ] as const;
 
 export type RealtimeEventName = (typeof REALTIME_EVENTS)[number];
@@ -47,6 +50,8 @@ export interface RealtimeOptions {
 
 export interface RealtimeConnection {
   close(): void;
+  /** Drops the frame when the socket is not open. Nothing is kept for the next connection. */
+  sendTyping(channelId: string, active: boolean): void;
 }
 
 interface LiveSocket {
@@ -196,6 +201,13 @@ export function connectRealtime(options: RealtimeOptions): RealtimeConnection {
       clearTimeout(timer);
       clearInterval(keepalive);
       socket?.close();
+    },
+    sendTyping(channelId, active) {
+      try {
+        deliverTyping(socket, channelId, active);
+      } catch {
+        /* a socket that closes between the check and the write is simply not typing */
+      }
     },
   };
 }

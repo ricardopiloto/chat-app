@@ -14,16 +14,18 @@ export function UserPanel() {
   const name = () => me().display_name || me().handle;
   const avatar = useAuthedSrc(() => (me().has_avatar ? avatarUrl(me().id) : undefined));
   return (
-    <div class="relative border-t border-outline-variant bg-surface-container">
+    <div class="user-strip relative bg-surface-container-lowest p-2 space-y-2 [&_.presence]:h-2.5 [&_.presence]:w-2.5 [&_.presence]:border-surface-container-lowest">
       <CallControls />
-      <div class="flex items-center gap-3 px-3 py-3">
-      <Avatar name={name()} src={avatar()} online />
-      <div class="flex min-w-0 flex-1 flex-col leading-tight">
-        <strong class="truncate text-body-md text-on-surface">{name()}</strong>
-        <small class="truncate font-code text-label-code-sm text-secondary">@{me().handle}</small>
+      <div class="flex items-center justify-between gap-2 px-1.5 py-1">
+      <div class="flex min-w-0 items-center gap-2">
+      <Avatar name={name()} src={avatar()} online size="sm" />
+      <div class="flex min-w-0 flex-col leading-tight">
+        <span class="truncate font-display text-body-sm text-on-surface">{name()}</span>
+        <small class="truncate font-code text-label-code-sm text-on-surface-variant">@{me().handle}</small>
       </div>
-      <button type="button" aria-haspopup="menu" aria-expanded={open()} title={t("shell.accountMenu")} aria-label={t("shell.accountMenu")} onClick={() => setOpen(!open())} class="grid h-9 w-9 place-items-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-highest hover:text-on-surface">
-        <Icon name="tune" class="text-[20px]" />
+      </div>
+      <button type="button" aria-haspopup="menu" aria-expanded={open()} title={t("shell.accountMenu")} aria-label={t("shell.accountMenu")} onClick={() => setOpen(!open())} class="grid shrink-0 place-items-center rounded p-1.5 text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface">
+        <Icon name="tune" class="text-[18px]" />
       </button>
       <Show when={open()}>
         <AccountMenu onClose={() => setOpen(false)} />

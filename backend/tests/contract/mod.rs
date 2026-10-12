@@ -39,6 +39,7 @@ mod scenes_activate;
 mod security_headers;
 mod servers;
 mod single_role_presence;
+mod typing;
 mod unfurl;
 mod voice_join;
 mod voice_popout;

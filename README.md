@@ -6,9 +6,9 @@ Pensado para mesas de RPG que gravam ou transmitem sessões, e para qualquer gru
 
 | | |
 |--|--|
-| **Estado** | Backend `1.1.0` · Frontend `1.1.0` (cliente v2 em `frontend/`; ver [CHANGELOG.md](CHANGELOG.md)) |
+| **Estado** | **1.3.2** — backend, frontend v2 e cliente desktop Electron (ver [CHANGELOG.md](CHANGELOG.md)) |
 | **Baixar** | [Instaladores desktop (Windows/macOS/Linux)](https://github.com/ricardopiloto/chat-app/releases) — ver [Distribuição desktop](#distribuição-desktop) |
-| **Stack** | Backend Rust (Axum + SQLite) · Frontend **v2** SolidJS (Vite, Tailwind) · LiveKit (voz/vídeo) |
+| **Stack** | Backend Rust (Axum + SQLite) · Frontend **v2** SolidJS (Vite, Tailwind) · Cliente desktop Electron · LiveKit (voz/vídeo) |
 | **Frontend** | [`frontend/`](frontend/) é o cliente atual (v2). A versão 0.8.1 da v1 permanece no histórico Git para rollback |
 | **Operação** | [docs/operar-instancia.md](docs/operar-instancia.md) · [docs/deploy-producao.md](docs/deploy-producao.md) |
 | **Integração** | [docs/contratos-e-fluxos.md](docs/contratos-e-fluxos.md) |
@@ -29,8 +29,9 @@ Pensado para mesas de RPG que gravam ou transmitem sessões, e para qualquer gru
 8. [Fluxos de integração](#fluxos-de-integração)
 9. [Arranque rápido (dev)](#arranque-rápido-dev)
 10. [Estrutura do repositório](#estrutura-do-repositório)
-11. [Distribuição desktop](#distribuição-desktop)
-12. [Fora de escopo e diferido](#fora-de-escopo-e-diferido)
+11. [Instalar e atualizar](#instalar-e-atualizar)
+12. [Distribuição desktop](#distribuição-desktop)
+13. [Fora de escopo e diferido](#fora-de-escopo-e-diferido)
 
 ---
 
@@ -55,6 +56,7 @@ Lista do que o cliente atual faz hoje. A checklist de paridade está em [`docs/v
 ### Conta e identidade
 - Registo (handle e palavra-passe de 8+ caracteres), com código de convite quando não é a primeira conta (`/invite/:code` ou `?invite=`).
 - Login, logout com confirmação, restauro de sessão ao recarregar, troca de conta.
+- **Cliente desktop**: no primeiro arranque pede o endereço da instância. Um host sem esquema (por exemplo `chat.exemplo.com`) é lido como HTTPS; um endereço `http://` é recusado. **Trocar de instância**, no entrar, no criar conta, no menu da conta e no desbloqueio, esquece o endereço e a sessão e volta a pedir a instância. O browser servido pela própria instância não mostra essa acção.
 - **Identidade criptográfica** gerada no navegador, protegida por um cofre cifrado com a palavra-passe (guardado no dispositivo e no servidor, sempre cifrado).
 - Desbloqueio em dispositivo novo (cofre remoto) e **recuperação de identidade** (nova identidade) quando a palavra-passe do cofre se perde.
 - **Esqueci a senha** (`/recover`): sem e-mail. Há alteração com a senha actual, chave de recuperação, ou código do operador. O passo a passo está em [Reset de senha](#reset-de-senha).
@@ -64,7 +66,7 @@ Lista do que o cliente atual faz hoje. A checklist de paridade está em [`docs/v
 - Criar servidor com **custódia da chave** obrigatória (cria também o canal de texto `geral` e o de voz `mesa`).
 - Imagem do servidor, mensagem e canal de boas-vindas, apagar servidor confirmando o nome.
 - Membros com pesquisa, mudança de cargo, remoção. **Cargos** com 12 permissões (ver canais, gerir canais, gerir cargos, criar convites, enviar mensagens, apagar mensagens, anexar ficheiros, mencionar @todos, remover membros, silenciar membros, ligar-se à voz, falar). Quem não tem cargo vê e escreve nos canais de texto e participa nos de voz; só um cargo, um canal privado ou o silenciamento reduzem isso, reordenação e cargo de sistema do dono.
-- **Convites** em dois passos, pré-visualização sem sessão, aceitar com registo inline ou com sessão. Os novos links levam a chave do servidor selada no fragmento `#` (não enviado ao backend), permitindo entrar mesmo sem outro membro online; convites antigos continuam com handoff online.
+- **Convites** em dois passos, pré-visualização sem sessão, aceitar com registo inline ou com sessão. Os novos links levam a chave do servidor selada no fragmento `#` (não enviado ao backend), permitindo entrar mesmo sem outro membro online; convites antigos continuam com handoff online. No desktop, o link usa o endereço HTTPS da instância guardada, para quem o abre poder criar a conta.
 - Painel de Membros com presença (online / offline) e aviso quando um convite é consumido.
 
 ### Canais e acesso
@@ -74,6 +76,7 @@ Lista do que o cliente atual faz hoje. A checklist de paridade está em [`docs/v
 
 ### Chat de texto (E2EE)
 - O corpo das mensagens é cifrado no cliente; o servidor recebe o *ciphertext* e os metadados necessários. Tempo real, agrupamento por remetente em intervalos de até 5 minutos, separadores de dia, saltar para o presente.
+- **Quem está a digitar**: uma linha acima da caixa de composição, com os nomes dos outros membros do canal aberto. Não mostra o texto, não inclui a própria pessoa e some ao limpar, enviar, mudar de canal ou após uns segundos sem renovação. Quem não pode escrever, ou está silenciado, não anuncia; quem não pode ler o canal não recebe.
 - Responder com citação, apagar por permissão, **menções** (`@`, e `@todos` para quem tem a permissão) e autocompletar de emoji (`:shortcode:`), selector de emoji.
 - **Reações com emoji** em mensagens de texto, com anexos ou com citação: pills com contagem e autores, alternância por clique e sincronização em tempo real. A reação é metadado visível ao servidor, enquanto o corpo da mensagem permanece cifrado.
 - **Anexos** de imagem (ficheiro ou colar), até 10 por mensagem e 5 MiB cada, cifrados no cliente, com *lightbox* (zoom, download, navegação).
@@ -91,6 +94,8 @@ Lista do que o cliente atual faz hoje. A checklist de paridade está em [`docs/v
 - **Vista Composição**: três layouts (Mestre em Destaque, Painel, Faixa), de 2 a 8 posições, faixa "No banco" para quem não tem posição. **Editor de cena** com arrastar-e-largar, número de posições e confirmação de alterações por guardar.
 - **Vista Grade**: câmeras e partilhas de ecrã, com destaque de uma partilha (*spotlight*) sem interromper as transmissões.
 - **PiP flutuante**: mini-player arrastável com encaixe nos 4 cantos, visível ao navegar para fora do canal; "Voltar ao palco" e terminar direto no PiP.
+- Quem já está no canal vê outra pessoa entrar, e a câmara quando a faixa fica disponível, sem recarregar a página nem sair e voltar.
+- **Janela da chamada** (só no desktop): "Abrir numa nova janela" abre a grade numa segunda janela do sistema, só a ver, sem ocupar lugar nem publicar média. Essa janela não reproduz o áudio da sala, para não devolver a voz de quem fala. Sem uma partilha em destaque, os mosaicos têm o mesmo tamanho e preenchem a janela. Enquanto está aberta, a janela principal não mostra o cartão de "chamada noutro sítio". O browser não oferece o botão.
 - **E2EE de canal de voz** com chip de estado, faixa permanente "E2EE desligada" (quem e quando) e **Religar E2EE** mediante a chave do canal, validada contra a cópia selada no servidor.
 - Página **Áudio & Vídeo**: escolha de microfone, saída e câmera, medidor em tempo real, som de teste, pré-visualização e blur partilhado com a chamada.
 - Entrar noutro canal de voz sai do anterior; apagar o canal ou o servidor encerra a chamada.
@@ -181,7 +186,7 @@ flowchart LR
 
     LKS["LiveKit server :7880<br/>SFU de voz e video"]
 
-    UI -->|JSON, cookie Session| PX
+    UI -->|JSON, cookie ou Bearer| PX
     UI <-->|eventos| PX
     PX --> REST
     PX --> WS
@@ -197,7 +202,7 @@ flowchart LR
     CR --- LK
 ```
 
-- **Frontend v2** (`frontend/`): SPA SolidJS. Faz REST em `/api/*` com o cookie `Session` (mesma origem), escuta o `/ws` e fala com o LiveKit por WebRTC. Toda a cifra acontece no navegador.
+- **Frontend v2** (`frontend/`): SPA SolidJS. No browser servido pela instância, o REST em `/api/*` usa o cookie `Session` (mesma origem). O cliente desktop (`frontend/electron/`) carrega a mesma SPA, fala com a instância HTTPS escolhida e autentica com `Authorization: Bearer`. Os dois escutam o `/ws` e falam com o LiveKit por WebRTC. Toda a cifra acontece no cliente. A aplicação empacotada avisa quando há uma release mais recente; a instalação dessa versão é manual.
 - **Backend** (`backend/`): API Axum sobre SQLite. Valida sessão e permissões, guarda *ciphertext* e metadados, difunde eventos por WebSocket e emite tokens do LiveKit. O segredo de API do LiveKit nunca sai do backend.
 - **LiveKit** (`infra/`): SFU em Docker Compose. A mídia chega cifrada (Insertable Streams), por isso o SFU não a lê.
 - **Em produção** o proxy do Vite é substituído por um *reverse proxy* da instância; o cliente continua a falar com uma única origem. Ver [docs/deploy-producao.md](docs/deploy-producao.md).
@@ -358,13 +363,13 @@ cd ../backend && cargo test # contratos e integração da API
 
 ```text
 backend/          # API Axum, SQLite, tokens LiveKit, hub de WebSocket
-frontend/         # SPA SolidJS v2 (cliente atual)
+frontend/         # SPA SolidJS v2 e shell Electron (frontend/electron/)
 infra/            # Docker Compose do LiveKit
+scripts/          # Instalação e atualização do cliente desktop (Linux, macOS, Windows)
 openspec/         # Specs e changes da v2 (specs/ = estado atual, changes/ = trabalho)
 docs/             # Produto, arquitetura, operação, contratos e mockups (docs/v2/)
 specs/            # Specs históricas da v1 (Speckit)
 assets/audio/     # Efeitos sonoros curtos (mention.mp3, call-join.mp3), copiados para o frontend
-spike/            # Provas de conceito descartáveis
 CHANGELOG.md      # Versionamento
 ```
 
@@ -372,6 +377,20 @@ CHANGELOG.md      # Versionamento
 - Fidelidade visual: [`docs/v2/fidelity-protocol.md`](docs/v2/fidelity-protocol.md) e [`docs/v2/AUDIT-fidelity.md`](docs/v2/AUDIT-fidelity.md).
 
 ---
+
+## Instalar e atualizar
+
+A aplicação avisa com uma faixa persistente quando há uma release publicada mais recente. A atualização é **manual em todas as plataformas**: a aplicação não descarrega nem executa instaladores em segundo plano. A faixa leva à [página de releases](https://github.com/ricardopiloto/chat-app/releases), onde pode descarregar a versão nova. Também pode executar novamente o script de instalação para instalar a última versão publicada.
+
+| Via | Instalar | Atualizar |
+|---|---|---|
+| Linha de comando, Linux/macOS | Execute `scripts/install-mesa.sh` a partir de uma cópia deste repositório. Requer `curl` e `python3`; no Linux instala AppImage com entrada no menu, no macOS copia a app do DMG para `/Applications`. | Execute o mesmo script novamente. |
+| Linha de comando, Windows | Execute `scripts/install-mesa.ps1` no PowerShell a partir de uma cópia deste repositório. `-Silent` usa o modo silencioso do NSIS. | Execute o mesmo script novamente. |
+| Linux, download direto | Descarregue AppImage, `.deb` ou `.rpm` da release. | Descarregue e instale o pacote mais recente; para AppImage, substitua o ficheiro anterior. |
+| Windows, download direto | Descarregue o instalador NSIS `.exe` ou o `.msi`. | Execute o instalador mais recente do mesmo formato. |
+| macOS, download direto | Abra o `.dmg` e copie a app para `/Applications`. | Substitua a app pela versão do novo `.dmg`. |
+
+Os scripts verificam o SHA-256 do instalador contra o `SHA256SUMS` da mesma release antes da instalação. Releases antigas sem esse manifesto requerem download e instalação diretos. Veja também [Distribuição desktop](#distribuição-desktop) para formatos e avisos de SmartScreen/Gatekeeper.
 
 ## Distribuição desktop
 
@@ -399,4 +418,4 @@ O processo de publicar uma versão, os formatos (AppImage, deb, rpm, msi, exe, d
 - MLS, multi-dispositivo, Passkeys e semente BIP-39.
 - Rolagem de dados, ferramentas VTT, telemetria de rede e perfil estendido.
 - Outros sons além de menção e chegada à chamada, volume ajustável e notificações do sistema.
-- Cliente desktop empacotado (Tauri) como binário único cliente + servidor (visão de longo prazo).
+- Um único binário Rust que seja ao mesmo tempo cliente e servidor. O cliente desktop actual é Electron; só `backend/` é Rust. A aplicação não descarrega nem aplica atualizações sozinha.

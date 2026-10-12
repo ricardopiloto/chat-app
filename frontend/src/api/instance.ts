@@ -151,14 +151,24 @@ export async function clearInstance(): Promise<void> {
 export function normalizeInstanceUrl(raw: string): string {
   const trimmed = raw.trim();
   if (!trimmed) throw new Error("empty");
+  const withScheme = trimmed.includes("://") ? trimmed : `https://${trimmed}`;
   let url: URL;
   try {
-    url = new URL(trimmed);
+    url = new URL(withScheme);
   } catch {
     throw new Error("invalid");
   }
-  if (url.protocol !== "http:" && url.protocol !== "https:") throw new Error("protocol");
+  if (url.protocol === "http:") throw new Error("https");
+  if (url.protocol !== "https:") throw new Error("protocol");
   return url.origin;
+}
+
+/** Page origin on the web. The saved instance on the native client, or null when none is saved. */
+export function inviteLinkOrigin(): string | null {
+  if (!isNative()) return location.origin || null;
+  const base = currentInstance().baseUrl;
+  if (!base || base.startsWith("mesa:")) return null;
+  return base;
 }
 
 /** Confirms `GET /health` returns `{ ok: true }` and returns the origin to store. */

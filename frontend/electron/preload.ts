@@ -12,6 +12,11 @@ export interface CallPopoutRequest {
   serverKey: string | null;
 }
 
+export interface AvailableUpdate {
+  version: string;
+  url: string;
+}
+
 // Set before the page runs. The renderer treats this flag as "inside the Mesa shell"
 // and does not sniff the user agent.
 contextBridge.exposeInMainWorld("__MESA_NATIVE__", true);
@@ -25,6 +30,12 @@ contextBridge.exposeInMainWorld("mesaNative", {
   openCallPopout: (request: CallPopoutRequest): Promise<void> => ipcRenderer.invoke("mesa:open-call-popout", request),
   closeCallPopout: (): Promise<void> => ipcRenderer.invoke("mesa:close-call-popout"),
   takeCallPopout: (): Promise<CallPopoutRequest | null> => ipcRenderer.invoke("mesa:take-call-popout"),
+  availableUpdate: (): Promise<AvailableUpdate | null> => ipcRenderer.invoke("mesa:available-update"),
+  onUpdateAvailable: (listener: (update: AvailableUpdate) => void): (() => void) => {
+    const wrapped = (_event: Electron.IpcRendererEvent, update: AvailableUpdate) => listener(update);
+    ipcRenderer.on("mesa:update-available", wrapped);
+    return () => ipcRenderer.removeListener("mesa:update-available", wrapped);
+  },
   onCallPopoutClosed: (listener: (channelId: string) => void): (() => void) => {
     const wrapped = (_event: Electron.IpcRendererEvent, channelId: string) => listener(channelId);
     ipcRenderer.on("mesa:call-popout-closed", wrapped);
