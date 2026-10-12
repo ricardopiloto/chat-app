@@ -16,7 +16,7 @@ function PopoutStage(props: { request: { channelId: string; serverId: string; e2
       when={call.problem()}
       fallback={
         <main class="call-popout">
-          <GridView />
+          <GridView fill />
         </main>
       }
     >

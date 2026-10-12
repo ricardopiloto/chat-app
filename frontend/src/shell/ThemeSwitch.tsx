@@ -12,7 +12,7 @@ const MODES: { mode: ThemeMode; icon: string; label: string }[] = [
 // Three icon buttons in one pill: System follows the operating system, Light and Dark are fixed.
 export function ThemeSwitch() {
   return (
-    <div class="flex items-center gap-0.5 rounded-full border border-outline-variant bg-surface-container-low p-0.5" role="radiogroup" aria-label={t("shell.theme")}>
+    <div class="flex items-center gap-0.5 rounded border border-outline-variant bg-surface-container-low p-0.5" role="radiogroup" aria-label={t("shell.theme")}>
       <For each={MODES}>
         {(entry) => (
           <button
@@ -22,7 +22,7 @@ export function ThemeSwitch() {
             title={t(entry.label)}
             aria-label={t(entry.label)}
             onClick={() => setThemeMode(entry.mode)}
-            class="grid h-7 w-7 place-items-center rounded-full text-on-surface-variant transition-colors hover:text-on-surface aria-checked:bg-primary-container aria-checked:text-on-primary-container"
+            class="grid h-7 w-7 place-items-center rounded-sm text-on-surface-variant transition-colors hover:text-on-surface aria-checked:bg-primary-container aria-checked:text-on-primary-container"
           >
             <Icon name={entry.icon} class="text-[16px]" />
           </button>

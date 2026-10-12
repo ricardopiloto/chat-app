@@ -9,6 +9,26 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-12
+
+### Added
+
+- `npm run verify:icons` checks that every icon name used in the frontend maps to a Lucide glyph.
+- `npm run verify:popout-grid` checks how the popout grid picks columns and rows for a given window size.
+
+### Changed
+
+- Icons are inline Lucide SVGs (24×24 grid, 2px stroke) instead of the Material Symbols icon font. The Google Fonts request no longer loads Material Symbols. Active and inactive states still come from color and the container. A filled glyph is only used where the interface already asked for one, such as the voice indicator on the server rail.
+- In the call popout, when no shared screen is in focus, every participant tile is the same size and the grid fills the window. Resizing the window, or someone joining or leaving, recalculates the tiles. There is no leftover empty band and no scrollbar. A shared screen in focus keeps the spotlight layout. The grid in the main window is unchanged.
+- "Jump to present" appears whenever the message list is scrolled away from the bottom. The count appears only when new messages have arrived since then. Clicking the pill scrolls to the bottom and hides it. A message you just sent still follows the bottom, so the pill stays hidden.
+- `frontend/package.json`, `backend/Cargo.toml` and `frontend/electron/package.json` still say **1.2.0**. This changelog section is 1.3.0; those version fields were not changed.
+
+### Fixed
+
+- The top-bar search button and the theme switch use an 8px corner radius. The theme buttons inside the switch use 4px. The channel search panel and the notifications panel use 16px.
+- In the account menu, the display name uses the on-surface color and the handle uses the secondary color.
+- The call bench label includes a seat icon.
+
 ## [1.2.2] - 2026-10-11
 
 ### Added

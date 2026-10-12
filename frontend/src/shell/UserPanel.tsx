@@ -19,8 +19,8 @@ export function UserPanel() {
       <div class="flex items-center gap-3 px-3 py-3">
       <Avatar name={name()} src={avatar()} online />
       <div class="flex min-w-0 flex-1 flex-col leading-tight">
-        <strong class="truncate text-body-md">{name()}</strong>
-        <small class="truncate font-code text-label-code-sm text-on-surface-variant">@{me().handle}</small>
+        <strong class="truncate text-body-md text-on-surface">{name()}</strong>
+        <small class="truncate font-code text-label-code-sm text-secondary">@{me().handle}</small>
       </div>
       <button type="button" aria-haspopup="menu" aria-expanded={open()} title={t("shell.accountMenu")} aria-label={t("shell.accountMenu")} onClick={() => setOpen(!open())} class="grid h-9 w-9 place-items-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-highest hover:text-on-surface">
         <Icon name="tune" class="text-[20px]" />

@@ -1,6 +1,7 @@
 // "Composição": people placed in named seats of the channel's single scene, plus the bench for
 // whoever holds no seat. The same seat layout is reused, without video, by the scene editor preview.
 import { For, Show } from "solid-js";
+import { Icon } from "../components/ui";
 import { t } from "../i18n";
 import { useCall } from "./callSession";
 import { useCallPeople } from "./people";
@@ -29,7 +30,7 @@ export function CompositionView(props: { scene: Scene }) {
         </For>
       </div>
       <footer class="call-bench" aria-label={t("call.bench")}>
-        <span class="mono-label">{t("call.bench")}</span>
+        <span class="mono-label"><Icon name="airline_seat_recline_extra" class="text-[16px] text-outline" />{t("call.bench")}</span>
         <Show when={benched().length > 0} fallback={<span class="call-bench-hint">{t("call.benchEmpty")}</span>}>
           <For each={benched()}>
             {(id) => {

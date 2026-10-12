@@ -37,7 +37,7 @@ O sistema SHALL fornecer um conjunto de componentes de UI genéricos e reutiliz�
 
 #### Scenario: Ícones consistentes
 - **WHEN** um componente da biblioteca base precisa de um ícone
-- **THEN** o ícone é renderizado através do conjunto Material Symbols Outlined, nunca como emoji ou como um conjunto de SVG customizado
+- **THEN** o ícone é renderizado como um SVG inline do conjunto Lucide (grelha 24×24, traço 2px, `fill="none"` por omissão, estado activo/inactivo comunicado por cor e fundo do contentor, não por uma variante preenchida do glifo), nunca como emoji nem como ligature de uma fonte de ícones
 
 ### Requirement: Cliente de API compatível com os contratos existentes
 O sistema SHALL comunicar com o backend existente (Rust/Axum) usando exactamente os mesmos endpoints REST, formatos de pedido/resposta, formato de erro (`{ "error", "code"?, "message"? }`) e cookie de sessão (`Session`, httpOnly, `SameSite=Strict`) tal como definidos pelo backend e documentados em `README.md`, sem exigir qualquer alteração de contrato no backend. O cliente SHALL ser derivado desses contratos e SHALL NOT derivar de código do frontend v1.

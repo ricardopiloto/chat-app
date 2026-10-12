@@ -34,7 +34,7 @@ export function Topbar() {
 
       <div class="flex-1" />
 
-      <button type="button" class="hidden min-w-[260px] items-center gap-3 rounded-full border border-outline-variant bg-surface-container-low px-4 py-2 text-left text-body-sm text-on-surface-variant transition-colors hover:border-outline tablet:flex" aria-label={t("shell.searchEntry")} onClick={() => document.dispatchEvent(new Event("mesa:search"))}>
+      <button type="button" class="hidden min-w-[260px] items-center gap-3 rounded border border-outline-variant bg-surface-container-low px-4 py-2 text-left text-body-sm text-on-surface-variant transition-colors hover:border-outline tablet:flex" aria-label={t("shell.searchEntry")} onClick={() => document.dispatchEvent(new Event("mesa:search"))}>
         <Icon name="search" class="text-[18px]" />
         <span class="flex-1">{t("shell.searchPlaceholder")}</span>
         <kbd class="rounded bg-surface-container-highest px-1.5 py-0.5 font-code text-label-code-sm">Ctrl+K</kbd>

@@ -14,7 +14,7 @@
 .ui-button.danger:hover:not(:disabled) { @apply bg-error-container brightness-110; }
 .ui-button.icon { @apply h-9 w-9 border-0 bg-transparent p-0 text-on-surface-variant; }
 .ui-button.icon:hover:not(:disabled) { @apply bg-surface-container-highest text-on-surface; }
-.ui-button .material-symbols-outlined { @apply text-[20px]; }
+.ui-button .ui-icon { @apply text-[20px]; }
 
 /* One focus treatment for every interactive element. */
 .ui-button:focus-visible,
@@ -92,7 +92,7 @@
 .toast {
   @apply fixed bottom-6 right-6 z-[60] flex items-center gap-3 rounded-md border border-outline-variant bg-surface-container-high px-4 py-3 text-body-md shadow-floating;
 }
-.toast .material-symbols-outlined { @apply text-secondary; }
+.toast .ui-icon { @apply text-secondary; }
 
 /* Context menu. */
 .context-target { @apply relative inline-flex; }

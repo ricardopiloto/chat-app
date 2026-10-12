@@ -126,6 +126,8 @@ export function ChannelPage(props: {
   const jump = () => {
     setAway(0);
     setPinned(true);
+    // The smooth scroll this starts is not the person leaving the bottom.
+    lastGesture = 0;
     toBottom(true);
   };
 
@@ -145,8 +147,15 @@ export function ChannelPage(props: {
     if (first) return settle(() => !props.focusMessageId && toBottom());
     if (added === 0) return;
     const fromOthers = list.slice(-added).filter((m) => m.senderId !== props.me.id).length;
-    if (pinned() || last.senderId === props.me.id) settle(() => toBottom(true));
-    else if (fromOthers > 0) setAway((n) => n + fromOthers);
+    if (pinned() || last.senderId === props.me.id) {
+      // A message I just sent follows the bottom, so the jump pill stays hidden.
+      if (last.senderId === props.me.id) {
+        setPinned(true);
+        setAway(0);
+        lastGesture = 0;
+      }
+      settle(() => toBottom(true));
+    } else if (fromOthers > 0) setAway((n) => n + fromOthers);
   });
 
   onMount(() => {
@@ -312,9 +321,11 @@ export function ChannelPage(props: {
             </For>
           </div>
         </div>
-        <Show when={!pinned() && away() > 0}>
+        <Show when={!pinned()}>
           <button type="button" class="ch-jump" onClick={jump}>
-            {t("txt.jump")}<Badge tone="primary" mono>{away()}</Badge><Icon name="arrow_downward" />
+            {t("txt.jump")}
+            <Show when={away() > 0}><Badge tone="primary" mono>{away()}</Badge></Show>
+            <Icon name="arrow_downward" />
           </button>
         </Show>
       </div>

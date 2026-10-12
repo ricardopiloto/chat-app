@@ -112,7 +112,7 @@ button.call-bench-chip{cursor:grab}
 .call-seat-person>span:nth-child(2){min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .call-seat.editable{min-width:0;min-height:0;overflow:hidden}
 .call-stage.editing.layout-faixa .call-seat-person,.call-stage.editing.seats-6 .call-seat-person,.call-stage.editing.seats-7 .call-seat-person,.call-stage.editing.seats-8 .call-seat-person{flex-direction:column;border-radius:var(--radius-md);padding:6px;text-align:center;gap:4px}
-.call-stage.editing.layout-faixa .call-seat-person .material-symbols-outlined{display:none}
+.call-stage.editing.layout-faixa .call-seat-person .ui-icon{display:none}
 .call-stepper{display:inline-flex;align-items:center;gap:12px}
 .call-stepper output{min-width:24px;text-align:center;font:700 20px var(--font-display)}
 .call-layout-list{display:flex;flex-direction:column;gap:8px}
@@ -207,5 +207,7 @@ button.call-bench-chip{cursor:grab}
 @media (max-width:900px){.call-av-grid,.call-av-camera{grid-template-columns:1fr}}
 
 .call-popout{min-height:100vh;background:var(--background);padding:12px}
+.call-popout:has(> .call-grid-view.is-fill){height:100vh;display:flex;flex-direction:column}
+.call-grid.is-fill{grid-auto-rows:unset;grid-template-rows:repeat(var(--rows,1),minmax(0,1fr))}
 .call-popout-status,.call-elsewhere{display:grid;min-height:240px;place-items:center;align-content:center;gap:12px;padding:24px;text-align:center}
 .call-popout-status{min-height:100vh}
