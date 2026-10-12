@@ -6,7 +6,7 @@ extraMetadata:
   author: Mesa
   description: Chat e vídeo self-hosted, com composição de câmaras e criptografia ponta a ponta.
   homepage: https://github.com/ricardopiloto/chat-app
-  desktopName: mesa.desktop
+  desktopName: mesa-chat-app.desktop
 directories:
   output: release
 files:
@@ -26,9 +26,14 @@ linux:
     Chat e vídeo self-hosted, com composição de câmaras e criptografia ponta a
     ponta. Pensado para mesas de RPG e grupos pequenos que querem uma instância
     própria, sem o servidor ler o conteúdo das conversas.
-  executableName: mesa
+  executableName: mesa-chat-app
   maintainer: Mesa
   syncDesktopName: true
+  artifactName: "mesa-chat-app-${version}-${arch}.${ext}"
+deb:
+  packageName: mesa-chat-app
+rpm:
+  packageName: mesa-chat-app
 win:
   target:
     - nsis

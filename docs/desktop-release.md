@@ -29,9 +29,11 @@ A escolha do rascunho é deliberada. A primeira release real não deve aparecer 
 
 O nome de cada ficheiro inclui a versão de `frontend/package.json`, que tem de ser a mesma de `frontend/electron/package.json` (hoje `1.2.0`).
 
+Nos três formatos Linux, o nome do ficheiro, o binário instalado e o identificador do pacote usam `mesa-chat-app`, não `mesa`/`Mesa` (`frontend/electron-builder.yml`: `executableName`, `deb.packageName`, `rpm.packageName`, `artifactName`) — por exemplo `mesa-chat-app-1.2.0-amd64.deb`, `mesa-chat-app-1.2.0-x86_64.rpm`, `mesa-chat-app-1.2.0-x86_64.AppImage`. Motivo: `mesa`/`Mesa` é também o nome da biblioteca gráfica Mesa 3D (`mesa-libgallium`, `mesa-vulkan-drivers`, etc.), já instalada por omissão em praticamente qualquer distribuição Linux — confirmado em `dpkg -l | grep mesa` numa instalação Ubuntu comum. `productName` ("Mesa", mostrado no menu/dock/título da janela) e `appId` (`com.mesa.desktop`) não mudam, só o identificador de empacotamento. Windows e macOS não têm este risco de colisão (sem um espaço de nomes de pacotes partilhado) e continuam com `Mesa` no nome dos instaladores.
+
 Os artefactos de uma tag ficam na GitHub Release `v*` (rascunho até ser publicada): `https://github.com/ricardopiloto/chat-app/releases`. Num disparo manual, ficam só nos artefactos dessa execução do workflow.
 
-O `.deb` e o `.rpm` instalam um `.desktop` com o ícone de `frontend/electron/icons/`. No Wayland, esse ícone só aparece na barra depois de instalar o pacote; uma janela de desenvolvimento ou um directório desempacotado continua com o símbolo genérico.
+O `.deb` e o `.rpm` instalam um `.desktop` (`mesa-chat-app.desktop`) com o ícone de `frontend/electron/icons/`. No Wayland, esse ícone só aparece na barra depois de instalar o pacote; uma janela de desenvolvimento ou um directório desempacotado continua com o símbolo genérico.
 
 ## Instaladores por assinar
 

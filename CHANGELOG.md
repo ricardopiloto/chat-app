@@ -9,6 +9,13 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-10-12
+
+### Changed
+
+- On Linux, the installed binary, the deb and rpm package names, the AppImage, deb and rpm file names, and the installed desktop entry are `mesa-chat-app` instead of `mesa` or `Mesa`. The short name collides with the Mesa 3D graphics packages that ship on a typical Linux install. The window title, the dock name and the app id stay Mesa and `com.mesa.desktop`. Windows and macOS installers keep the Mesa file names.
+- `frontend/package.json`, `backend/Cargo.toml` and `frontend/electron/package.json` still say **1.2.0**. This changelog section is 1.4.0; those version fields were not changed.
+
 ## [1.3.0] - 2026-10-12
 
 ### Added
