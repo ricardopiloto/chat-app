@@ -55,7 +55,10 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: mesa-linux
-          path: frontend/release/*
+          path: |
+            frontend/release/*.AppImage
+            frontend/release/*.deb
+            frontend/release/*.rpm
           if-no-files-found: error
 
   windows:
@@ -104,7 +107,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: mesa-windows
-          path: frontend/release/*
+          path: |
+            frontend/release/*.exe
+            frontend/release/*.msi
           if-no-files-found: error
 
   macos:
@@ -150,7 +155,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: mesa-macos
-          path: frontend/release/*
+          path: frontend/release/*.dmg
           if-no-files-found: error
 
   release:
