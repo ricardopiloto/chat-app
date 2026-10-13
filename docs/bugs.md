@@ -4,6 +4,16 @@ Defeitos conhecidos do produto, à parte do [backlog de funcionalidades](backlog
 
 ## Em aberto
 
+### App trava ao entrar numa chamada de voz/vídeo (desktop Linux, `v1.3.3`)
+
+**Grave — bloqueia voz/vídeo por completo no Linux.** Ao tentar entrar num canal de voz/vídeo, a aplicação trava por completo (não só a navegação, como no bug abaixo). A barra de tarefas mostra o indicador do sistema de que câmara/microfone estão em uso, mas fica "blinking" — sinal de que a janela deixou de responder a eventos do gestor de janelas. A única acção possível é fechar a aplicação.
+
+**Como reproduzir**: no Linux (reportado contra o AppImage `v1.3.3`), entrar em qualquer canal de voz/vídeo.
+
+**Contexto relevante**: esta sessão já tinha tentado reproduzir o travamento de PiP (abaixo) com `--remote-debugging-port`/`--inspect`, e nessa tentativa a ligação de depuração ao alvo morreu 1.7s depois de anexar, logo ao tentar entrar na chamada — na altura atribuído às próprias flags de depuração interferirem com WebRTC. O relato agora confirma que acontece **sem** essas flags, no pacote normal — não é um artefacto do modo de depuração, é um travamento real ao adquirir câmara/microfone. Ver `openspec/changes/fix-pip-call-navigation-freeze/design.md`, secção "Tentativa de reprodução do cenário PiP", para os detalhes dessa primeira pista.
+
+**Não diagnosticado**: pode ser um travamento no `VideoCaptureService`/`AudioService` do Chromium (processos utilitários separados, confirmados a arrancar quando a app entra numa chamada), um problema de driver/PipeWire específico da máquina, ou algo na própria sequência de `room.localParticipant.setCameraEnabled()`/`setMicrophoneEnabled()` em `frontend/src/voice/callSession.tsx`. Spec: [fix-voice-join-freeze-linux](../openspec/changes/fix-voice-join-freeze-linux/proposal.md).
+
 ### App trava ao navegar com uma chamada no PiP (desktop, AppImage e Windows)
 
 Com uma chamada de voz/vídeo activa em segundo plano (mini-player flutuante, PiP — não o popout em janela separada), navegar para outro canal trava a aplicação inteira. Reportado em 2026-10-12, contra a `v1.3.2`, no AppImage Linux. Também reportado no Windows, com o popout (não o PiP) aberto.

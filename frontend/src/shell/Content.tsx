@@ -41,15 +41,23 @@ export function Content() {
           <SettingsPage server={shell.server()!} />
         </Match>
         <Match when={shell.route().channelId}>
-          <Show when={shell.channel()} keyed fallback={<p class="p-6 text-on-surface-variant">{t("shell.loadingChannel")}</p>}>
-            {(channel) => (
+          {/* Keyed by id (stable across a channels refetch), not by the channel object: GreenRoom
+              refreshes the channel list on mount, which returns new object references for the same
+              channel. Keying by the object re-triggered this very block on every such refresh, in a
+              loop that never settled. Reading shell.channel()! directly below (rather than through
+              Show's own resolved-value accessor) matters too: Solid's Show deliberately throws if its
+              accessor is read once the branch has started disposing, which downstream code here hit
+              every time a server switch unmounted this block (onCleanup / a pending setTimeout in
+              ChannelPage and Composer). A plain memo read never throws that way. */}
+          <Show when={shell.channel()?.id} keyed fallback={<p class="p-6 text-on-surface-variant">{t("shell.loadingChannel")}</p>}>
+            {(_id) => (
               <Show
-                when={channel.type === "text"}
-                fallback={<VoicePage channel={channel} />}
+                when={shell.channel()!.type === "text"}
+                fallback={<VoicePage channel={shell.channel()!} />}
               >
                 <ChannelPage
                   me={me()}
-                  channel={channel}
+                  channel={shell.channel()!}
                   identity={identity()}
                   server={shell.server()}
                   roles={shell.roles.data ?? []}

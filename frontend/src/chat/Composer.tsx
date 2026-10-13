@@ -87,10 +87,15 @@ export function Composer(props: {
       document.removeEventListener("visibilitychange", onVis);
     });
   });
+  // Tracked separately from props.channelId: onCleanup runs as the channel page unmounts (e.g. a
+  // server switch), by which point the upstream channel prop may already be gone. Reading the plain
+  // last-known id here avoids re-deriving it from a prop chain that is mid-teardown.
+  let lastChannelId = props.channelId;
   createEffect(on(() => props.channelId, (channelId, prev) => {
     if (prev && prev !== channelId) stopAnnouncing(prev);
+    lastChannelId = channelId;
   }));
-  onCleanup(() => stopAnnouncing(props.channelId));
+  onCleanup(() => stopAnnouncing(lastChannelId));
 
   const suggestions = () => {
     const open = completion();

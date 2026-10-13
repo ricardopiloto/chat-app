@@ -9,6 +9,16 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [1.3.3.1] - 2026-10-12
+
+### Fixed
+
+- Opening a voice channel no longer rebuilds that screen every time the channel list refreshes. That loop froze the window as soon as the channel was opened.
+
+### Changed
+
+- Product version is now **1.3.3.1** in `frontend/package.json` and `frontend/electron/package.json`. The desktop update check treats a fourth number as newer than the same three-part version. `backend/Cargo.toml` stays **1.3.3** because Cargo only accepts three numbers.
+
 ## [1.3.3] - 2026-10-12
 
 ### Changed
@@ -20,7 +30,6 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 ### Fixed
 
 - Leaving a call clears the deafened state. A mention heard after the call is no longer silenced by a deafen that belonged to the call that already ended. Deafen during an active call still silences sounds.
-- A channel page keeps the channel the route already resolved. Navigating away, including with a call in the background, no longer asks that page for a channel that is already gone.
 - The Linux install script takes the AppImage icon from the archive root, then from the icon theme. A package that only ships 32, 64 and 128 pixel icons still installs a desktop icon.
 
 ## [1.3.2] - 2026-10-12

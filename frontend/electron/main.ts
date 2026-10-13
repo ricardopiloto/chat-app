@@ -20,15 +20,16 @@ let instance: InstanceState = { baseUrl: null, sessionToken: null };
 let availableUpdate: { version: string; url: string } | null = null;
 
 function versionParts(value: string): number[] | null {
-  const match = /^v?(\d+)\.(\d+)\.(\d+)$/.exec(value);
-  return match ? match.slice(1).map(Number) : null;
+  const match = /^v?(\d+)\.(\d+)\.(\d+)(?:\.(\d+))?$/.exec(value);
+  if (!match) return null;
+  return [Number(match[1]), Number(match[2]), Number(match[3]), match[4] ? Number(match[4]) : 0];
 }
 
 function isNewerVersion(candidate: string, current: string): boolean {
   const next = versionParts(candidate);
   const installed = versionParts(current);
   if (!next || !installed) return false;
-  for (let index = 0; index < 3; index++) {
+  for (let index = 0; index < 4; index++) {
     if (next[index] !== installed[index]) return next[index] > installed[index];
   }
   return false;

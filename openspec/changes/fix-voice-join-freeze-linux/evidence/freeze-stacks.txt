@@ -1,0 +1,33 @@
+=== captured 2026-10-12T23:23:35-03:00 ===
+--- cpu ---
+    PID STAT %CPU %MEM COMMAND
+ 592439 Sl   14.4  0.7 /home/ricardosobral/Documents/Desenvolvimento/chat-app/frontend/node_modules/electron/dist/electron electron/dist/main.js
+ 592493 Sl   15.4  0.4 /home/ricardosobral/Documents/Desenvolvimento/chat-app/frontend/node_modules/electron/dist/electron --type=zygote --no-zygote-sandbox
+ 592515 Sl   47.3  0.9 /home/ricardosobral/Documents/Desenvolvimento/chat-app/frontend/node_modules/electron/dist/electron --type=zygote
+ 592496 Sl   12.3  0.2 /proc/self/exe --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-US --service-sandbox-type=none --render-node-override=/dev/dri/renderD128 --disable-quic --enable-crash-reporter=c72b1021-88db-4ea4-931f-948bda0c47a3,no_channel --user-data-dir=/home/ricardosobral/.config/Electron --shared-files=v8_context_snapshot_data:100 --field-trial-handle=3,i,3738973074229621687,1991424950240335983,262144 --enable-features=PdfUseShowSaveFilePicker,WebRTCPipeWireCapturer --disable-features=ScreenAIOCREnabled,SpareRendererForSitePerProcess,TraceSiteInstanceGetProcessCreation --variations-seed-version
+ 592762 Sl   20.2  0.2 /proc/self/exe --type=utility --utility-sub-type=audio.mojom.AudioService --lang=en-US --service-sandbox-type=none --render-node-override=/dev/dri/renderD128 --disable-quic --enable-crash-reporter=c72b1021-88db-4ea4-931f-948bda0c47a3,no_channel --user-data-dir=/home/ricardosobral/.config/Electron --shared-files=v8_context_snapshot_data:100 --field-trial-handle=3,i,3738973074229621687,1991424950240335983,262144 --enable-features=PdfUseShowSaveFilePicker,WebRTCPipeWireCapturer --disable-features=ScreenAIOCREnabled,SpareRendererForSitePerProcess,TraceSiteInstanceGetProcessCreation --variations-seed-version
+ 593209 Sl    3.0  0.2 /proc/self/exe --type=utility --utility-sub-type=video_capture.mojom.VideoCaptureService --lang=en-US --service-sandbox-type=none --render-node-override=/dev/dri/renderD128 --disable-quic --message-loop-type-ui --enable-crash-reporter=c72b1021-88db-4ea4-931f-948bda0c47a3,no_channel --user-data-dir=/home/ricardosobral/.config/Electron --shared-files=v8_context_snapshot_data:100 --field-trial-handle=3,i,3738973074229621687,1991424950240335983,262144 --enable-features=PdfUseShowSaveFilePicker,WebRTCPipeWireCapturer --disable-features=ScreenAIOCREnabled,SpareRendererForSitePerProcess,TraceSiteInstanceGetProcessCreation --variations-seed-version
+--- video fds ---
+--- audio fds ---
+lrwx------. 1 ricardosobral ricardosobral 64 out 12 23:20 18 -> /memfd:pulseaudio (deleted)
+lrwx------. 1 ricardosobral ricardosobral 64 out 12 23:20 29 -> /memfd:pulseaudio (deleted)
+--- video threads ---
+    TID STAT %CPU WCHAN                    COMMAND
+ 593209 Sl    2.7 poll_schedule_timeout.co electron
+ 593210 Sl    0.0 ep_poll                  PerfettoTrace
+ 593211 Sl    0.0 ep_poll                  ThreadPoolServi
+ 593212 Sl    0.0 futex_do_wait            ThreadPoolForeg
+ 593213 Sl    0.2 ep_poll                  Chrome_ChildIOT
+--- audio threads ---
+    TID STAT %CPU WCHAN                    COMMAND
+ 592762 Sl    4.1 futex_do_wait            electron
+ 592764 Sl    0.0 ep_poll                  PerfettoTrace
+ 592765 Sl    0.0 ep_poll                  ThreadPoolServi
+ 592766 Sl    0.0 futex_do_wait            ThreadPoolForeg
+ 592767 Sl    0.5 ep_poll                  Chrome_ChildIOT
+ 592768 Sl    0.0 futex_do_wait            ThreadPoolForeg
+ 592769 Sl   14.6 poll_schedule_timeout.co threaded-ml
+ 593215 Sl    0.3 poll_schedule_timeout.co threaded-ml
+=== STACK video 593209 main ===
+=== STACK audio 592762 main ===
+=== STACK gpu 592493 main ===

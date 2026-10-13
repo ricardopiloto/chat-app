@@ -213,7 +213,10 @@ export function ChannelPage(props: {
     clearNews(props.channel.id);
     if (!pinned()) return;
     void thread.messages().length;
-    const timer = window.setTimeout(() => void channelsApi.markRead(props.channel.id).catch(() => undefined), 800);
+    // Captured now, not read inside the timeout: by the time it fires the page may already be
+    // unmounted (e.g. the user switched servers), and props.channel would be gone by then.
+    const channelId = props.channel.id;
+    const timer = window.setTimeout(() => void channelsApi.markRead(channelId).catch(() => undefined), 800);
     onCleanup(() => window.clearTimeout(timer));
   });
 
