@@ -14,6 +14,7 @@ import { useSession } from "../session/session";
 import type { Identity } from "../crypto/identity";
 import { devices, prefs, refreshDevices, resolveDevice, type BlurLevel } from "./devices";
 import { createTestPattern, type TestPattern } from "./testPattern";
+import { notify } from "../sound/effects";
 
 export type CallStatus = "idle" | "connecting" | "live" | "reconnecting";
 export type JoinMode = "full" | "listen" | "test";
@@ -187,6 +188,7 @@ function createCall() {
     setE2eeOn(false);
     setAudioBlocked(false);
     setBlurError(false);
+    setDeafened(false);
     return disconnected;
   }
 
@@ -432,17 +434,17 @@ function createCall() {
     setProblem(why);
   }
 
-  async function join(request: JoinRequest): Promise<boolean> {
+  async function join(request: JoinRequest, { silent = false }: { silent?: boolean } = {}): Promise<boolean> {
     if (joining) return false;
     joining = true;
     try {
-      return await joinOnce(request);
+      return await joinOnce(request, silent);
     } finally {
       joining = false;
     }
   }
 
-  async function joinOnce(request: JoinRequest): Promise<boolean> {
+  async function joinOnce(request: JoinRequest, silent: boolean): Promise<boolean> {
     if (status() !== "idle") await leave();
     const mine = ++epoch;
     lastRequest = request;
@@ -519,6 +521,7 @@ function createCall() {
 
       setStartedAt(Date.now());
       setStatus("live");
+      if (!viewer && !silent) notify("callJoin");
       setAudioBlocked(!next.canPlaybackAudio);
       refresh();
       report({ mic_on: next.localParticipant.isMicrophoneEnabled, cam_on: next.localParticipant.isCameraEnabled });
@@ -595,7 +598,7 @@ function createCall() {
       mic: mic(),
       cam: cam(),
     };
-    await join(request);
+    await join(request, { silent: true });
   }
 
   /** Feeds shell realtime events: the channel or server of the call being deleted ends the call. */

@@ -1,0 +1,2 @@
+2026-10-13T01:29:58.578Z
+ 523686 Sl    0.3  0.2 ep_poll              node /home/ricardosobral/Documents/Desenvolvimento/chat-app/openspec/changes/fix-pip-call-navigation-freeze/evidence/capture.mjs

@@ -9,6 +9,20 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [1.3.3] - 2026-10-12
+
+### Changed
+
+- Joining a voice or video channel plays the arrival sound for the person who just joined, whether the call was empty or someone was already there. People already in the call still hear someone else arrive. Rejoining because the channel's end-to-end encryption setting changed does not play it. The call popout does not play it.
+- Windows installers are named `Mesa-<version>.exe` and `Mesa-<version>.msi`.
+- Product version is now **1.3.3** in `frontend/package.json`, `backend/Cargo.toml` and `frontend/electron/package.json`.
+
+### Fixed
+
+- Leaving a call clears the deafened state. A mention heard after the call is no longer silenced by a deafen that belonged to the call that already ended. Deafen during an active call still silences sounds.
+- A channel page keeps the channel the route already resolved. Navigating away, including with a call in the background, no longer asks that page for a channel that is already gone.
+- The Linux install script takes the AppImage icon from the archive root, then from the icon theme. A package that only ships 32, 64 and 128 pixel icons still installs a desktop icon.
+
 ## [1.3.2] - 2026-10-12
 
 ### Added

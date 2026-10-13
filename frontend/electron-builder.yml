@@ -39,6 +39,7 @@ win:
     - nsis
     - msi
   icon: electron/icons/icon.ico
+  artifactName: "Mesa-${version}.${ext}"
 mac:
   target:
     - dmg

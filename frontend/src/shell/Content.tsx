@@ -41,15 +41,15 @@ export function Content() {
           <SettingsPage server={shell.server()!} />
         </Match>
         <Match when={shell.route().channelId}>
-          <Show when={shell.channel()?.id} keyed fallback={<p class="p-6 text-on-surface-variant">{t("shell.loadingChannel")}</p>}>
-            {(_id) => (
+          <Show when={shell.channel()} keyed fallback={<p class="p-6 text-on-surface-variant">{t("shell.loadingChannel")}</p>}>
+            {(channel) => (
               <Show
-                when={shell.channel()!.type === "text"}
-                fallback={<VoicePage channel={shell.channel()!} />}
+                when={channel.type === "text"}
+                fallback={<VoicePage channel={channel} />}
               >
                 <ChannelPage
                   me={me()}
-                  channel={shell.channel()!}
+                  channel={channel}
                   identity={identity()}
                   server={shell.server()}
                   roles={shell.roles.data ?? []}

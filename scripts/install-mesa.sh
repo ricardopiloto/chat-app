@@ -79,7 +79,11 @@ if [ "$system" = Linux ]; then
   cp "$temporary/$asset_name" "$staged"
   chmod 755 "$staged"
   (cd "$temporary" && "$staged" --appimage-extract >/dev/null)
-  icon=$(find "$temporary/squashfs-root" -type f -name '*.png' | grep -E '/(256x256|512x512)/|/icon\.png$' | head -n 1 || true)
+  # The AppImage spec guarantees a top-level icon next to the .desktop file; electron-builder's
+  # hicolor sizes vary by app (this one only ships 32/64/128), so that top-level file is the
+  # reliable pick instead of guessing a specific hicolor size.
+  icon=$(find "$temporary/squashfs-root" -maxdepth 1 -type f -name '*.png' | head -n 1 || true)
+  [ -n "$icon" ] || icon=$(find "$temporary/squashfs-root/usr/share/icons" -type f -name '*.png' 2>/dev/null | head -n 1 || true)
   [ -n "$icon" ] || { echo "Mesa: ícone não encontrado no AppImage." >&2; exit 1; }
   cp "$icon" "$HOME/.local/share/icons/mesa-chat-app.png"
   mv -f "$staged" "$target"

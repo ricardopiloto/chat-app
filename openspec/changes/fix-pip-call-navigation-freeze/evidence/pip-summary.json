@@ -1,0 +1,9 @@
+{
+  "capturedAt": "2026-10-13T01:52:26.792Z",
+  "waitTargetMs": 180000,
+  "recordMs": 480000,
+  "heartbeatTimeoutMs": 15000,
+  "freeze": null,
+  "sessions": [],
+  "reason": "signal-SIGTERM"
+}
