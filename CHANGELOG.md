@@ -9,7 +9,7 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
-## [1.3.3.1] - 2026-10-12
+## [1.3.4] - 2026-10-12
 
 ### Fixed
 
