@@ -17,7 +17,7 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ### Changed
 
-- Product version is now **1.3.3.1** in `frontend/package.json` and `frontend/electron/package.json`. The desktop update check treats a fourth number as newer than the same three-part version. `backend/Cargo.toml` stays **1.3.3** because Cargo only accepts three numbers.
+- Product version is now **1.3.4** in `frontend/package.json`, `backend/Cargo.toml` and `frontend/electron/package.json`.
 
 ## [1.3.3] - 2026-10-12
 
