@@ -9,6 +9,14 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [1.3.5] - 2026-10-16
+
+### Changed
+
+- The call popout window can shrink to 240×180. The previous floor was 640×480.
+- In a narrow, tall popout, participants stack in a single column that fills the width. Wider proportions keep the equal-tile grid used before.
+- Product version is now **1.3.5** in `frontend/package.json`, `backend/Cargo.toml` and `frontend/electron/package.json`.
+
 ## [1.3.4] - 2026-10-12
 
 ### Fixed

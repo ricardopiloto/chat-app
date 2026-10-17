@@ -321,8 +321,8 @@ function registerPopoutIpc(): void {
     const window = new BrowserWindow({
       width: 960,
       height: 640,
-      minWidth: 640,
-      minHeight: 480,
+      minWidth: 240,
+      minHeight: 180,
       backgroundColor: BACKGROUND,
       icon,
       webPreferences: {

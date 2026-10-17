@@ -1,5 +1,7 @@
 # Termo de Referência — Camada de integração de bots + chave por canal (item 10)
 
+> **Encerrado em 2026-10-14, sem implementação.** A proposta OpenSpec gerada a partir deste TR (`bots-channel-key-integration`) foi removida. Motivo: o caso de uso que mais justificava o custo da migração de chave por canal — música durante as sessões — passou a ser resolvido pelo FoundryVTT nativamente, via módulos de terceiros (ex. Youtube Player Widget, YouTube Sync, Bardic Inspiration, YouTube Jukebox) que sincronizam áudio do YouTube entre todos os clientes sem depender de um bot participante na chamada de voz desta plataforma. Sem esse caso, decidiu-se não prosseguir também com o bot de conversa nesta forma — ver `docs/backlog/backlog.md`, item 10. Documento mantido como registo da análise.
+
 **Data:** 2026-10-03
 **Autor:** análise assistida (Claude Code), a pedido de Ricardo Sobral
 **Tipo:** documento de análise/escopo — **não contém desenvolvimento**; alimenta a proposta OpenSpec desta demanda (`/opsx:propose`).

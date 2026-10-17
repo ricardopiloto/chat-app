@@ -43,6 +43,21 @@ check("tall window prefers more rows than columns", tall.rows > tall.cols && tal
 const tie = computeGridSize(2, 200, 200);
 check("a tie keeps the smaller column count", tie.cols === 1 && tie.rows === 2);
 
+// Narrow/tall (width/height < 0.7) with n > 1 forces a single column.
+const narrowTall = computeGridSize(4, 200, 800);
+check("narrow/tall window forces a single column", narrowTall.cols === 1 && narrowTall.rows === 4);
+
+// n = 1 is unaffected by the single-column rule even when the ratio is below 0.7.
+const oneNarrow = computeGridSize(1, 100, 800);
+check("n=1 stays one cell when narrow/tall", oneNarrow.cols === 1 && oneNarrow.rows === 1);
+
+// Straddle 0.7 for the same n and width family: above keeps maximization, below forces one column.
+const justAbove = computeGridSize(4, 701, 1000);
+check("just above 0.7 does not force a single column", justAbove.cols !== 1);
+
+const justBelow = computeGridSize(4, 699, 1000);
+check("just below 0.7 forces a single column", justBelow.cols === 1 && justBelow.rows === 4);
+
 if (failed) {
   console.error(`${failed} check(s) failed`);
   process.exit(1);
