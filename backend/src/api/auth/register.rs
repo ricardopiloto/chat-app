@@ -227,6 +227,9 @@ pub async fn register_inner(
             tx.commit()
                 .await
                 .map_err(|e| ApiError::internal(e.to_string()))?;
+            if record.is_initial_operator {
+                tracing::info!(account_id = %record.id, "instance administrator account created");
+            }
             if let Some(inv) = invite {
                 emit_invite_consumed(state, &inv, record.id).await;
             }

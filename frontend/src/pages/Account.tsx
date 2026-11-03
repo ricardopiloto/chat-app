@@ -1,4 +1,4 @@
-import { For, Show, createEffect, createSignal, onCleanup } from "solid-js";
+import { For, Show, createEffect, createSignal, onCleanup, onMount } from "solid-js";
 import { ApiError, auth, avatarUrl, useAuthedSrc } from "../api";
 import { MAX_IMAGE_BYTES, PROFILE_IMAGE_MEDIA_TYPES } from "../api/limits";
 import { Avatar, Badge, Button, Card, Icon, MonoLabel, Segmented } from "../components/ui";
@@ -25,6 +25,13 @@ export function Account() {
   const [editing, setEditing] = createSignal(false);
   const [busy, setBusy] = createSignal(false);
   const [note, setNote] = createSignal<{ tone: "error" | "info"; text: string }>();
+  const [showAdminWelcome, setShowAdminWelcome] = createSignal(false);
+  onMount(() => {
+    if (me().is_initial_operator && session.welcomeAccountId() === me().id) {
+      setShowAdminWelcome(true);
+      session.dismissWelcome();
+    }
+  });
   const [currentPassword, setCurrentPassword] = createSignal("");
   const [nextPassword, setNextPassword] = createSignal("");
   const [confirmPassword, setConfirmPassword] = createSignal("");
@@ -147,6 +154,9 @@ export function Account() {
       </nav>
 
       <div class="flex min-w-0 flex-col gap-6">
+        <Show when={showAdminWelcome()}>
+          <p class="notice info" role="status">{t("account.adminWelcome")}</p>
+        </Show>
         <header>
           <MonoLabel>{t("account.crumb")}</MonoLabel>
           <h1 class="mt-1 font-display text-display-lg-mobile desktop:text-display-lg">{t("account.title")}</h1>
@@ -176,7 +186,13 @@ export function Account() {
             <div class="flex flex-wrap items-center gap-2">
               <span class="font-code text-label-code-md text-on-surface-variant">@{me().handle}</span>
               <Badge tone="secure" mono icon="key">{t("account.identityChip")}</Badge>
+              <Show when={me().is_initial_operator}>
+                <Badge tone="primary" icon="verified_user">{t("account.instanceAdmin")}</Badge>
+              </Show>
             </div>
+            <Show when={me().is_initial_operator}>
+              <p class="text-body-sm text-on-surface-variant">{t("account.instanceAdminNote")}</p>
+            </Show>
           </div>
         </section>
 

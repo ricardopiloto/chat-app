@@ -52,6 +52,13 @@ export const ptBR: MessageTree = {
     recoveryWarning: "Isto cria uma identidade nova. O histórico volta a ficar legível quando alguém que ainda tem a chave do servidor estiver online e a voltar a selar. Fica ilegível nos servidores em que esta conta era a única com a chave. A custódia da chave do canal de voz desta conta deixa de poder ser recuperada por esta identidade. A senha digitada protege o novo cofre.",
     generateKeys: "Gerar novas chaves",
   },
+  setup: {
+    title: "Configurar a instância · Criar a conta de administrador",
+    noExtraPermissions: "Por ora, esta conta não tem permissões extras.",
+    role: "Esta é a primeira conta e será identificada como Administrador da instância. Ela poderá administrar a instância no futuro, sem precisar pertencer a um servidor. Se você hospeda a Mesa nesta máquina, também é o operador que acessa o host.",
+    exposure: "Crie esta conta antes de expor a instância à internet. Quem se cadastrar primeiro receberá este marcador.",
+    recoveryRecommended: "Recomendado: crie e guarde a chave de recuperação agora.",
+  },
   recover: {
     headline: "Voltar a entrar sem a senha.",
     pitch: "O operador da instância emite um código de uso único. Não há recuperação por e-mail.",
@@ -120,6 +127,9 @@ export const ptBR: MessageTree = {
     subtitle: "Gerencie como as outras pessoas veem você na Mesa.",
     editName: "Editar nome de exibição",
     identityChip: "Identidade ativa",
+    instanceAdmin: "Administrador da instância",
+    instanceAdminNote: "Esta conta administrará a instância no futuro; por ora não tem permissões extras.",
+    adminWelcome: "Bem-vindo, Administrador da instância. Sua conta foi criada. Ela poderá administrar a instância no futuro; por ora não tem permissões extras.",
     photoLabel: "Perfil",
     photoTitle: "Foto de perfil",
     photoHint: "JPEG, PNG ou WebP, até 1 MiB.",

@@ -20,6 +20,7 @@ mod channels_delete;
 mod grid;
 mod grid_admin;
 mod hierarchy;
+mod instance_status;
 mod invites;
 mod key_envelopes;
 mod member_join_welcome;

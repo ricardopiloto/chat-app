@@ -22,7 +22,8 @@ Só os contratos que a **v2** consome. O backend tem mais rotas (listadas em [Ro
 
 | Método | Caminho | Pedido | Resposta | Notas |
 |--------|---------|--------|----------|-------|
-| `POST` | `/api/auth/register` | `RegisterBody` `{ handle, password, identity_pubkey, identity_vault?, invite_code? }` | `Account` | A primeira conta é o operador inicial; as seguintes exigem convite. Emite o cookie |
+| `GET` | `/api/instance/status` | — | `{ "initial_setup": boolean }` | Público, limitado por IP em balde próprio. `true` se não há contas; pode receber 429. Não é sinal de segurança. `/health` permanece `{ "ok": true }` |
+| `POST` | `/api/auth/register` | `RegisterBody` `{ handle, password, identity_pubkey, identity_vault?, invite_code? }` | `Account` | A primeira conta é o Administrador da instância (`is_initial_operator`), sem permissões extras; as seguintes exigem convite. Emite o cookie |
 | `POST` | `/api/auth/login` | `{ handle, password }` | `Account` (inclui `identity_vault`) | Emite o cookie |
 | `POST` | `/api/auth/logout` | — | sem corpo | Revoga a sessão |
 | `GET` | `/api/auth/me` | — | `Account` ou 204 | 204 quando não há sessão |

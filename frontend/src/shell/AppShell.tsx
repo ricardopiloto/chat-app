@@ -1,5 +1,7 @@
 import { Show, createEffect, createSignal, onCleanup, onMount } from "solid-js";
 import { t } from "../i18n";
+import { Toast } from "../components/ui";
+import { createToast } from "../lib/toast";
 import { useSession } from "../session/session";
 import { CallProvider } from "../voice/callSession";
 import { Content } from "./Content";
@@ -16,10 +18,13 @@ import { Topbar } from "./Topbar";
 // content from 768px up; below that it is a drawer over the content with a backdrop that closes it.
 function Frame() {
   const shell = useShell();
+  const session = useSession();
+  const welcomeToast = createToast(6000);
   const [availableUpdate, setAvailableUpdate] = createSignal<{ version: string; url: string } | null>(null);
   useSoundEffects();
 
   onMount(() => {
+    if (session.welcomeAccountId() === session.account()?.id) welcomeToast.flash(t("account.adminWelcome"));
     const native = window.mesaNative;
     if (!native) return;
     const unsubscribe = native.onUpdateAvailable(setAvailableUpdate);
@@ -70,6 +75,7 @@ function Frame() {
         </Show>
       </div>
       <Hosts />
+      <Toast show={!!welcomeToast.message()} message={welcomeToast.message()} />
     </div>
   );
 }

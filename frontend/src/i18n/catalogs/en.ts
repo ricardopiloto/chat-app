@@ -51,6 +51,13 @@ export const en: MessageTree = {
     recoveryWarning: "This creates a new identity. History becomes readable again when someone who still holds the server key is online and reseals it. It stays unreadable on servers where this account was the only one with the key. Custody of this account's voice-channel key cannot be recovered by the new identity. The password you type protects the new vault.",
     generateKeys: "Generate new keys",
   },
+  setup: {
+    title: "Set up the instance · Create the administrator account",
+    noExtraPermissions: "For now, this account has no extra permissions.",
+    role: "This is the first account and will be identified as the Instance administrator. It may manage the instance in the future without belonging to a server. If you host Mesa on this machine, you are also the operator with host access.",
+    exposure: "Create this account before exposing the instance to the internet. Whoever registers first receives this marker.",
+    recoveryRecommended: "Recommended: create and save the recovery key now.",
+  },
   recover: {
     headline: "Get back in without the password.",
     pitch: "The instance operator issues a one-time code. There is no email recovery.",
@@ -119,6 +126,9 @@ export const en: MessageTree = {
     subtitle: "Manage how other people see you on Mesa.",
     editName: "Edit display name",
     identityChip: "Identity active",
+    instanceAdmin: "Instance administrator",
+    instanceAdminNote: "This account may manage the instance in the future; for now it has no extra permissions.",
+    adminWelcome: "Welcome, Instance administrator. Your account is ready. It may manage the instance in the future; for now it has no extra permissions.",
     photoLabel: "Profile",
     photoTitle: "Profile photo",
     photoHint: "JPEG, PNG or WebP, up to 1 MiB.",

@@ -31,12 +31,12 @@ Para participantes **fora da LAN do operador**, abra as mesmas portas no router/
 
 ## 2. Backend
 
-Por omissão o processo escuta só em **127.0.0.1:8080**. Na LAN tem de exportar `BIND=0.0.0.0:8080` **explicitamente**. Sem `MESA_PRODUCTION`, as chaves LiveKit de exemplo (`instkey` / o secret em `infra/livekit.yaml`) ainda arrancam — só para este caminho de 30 minutos.
+Por omissão o processo escuta só em **127.0.0.1:8080**. Mantenha `BIND=127.0.0.1:8080` até criar a conta de Administrador da instância; só então exponha o serviço. Na LAN tem de exportar `BIND=0.0.0.0:8080` **explicitamente**. Sem `MESA_PRODUCTION`, as chaves LiveKit de exemplo (`instkey` / o secret em `infra/livekit.yaml`) ainda arrancam — só para este caminho de 30 minutos.
 
 ```bash
 cd backend
 export DATABASE_URL=sqlite://chat.db?mode=rwc
-export BIND=0.0.0.0:8080            # obrigatório para a LAN; omissão = 127.0.0.1:8080
+export BIND=127.0.0.1:8080          # mantenha local até criar a primeira conta; depois use 0.0.0.0:8080 para LAN
 export LIVEKIT_API_KEY=instkey      # LAN; coincidir com infra/livekit.yaml
 export LIVEKIT_API_SECRET=instsecretinstsecretinstsecret12
 export LIVEKIT_WS_URL=ws://127.0.0.1:7880
@@ -79,9 +79,11 @@ Ao **sair da sala** de voz/vídeo, o cliente faz disconnect ordenado (desliga tr
 
 ## 4. Primeiro uso
 
-1. Instância vazia: cadastre a primeira conta (identificador + senha ≥ 8). Essa conta é o operador inicial.
+1. Instância vazia: abra o cadastro localmente e crie a primeira conta (identificador + senha ≥ 8). A tela identifica essa conta como **Administrador da instância**, não pede convite e recomenda criar e guardar a chave de recuperação. Por ora, o marcador não concede permissões extras nem vincula a conta a um servidor.
 2. Crie um Servidor e um canal. Gere um convite (expira em 7 dias por omissão; `expires_in_seconds: null` = permanente). Marque histórico só se quiser que o recém-chegado leia o passado.
 3. A segunda pessoa abre o link do convite, cria conta se ainda não tiver, e entra.
+
+O **Administrador da instância** é a primeira conta; o **operador** tem acesso ao host e usa a CLI para manutenção. No self-host local, podem ser a mesma pessoa. `GET /api/instance/status` informa publicamente se ainda não há contas (`{"initial_setup":true}`), mas não é um sinal de segurança nem impede que outra pessoa chegue primeiro. Configure a conta antes de expor a instância. Atrás do Nginx, o limite por IP deste endpoint usa o IP do proxy e torna-se global.
 
 Não copie `spike/` — é descartável. Este binário é o produto.
 

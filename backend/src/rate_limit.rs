@@ -10,6 +10,7 @@ const AUTH_LIMIT: usize = 10;
 const AUTH_WINDOW: Duration = Duration::from_secs(60);
 // Handle availability is queried while typing, so it gets a roomier bucket of its own.
 const HANDLE_CHECK_LIMIT: usize = 60;
+const INSTANCE_STATUS_LIMIT: usize = 60;
 const RECOVERY_LIMIT: usize = 5;
 const RECOVERY_WINDOW: Duration = Duration::from_secs(60 * 60);
 const MAX_BUCKETS: usize = 4096;
@@ -113,6 +114,17 @@ impl RateLimiter {
         self.check(
             &format!("handle-check:{who}"),
             HANDLE_CHECK_LIMIT,
+            AUTH_WINDOW,
+        )
+    }
+
+    pub fn allow_instance_status(&self, ip: Option<IpAddr>) -> bool {
+        let who = ip
+            .map(|a| a.to_string())
+            .unwrap_or_else(|| "unknown".into());
+        self.check(
+            &format!("instance-status:{who}"),
+            INSTANCE_STATUS_LIMIT,
             AUTH_WINDOW,
         )
     }

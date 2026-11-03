@@ -9,6 +9,10 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+### Added
+
+- A configuração inicial identifica a primeira conta como Administrador da instância, recomenda a chave de recuperação e mostra o papel na conta. `GET /api/instance/status` expõe apenas se a instância ainda está vazia, com limite por IP; o cadastro e `/health` mantêm seus contratos.
+
 ## [1.3.5] - 2026-10-16
 
 ### Changed

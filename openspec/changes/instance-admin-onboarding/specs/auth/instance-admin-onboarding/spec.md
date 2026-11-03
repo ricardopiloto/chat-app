@@ -27,17 +27,22 @@ O sistema SHALL expor, sem autenticação, o estado de configuração inicial da
 
 ### Requirement: Cadastro guiado da conta de administrador
 
-Quando a instância está em configuração inicial, o cliente SHALL apresentar o cadastro como a criação da conta de administrador da instância, explicando o papel antes do envio, SHALL NOT pedir nem aceitar código de convite nessa variante SHALL esconder a escolha entre entrar e cadastrar (não há contas para entrar), SHALL mostrar antes de tudo que por agora a conta não tem permissões extras e SHALL oferecer a criação da chave de recuperação em destaque, seleccionada por padrão. O cliente SHALL consultar o estado apenas na tela de cadastro e só depois de haver uma instância configurada. Se o estado não puder ser obtido, o cliente SHALL apresentar o cadastro normal.
+Quando a instância está em configuração inicial, o cliente SHALL apresentar o cadastro como a criação da conta de administrador da instância, explicando o papel antes do envio, SHALL NOT pedir nem aceitar código de convite nessa variante SHALL esconder a escolha entre entrar e cadastrar (não há contas para entrar), SHALL mostrar antes de tudo que por agora a conta não tem permissões extras e SHALL oferecer a criação da chave de recuperação em destaque, seleccionada por padrão. O cliente SHALL consultar o estado uma única vez ao abrir a tela de autenticação, e só depois de haver uma instância configurada, e SHALL abrir directamente no cadastro guiado quando a instância estiver em configuração inicial, sem passar antes pela tela de entrar. Se o estado não puder ser obtido, o cliente SHALL apresentar o cadastro normal.
 
 #### Scenario: Primeiro uso
 
-- **WHEN** a pessoa abre o cadastro numa instância vazia
-- **THEN** vê que está a criar a conta de administrador da instância, sem campo de convite, com a chave de recuperação em destaque
+- **WHEN** a pessoa abre a aplicação numa instância vazia
+- **THEN** a primeira tela já é o cadastro guiado e vê que está a criar a conta de administrador da instância, sem campo de convite, com a chave de recuperação em destaque
 
 #### Scenario: Convite no URL numa instância vazia
 
 - **WHEN** o cadastro é aberto com um código de convite numa instância vazia
 - **THEN** a variante de configuração inicial é mostrada e o convite não é usado
+
+#### Scenario: Consulta única
+
+- **WHEN** a pessoa alterna entre os modos da tela de autenticação numa instância já pronta
+- **THEN** o estado não é consultado de novo
 
 #### Scenario: Sem opção de entrar
 

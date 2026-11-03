@@ -41,7 +41,7 @@ export function RecoverySetup(props: {
       <Show when={props.choice === "now" && props.code}>
         <p class="text-body-sm text-on-surface-variant">{t("recover.setupOnce")}</p>
         <code class="break-all rounded-md bg-surface-container-lowest px-3 py-2 font-code text-body-sm">{props.code}</code>
-        <div class="flex gap-2">
+        <div class="flex flex-wrap gap-2">
           <Button type="button" onClick={() => void copy()}>
             <Icon name="content_copy" />
             {t("recover.copy")}

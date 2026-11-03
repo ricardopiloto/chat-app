@@ -1,5 +1,7 @@
 use crate::api::auth::session::OptionalAuth;
 use crate::domain::avatar::MAX_AVATAR_BYTES;
+use crate::error::ApiError;
+use crate::rate_limit::ClientIp;
 use crate::ws;
 use crate::{db, AppState};
 use axum::extract::ws::{Message, WebSocket};
@@ -40,6 +42,7 @@ pub fn router(state: AppState) -> axum::Router {
             "/api",
             Router::new()
                 .merge(auth::router())
+                .route("/instance/status", get(instance_status))
                 .route(
                     "/accounts/{account_id}/avatar",
                     get(avatars::get_account_avatar),
@@ -238,6 +241,19 @@ pub fn router(state: AppState) -> axum::Router {
 
 async fn health() -> axum::Json<serde_json::Value> {
     axum::Json(serde_json::json!({ "ok": true }))
+}
+
+async fn instance_status(
+    State(state): State<AppState>,
+    ClientIp(ip): ClientIp,
+) -> Result<axum::Json<serde_json::Value>, ApiError> {
+    if !state.config.rate_limit_disabled && !state.rate_limiter.allow_instance_status(ip) {
+        return Err(ApiError::too_many_requests());
+    }
+    let initial_setup = db::account::count(&state.pool).await? == 0;
+    Ok(axum::Json(
+        serde_json::json!({ "initial_setup": initial_setup }),
+    ))
 }
 
 async fn ws_handler(

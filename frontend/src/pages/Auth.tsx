@@ -1,16 +1,16 @@
-import { Show, createSignal } from "solid-js";
+import { Show, createSignal, onCleanup, onMount } from "solid-js";
 import { A, useLocation } from "@solidjs/router";
-import { ApiError } from "../api";
-import { clearInstance, isNative } from "../api/instance";
+import { ApiError, instance } from "../api";
+import { clearInstance, currentInstance, isNative } from "../api/instance";
 import { AuthField, AuthFrame, bindValue } from "../auth/AuthFrame";
+import { InstanceSetupIntro } from "../auth/InstanceSetupIntro";
 import { RecoverySetup, type RecoveryChoice } from "../auth/RecoverySetup";
+import { inviteForVariant, modeForSetupVariant, resolveSetupVariant, type AuthMode, type SetupVariant } from "../auth/setupVariant";
 import { Button, Icon, Segmented } from "../components/ui";
 import { generateIdentity, type Identity } from "../crypto/identity";
 import { createRecovery, type RecoveryMaterial } from "../crypto/recovery";
 import { t } from "../i18n";
 import { useSession } from "../session/session";
-
-type Mode = "login" | "register";
 
 const MIN_PASSWORD = 8;
 
@@ -20,7 +20,7 @@ function inviteFromLocation(path: string, search: string): string {
   return fromPath ? decodeURIComponent(fromPath) : (new URLSearchParams(search).get("invite") ?? "");
 }
 
-function failureText(error: unknown, mode: Mode): string {
+function failureText(error: unknown, mode: AuthMode): string {
   if (!(error instanceof ApiError)) return t("auth.genericError");
   if (error.status === 401) return t("auth.invalidCredentials");
   if (error.status === 403 && mode === "register") return t("auth.inviteError");
@@ -34,7 +34,7 @@ export function Auth() {
   const where = useLocation();
   const presetInvite = inviteFromLocation(where.pathname, where.search);
 
-  const [mode, setMode] = createSignal<Mode>(presetInvite && !where.search.includes("signin") ? "register" : "login");
+  const [mode, setMode] = createSignal<AuthMode>(presetInvite && !where.search.includes("signin") ? "register" : "login");
   const [handle, setHandle] = createSignal("");
   const [password, setPassword] = createSignal("");
   const [invite, setInvite] = createSignal(presetInvite);
@@ -44,6 +44,25 @@ export function Auth() {
   const [recoveryChoice, setRecoveryChoice] = createSignal<RecoveryChoice>("later");
   const [recoveryDraft, setRecoveryDraft] = createSignal<{ handle: string; identity: Identity; material: RecoveryMaterial }>();
   const [recoverySaved, setRecoverySaved] = createSignal(false);
+  const [variant, setVariant] = createSignal<SetupVariant>("normal");
+
+  onMount(() => {
+    if (isNative() && !currentInstance().baseUrl) return;
+    let cancelled = false;
+    void instance.status().then(
+      (status) => {
+        if (cancelled) return;
+        const next = resolveSetupVariant(status);
+        setVariant(next);
+        if (next === "setup") {
+          setMode((current) => modeForSetupVariant(next, current));
+          setRecoveryChoice("now");
+        }
+      },
+      (error) => { if (!cancelled) setVariant(resolveSetupVariant(undefined, error)); },
+    );
+    onCleanup(() => { cancelled = true; });
+  });
 
   async function submit(event: SubmitEvent) {
     event.preventDefault();
@@ -70,12 +89,16 @@ export function Auth() {
             setProblem(t("recover.savedRequired"));
             return;
           }
-          await session.register({ ...credentials, inviteCode: invite().trim(), identity: current.identity, recovery: current.material });
+          await session.register({ ...credentials, inviteCode: inviteForVariant(variant(), invite()), identity: current.identity, recovery: current.material });
         } else {
-          await session.register({ ...credentials, inviteCode: invite().trim() });
+          await session.register({ ...credentials, inviteCode: inviteForVariant(variant(), invite()) });
         }
       } else await session.login(credentials);
     } catch (error) {
+      if (error instanceof ApiError && error.status === 403 && mode() === "register") {
+        setVariant(resolveSetupVariant(undefined, undefined, error.status));
+        setRecoveryChoice("later");
+      }
       setProblem(failureText(error, mode()));
     } finally {
       setBusy(false);
@@ -95,7 +118,8 @@ export function Auth() {
       ]}
     >
       <form class="flex flex-col gap-5" onSubmit={submit} noValidate>
-        <Segmented
+        <Show when={variant() === "setup"}><InstanceSetupIntro /></Show>
+        <Show when={variant() !== "setup"}><Segmented
           fill
           label={t("auth.mode")}
           value={mode()}
@@ -107,7 +131,7 @@ export function Auth() {
             setMode(next);
             setProblem("");
           }}
-        />
+        /></Show>
 
         <AuthField label={t("auth.handle")} aside={<span class="font-code text-label-code-sm text-on-surface-variant">{t("auth.handleExample")}</span>} lead="@" hint={t("auth.handleHint")}>
           <input name="handle" autocomplete="username" autocapitalize="none" spellcheck={false} required placeholder={t("auth.handlePlaceholder")} {...bindValue(handle, setHandle)} />
@@ -134,9 +158,10 @@ export function Auth() {
         </AuthField>
 
         <Show when={registering()}>
-          <AuthField label={t("auth.inviteCode")} lead={<Icon name="confirmation_number" class="text-[18px]" />} hint={t("auth.inviteHint")}>
+          <Show when={variant() !== "setup"}><AuthField label={t("auth.inviteCode")} lead={<Icon name="confirmation_number" class="text-[18px]" />} hint={t("auth.inviteHint")}>
             <input name="invite" autocomplete="off" spellcheck={false} placeholder={t("auth.invitePlaceholder")} {...bindValue(invite, setInvite)} />
-          </AuthField>
+          </AuthField></Show>
+          <Show when={variant() === "setup"}><p class="text-body-sm font-semibold text-on-surface">{t("setup.recoveryRecommended")}</p></Show>
           <RecoverySetup
             choice={recoveryChoice()}
             onChoice={(next) => {
@@ -163,7 +188,7 @@ export function Auth() {
           {busy() ? t("auth.waiting") : registering() ? t("auth.createButton") : t("auth.loginButton")}
         </Button>
 
-        <div class="flex items-center gap-4 font-code text-label-code-sm text-on-surface-variant" aria-hidden="true">
+        <Show when={variant() !== "setup"}><div class="flex items-center gap-4 font-code text-label-code-sm text-on-surface-variant" aria-hidden="true">
           <span class="h-px flex-1 bg-outline-variant" />
           {t("auth.or")}
           <span class="h-px flex-1 bg-outline-variant" />
@@ -177,7 +202,7 @@ export function Auth() {
           }}
         >
           {registering() ? t("auth.haveAccount") : t("auth.newAccount")}
-        </Button>
+        </Button></Show>
 
         <Show when={isNative()}>
           <button type="button" class="self-center inline-flex min-h-6 items-center text-body-sm text-primary underline" onClick={() => void clearInstance()}>

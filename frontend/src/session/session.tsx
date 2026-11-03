@@ -37,6 +37,7 @@ function createSession() {
   const [identity, setIdentity] = createSignal<Identity>();
   const [checked, setChecked] = createSignal(false);
   const [lockReason, setLockReason] = createSignal<LockReason>("locked");
+  const [welcomeAccountId, setWelcomeAccountId] = createSignal<string>();
 
   const phase = (): SessionPhase => (!checked() ? "loading" : !account() ? "anonymous" : identity() ? "ready" : "locked");
 
@@ -113,6 +114,17 @@ function createSession() {
     });
     await keepNativeSession(me);
     await persistIdentity(me.id, fresh, password);
+    if (me.is_initial_operator) {
+      const key = `mesa.instance-admin-welcome:${me.id}`;
+      try {
+        if (localStorage.getItem(key) !== "seen") {
+          localStorage.setItem(key, "seen");
+          setWelcomeAccountId(me.id);
+        }
+      } catch {
+        setWelcomeAccountId(me.id);
+      }
+    }
     adopt(me, fresh);
   }
 
@@ -260,6 +272,7 @@ function createSession() {
     setAccount(undefined);
     setIdentity(undefined);
     setLockReason("locked");
+    setWelcomeAccountId(undefined);
     queryClient.clear();
   }
 
@@ -268,6 +281,8 @@ function createSession() {
     account,
     identity,
     lockReason,
+    welcomeAccountId,
+    dismissWelcome: () => setWelcomeAccountId(undefined),
     restore,
     login,
     register,
