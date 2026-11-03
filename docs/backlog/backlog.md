@@ -161,6 +161,13 @@ Decidido na spec do item 18 (2026-10-04): o operador emite os códigos de reset 
 
 Pré-requisito de produto a decidir antes: **quem é o operador na UI** (só a conta `is_initial_operator`? transferível? vários?) e como isso se separa do dono de Servidor, que é um conceito por servidor e não por instância. Sem código nem decisão hoje.
 
+**Atualização (2026-11-03) — escopo acordado para esta funcionalidade futura:**
+
+- A conta de administrador da instância (`is_initial_operator`, ver change `instance-admin-onboarding`) deve poder **administrar a aplicação e as configurações sem aceder ao backend nem a nenhum servidor**, pensando no self-host local em que a pessoa só tem o cliente.
+- **Reset de senha por e-mail para contas sem chave de recuperação** entra aqui. Hoje essas contas dependem do operador (código por CLI) porque substituir a identidade dispara o handoff automático de chaves de servidor (`frontend/src/crypto/keyHandoff.ts`), o que entregaria as chaves a quem controla a caixa de e-mail. Para permitir o reset por e-mail nesse caso é preciso **aprovação humana do handoff** (pelo administrador ou por um membro) ou um **período de espera** com aviso e cancelamento. Ver `openspec/changes/email-password-reset/design.md` (Decisão 1) e `docs/parecer-recuperacao-senha.md`.
+- Inclui, em princípio: emitir e revogar códigos de reset pela UI (hoje só `reset-code` na CLI), aprovar handoffs de contas recuperadas, definir configurações da instância (por exemplo modo de registo) e, depois, transferir o papel ou ter vários administradores.
+- Contas sem e-mail (instâncias antigas) não são um caso a tratar: a instância será reiniciada com as contas zeradas, então não há change prevista para adicionar e-mail a contas existentes.
+
 ---
 
 ## Itens a decidir (não são bem "backlog", mas ficam registados para não se perderem)
