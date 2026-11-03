@@ -11,6 +11,7 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ### Added
 
+- Cadastro por e-mail confirmado antes de criar a conta, com link de uso único por 5 horas, modo `REGISTO_MODO=aberto|fechado`, envio por Resend ou log de desenvolvimento, limites por IP/e-mail e Turnstile opcional. Contas existentes e clientes sem `email_token` continuam a usar o fluxo de convites.
 - A configuração inicial identifica a primeira conta como Administrador da instância, recomenda a chave de recuperação e mostra o papel na conta. `GET /api/instance/status` expõe apenas se a instância ainda está vazia, com limite por IP; o cadastro e `/health` mantêm seus contratos.
 
 ## [1.3.5] - 2026-10-16

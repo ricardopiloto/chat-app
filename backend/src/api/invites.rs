@@ -305,6 +305,7 @@ pub async fn accept_invite(
                 invite_code: Some(code.clone()),
                 recovery_vault: body.recovery_vault,
                 recovery_verifier_pubkey: body.recovery_verifier_pubkey,
+                email_token: None,
             },
         )
         .await?;

@@ -1,10 +1,12 @@
 import { Show, createSignal, onCleanup, onMount } from "solid-js";
 import { A, useLocation } from "@solidjs/router";
-import { ApiError, instance } from "../api";
+import { ApiError, auth, instance } from "../api";
 import { clearInstance, currentInstance, isNative } from "../api/instance";
 import { AuthField, AuthFrame, bindValue } from "../auth/AuthFrame";
 import { InstanceSetupIntro } from "../auth/InstanceSetupIntro";
 import { RecoverySetup, type RecoveryChoice } from "../auth/RecoverySetup";
+import { EmailRequest } from "../auth/EmailRequest";
+import { emailErrorKey, takeEmailTokenFragment } from "../auth/emailToken";
 import { inviteForVariant, modeForSetupVariant, resolveSetupVariant, type AuthMode, type SetupVariant } from "../auth/setupVariant";
 import { Button, Icon, Segmented } from "../components/ui";
 import { generateIdentity, type Identity } from "../crypto/identity";
@@ -22,6 +24,7 @@ function inviteFromLocation(path: string, search: string): string {
 
 function failureText(error: unknown, mode: AuthMode): string {
   if (!(error instanceof ApiError)) return t("auth.genericError");
+  if (error.code?.startsWith("email_") || error.code === "registration_closed") return t(emailErrorKey(error.code));
   if (error.status === 401) return t("auth.invalidCredentials");
   if (error.status === 403 && mode === "register") return t("auth.inviteError");
   if (error.status === 409) return t("auth.handleTaken");
@@ -45,10 +48,29 @@ export function Auth() {
   const [recoveryDraft, setRecoveryDraft] = createSignal<{ handle: string; identity: Identity; material: RecoveryMaterial }>();
   const [recoverySaved, setRecoverySaved] = createSignal(false);
   const [variant, setVariant] = createSignal<SetupVariant>("normal");
+  const [registrationConfig, setRegistrationConfig] = createSignal<{ mode: "fechado" | "aberto"; turnstile_site_key: string | null }>();
+  const [emailToken, setEmailToken] = createSignal<string>();
+  const [verifiedEmail, setVerifiedEmail] = createSignal<string>();
+  const [emailProblem, setEmailProblem] = createSignal("");
+  const [verifyingEmail, setVerifyingEmail] = createSignal(false);
+  const [useInviteForm, setUseInviteForm] = createSignal(!!presetInvite);
 
   onMount(() => {
     if (isNative() && !currentInstance().baseUrl) return;
     let cancelled = false;
+    void auth.registrationConfig().then((config) => { if (!cancelled) setRegistrationConfig(config); }, () => {});
+    const fragment = takeEmailTokenFragment(window.location, window.history);
+    if (fragment.present) {
+      const token = fragment.token;
+      setMode("register");
+      if (token) {
+        setVerifyingEmail(true);
+        void auth.verifyEmail(token).then(
+          ({ email }) => { if (!cancelled) { setEmailToken(token); setVerifiedEmail(email); } },
+          () => { if (!cancelled) setEmailProblem(t("emailRegistration.emailTokenInvalid")); },
+        ).finally(() => { if (!cancelled) setVerifyingEmail(false); });
+      } else setEmailProblem(t("emailRegistration.emailTokenInvalid"));
+    }
     void instance.status().then(
       (status) => {
         if (cancelled) return;
@@ -89,12 +111,18 @@ export function Auth() {
             setProblem(t("recover.savedRequired"));
             return;
           }
-          await session.register({ ...credentials, inviteCode: inviteForVariant(variant(), invite()), identity: current.identity, recovery: current.material });
+          await session.register({ ...credentials, inviteCode: inviteForVariant(variant(), invite()), identity: current.identity, recovery: current.material, emailToken: emailToken() });
         } else {
-          await session.register({ ...credentials, inviteCode: inviteForVariant(variant(), invite()) });
+          await session.register({ ...credentials, inviteCode: inviteForVariant(variant(), invite()), emailToken: emailToken() });
         }
       } else await session.login(credentials);
     } catch (error) {
+      if (error instanceof ApiError && error.code === "email_token_invalid") {
+        setEmailToken(undefined);
+        setVerifiedEmail(undefined);
+        setUseInviteForm(false);
+        setEmailProblem(t("emailRegistration.emailTokenInvalid"));
+      }
       if (error instanceof ApiError && error.status === 403 && mode() === "register") {
         setVariant(resolveSetupVariant(undefined, undefined, error.status));
         setRecoveryChoice("later");
@@ -106,6 +134,7 @@ export function Auth() {
   }
 
   const registering = () => mode() === "register";
+  const showEmailRequest = () => registering() && variant() !== "setup" && registrationConfig()?.mode === "aberto" && !verifiedEmail() && !useInviteForm() && !presetInvite;
 
   return (
     <AuthFrame
@@ -117,6 +146,8 @@ export function Auth() {
         { icon: "dns", title: t("auth.featureSelfHosted"), text: t("auth.featureSelfHostedText") },
       ]}
     >
+      <Show when={!verifyingEmail()} fallback={<p class="text-body-md">{t("emailRegistration.verifying")}</p>}>
+      <Show when={!showEmailRequest()} fallback={<EmailRequest siteKey={registrationConfig()?.turnstile_site_key ?? null} error={emailProblem()} onLogin={() => setMode("login")} onUseInvite={() => setUseInviteForm(true)} />}>
       <form class="flex flex-col gap-5" onSubmit={submit} noValidate>
         <Show when={variant() === "setup"}><InstanceSetupIntro /></Show>
         <Show when={variant() !== "setup"}><Segmented
@@ -158,6 +189,7 @@ export function Auth() {
         </AuthField>
 
         <Show when={registering()}>
+          <Show when={verifiedEmail()}><p class="notice min-w-0 break-words" role="status">{t("emailRegistration.verified")}: <strong>{verifiedEmail()}</strong></p></Show>
           <Show when={variant() !== "setup"}><AuthField label={t("auth.inviteCode")} lead={<Icon name="confirmation_number" class="text-[18px]" />} hint={t("auth.inviteHint")}>
             <input name="invite" autocomplete="off" spellcheck={false} placeholder={t("auth.invitePlaceholder")} {...bindValue(invite, setInvite)} />
           </AuthField></Show>
@@ -218,6 +250,8 @@ export function Auth() {
           <span>{t("auth.cipher")}</span>
         </p>
       </form>
+      </Show>
+      </Show>
     </AuthFrame>
   );
 }

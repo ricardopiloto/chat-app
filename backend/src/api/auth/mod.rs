@@ -16,6 +16,7 @@ use serde::Deserialize;
 use sqlx::SqliteConnection;
 use uuid::Uuid;
 
+pub mod email;
 pub mod login;
 pub mod recovery;
 pub mod recovery_key;
@@ -25,6 +26,9 @@ pub mod session;
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/auth/register", post(register::register))
+        .route("/auth/register/config", get(email::register_config))
+        .route("/auth/email/request", post(email::request))
+        .route("/auth/email/verify", post(email::verify))
         .route("/auth/login", post(login::login))
         .route("/auth/logout", post(logout))
         .route("/auth/me", get(me))

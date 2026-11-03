@@ -21,6 +21,8 @@ export interface Account {
   has_recovery_key?: boolean;
   has_avatar: boolean;
   display_name?: string;
+  email?: string | null;
+  email_verified_at?: Timestamp | null;
   /** Present only on responses that mint a session. The web client ignores it. */
   session_token?: string;
 }
@@ -31,6 +33,7 @@ export interface RegisterBody {
   identity_pubkey: string;
   identity_vault?: IdentityVaultPayload;
   invite_code?: string;
+  email_token?: string;
   recovery_vault?: { v: 1; publicKey: number[]; iv: number[]; wrapped: number[] };
   recovery_verifier_pubkey?: string;
 }

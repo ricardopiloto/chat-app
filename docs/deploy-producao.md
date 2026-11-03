@@ -19,7 +19,7 @@ Internet ─────────────────────▶  Ngi
                   │                 │                        │
              / (estático)      /api /health /ws          /rtc (WS)
                   │                 │                        │
-     frontend-v2/dist    127.0.0.1:8080 (backend)  127.0.0.1:7880 (LiveKit)
+       frontend/dist  127.0.0.1:8080 (backend)  127.0.0.1:7880 (LiveKit)
                                                               │
                                                      7881/tcp, 3478/udp,
                                                      50000-50100/udp
@@ -42,6 +42,9 @@ Pontos importantes que moldam esta arquitectura (ver código, não são opção 
   **partilhado por todos os visitantes**, não por IP de origem. Aceitável para um grupo pequeno;
   se isto for um problema, adicione rate limiting equivalente no próprio Nginx
   (`limit_req_zone` em `/api/auth/`).
+- Os novos limites de `POST /api/auth/email/request` usam `X-Real-IP` somente quando
+  `TRUSTED_PROXY=true` e o peer TCP é loopback. Login e cadastro continuam a usar o IP do peer.
+  Mantenha `BIND=127.0.0.1:8080`; a porta 8080 não pode estar exposta à internet.
 
 ## 0. Pré-requisitos
 
@@ -163,14 +166,13 @@ sudo mkswap /swapfile && sudo swapon /swapfile
 ## 6. Compilar o frontend
 
 ```bash
-cd /opt/mesa/frontend-v2
+cd /opt/mesa/frontend
 npm install
 npm run build
 ```
 
-Isto gera `frontend-v2/dist/` — ficheiros estáticos que o Nginx vai servir directamente (o backend
-não serve HTML/JS, ver secção "Arquitectura"). O frontend de produção é o **v2**; a v1 (`frontend/`)
-só serve para o rollback descrito na secção 14.
+Isto gera `frontend/dist/` — ficheiros estáticos que o Nginx vai servir directamente (o backend
+não serve HTML/JS, ver secção "Arquitectura"). `frontend/` contém o cliente atual.
 
 ## 7. Variáveis de ambiente de produção
 
@@ -193,6 +195,17 @@ SESSION_TTL_SECS=604800
 DEFAULT_INVITE_TTL_SECS=300
 ATTACHMENTS_DIR=/opt/mesa/data/attachments
 AVATARS_DIR=/opt/mesa/data/avatars
+REGISTO_MODO=fechado
+# Para abrir após testar Resend, termos/privacidade e Nginx:
+# REGISTO_MODO=aberto
+# EMAIL_API_KEY=<chave Resend>
+# EMAIL_FROM=Mesa <noreply@seu-dominio.example>
+# PUBLIC_BASE_URL=https://chat.1nodado.com.br
+# TRUSTED_PROXY=true
+# TURNSTILE_SECRET=<segredo opcional>
+# TURNSTILE_SITE_KEY=<chave pública opcional>
+# REGISTO_DOMINIOS_BLOQUEADOS=/etc/mesa/dominios-bloqueados.txt
+# EMAIL_LOG_FILE=/opt/mesa/data/email-dev.log   # só desenvolvimento/teste sem Resend
 EOF
 sudo chown root:mesa /etc/mesa/mesa.env
 sudo chmod 640 /etc/mesa/mesa.env
@@ -203,6 +216,14 @@ coincidir exactamente com `infra/livekit.yaml`. Confirme que `LIVEKIT_WS_URL` us
 `ws://`): o backend recusa arrancar em produção com `COOKIE_SECURE` falso, mas não valida o
 esquema do LiveKit — um `ws://` aqui deixaria o browser a tentar WebSocket inseguro a partir de
 uma página HTTPS, que a maioria dos browsers bloqueia (*mixed content*).
+
+`REGISTO_MODO` aceita `fechado` (padrão) ou `aberto`. No perfil de produção, `aberto` só arranca
+com `EMAIL_API_KEY`, `EMAIL_FROM`, `PUBLIC_BASE_URL` HTTPS público e `TRUSTED_PROXY=true`.
+`TURNSTILE_SECRET` e `TURNSTILE_SITE_KEY` ativam o captcha; configure o par em conjunto.
+`REGISTO_DOMINIOS_BLOQUEADOS` aponta para uma lista adicional (um domínio por linha), somada
+à lista embutida. `EMAIL_LOG_FILE` guarda apenas diagnósticos sem endereço ou token; o e-mail
+de teste completo fica no ficheiro `.eml` vizinho. Não o use em produção. Os termos e a política de privacidade precisam de texto final antes de
+abrir o cadastro. `REGISTO_MODO=fechado` é o rollback imediato.
 
 Prepare os diretórios de dados e ajuste dono:
 
@@ -256,7 +277,14 @@ sudo certbot --nginx -d chat.1nodado.com.br
 
 O certbot cria um bloco de servidor básico. Substitua-o (ou edite) por
 `/etc/nginx/conf.d/mesa.conf` com o proxy completo — o certbot já terá inserido as directivas
-`ssl_certificate`/`ssl_certificate_key`, mantenha-as:
+`ssl_certificate`/`ssl_certificate_key`, mantenha-as. No contexto `http` do Nginx, fora de
+`server`, configure o balde adicional:
+
+```nginx
+limit_req_zone $binary_remote_addr zone=mesa_email:10m rate=5r/m;
+```
+
+No servidor HTTPS:
 
 ```nginx
 server {
@@ -270,13 +298,19 @@ server {
     client_max_body_size 6m;   # cobre o limite de anexos (5 MiB) + avatares
 
     # Frontend estático
-    root /opt/mesa/frontend-v2/dist;
+    root /opt/mesa/frontend/dist;
     index index.html;
     location / {
         try_files $uri /index.html;
     }
 
     # API REST
+    location /api/auth/email/ {
+        limit_req zone=mesa_email burst=5 nodelay;
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
     location /api/ {
         proxy_pass http://127.0.0.1:8080;
         proxy_set_header Host $host;
@@ -366,7 +400,7 @@ TURN (3478/udp) e o range de mídia estão mesmo alcançáveis a partir da inter
 cd /opt/mesa
 git pull
 cd backend && cargo build --release && sudo systemctl restart mesa-backend
-cd ../frontend-v2 && npm install && npm run build   # Nginx serve o dist/ novo de imediato
+cd ../frontend && npm install && npm run build   # Nginx serve o dist/ novo de imediato
 ```
 
 Se a actualização trouxer novas migrações SQL (`backend/migrations/`), correm automaticamente
@@ -402,70 +436,21 @@ instância pequena a paragem é de segundos.
 - **Rate limiting partilhado atrás do proxy** (ver secção "Arquitectura de produção") — não é um
   IDS; para abuso de login persistente, complemente com `fail2ban` a observar o log do Nginx ou
   `limit_req` no próprio Nginx.
+- **Cadastro aberto sem cotas:** qualquer conta com e-mail verificado pode criar servidores e
+  anexos. Ative `REGISTO_MODO=aberto` apenas após avaliar a capacidade de disco e o volume diário
+  permitido pelo Resend. Os baldes do backend são em memória e por processo.
+- **Não recebi o e-mail:** a resposta 202 é sempre genérica. Verifique spam e o DNS do domínio
+  remetente (SPF/DKIM/DMARC). Consulte os logs do backend por `purpose=verify|notice`, status HTTP
+  do Resend, id de envio e prefixo do hash do e-mail canônico. Limite por e-mail e falha de envio
+  não aparecem na resposta ao cliente; peça nova tentativa depois da janela de limite. Não coloque
+  endereço ou token em logs de suporte.
 - **CSP** já vem restritiva por omissão (`backend/src/security_headers.rs`); se adicionar
   integrações externas (ex.: outro CDN de fontes) terá de rever essa política em conjunto com
   este ficheiro.
 
-## 14. Corte para o frontend v2 e rollback
+## 15. Histórico do corte para o frontend v2
 
-Para uma instância instalada com a v1 (Nginx com `root /opt/mesa/frontend/dist;`), o corte troca só o
-directório que o Nginx serve. Instalações novas seguem as secções 6 a 9 e já nascem na v2. O backend, a origem (`https://chat.1nodado.com.br`),
-as portas e o cookie de sessão (`SameSite=Strict`) não mudam, por isso quem já tem sessão continua
-autenticado. Não há período de convivência: a v1 e a v2 não servem pessoas diferentes ao mesmo tempo.
-
-### 14.1 Antes do corte
-
-Só se corta com os três portões fechados (registo em [`docs/v2/closing-report.md`](v2/closing-report.md)):
-
-1. **Paridade funcional:** todos os itens de `docs/v2/parity-checklist.md` verificados.
-2. **Fidelidade visual:** todas as telas em escopo classificadas **Fiel** em `docs/v2/AUDIT-fidelity.md` §4.
-3. **Independência da v1:** `npm run check:v1-overlap` com 0 reprovados.
-
-Confirme também no servidor: `cargo test` do backend sem falhas novas, e as alterações de backend da
-reescrita (duas rotas aditivas, ver `docs/v2/contracts/backend-change-policy.md`) já implantadas.
-Como são aditivas, a v1 continua a funcionar com elas.
-
-### 14.2 Cortar
-
-```bash
-cd /opt/mesa && git pull
-cd backend && cargo build --release && sudo systemctl restart mesa-backend   # só se o backend mudou
-cd ../frontend-v2 && npm install && npm run build                            # gera frontend-v2/dist
-```
-
-Guarde uma cópia da configuração atual e troque o `root`:
-
-```bash
-sudo cp /etc/nginx/sites-available/mesa /etc/nginx/sites-available/mesa.v1
-sudo sed -i 's|root /opt/mesa/frontend/dist;|root /opt/mesa/frontend-v2/dist;|' /etc/nginx/sites-available/mesa
-sudo nginx -t && sudo systemctl reload nginx
-```
-
-(Ajuste o caminho do ficheiro ao que usa na sua instalação.) **Não apague** `/opt/mesa/frontend/dist`:
-é o destino do rollback.
-
-### 14.3 Verificar depois do corte
-
-- Uma sessão aberta **antes** do corte continua válida: recarregue a página; deve pedir só o
-  desbloqueio do cofre (palavra-passe), não um novo login.
-- `https://chat.1nodado.com.br/health` responde `{"ok":true}` e o app fala com a API pela mesma origem.
-- Entre numa chamada entre dois dispositivos e confirme voz, vídeo e a faixa de E2EE.
-- Os efeitos sonoros (se `frontend-v2/public/audio/` tiver os MP3) tocam; sem ficheiros ficam silenciosos.
-
-### 14.4 Rollback
-
-Sem alterações no backend nem nos dados:
-
-```bash
-sudo cp /etc/nginx/sites-available/mesa.v1 /etc/nginx/sites-available/mesa
-sudo nginx -t && sudo systemctl reload nginx
-```
-
-Confirme que a v1 abre, que o login funciona e que as mensagens e chamadas continuam a funcionar.
-Para voltar a cortar, repita 14.2.
-
-### 14.5 Depois do corte
-
-Mantenha `frontend/` no repositório e o seu `dist/` no servidor durante o período de rollback.
-Quando remover a v1 do repositório é decisão do responsável do produto, depois de a v2 estar validada
-em produção por tempo suficiente (pergunta em aberto no `design.md` da change `frontend-v2-polish-cutover`).
+O corte da v1 para a v2 já foi concluído. O cliente atual está em `frontend/` e o Nginx
+serve `/opt/mesa/frontend/dist`. Para reverter uma versão do cliente, use um artefato ou
+checkout anterior aprovado, faça o build em diretório separado e aponte o `root` do Nginx
+para esse diretório após `nginx -t`. Não altere a base de dados sem um plano de migração.

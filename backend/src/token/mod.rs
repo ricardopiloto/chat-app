@@ -59,6 +59,15 @@ mod tests {
             avatars_dir: PathBuf::from("/tmp"),
             production: false,
             rate_limit_disabled: true,
+            registo_modo: "fechado".into(),
+            email_api_key: Default::default(),
+            email_from: None,
+            public_base_url: None,
+            email_log_file: None,
+            trusted_proxy: false,
+            turnstile_secret: Default::default(),
+            turnstile_site_key: None,
+            registo_dominios_bloqueados: None,
         }
     }
 
@@ -68,7 +77,8 @@ mod tests {
         while padded.len() % 4 != 0 {
             padded.push('=');
         }
-        let decoded = base64::Engine::decode(&base64::engine::general_purpose::STANDARD, &padded).unwrap();
+        let decoded =
+            base64::Engine::decode(&base64::engine::general_purpose::STANDARD, &padded).unwrap();
         serde_json::from_slice(&decoded).unwrap()
     }
 

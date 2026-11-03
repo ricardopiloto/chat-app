@@ -27,6 +27,10 @@ pub struct AccountRecord {
     pub avatar_content_type: Option<String>,
     /// Optional public presentation name (099). NULL = unset.
     pub display_name: Option<String>,
+    pub email: Option<String>,
+    pub email_canonical: Option<String>,
+    pub email_verified_at: Option<DateTime<Utc>>,
+    pub terms_accepted_at: Option<DateTime<Utc>>,
 }
 
 impl AccountRecord {
@@ -50,6 +54,8 @@ impl AccountRecord {
             has_recovery_key: self.has_recovery_key,
             has_avatar: self.avatar_filename.is_some(),
             display_name: self.display_name.clone(),
+            email: self.email.clone(),
+            email_verified_at: self.email_verified_at,
             session_token: None,
         }
     }
@@ -69,6 +75,8 @@ pub struct AuthAccount {
     pub has_avatar: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub display_name: Option<String>,
+    pub email: Option<String>,
+    pub email_verified_at: Option<DateTime<Utc>>,
     /// Clear session token, present only on responses that mint a session
     /// (login, register, operator-code redeem, recovery-key redeem).
     /// Native clients send it as `Authorization: Bearer <session_token>`.

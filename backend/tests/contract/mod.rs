@@ -2,6 +2,7 @@
 mod common;
 
 mod attachments;
+mod auth_email_registration;
 mod auth_rate_limit;
 mod auth_recovery;
 mod auth_recovery_key;
@@ -43,5 +44,5 @@ mod single_role_presence;
 mod typing;
 mod unfurl;
 mod voice_join;
-mod voice_popout;
 mod voice_occupancy;
+mod voice_popout;

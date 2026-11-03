@@ -16,6 +16,10 @@ struct Row {
     avatar_filename: Option<String>,
     avatar_content_type: Option<String>,
     display_name: Option<String>,
+    email: Option<String>,
+    email_canonical: Option<String>,
+    email_verified_at: Option<String>,
+    terms_accepted_at: Option<String>,
 }
 
 fn map_row(row: Row) -> Result<AccountRecord, sqlx::Error> {
@@ -33,11 +37,29 @@ fn map_row(row: Row) -> Result<AccountRecord, sqlx::Error> {
         avatar_filename: row.avatar_filename,
         avatar_content_type: row.avatar_content_type,
         display_name: row.display_name,
+        email: row.email,
+        email_canonical: row.email_canonical,
+        email_verified_at: row
+            .email_verified_at
+            .map(|v| {
+                DateTime::parse_from_rfc3339(&v)
+                    .map(|d| d.with_timezone(&Utc))
+                    .map_err(|e| sqlx::Error::Decode(Box::new(e)))
+            })
+            .transpose()?,
+        terms_accepted_at: row
+            .terms_accepted_at
+            .map(|v| {
+                DateTime::parse_from_rfc3339(&v)
+                    .map(|d| d.with_timezone(&Utc))
+                    .map_err(|e| sqlx::Error::Decode(Box::new(e)))
+            })
+            .transpose()?,
     })
 }
 
 const COLS: &str =
-    "id, handle, password_hash, identity_pubkey, identity_vault, (recovery_vault IS NOT NULL AND recovery_verifier_pubkey IS NOT NULL) AS has_recovery_key, is_initial_operator, created_at, avatar_filename, avatar_content_type, display_name";
+    "id, handle, password_hash, identity_pubkey, identity_vault, (recovery_vault IS NOT NULL AND recovery_verifier_pubkey IS NOT NULL) AS has_recovery_key, is_initial_operator, created_at, avatar_filename, avatar_content_type, display_name, email, email_canonical, email_verified_at, terms_accepted_at";
 
 pub async fn count<'e, E>(executor: E) -> Result<i64, sqlx::Error>
 where
@@ -78,8 +100,8 @@ where
     E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
 {
     sqlx::query(
-        "INSERT INTO account (id, handle, password_hash, identity_pubkey, identity_vault, is_initial_operator, created_at, display_name)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO account (id, handle, password_hash, identity_pubkey, identity_vault, is_initial_operator, created_at, display_name, email, email_canonical, email_verified_at, terms_accepted_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(record.id.to_string())
     .bind(&record.handle)
@@ -89,6 +111,10 @@ where
     .bind(i64::from(record.is_initial_operator))
     .bind(record.created_at.to_rfc3339())
     .bind(&record.display_name)
+    .bind(&record.email)
+    .bind(&record.email_canonical)
+    .bind(record.email_verified_at.map(|v| v.to_rfc3339()))
+    .bind(record.terms_accepted_at.map(|v| v.to_rfc3339()))
     .execute(executor)
     .await?;
     Ok(())

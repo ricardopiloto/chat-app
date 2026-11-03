@@ -2,6 +2,24 @@ import type { MessageTree } from "../messages";
 
 // Text for the foundation screen (design tokens and component gallery) and shared building blocks.
 export const ptBR: MessageTree = {
+  emailRegistration: {
+    title: "Confirme seu e-mail",
+    intro: "Enviaremos um link para confirmar o endereço antes de criar sua conta.",
+    email: "E-mail",
+    terms: "Aceito os termos de uso e a política de privacidade desta instância.",
+    send: "Enviar link de confirmação",
+    sent: "Se o endereço puder receber mensagens, enviamos uma confirmação. Confira também o spam e tente mais tarde se necessário.",
+    useInvite: "Tenho um convite e quero cadastrar sem e-mail",
+    verifying: "Validando o link de confirmação…",
+    verified: "E-mail confirmado",
+    registrationClosed: "O cadastro por e-mail está fechado nesta instância.",
+    termsRequired: "Aceite os termos para continuar.",
+    emailInvalid: "Informe um endereço de e-mail válido.",
+    emailDomainBlocked: "Este domínio de e-mail não é aceito.",
+    captchaFailed: "Não foi possível validar o desafio de segurança. Tente novamente.",
+    emailTokenInvalid: "O link expirou ou já foi usado. Peça uma nova confirmação.",
+    emailTaken: "Este e-mail já está ligado a uma conta.",
+  },
   auth: {
     loading: "Carregando…",
     selfHosted: "Auto-hospedado",

@@ -1,6 +1,42 @@
 use std::env;
 use std::path::PathBuf;
 
+#[derive(Clone, Default)]
+pub struct Secret(String);
+
+impl Secret {
+    pub fn new(value: impl Into<String>) -> Self {
+        Self(value.into())
+    }
+    pub fn expose(&self) -> &str {
+        &self.0
+    }
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+}
+
+impl std::fmt::Debug for Secret {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("***")
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum RegistoModo {
+    Fechado,
+    Aberto,
+}
+
+impl RegistoModo {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Fechado => "fechado",
+            Self::Aberto => "aberto",
+        }
+    }
+}
+
 /// LiveKit API key shipped for LAN / 30-minute setup. Refused when production profile is on.
 pub const EXAMPLE_LIVEKIT_API_KEY: &str = "instkey";
 /// LiveKit API secret shipped for LAN / 30-minute setup. Refused when production profile is on.
@@ -28,6 +64,15 @@ pub struct Config {
     pub production: bool,
     /// When true, login/register skip the in-process IP limiter (TestApp default).
     pub rate_limit_disabled: bool,
+    pub registo_modo: String,
+    pub email_api_key: Secret,
+    pub email_from: Option<String>,
+    pub public_base_url: Option<String>,
+    pub email_log_file: Option<PathBuf>,
+    pub trusted_proxy: bool,
+    pub turnstile_secret: Secret,
+    pub turnstile_site_key: Option<String>,
+    pub registo_dominios_bloqueados: Option<PathBuf>,
 }
 
 fn env_flag(name: &str) -> bool {
@@ -75,6 +120,33 @@ impl Config {
                 .unwrap_or_else(|_| PathBuf::from("./data/avatars")),
             production: production_from_env(),
             rate_limit_disabled: env_flag("MESA_RATE_LIMIT_DISABLED"),
+            registo_modo: env::var("REGISTO_MODO").unwrap_or_else(|_| "fechado".into()),
+            email_api_key: Secret::new(env::var("EMAIL_API_KEY").unwrap_or_default()),
+            email_from: env::var("EMAIL_FROM").ok().filter(|s| !s.trim().is_empty()),
+            public_base_url: env::var("PUBLIC_BASE_URL")
+                .ok()
+                .filter(|s| !s.trim().is_empty()),
+            email_log_file: env::var("EMAIL_LOG_FILE")
+                .ok()
+                .filter(|s| !s.is_empty())
+                .map(PathBuf::from),
+            trusted_proxy: env_flag("TRUSTED_PROXY"),
+            turnstile_secret: Secret::new(env::var("TURNSTILE_SECRET").unwrap_or_default()),
+            turnstile_site_key: env::var("TURNSTILE_SITE_KEY")
+                .ok()
+                .filter(|s| !s.trim().is_empty()),
+            registo_dominios_bloqueados: env::var("REGISTO_DOMINIOS_BLOQUEADOS")
+                .ok()
+                .filter(|s| !s.is_empty())
+                .map(PathBuf::from),
+        }
+    }
+
+    pub fn mode(&self) -> Result<RegistoModo, String> {
+        match self.registo_modo.as_str() {
+            "fechado" => Ok(RegistoModo::Fechado),
+            "aberto" => Ok(RegistoModo::Aberto),
+            _ => Err("REGISTO_MODO deve ser fechado ou aberto".into()),
         }
     }
 
@@ -85,6 +157,37 @@ impl Config {
 
     /// Fail closed before bind when the production profile is active.
     pub fn validate(&self) -> Result<(), String> {
+        let mode = self.mode()?;
+        if self.production && mode == RegistoModo::Aberto {
+            if self.email_api_key.is_empty() {
+                return Err("REGISTO_MODO=aberto exige EMAIL_API_KEY em produção".into());
+            }
+            if self.email_from.is_none() {
+                return Err("REGISTO_MODO=aberto exige EMAIL_FROM em produção".into());
+            }
+            let url = self.public_base_url.as_deref().unwrap_or("");
+            let parsed = reqwest::Url::parse(url).ok();
+            let valid = parsed.as_ref().is_some_and(|value| {
+                value.scheme() == "https"
+                    && value.host_str().is_some_and(|host| {
+                        !host.eq_ignore_ascii_case("localhost")
+                            && !host.ends_with(".localhost")
+                            && !host
+                                .parse::<std::net::IpAddr>()
+                                .is_ok_and(|ip| ip.is_loopback())
+                    })
+                    && value.query().is_none()
+                    && value.fragment().is_none()
+            });
+            if !valid {
+                return Err(
+                    "REGISTO_MODO=aberto exige PUBLIC_BASE_URL HTTPS pública em produção".into(),
+                );
+            }
+            if !self.trusted_proxy {
+                return Err("REGISTO_MODO=aberto exige TRUSTED_PROXY=true em produção".into());
+            }
+        }
         if !self.production {
             return Ok(());
         }

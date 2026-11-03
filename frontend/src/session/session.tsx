@@ -100,7 +100,8 @@ function createSession() {
     inviteCode,
     identity,
     recovery,
-  }: Credentials & { inviteCode?: string; identity?: Identity; recovery?: RecoveryMaterial }): Promise<void> {
+    emailToken,
+  }: Credentials & { inviteCode?: string; identity?: Identity; recovery?: RecoveryMaterial; emailToken?: string }): Promise<void> {
     const fresh = identity ?? generateIdentity();
     const vault = await wrapIdentity(fresh, password);
     const me = await auth.register({
@@ -109,6 +110,7 @@ function createSession() {
       identity_pubkey: b64(fresh.publicKey),
       identity_vault: vault,
       invite_code: inviteCode || undefined,
+      email_token: emailToken,
       recovery_vault: recovery?.vault,
       recovery_verifier_pubkey: recovery ? b64(recovery.verifierPublicKey) : undefined,
     });

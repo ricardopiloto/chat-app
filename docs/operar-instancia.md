@@ -6,7 +6,7 @@ Guia para um operador publicar a instância na própria máquina. Meta: instânc
 
 - Linux (validado em Fedora). Docker Engine + Compose (grupo `docker` ou `sudo`).
 - Rust stable (`rustc`, `cargo`) e Node LTS (`node`, `npm`).
-- Portas livres: **8080/tcp** (API), **1420/tcp** (SPA em dev / HTTPS local), **7880/tcp** e **7881/tcp** (sinalização LiveKit), **3478/udp** (TURN embutido), **50000–50100/udp** (mídia).
+- Portas livres: **8080/tcp** (API), **1421/tcp** (SPA em dev / HTTPS local), **7880/tcp** e **7881/tcp** (sinalização LiveKit), **3478/udp** (TURN embutido), **50000–50100/udp** (mídia).
 
 ## 1. LiveKit
 
@@ -23,7 +23,7 @@ O Compose usa `network_mode: host` para o LiveKit anunciar o IP da LAN (necessá
 No firewall, na LAN:
 
 ```bash
-sudo firewall-cmd --add-port=1420/tcp --add-port=7880/tcp --add-port=7881/tcp \
+sudo firewall-cmd --add-port=1421/tcp --add-port=7880/tcp --add-port=7881/tcp \
   --add-port=3478/udp --add-port=50000-50100/udp
 ```
 
@@ -46,6 +46,17 @@ export SESSION_TTL_SECS=604800      # 7 dias
 export DEFAULT_INVITE_TTL_SECS=300  # 5 minutos (produto); labs podem sobrescrever
 export ATTACHMENTS_DIR=./data/attachments   # blobs cifrados no cliente (opaco no disco)
 export AVATARS_DIR=./data/avatars           # avatares de conta e imagens de servidor (JPEG/PNG/WebP em claro, ≤1 MiB)
+export REGISTO_MODO=fechado               # padrão; convite obrigatório após a primeira conta
+# Para testar o cadastro por e-mail localmente:
+# export REGISTO_MODO=aberto
+# export PUBLIC_BASE_URL=https://127.0.0.1:1421
+# export EMAIL_LOG_FILE=/tmp/mesa-email.log   # diagnósticos; link no .eml vizinho privado
+# export EMAIL_FROM='Mesa <noreply@example.com>'
+# export EMAIL_API_KEY=<chave Resend>         # ausente: usa LogSender
+# export TRUSTED_PROXY=false                  # true só atrás de Nginx local confiável
+# export TURNSTILE_SECRET=<segredo opcional>
+# export TURNSTILE_SITE_KEY=<chave pública opcional>
+# export REGISTO_DOMINIOS_BLOQUEADOS=./data/dominios-bloqueados.txt
 cargo run
 ```
 
@@ -63,15 +74,24 @@ Não use o par de exemplo LiveKit como receita de produção. Perfil explícito:
 
 Com o perfil de produção, o processo **não arranca** se as chaves forem as de exemplo ou se o cookie não for Secure. Não há processo BFF: o browser fala com este Axum (opcionalmente via proxy TLS).
 
+Com `REGISTO_MODO=aberto` em produção, o arranque exige `EMAIL_API_KEY`, `EMAIL_FROM`,
+`PUBLIC_BASE_URL` HTTPS público e `TRUSTED_PROXY=true`. `TURNSTILE_SECRET` e
+`TURNSTILE_SITE_KEY` formam o captcha opcional; `REGISTO_DOMINIOS_BLOQUEADOS` adiciona domínios
+à lista embutida. `EMAIL_LOG_FILE` guarda só diagnósticos no desenvolvimento/testes com
+`LogSender`; o link de teste está no ficheiro `.eml` vizinho, que deve permanecer privado.
+Não abra o cadastro antes de definir os textos finais de termos e privacidade. O rollback é
+`REGISTO_MODO=fechado`. Consulte o trecho `limit_req` e `X-Real-IP` do
+[deploy de produção](deploy-producao.md#9-nginx--tls-lets-encrypt).
+
 ## 3. Cliente web
 
 ```bash
-cd frontend-v2
+cd frontend
 npm install
 npm run dev
 ```
 
-Este é o cliente de produção (**frontend v2**). Abra `https://127.0.0.1:1421` (certificado de desenvolvimento — aceite-o). No telemóvel na mesma Wi‑Fi use `https://<IP-LAN>:1421`. O Vite arranca com proxy para o backend (`/api`, `/ws`, `/health`) e para o LiveKit (`/rtc`). A v1 (`frontend/`, porta `1420`) fica só como rollback; ver [deploy-producao.md § 14](deploy-producao.md#14-corte-para-o-frontend-v2-e-rollback). `http://IP` não é origem segura: `mediaDevices` fica indefinido.
+Este é o cliente de produção (**frontend v2**). Abra `https://127.0.0.1:1421` (certificado de desenvolvimento — aceite-o). No telemóvel na mesma Wi‑Fi use `https://<IP-LAN>:1421`. O Vite arranca com proxy para o backend (`/api`, `/ws`, `/health`) e para o LiveKit (`/rtc`). O código da v1 está no histórico Git. `http://IP` não é origem segura: `mediaDevices` fica indefinido.
 
 ### Dev: proxy WebSocket `/rtc` (LiveKit)
 
@@ -84,6 +104,14 @@ Ao **sair da sala** de voz/vídeo, o cliente faz disconnect ordenado (desliga tr
 3. A segunda pessoa abre o link do convite, cria conta se ainda não tiver, e entra.
 
 O **Administrador da instância** é a primeira conta; o **operador** tem acesso ao host e usa a CLI para manutenção. No self-host local, podem ser a mesma pessoa. `GET /api/instance/status` informa publicamente se ainda não há contas (`{"initial_setup":true}`), mas não é um sinal de segurança nem impede que outra pessoa chegue primeiro. Configure a conta antes de expor a instância. Atrás do Nginx, o limite por IP deste endpoint usa o IP do proxy e torna-se global.
+
+No modo aberto, após a primeira conta, a pessoa pode pedir um link de confirmação de e-mail,
+concluir o cadastro sem convite e aceitar um convite mais tarde. O cliente desktop mostra o pedido,
+mas o link abre no navegador; a pessoa entra no desktop depois com handle e senha. A resposta 202
+é sempre genérica: se o e-mail não chegar, verifique spam, domínio remetente e os logs do backend
+por finalidade, status do Resend, id de envio e prefixo do hash canônico. Nunca peça ao utilizador
+para enviar o token. Limites em memória são por processo; cadastro aberto ainda não tem cotas de
+servidores ou anexos.
 
 Não copie `spike/` — é descartável. Este binário é o produto.
 
@@ -113,7 +141,7 @@ A pessoa abre **Esqueci a senha** no ecrã de entrada, escolhe **Tenho um códig
 
 Cenas de câmera (Fase 2) não abrem portas novas: são só composições da grade no canal de vídeo. Trocar de cena não reinicia a chamada.
 
-A SPA segue o visual **Mesa / Nocturne** (tema claro/escuro, shell com sidebar). Não há portas nem processos novos — só o frontend em `1421` (dev) ou o estático de `frontend-v2/dist` servido pelo Nginx.
+A SPA segue o visual **Mesa / Nocturne** (tema claro/escuro, shell com sidebar). Não há portas nem processos novos — só o frontend em `1421` (dev) ou o estático de `frontend/dist` servido pelo Nginx.
 
 Layouts de cena (**Mestre em destaque**, **Painel**, **Faixa N-up**) aceitam **2–8** câmeras/slots por cena; a família de layout e o número são independentes. Continuam só dados SQLite + API, sem portas novas.
 
@@ -126,4 +154,4 @@ Layouts de cena (**Mestre em destaque**, **Painel**, **Faixa N-up**) aceitam **2
 
 ## Efeitos sonoros do frontend v2
 
-O frontend v2 toca dois sons curtos (nova menção e alguém a entrar na chamada). Os ficheiros `mention.mp3` e `call-join.mp3` ficam em `assets/audio/` e são copiados para `frontend-v2/public/audio/` quando o Vite arranca (dev) ou faz o build; sem eles a funcionalidade fica silenciosa, sem erro. Cada pessoa liga ou desliga os efeitos em **Áudio & Vídeo**.
+O frontend v2 toca dois sons curtos (nova menção e alguém a entrar na chamada). Os ficheiros `mention.mp3` e `call-join.mp3` ficam em `assets/audio/` e são copiados para `frontend/public/audio/` quando o Vite arranca (dev) ou faz o build; sem eles a funcionalidade fica silenciosa, sem erro. Cada pessoa liga ou desliga os efeitos em **Áudio & Vídeo**.

@@ -134,7 +134,7 @@ Uma Instância de Hospedagem contém múltiplos Servidores. Não é um banco por
 ### 4.3 Conteúdo cifrado vs. metadados em claro
 
 O admin da instância não tem chave capaz de decifrar mensagens nem mídia. O banco guarda:
-- **Em claro:** metadados estruturais (quem é membro de quê, quando uma mensagem foi enviada, estado de E2EE de um canal, log de auditoria de quem desligou/religou E2EE).
+- **Em claro:** metadados estruturais (quem é membro de quê, quando uma mensagem foi enviada, estado de E2EE de um canal, log de auditoria de quem desligou/religou E2EE) e, quando informado no cadastro, o e-mail verificado da conta. O e-mail é devolvido somente nas respostas de autenticação da própria conta (`/api/auth/me`, login e cadastro), nunca em listas de membros, convites ou eventos.
 - **Cifrado (ciphertext opaco ao servidor):** corpo de mensagens de texto; a chave de mídia de voz/vídeo trafega apenas entre clientes (Insertable Streams), nunca é persistida em claro no servidor.
 
 Blobs grandes (anexos, avatares, gravações opt-in) ficam fora do banco relacional, em pasta separada no disco — preserva a portabilidade "copiar a pasta" da instância inteira.

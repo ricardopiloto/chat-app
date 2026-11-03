@@ -4,7 +4,7 @@ use axum::http::HeaderValue;
 use axum::middleware::Next;
 use axum::response::Response;
 
-pub const CONTENT_SECURITY_POLICY: &str = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' ws: wss:; frame-ancestors 'none'; font-src 'self'";
+pub const CONTENT_SECURITY_POLICY: &str = "default-src 'self'; script-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' ws: wss: https://challenges.cloudflare.com; frame-ancestors 'none'; font-src 'self'";
 
 pub async fn attach(State(state): State<AppState>, req: Request, next: Next) -> Response {
     let mut res = next.run(req).await;

@@ -1,6 +1,24 @@
 import type { MessageTree } from "../messages";
 
 export const en: MessageTree = {
+  emailRegistration: {
+    title: "Confirm your email",
+    intro: "We will send a link to confirm your address before you create an account.",
+    email: "Email",
+    terms: "I accept this instance's terms of use and privacy policy.",
+    send: "Send confirmation link",
+    sent: "If this address can receive mail, we sent a confirmation. Check spam too, and try again later if needed.",
+    useInvite: "I have an invitation and want to register without email",
+    verifying: "Checking your confirmation link…",
+    verified: "Confirmed email",
+    registrationClosed: "Email registration is closed on this instance.",
+    termsRequired: "Accept the terms to continue.",
+    emailInvalid: "Enter a valid email address.",
+    emailDomainBlocked: "This email domain is not accepted.",
+    captchaFailed: "The security check failed. Try again.",
+    emailTokenInvalid: "This link expired or was already used. Request a new one.",
+    emailTaken: "This email already belongs to an account.",
+  },
   auth: {
     loading: "Loading…",
     selfHosted: "Self-hosted",

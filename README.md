@@ -43,7 +43,7 @@ Quem precisa de **chat + chamada** e, ao mesmo tempo, de **composição visual**
 2. **Servidor**: unidade social (dono, cargos, canais, convites, membros).
 3. **Canal**: **texto** ou **voz/vídeo**. O canal de voz tem palco com composição de câmeras (cena).
 
-Não há federação entre instâncias: o que corre na tua máquina fica na tua máquina. A primeira conta registada é o **Administrador da instância**; as seguintes entram por convite. Por ora, esse marcador não concede permissões extras nem associa a conta a um servidor. O **operador** é quem tem acesso ao host e pode executar comandos de manutenção; no self-host local as duas pessoas podem coincidir. Configure a primeira conta antes de expor a instância à internet.
+Não há federação entre instâncias: o que corre na tua máquina fica na tua máquina. A primeira conta registada é o **Administrador da instância**; as seguintes entram por convite por padrão. Com `REGISTO_MODO=aberto`, também podem entrar após confirmar um e-mail, sem convite e sem pertencer inicialmente a um servidor. Por ora, o marcador de administrador não concede permissões extras nem associa a conta a um servidor. O **operador** é quem tem acesso ao host e pode executar comandos de manutenção; no self-host local as duas pessoas podem coincidir. Configure a primeira conta antes de expor a instância à internet.
 
 **Porquê self-host?** O operador escolhe onde vivem metadados e ficheiros; SQLite embutido e poucas portas (API, LiveKit, TURN) permitem subir uma mesa em menos de 30 minutos; não há rede social global nem diretório obrigatório.
 
@@ -55,6 +55,7 @@ Lista do que o cliente atual faz hoje. A checklist de paridade está em [`docs/v
 
 ### Conta e identidade
 - Registo (handle e palavra-passe de 8+ caracteres), com código de convite quando não é a primeira conta (`/invite/:code` ou `?invite=`).
+- No modo de registo aberto, a pessoa aceita os termos, confirma o e-mail por um link que vale 5 horas e conclui o cadastro com as chaves E2E geradas no cliente. O convite continua a funcionar com ou sem e-mail. O e-mail só é mostrado à própria conta; a recuperação de senha por e-mail não faz parte deste fluxo.
 - Numa instância vazia, o cadastro orienta a criação da conta de **Administrador da instância** e recomenda guardar a chave de recuperação. Não pede convite; o estado é consultado em `GET /api/instance/status`.
 - Login, logout com confirmação, restauro de sessão ao recarregar, troca de conta.
 - **Cliente desktop**: no primeiro arranque pede o endereço da instância. Um host sem esquema (por exemplo `chat.exemplo.com`) é lido como HTTPS; um endereço `http://` é recusado. **Trocar de instância**, no entrar, no criar conta, no menu da conta e no desbloqueio, esquece o endereço e a sessão e volta a pedir a instância. O browser servido pela própria instância não mostra essa acção.

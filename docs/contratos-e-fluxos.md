@@ -4,7 +4,7 @@ Rotas que o frontend v2 consome e os fluxos entre o cliente e o backend. O [READ
 
 ## Contratos Frontend ↔ Backend
 
-Só os contratos que a **v2** consome. O backend tem mais rotas (listadas em [Rotas do backend que a v2 não usa](#rotas-do-backend-que-a-v2-não-usa)). Tipos de referência: [`frontend-v2/src/api/types.ts`](../frontend-v2/src/api/types.ts) e clientes em [`frontend-v2/src/api/endpoints/`](../frontend-v2/src/api/endpoints/).
+Só os contratos que a **v2** consome. O backend tem mais rotas (listadas em [Rotas do backend que a v2 não usa](#rotas-do-backend-que-a-v2-não-usa)). Tipos de referência: [`frontend/src/api/types.ts`](../frontend/src/api/types.ts) e clientes em [`frontend/src/api/endpoints/`](../frontend/src/api/endpoints/).
 
 ### Convenções
 
@@ -23,7 +23,10 @@ Só os contratos que a **v2** consome. O backend tem mais rotas (listadas em [Ro
 | Método | Caminho | Pedido | Resposta | Notas |
 |--------|---------|--------|----------|-------|
 | `GET` | `/api/instance/status` | — | `{ "initial_setup": boolean }` | Público, limitado por IP em balde próprio. `true` se não há contas; pode receber 429. Não é sinal de segurança. `/health` permanece `{ "ok": true }` |
-| `POST` | `/api/auth/register` | `RegisterBody` `{ handle, password, identity_pubkey, identity_vault?, invite_code? }` | `Account` | A primeira conta é o Administrador da instância (`is_initial_operator`), sem permissões extras; as seguintes exigem convite. Emite o cookie |
+| `GET` | `/api/auth/register/config` | — | `{ mode: "fechado" \| "aberto", turnstile_site_key: string \| null }` | Público. `fechado` é o padrão |
+| `POST` | `/api/auth/email/request` | `{ email, terms_accepted, website?, captcha_token? }` | `202 { "ok": true }` | Público no modo aberto. Resposta genérica para e-mail novo, existente, honeypot, limite por e-mail ou falha de envio. Limite por IP devolve 429 |
+| `POST` | `/api/auth/email/verify` | `{ token }` | `{ email }` | Público. Não consome token; inexistente, expirado, substituído ou consumido → `email_token_invalid`. Token sempre no corpo, nunca em caminho ou query |
+| `POST` | `/api/auth/register` | `RegisterBody` `{ handle, password, identity_pubkey, identity_vault?, invite_code?, email_token? }` | `Account` | A primeira conta é o Administrador da instância. Depois dela, convite válido ou modo aberto com token válido; convite fornecido e inválido sempre recusa. Emite o cookie |
 | `POST` | `/api/auth/login` | `{ handle, password }` | `Account` (inclui `identity_vault`) | Emite o cookie |
 | `POST` | `/api/auth/logout` | — | sem corpo | Revoga a sessão |
 | `GET` | `/api/auth/me` | — | `Account` ou 204 | 204 quando não há sessão |
@@ -38,6 +41,10 @@ Só os contratos que a **v2** consome. O backend tem mais rotas (listadas em [Ro
 | `PATCH` | `/api/auth/display-name` | `{ display_name: string \| null }` | `Account` | Handle não muda |
 | `PUT` / `DELETE` | `/api/auth/avatar` | bytes + `X-Mesa-Media-Type` / — | `Account` / sem corpo | JPEG, PNG, WebP, 1 MiB |
 | `GET` | `/api/accounts/{id}/avatar` | — | imagem | Usada em `<img src>` |
+
+O link de e-mail é `PUBLIC_BASE_URL/register#email_token=…`: o fragmento é lido e removido pelo frontend, e o token é validado por POST. Vale por 5 horas e é consumido no cadastro. Com token válido, o e-mail, seu canônico, o instante de verificação e o aceite de termos são gravados na conta. `email` e `email_verified_at` só aparecem nas respostas da própria conta. Sem token, os clientes antigos mantêm o fluxo por convite e o e-mail fica nulo. Uma conta criada sem convite no modo aberto começa sem servidor e pode aceitar um convite depois.
+
+Erros estáveis do fluxo: `registration_closed` (403), `terms_required`, `email_invalid`, `email_domain_blocked`, `captcha_failed`, `email_token_invalid` (400) e `email_taken` (409). No cadastro a ordem é: limite de IP (429), corpo inválido (400), token inválido (400), convite/modo (403), handle existente (409), e-mail já associado (409). Qualquer falha preserva o token. O limite por e-mail é silencioso e usa o e-mail canônico (minúsculas, etiqueta `+` removida, pontos Gmail ignorados); o limite por IP usa `X-Real-IP` somente com `TRUSTED_PROXY=true` e peer em loopback. Os limites antigos de login/cadastro mantêm o IP do peer.
 
 ### Servidores, membros e cargos
 

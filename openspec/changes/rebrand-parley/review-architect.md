@@ -1,46 +1,49 @@
-# Review — Arquiteto de Soluções
+# Review — Arquiteto de Soluções (revisão final)
 
 **Change:** rebrand-parley
 **Data:** 2026-11-03
-**Veredito geral:** Bloqueado (3 bloqueantes, todos resolvidos editando os artefatos; nenhum exige redesenho)
+**Veredito geral:** Aprovado com ressalvas
 
-**Premissa nova do autor:** há uma única instância (chat.1nodado.com.br, ver `docs/deploy-producao.md`) e só usuários de teste, então a compatibilidade com instalações de terceiros deixa de ser requisito. Esta revisão reavalia a change sob essa premissa.
+Os três bloqueantes da revisão anterior estão resolvidos nos artefatos atuais:
+1. Rótulos criptográficos `mesa-recovery-v1` e `mesa-invite-seed-v1` declarados intocáveis (`design.md`, decisão 1; spec `brand-identity`, requisito "Identificadores internos…"; tarefa 4.4 com teste em `test:contracts`).
+2. Chaves `mesa.*` do `localStorage` e `mesa://` declarados intocáveis, com a justificativa de perda de chaves E2E do cliente web.
+3. Escopo reescrito para a premissa (uma instância, usuários de teste): capacidades de continuidade de dados e de fallback de variáveis removidas; recusa de partida do backend com `MESA_*`; documentos e runbook incluídos.
 
 ## 1. Definição da arquitetura técnica
-Veredito: Atenção
-- A change é de identidade, não muda stack nem componentes. Coerente com o desenho em `README.md` (Axum + SQLite, SPA SolidJS, Electron, LiveKit).
-- `design.md` Decisões 1 e 5 (fixar `userData`, ler `PARLEY_*` com fallback `MESA_*`) existem para proteger terceiros. Com uma instância e usuários de teste elas custam mais do que protegem: duas capacidades novas (`desktop/data-continuity`, `instance/environment-variables`), helpers em Rust e Node, avisos de depreciação e 6 tarefas (2.1, 2.2, 3.1 a 3.4). **Recomendo remover as duas capacidades e trocar as variáveis de uma vez.**
-- Ressalva ao simplificar: em vez de apenas deixar de ler `MESA_*`, o backend deve **falhar na partida** se `MESA_PRODUCTION`, `MESA_ENV` ou `MESA_RATE_LIMIT_DISABLED` estiverem definidas sem a `PARLEY_*` equivalente, com mensagem clara. Custa poucas linhas e evita o único modo de falha silenciosa (produção sem `COOKIE_SECURE` e sem recusa das chaves de exemplo do LiveKit). Isso substitui a camada de legado.
+Veredito: OK
+- Sem mudança de stack ou de componentes. A identidade muda no cliente, no empacotamento e em poucas linhas do backend; coerente com `README.md` (Axum + SQLite, SPA SolidJS, Electron, LiveKit).
+- A nova capacidade `desktop/legacy-install-cleanup` é um componente novo e pequeno, no processo principal do Electron, isolado em módulo com dependências injetáveis (tarefa 2.1). Aceitável para o porte do projeto.
 
 ## 2. Integração com a infraestrutura existente
 Veredito: Atenção
-- A instância real tem `systemd` com usuário `mesa`, `/opt/mesa`, `/etc/mesa/mesa.env` (com `MESA_PRODUCTION=1`) e Nginx servindo o `dist` estático (`docs/deploy-producao.md`). A proposal não cita nenhum desses itens nem os documentos `deploy-producao.md`, `operar-instancia.md` e `desktop-release.md`.
-- Sequência obrigatória no deploy: editar `/etc/mesa/mesa.env` (`MESA_PRODUCTION` para `PARLEY_PRODUCTION`) **antes** de reiniciar o backend novo. Entrar na change como tarefa de runbook.
-- Renomear usuário, diretórios e unit do servidor (`mesa` para `parley`) é opcional e fora de escopo: não aparece para usuário nenhum e mexe em permissões e caminhos do SQLite e dos anexos. Manter no servidor atual; só a documentação de **novas** instalações usa o nome novo.
-- `docs/desktop-release.md:38` afirma que `productName` e `appId` "não mudam" e justifica o prefixo `mesa-chat-app`. Esse trecho fica errado após a change e precisa ser reescrito.
-- Colisão de nome de pacote Linux: existe o pacote **Parley** do KDE (treinador de vocabulário) nos repositórios Debian e Fedora, com `.desktop` e ícone próprios. O nome `parley` sozinho como pacote, executável ou ícone colide. **Manter o sufixo:** `parley-chat-app` para `packageName`/`executableName`/`desktopName` (a razão de manter `-chat-app` continua válida, só mudou o nome colidente). Isto também deve entrar na tarefa 1.2 de colisão de marca.
+- **Escopo da colisão em andamento é maior do que a nota diz.** O working tree com `email-registration` (12 tarefas feitas, 10 pendentes, sem commit) já modifica, além de `backend/src/config.rs`: `README.md`, `docs/deploy-producao.md`, `docs/operar-instancia.md`, `frontend/package.json`, `frontend/src/i18n/catalogs/en.ts` e `pt-BR.ts`, `frontend/src/pages/Auth.tsx`, `backend/tests/contract/production_boot.rs`. São arquivos que os grupos 3, 4, 6 e 7 do rebrand também editam. A pré-condição "só depois de `email-registration` commitada" está certa; a nota deve citar essa lista, não só `config.rs`.
+- **Runbook da instância precisa de mais um item.** `email-registration` introduz variáveis sem prefixo `MESA_` (`EMAIL_API_KEY`, `EMAIL_FROM`, `PUBLIC_BASE_URL`, `REGISTO_MODO`, `TURNSTILE_*`), então a recusa de partida não as afeta. Mas o nome de exibição em `EMAIL_FROM` (por exemplo `Mesa <noreply@…>`) vai para `/etc/mesa/mesa.env` da instância real e hoje cita o nome antigo. Entrar na tarefa 8.1.
+- Origem `mesa://app` e domínio `chat.1nodado.com.br` não mudam, então CORS, cookies e links de e-mail (`PUBLIC_BASE_URL`) seguem válidos.
+- Pacote Linux `parley-chat-app` evita colisão com o Parley do KDE. Windows/macOS usam `Parley`.
 
 ## 3. Qualidade de arquitetura e trade-offs
-Veredito: Bloqueante
-- **Bloqueante A, rótulos criptográficos.** `frontend/src/crypto/recovery.ts:83` usa `"mesa-recovery-v1"` e `frontend/src/crypto/inviteSeed.ts:14` usa `"mesa-invite-seed-v1"` como separação de domínio na derivação de chaves. Trocar essas cadeias muda as chaves derivadas: recovery keys e convites existentes deixam de funcionar, e o contrato com o backend/testes se rompe. A change nunca os menciona, e a tarefa 4.1 ("grep -ri mesa deve só devolver identificadores internos") convida a quebrá-los, ainda mais sob "trocar tudo". Precisam constar como **intocáveis** em `design.md`, na spec de marca e em `tasks.md`, com teste que fixe os valores.
-- **Bloqueante B, armazenamento local no cliente web.** As chaves `mesa.channelKey.<id>`, `mesa.instance.*`, `mesa.locale` etc. vivem no `localStorage` de `chat.1nodado.com.br`, não só no desktop. Renomear qualquer uma apaga as chaves E2E locais de **todos** os usuários web, independentemente do `userData` do Electron. Também o esquema `mesa://` (origem do `localStorage` no desktop) pertence a esse grupo. A change já deixa esses itens como estão; falta registrar o **porquê** e que a premissa "trocar tudo" não os inclui.
-- Segurança: sem alteração de garantia, desde que A e B sejam respeitados.
-- Performance: N/A.
-- Manutenibilidade: remover a camada de legado reduz a superfície; manter o resto interno reduz risco de regressão E2E.
+Veredito: Atenção
+- **Segurança da recusa de partida:** correta e fail-closed (`MESA_PRODUCTION`, `MESA_ENV`, `MESA_RATE_LIMIT_DISABLED` recusam partida mesmo se a `PARLEY_*` também existir). Evita o único modo de falha silenciosa.
+- **Limpeza da instalação anterior (principal risco novo):**
+  - A remoção só ocorre com confirmação do usuário, só em app empacotado, uma vez, sem tocar no executável em execução e sem apagar dados. Os limites estão bem postos.
+  - O desinstalador NSIS do electron-builder costuma copiar-se para a pasta temporária e reexecutar-se, então o processo iniciado pelo app pode retornar antes de a remoção terminar; e ele recusa ou pede para fechar se o Mesa estiver aberto. O design registra o plano B (hook NSIS) mas não trata estes dois casos. Recomendo exigir, na tarefa 2.2, que o resultado seja confirmado pela ausência da chave de registro/do diretório após a espera, e que a pergunta avise para fechar o Mesa antes.
+  - Executar um comando lido do registro é aceitável porque vem de `HKCU`/`HKLM` do próprio usuário e a chave é identificada pelo nome do app anterior; a tarefa 1.1 deve fixar o critério de correspondência (nome da chave e `DisplayName`) para não executar qualquer desinstalador.
+- Marcar a limpeza como feita mesmo quando recusada ou falha é a decisão certa para não incomodar; o README cobre o passo manual.
+- **`.icns`:** o caminho do macOS (PNG de 1024 como `mac.icon`, convertido pelo electron-builder) é viável, mas só é exercitado no runner macOS do CI, não na máquina de desenvolvimento. Aceitável, desde que a verificação final dependa do artefato da tag de teste (tarefa 6.2).
 
 ## 4. Documentação e decisões (ADRs)
-Veredito: Atenção
-- `design.md` registra alternativas rejeitadas, bom. Precisa de uma decisão nova e curta: "o que NÃO se renomeia, e por quê" (rótulos criptográficos, chaves de `localStorage`, `mesa://`, IPC, header `x-mesa-media-type`), em vez de apenas dizer "interno".
-- `docs/desktop-release.md`, `docs/deploy-producao.md`, `docs/operar-instancia.md` e `CHANGELOG.md` entram na lista de impacto (documentação operacional que cita `MESA_PRODUCTION`). Sem diagrama: a complexidade não o exige.
+Veredito: OK
+- `design.md` registra alternativas rejeitadas (hook NSIS, fallback de variáveis, `appId` mantido) e a decisão de "intocáveis" com motivos. Tem Risks, Migration Plan e pré-condição de ordem.
+- Sem diagrama: a complexidade não o exige.
 
 ## 5. Ponte entre produto e técnico
 Veredito: OK
-- O objetivo (renomear e trocar o logo) está traduzido em tarefas verificáveis. Dependência externa (arquivos do logo) está explícita na tarefa 1.3.
-- Com a premissa nova, o `appId` pode mudar (`com.parley.desktop`): consequência aceitável é o app novo coexistir com o antigo no desktop do autor; desinstalar o Mesa à mão.
+- Objetivo (renomear, novo logo, sem deixar o Mesa instalado) traduzido em tarefas verificáveis. Logo aprovado e entregue em `docs/v2/parley_logo/`; tarefa 1.3 concluída. A varredura dos textos de e-mail é justificada: `backend/src/email_templates.rs` (da change em andamento) já traz "Mesa" em assuntos e corpos, e `production_boot.rs:85` usa `"Mesa <noreply@example.com>"`.
 
 ## Bloqueantes antes de implementar
-1. Declarar como intocáveis os rótulos criptográficos `mesa-recovery-v1` e `mesa-invite-seed-v1` (design, spec e tarefa com teste que os fixa).
-2. Declarar como intocáveis as chaves de `localStorage` `mesa.*` e o protocolo `mesa://`, com a justificativa de perda de chaves E2E do cliente web.
-3. Reescrever o escopo para a premissa nova: remover `desktop/data-continuity` e `instance/environment-variables` (e tarefas 2.x, 3.x) e substituir por troca direta das variáveis com **falha na partida** quando houver `MESA_*` sem o par `PARLEY_*`; adicionar a tarefa de runbook do deploy na instância e a atualização de `docs/deploy-producao.md`, `operar-instancia.md`, `desktop-release.md` e `CHANGELOG.md`.
+- nenhum
 
-Recomendações não bloqueantes: `appId` para `com.parley.desktop`; pacote Linux `parley-chat-app`; não renomear usuário, diretórios e unit do servidor atual; incluir a colisão com o Parley do KDE na checagem 1.2.
+## Recomendações (não bloqueantes)
+1. Ampliar a nota de ordem com a lista de arquivos em conflito com `email-registration`.
+2. Incluir o nome de exibição de `EMAIL_FROM` no runbook (tarefa 8.1).
+3. Na tarefa 2.2, tratar o desinstalador assíncrono e o Mesa em execução; na 1.1, fixar o critério de identificação da chave.

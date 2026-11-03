@@ -1,7 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-<circle cx="256" cy="256" r="256" fill="#181b24"/>
-<g transform="translate(5 0)"><defs><clipPath id="a"><circle cx="205" cy="205" r="95"/></clipPath></defs>
-<path fill="#f4e6c8" d="M140 262L112 322L192 298Z"/><circle cx="205" cy="205" r="95" fill="#f4e6c8"/>
-<path fill="#e07a5f" d="M362 342L392 402L308 390Z"/><circle cx="297" cy="297" r="95" fill="#e07a5f"/>
-<circle cx="297" cy="297" r="95" fill="#ffb4a1" clip-path="url(#a)"/></g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024"><circle cx="512" cy="512" r="512" fill="#181b24"/><g transform="translate(512 512) scale(1.247) translate(-512 -500.5)"><path fill="#f4e6c8" fill-rule="evenodd" d="M278 340Q205 325 216 251Q227 184 294 207Q341 222 352 280Q512 224 672 280Q683 222 730 207Q797 184 808 251Q819 325 746 340Q794 397 794 490V562Q794 670 682 700H464L322 796V690Q230 656 230 562V490Q230 397 278 340Z"/><path fill="#181b24" fill-rule="evenodd" d="M366 444H430V508H366Z M594 444H658V508H594Z"/></g></svg>

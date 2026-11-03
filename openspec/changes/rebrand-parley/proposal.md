@@ -2,7 +2,7 @@
 
 ## Why
 
-O produto passa de **Mesa** para **Parley**. O nome atual colide com a biblioteca gráfica Mesa 3D (já forçou o prefixo `mesa-chat-app` nos pacotes Linux) e não funciona em inglês como marca. Parley é curto, funciona em PT e EN e descreve o uso (conversa para combinar algo). O logo muda junto; o desenho novo ainda não existe e é entrada externa desta change.
+O produto passa de **Mesa** para **Parley**. O nome atual colide com a biblioteca gráfica Mesa 3D (já forçou o prefixo `mesa-chat-app` nos pacotes Linux) e não funciona em inglês como marca. Parley é curto, funciona em PT e EN e descreve o uso (conversa para combinar algo). O logo muda junto: o novo (urso com cabeça em forma de balão de conversa) já está aprovado e entregue em `docs/v2/parley_logo/`.
 
 Premissa do autor: há **uma única instância** em produção (chat.1nodado.com.br) e **só usuários de teste**, então não é preciso manter compatibilidade com instalações de terceiros. Trocar tudo que o usuário vê, e também os identificadores de empacotamento e as variáveis de ambiente, é aceitável. O que **não** se troca é o que quebraria criptografia ou chaves já guardadas (ver design.md, "Intocáveis").
 
@@ -40,4 +40,5 @@ Premissa do autor: há **uma única instância** em produção (chat.1nodado.com
 - CI e distribuição: `.github/workflows/desktop-release.yml`, `scripts/install-mesa.sh`, `scripts/install-mesa.ps1`, `README.md`, `CHANGELOG.md`.
 - Docs operacionais: `docs/deploy-producao.md`, `docs/operar-instancia.md`, `docs/desktop-release.md`.
 - Produção: `/etc/mesa/mesa.env` na instância atual e `systemd`.
-- Pré-requisito externo: arquivos do novo logo (mestre 1024 px, fundo transparente, emblema, versão legível a 16 px e versão de uma cor).
+- Logo: mestres aprovados em `docs/v2/parley_logo/` (SVG e PNG 1024); a change gera os ícones derivados deles.
+- Ordem: implementar depois de `email-registration` estar concluída e commitada, porque ambas alteram `backend/src/config.rs`.

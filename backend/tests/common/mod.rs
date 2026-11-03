@@ -39,9 +39,13 @@ impl TestApp {
         config.cookie_secure = false;
         config.production = false;
         config.rate_limit_disabled = true;
+        config.registo_modo = "fechado".into();
+        config.public_base_url = Some("https://mesa.example".into());
         config.default_invite_ttl_secs = 300;
         config.attachments_dir = dir.path().join("attachments");
         config.avatars_dir = dir.path().join("avatars");
+        config.email_log_file = Some(dir.path().join("email.log"));
+        config.email_api_key = Default::default();
         customize(&mut config);
         let state = build_state(config).await.expect("state");
         let pool = state.pool.clone();
@@ -207,6 +211,20 @@ impl TestApp {
             None,
         )
         .await
+    }
+
+    pub async fn last_email_link(&self) -> Option<String> {
+        let path = self
+            .state
+            .config
+            .email_log_file
+            .as_ref()?
+            .with_extension("eml");
+        let content = tokio::fs::read_to_string(path).await.ok()?;
+        content
+            .split_whitespace()
+            .find(|s| s.contains("#email_token="))
+            .map(str::to_string)
     }
 }
 

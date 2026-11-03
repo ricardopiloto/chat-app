@@ -33,6 +33,8 @@ pub struct RegisterBody {
     pub recovery_vault: Option<serde_json::Value>,
     #[serde(default)]
     pub recovery_verifier_pubkey: Option<String>,
+    #[serde(default)]
+    pub email_token: Option<String>,
 }
 
 pub fn encode_identity_vault(
@@ -132,6 +134,30 @@ pub async fn register_inner(
     }
     let pubkey = decode_pubkey(&body.identity_pubkey)?;
     let identity_vault = encode_identity_vault(body.identity_vault.as_ref())?;
+    match (
+        body.recovery_vault.as_ref(),
+        body.recovery_verifier_pubkey.as_deref(),
+    ) {
+        (None, None) => {}
+        (Some(vault), Some(verifier)) => {
+            if encode_identity_vault(Some(vault))?.is_none() {
+                return Err(ApiError::bad_request("recovery_vault required"));
+            }
+            let key = base64::engine::general_purpose::STANDARD
+                .decode(verifier.trim())
+                .map_err(|_| ApiError::bad_request("recovery_verifier_pubkey must be base64"))?;
+            if key.len() != 32 {
+                return Err(ApiError::bad_request(
+                    "recovery_verifier_pubkey must be 32 bytes",
+                ));
+            }
+        }
+        _ => {
+            return Err(ApiError::bad_request(
+                "recovery_vault and recovery_verifier_pubkey are set together",
+            ))
+        }
+    }
     let password_hash = hash_password(&body.password)?;
 
     let mut conn = state.pool.acquire().await?;
@@ -142,6 +168,10 @@ pub async fn register_inner(
 
     let outcome: Result<(AccountRecord, Option<crate::domain::invite::InviteRecord>), ApiError> =
         async {
+            let verified_email = match body.email_token.as_deref() {
+                Some(token) => Some(crate::api::auth::email::valid_token(&mut *tx, token).await?.ok_or_else(crate::api::auth::email::invalid_token)?),
+                None => None,
+            };
             let count = db::account::count(&mut *tx).await?;
             let mut invite = None;
             if count == 0 {
@@ -149,24 +179,13 @@ pub async fn register_inner(
                     // first account ignores invite; still allowed
                 }
             } else {
-                let code = body
-                    .invite_code
-                    .as_deref()
-                    .filter(|s| !s.is_empty())
-                    .ok_or_else(|| {
-                        ApiError::forbidden("invite required after the first account exists")
-                    })?;
-                let record = db::invite::find_by_code(&mut *tx, code)
-                    .await?
-                    .ok_or_else(|| {
-                        ApiError::forbidden("invite required after the first account exists")
-                    })?;
-                if !record.is_usable(Utc::now()) {
-                    return Err(ApiError::forbidden(
-                        "invite required after the first account exists",
-                    ));
+                if let Some(code) = body.invite_code.as_deref().filter(|s| !s.is_empty()) {
+                    let record = db::invite::find_by_code(&mut *tx, code).await?.ok_or_else(|| ApiError::forbidden("invite required after the first account exists"))?;
+                    if !record.is_usable(Utc::now()) { return Err(ApiError::forbidden("invite required after the first account exists")); }
+                    invite = Some(record);
+                } else if !(state.config.mode().ok() == Some(crate::config::RegistoModo::Aberto) && verified_email.is_some()) {
+                    return Err(ApiError::forbidden("invite required after the first account exists"));
                 }
-                invite = Some(record);
             }
 
             if db::account::find_by_handle(&mut *tx, &handle)
@@ -176,6 +195,13 @@ pub async fn register_inner(
                 return Err(ApiError::conflict("handle already exists"));
             }
 
+            if let Some((_, canonical)) = &verified_email {
+                let existing: Option<(String,)> = sqlx::query_as("SELECT id FROM account WHERE email_canonical = ?").bind(canonical).fetch_optional(&mut *tx).await?;
+                if existing.is_some() { return Err(ApiError::conflict_code("email_taken", "email already registered")); }
+            }
+
+            let now = Utc::now();
+
             let mut record = AccountRecord {
                 has_recovery_key: false,
                 id: Uuid::new_v4(),
@@ -184,12 +210,23 @@ pub async fn register_inner(
                 identity_pubkey: pubkey,
                 identity_vault,
                 is_initial_operator: count == 0,
-                created_at: Utc::now(),
+                created_at: now,
                 avatar_filename: None,
                 avatar_content_type: None,
                 display_name: None,
+                email: verified_email.as_ref().map(|(email, _)| email.clone()),
+                email_canonical: verified_email.as_ref().map(|(_, canonical)| canonical.clone()),
+                email_verified_at: verified_email.as_ref().map(|_| now),
+                terms_accepted_at: verified_email.as_ref().map(|_| now),
             };
-            db::account::create(&mut *tx, &record).await?;
+            db::account::create(&mut *tx, &record).await.map_err(|error| {
+                if let sqlx::Error::Database(db_error) = &error {
+                    if db_error.is_unique_violation() && db_error.message().contains("email_canonical") {
+                        return ApiError::conflict_code("email_taken", "email already registered");
+                    }
+                }
+                ApiError::from(error)
+            })?;
             store_recovery(
                 &mut tx,
                 record.id,
@@ -199,6 +236,12 @@ pub async fn register_inner(
             .await?;
             record.has_recovery_key =
                 body.recovery_vault.is_some() && body.recovery_verifier_pubkey.is_some();
+
+            if let Some(token) = body.email_token.as_deref() {
+                let changed = sqlx::query("UPDATE email_verification SET consumed_at = ? WHERE token_hash = ? AND consumed_at IS NULL AND expires_at > ?")
+                    .bind(now.to_rfc3339()).bind(hash_token(token)).bind(now.to_rfc3339()).execute(&mut *tx).await?;
+                if changed.rows_affected() != 1 { return Err(crate::api::auth::email::invalid_token()); }
+            }
 
             if let Some(inv) = &invite {
                 if !db::membership::exists(&mut *tx, record.id, inv.server_id).await? {

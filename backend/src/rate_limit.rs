@@ -15,6 +15,9 @@ const RECOVERY_LIMIT: usize = 5;
 const RECOVERY_WINDOW: Duration = Duration::from_secs(60 * 60);
 const MAX_BUCKETS: usize = 4096;
 const MAX_RECOVERY_HANDLE_BYTES: usize = 256;
+const EMAIL_IP_LIMIT: usize = 5;
+const EMAIL_ADDRESS_LIMIT: usize = 3;
+const EMAIL_WINDOW: Duration = Duration::from_secs(60 * 60);
 
 #[derive(Debug, Default)]
 struct RecoveryBucket {
@@ -107,6 +110,26 @@ impl RateLimiter {
         self.check(&key, AUTH_LIMIT, AUTH_WINDOW)
     }
 
+    pub fn allow_email_ip(&self, ip: Option<IpAddr>) -> bool {
+        self.check(
+            &format!(
+                "email-request:ip:{}",
+                ip.map(|v| v.to_string())
+                    .unwrap_or_else(|| "unknown".into())
+            ),
+            EMAIL_IP_LIMIT,
+            EMAIL_WINDOW,
+        )
+    }
+
+    pub fn allow_email_address(&self, canonical: &str) -> bool {
+        self.check(
+            &format!("email-request:address:{canonical}"),
+            EMAIL_ADDRESS_LIMIT,
+            EMAIL_WINDOW,
+        )
+    }
+
     pub fn allow_handle_check(&self, ip: Option<IpAddr>) -> bool {
         let who = ip
             .map(|a| a.to_string())
@@ -171,6 +194,39 @@ impl Default for RateLimiter {
 /// Optional TCP peer IP. Missing in `TestApp` oneshot (no ConnectInfo).
 pub struct ClientIp(pub Option<IpAddr>);
 
+pub struct RealClientIp(pub Option<IpAddr>);
+
+pub fn resolve_real_ip(
+    peer: Option<IpAddr>,
+    header: Option<&str>,
+    trusted_proxy: bool,
+) -> Option<IpAddr> {
+    if trusted_proxy && peer.is_some_and(|ip| ip.is_loopback()) {
+        header.and_then(|value| value.parse().ok()).or(peer)
+    } else {
+        peer
+    }
+}
+
+impl FromRequestParts<crate::AppState> for RealClientIp {
+    type Rejection = std::convert::Infallible;
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &crate::AppState,
+    ) -> Result<Self, Self::Rejection> {
+        let peer = parts
+            .extensions
+            .get::<ConnectInfo<SocketAddr>>()
+            .map(|c| c.0.ip());
+        let header = parts.headers.get("x-real-ip").and_then(|v| v.to_str().ok());
+        Ok(Self(resolve_real_ip(
+            peer,
+            header,
+            state.config.trusted_proxy,
+        )))
+    }
+}
+
 impl<S: Send + Sync> FromRequestParts<S> for ClientIp {
     type Rejection = std::convert::Infallible;
 
@@ -222,5 +278,48 @@ mod tests {
             let mut attempt = lim.start_recovery_attempt("alice").unwrap();
             attempt.success();
         }
+    }
+
+    #[test]
+    fn email_buckets_are_separate_and_aliases_share_one() {
+        let lim = RateLimiter::new();
+        let first = "127.0.0.1".parse().unwrap();
+        let second = "127.0.0.2".parse().unwrap();
+        for _ in 0..5 {
+            assert!(lim.allow_email_ip(Some(first)));
+        }
+        assert!(!lim.allow_email_ip(Some(first)));
+        assert!(lim.allow_email_ip(Some(second)));
+        let a = crate::email_address::normalize("a.b+x@gmail.com")
+            .unwrap()
+            .1;
+        let b = crate::email_address::normalize("ab@gmail.com").unwrap().1;
+        for _ in 0..3 {
+            assert!(lim.allow_email_address(&a));
+        }
+        assert!(!lim.allow_email_address(&b));
+        assert!(lim.allow_auth(Some(first)));
+    }
+
+    #[test]
+    fn real_ip_only_from_trusted_loopback() {
+        let loopback = "127.0.0.1".parse().unwrap();
+        let remote = "198.51.100.9".parse().unwrap();
+        assert_eq!(
+            resolve_real_ip(Some(loopback), Some("203.0.113.4"), true),
+            Some("203.0.113.4".parse().unwrap())
+        );
+        assert_eq!(
+            resolve_real_ip(Some(loopback), Some("203.0.113.4"), false),
+            Some(loopback)
+        );
+        assert_eq!(
+            resolve_real_ip(Some(remote), Some("203.0.113.4"), true),
+            Some(remote)
+        );
+        assert_eq!(
+            resolve_real_ip(Some(loopback), Some("not-ip"), true),
+            Some(loopback)
+        );
     }
 }

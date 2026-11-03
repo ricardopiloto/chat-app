@@ -4,6 +4,9 @@ import type { Account, IdentityVaultPayload, RegisterBody } from "../types";
 import type { RecoveryVault } from "../../crypto/recovery";
 
 export const auth = {
+  registrationConfig: () => http.get<{ mode: "fechado" | "aberto"; turnstile_site_key: string | null }>("/api/auth/register/config"),
+  requestEmail: (body: { email: string; terms_accepted: boolean; website?: string; captcha_token?: string }) => http.post<{ ok: true }>("/api/auth/email/request", body),
+  verifyEmail: (token: string) => http.post<{ email: string }>("/api/auth/email/verify", { token }),
   register: (body: RegisterBody) => http.post<Account>("/api/auth/register", body),
   login: (handle: string, password: string) => http.post<Account>("/api/auth/login", { handle, password }),
   logout: () => http.post<void>("/api/auth/logout"),

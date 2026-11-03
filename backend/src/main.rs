@@ -2,6 +2,7 @@ use chat_backend::{api::auth::recovery, db};
 use chat_backend::{api::voice, build_state, config::Config, router};
 use chrono::{Duration, Utc};
 use sqlx::Connection;
+use std::net::SocketAddr;
 use tokio::net::TcpListener;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -52,10 +53,16 @@ async fn main() {
     let bind = config.bind.clone();
     let state = build_state(config).await.expect("database");
     voice::spawn_stale_occupancy_sweeper(state.clone());
+    chat_backend::api::auth::email::spawn_cleanup(state.pool.clone());
     let app = router(state).layer(tower_http::trace::TraceLayer::new_for_http());
     let listener = TcpListener::bind(&bind).await.expect("bind");
     tracing::info!("listening on {bind}");
-    axum::serve(listener, app).await.expect("serve");
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await
+    .expect("serve");
 }
 
 async fn issue_reset_code(
