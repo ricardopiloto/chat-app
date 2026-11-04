@@ -47,7 +47,7 @@ export const voicePtBR: MessageTree = {
     bench: "No banco",
     benchEmpty: "Todos têm lugar no palco.",
     view: { label: "Vista da chamada", composition: "Composição", grid: "Grade" },
-    layout: { mestre: "Mestre em Destaque", quad: "Painel", faixa: "Faixa" },
+    layout: { mestre: "Destaque principal", quad: "Painel", faixa: "Faixa" },
     blur: {
       label: "Fundo da câmera",
       off: "Nítido",

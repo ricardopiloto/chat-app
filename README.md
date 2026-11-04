@@ -1,12 +1,17 @@
+<p align="center">
+  <img src="docs/v2/parley_logo/parley-logo-1024.png" alt="Parley" width="240">
+  <img src="docs/v2/parley_logo/mascote/parley-mascote-principal.png" alt="Mascote do Parley: urso aventureiro com cabeça em forma de balão de conversa" width="200">
+</p>
+
 # Parley
 
 **Chat e vídeo self-hosted**, no espírito do Discord, com **composição nativa de câmeras** e **criptografia ponta a ponta (E2EE) por omissão**.
 
-Pensado para mesas de RPG que gravam ou transmitem sessões, e para qualquer grupo pequeno que queira uma instância própria, sem federação e sem o servidor a ler o conteúdo das conversas.
+Para amigos, famílias, equipes, comunidades e criadores: qualquer grupo que queira uma instância própria, sem federação e sem o servidor a ler o conteúdo das conversas.
 
 | | |
 |--|--|
-| **Estado** | **1.3.2** — backend, frontend v2 e cliente desktop Electron (ver [CHANGELOG.md](CHANGELOG.md)) |
+| **Estado** | **1.4.0** — backend, frontend v2 e cliente desktop Electron (ver [CHANGELOG.md](CHANGELOG.md)) |
 | **Baixar** | [Instaladores desktop (Windows/macOS/Linux)](https://github.com/ricardopiloto/chat-app/releases) — ver [Distribuição desktop](#distribuição-desktop) |
 | **Stack** | Backend Rust (Axum + SQLite) · Frontend **v2** SolidJS (Vite, Tailwind) · Cliente desktop Electron · LiveKit (voz/vídeo) |
 | **Frontend** | [`frontend/`](frontend/) é o cliente atual (v2). A versão 0.8.1 da v1 permanece no histórico Git para rollback |
@@ -17,9 +22,19 @@ Pensado para mesas de RPG que gravam ou transmitem sessões, e para qualquer gru
 
 > Este README descreve a **v2**. A versão anterior do documento (centrada na v1) está em [`docs/archive/README-v1.md`](docs/archive/README-v1.md).
 
+## Por que usar o Parley?
+
+- **Ninguém lê as suas conversas.** Mensagens, arquivos e chamadas são cifrados ponta a ponta por padrão, com as chaves geradas no seu dispositivo. Nem quem hospeda o servidor consegue abrir o conteúdo.
+- **Os dados ficam com você.** Sem telemetria, sem anúncios, sem federação e sem depender de uma nuvem fechada: você escolhe onde a instância roda e quem entra.
+- **Chat, voz e vídeo no mesmo lugar.** Canais de texto, salas de voz e vídeo, compartilhamento de tela e convites, sem costurar ferramentas.
+- **Vídeo com palco próprio.** A composição de câmeras escolhe quem aparece onde, em reuniões, lives, aulas e gravações, sem programa de transmissão à parte.
+- **Fácil de subir e de manter.** Um backend em Rust com SQLite embutido, instaladores para Windows, macOS e Linux e poucas portas abertas.
+- **Para qualquer grupo.** Amigos, famílias, equipes, comunidades, escolas, criadores de conteúdo e grupos de RPG e outros jogos. Se vocês precisam conversar em privado, o Parley serve.
+
 ## Índice
 
-1. [A ideia](#a-ideia)
+1. [Por que usar o Parley?](#por-que-usar-o-parley)
+2. [A ideia](#a-ideia)
 2. [Funcionalidades](#funcionalidades)
 3. [Telas](#telas)
 4. [Arquitetura](#arquitetura)
@@ -37,7 +52,7 @@ Pensado para mesas de RPG que gravam ou transmitem sessões, e para qualquer gru
 
 ## A ideia
 
-Quem precisa de **chat + chamada** e, ao mesmo tempo, de **composição visual** (quem aparece onde na cena) costura hoje duas ferramentas: um chat tipo Discord e um programa de transmissão. O Parley junta as duas, numa instância que o próprio grupo controla.
+Quem precisa de **chat + chamada** e, ao mesmo tempo, de controle sobre quem vê o quê costura hoje serviços de terceiros, cada um com os seus dados e os seus termos. O Parley junta chat, voz e vídeo numa instância que o próprio grupo controla, e quando a conversa vira reunião, live ou gravação, a **composição de câmeras** decide quem aparece onde.
 
 1. **Instância**: o processo que o operador corre (máquina local ou VPS). Hospeda vários **Servidores**.
 2. **Servidor**: unidade social (dono, cargos, canais, convites, membros).
@@ -45,7 +60,7 @@ Quem precisa de **chat + chamada** e, ao mesmo tempo, de **composição visual**
 
 Não há federação entre instâncias: o que corre na tua máquina fica na tua máquina. A primeira conta registada é o **Administrador da instância**; as seguintes entram por convite por padrão. Com `REGISTO_MODO=aberto`, também podem entrar após confirmar um e-mail, sem convite e sem pertencer inicialmente a um servidor. Por ora, o marcador de administrador não concede permissões extras nem associa a conta a um servidor. O **operador** é quem tem acesso ao host e pode executar comandos de manutenção; no self-host local as duas pessoas podem coincidir. Configure a primeira conta antes de expor a instância à internet.
 
-**Porquê self-host?** O operador escolhe onde vivem metadados e ficheiros; SQLite embutido e poucas portas (API, LiveKit, TURN) permitem subir uma mesa em menos de 30 minutos; não há rede social global nem diretório obrigatório.
+**Porquê self-host?** O operador escolhe onde vivem metadados e ficheiros; SQLite embutido e poucas portas (API, LiveKit, TURN) permitem subir a sua instância em menos de 30 minutos; não há rede social global nem diretório obrigatório.
 
 ---
 
@@ -116,33 +131,33 @@ Com `KEY_REMINDERS=true` (desligado por padrão), uma conta com e-mail verificad
 
 ## Telas
 
-Capturas reais da v2 (tema escuro, pt-BR) em [`docs/v2/fidelity/`](docs/v2/fidelity/). Cada tela foi comparada com o seu mockup em [`docs/v2/mesa_*`](docs/v2/).
+Capturas reais da v2 com a marca Parley (tema escuro, pt-BR), em [`docs/screenshots/`](docs/screenshots/). As telas de voz e vídeo (palco, grade, editor de cena, PiP e configurações de áudio e vídeo) ainda são as capturas anteriores à troca de marca, em [`docs/v2/fidelity/`](docs/v2/fidelity/), e mostram o logo antigo. Cada tela foi comparada com o seu mockup em [`docs/v2/mesa_*`](docs/v2/).
 
 ### Entrada e conta
 
 | Entrar / criar conta | Desbloqueio do cofre | Menu da conta |
 |:--:|:--:|:--:|
-| ![Login](docs/v2/fidelity/frontend-v2-auth-shell/login.png) | ![Desbloqueio](docs/v2/fidelity/frontend-v2-auth-shell/unlock-local.png) | ![Menu da conta](docs/v2/fidelity/frontend-v2-auth-shell/account-menu.png) |
+| ![Login](docs/screenshots/login.png) | ![Desbloqueio](docs/screenshots/unlock-local.png) | ![Menu da conta](docs/screenshots/account-menu.png) |
 
 ### Shell e chat de texto
 
 | Shell com canais e Membros | Chat com respostas, menções e anexos |
 |:--:|:--:|
-| ![Shell](docs/v2/fidelity/frontend-v2-auth-shell/shell.png) | ![Chat](docs/v2/fidelity/frontend-v2-text-chat/chat-topo.jpg) |
+| ![Shell](docs/screenshots/shell.png) | ![Chat](docs/screenshots/chat.png) |
 
 | Pesquisa global | Notificações | Lightbox de anexos |
 |:--:|:--:|:--:|
-| ![Pesquisa](docs/v2/fidelity/frontend-v2-text-chat/pesquisa.jpg) | ![Notificações](docs/v2/fidelity/frontend-v2-text-chat/notificacoes.jpg) | ![Lightbox](docs/v2/fidelity/frontend-v2-text-chat/lightbox.jpg) |
+| ![Pesquisa](docs/screenshots/pesquisa.png) | ![Notificações](docs/screenshots/notificacoes.png) | ![Lightbox](docs/screenshots/lightbox.png) |
 
 ### Administração do servidor
 
 | Cargos e permissões | Membros | Convidar (passo 1) |
 |:--:|:--:|:--:|
-| ![Cargos](docs/v2/fidelity/frontend-v2-server-admin/cargos-lista.jpg) | ![Membros](docs/v2/fidelity/frontend-v2-server-admin/membros.jpg) | ![Convidar](docs/v2/fidelity/frontend-v2-server-admin/convidar-passo1.jpg) |
+| ![Cargos](docs/screenshots/cargos-lista.png) | ![Membros](docs/screenshots/membros.png) | ![Convidar](docs/screenshots/convidar-passo1.png) |
 
 | Permissões do canal (ACL) | Inspetor de acesso | Criar canal de voz com custódia |
 |:--:|:--:|:--:|
-| ![ACL](docs/v2/fidelity/frontend-v2-server-admin/permissoes-canal.jpg) | ![Inspetor](docs/v2/fidelity/frontend-v2-server-admin/inspecionar-acesso.jpg) | ![Canal de voz](docs/v2/fidelity/frontend-v2-server-admin/criar-canal-voz.jpg) |
+| ![ACL](docs/screenshots/permissoes-canal.png) | ![Inspetor](docs/screenshots/inspecionar-acesso.png) | ![Canal de voz](docs/screenshots/criar-canal-voz.png) |
 
 ### Voz e vídeo
 

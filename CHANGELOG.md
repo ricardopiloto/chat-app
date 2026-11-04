@@ -7,22 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Product versions align with `frontend/package.json` and `backend/Cargo.toml` unless noted. Up to 0.8.1 `frontend/` was the v1 client; since 1.0.0 it holds the v2 client (the rewrite formerly developed as `frontend-v2/`).
 
-## [1.4.0] - 2026-11-04
-
-### Changed
-
-- O produto passa a chamar-se Parley, com novo logo, ícones e instaladores `Parley-…` e `parley-chat-app-…`.
-- **BREAKING:** o desktop usa `com.parley.desktop` e um perfil novo. Informe novamente a instância e entre; chaves de canal de voz coladas manualmente precisam ser repostas. Os dados antigos do Mesa permanecem no disco.
-- **BREAKING:** variáveis `MESA_*` passam a `PARLEY_*`; o backend recusa iniciar com as antigas. Atualize o ambiente antes de reiniciar o serviço.
-- **BREAKING:** scripts e pacotes Linux usam `parley-chat-app`. Reexecute o script de instalação a partir do repositório para localizar os novos artefatos.
-- Na primeira abertura empacotada, o Parley pede consentimento para remover a instalação anterior do Mesa. Pacotes que exigem elevação têm instrução manual.
-
 ## [Unreleased]
+
+## [1.4.0] - 2026-11-04
 
 ### Added
 
 - Lembretes opcionais da chave de recuperação (`KEY_REMINDERS=true`): boas-vindas após cadastro com e-mail verificado e, para contas ainda sem chave, até três lembretes ao criar canais, com intervalo mínimo de 24 horas. A preferência por conta está em `PATCH /api/auth/key-reminders` e nas configurações da conta. Os e-mails apontam só para `PUBLIC_BASE_URL/account#recovery` e nunca carregam chaves, códigos, segredos ou tokens.
-
 - Recuperação iniciada por e-mail verificado (`RESET_EMAIL=true`, desligado por padrão): pedido `POST /api/auth/recovery/email/request` com resposta 202 uniforme, limites por IP e e-mail e link `/recover#handle=…` apenas para contas com chave. Sem chave, a mensagem orienta a procurar o operador. O e-mail não autoriza reset; os fluxos por chave e código do operador enviam aviso depois da reposição.
 - Cadastro por e-mail confirmado antes de criar a conta (`email-registration`). A pessoa informa só o e-mail e aceita os termos (`POST /api/auth/email/request`, resposta `202` sempre genérica); recebe um link `…/register#email_token=…` válido por 5 horas e de uso único, com o token no fragmento do URL (nunca em caminho ou query) e guardado só como hash. A página valida o token por `POST /api/auth/email/verify` e o cadastro atual (`POST /api/auth/register`) aceita o campo opcional `email_token`, que cria a conta com o e-mail verificado, sem pertencer a nenhum servidor.
 - Modo de registo `REGISTO_MODO=fechado|aberto` (padrão `fechado`, que mantém o convite obrigatório e o comportamento anterior). `GET /api/auth/register/config` informa o modo e a chave pública do Turnstile. Em `aberto`, um e-mail verificado dispensa o convite; um convite válido continua a levar a conta para o servidor.
@@ -31,6 +22,22 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 - Migração `0026_email_registration.sql` (aditiva): tabela `email_verification` e colunas nulas `email`, `email_canonical`, `email_verified_at`, `terms_accepted_at` em `account`, com índice único parcial no e-mail canonicalizado. Verificações expiradas são apagadas a cada 15 minutos. Contas existentes ficam sem e-mail; o `/auth/me` devolve o e-mail só à própria conta.
 - Contas existentes e clientes sem `email_token` continuam a usar o fluxo de convites.
 - A configuração inicial identifica a primeira conta como Administrador da instância, recomenda a chave de recuperação e mostra o papel na conta. `GET /api/instance/status` expõe apenas se a instância ainda está vazia, com limite por IP; o cadastro e `/health` mantêm seus contratos.
+- `npm run verify:brand`: falha com qualquer «Mesa/mesa» visível fora da lista de itens inalterados e dos caminhos históricos.
+- `npm run verify:legacy-cleanup`: testes do módulo de limpeza da instalação anterior (`frontend/electron/legacy-cleanup.ts`), que não toca a pasta de dados.
+- `npm run verify:icons` agora também confere os mestres do logo (1024×1024, RGBA, monocromático com transparência) e os ícones do app.
+
+### Changed
+
+- O produto passa a chamar-se **Parley** (antes Mesa): catálogos i18n (pt-BR e en), `<title>`, textos da interface, README, notas da release, mensagens dos scripts de instalação e documentação operacional (`docs/deploy-producao.md`, `docs/operar-instancia.md`, `docs/desktop-release.md`). Servidores já criados mantêm o nome que têm.
+- Novo logo (urso com cabeça em forma de balão de conversa) e novo conjunto de ícones gerado a partir dos mestres de `docs/v2/parley_logo/` com `scripts/generate-parley-icons.sh`: `logo.png`, `emblem.png`, `favicon.png`, `apple-touch-icon.png` e `frontend/electron/icons/` (PNGs de Linux de 16 a 512 px e `.ico` do Windows).
+- Backend: User-Agent do unfurl, prefixo do arquivo de gravação e canal de voz criado por omissão passam a Parley. A recovery key baixada passa a `parley-recovery-key.txt`.
+- Instaladores e artefatos da release: `Parley-…` (Windows e macOS) e `parley-chat-app-…` (Linux), com `SHA256SUMS`; o workflow `desktop-release.yml` e os scripts `install-mesa.sh` e `install-mesa.ps1` localizam os nomes novos, e o atalho do Linux e do macOS se chama Parley.
+- Na primeira abertura empacotada, o Parley pede consentimento para remover a instalação anterior do Mesa. Pacotes que exigem elevação têm instrução manual. A pasta de dados do Mesa nunca é apagada.
+- **BREAKING:** o desktop usa `com.parley.desktop` e um perfil novo. Informe novamente a instância e entre; chaves de canal de voz coladas manualmente precisam ser repostas. Os dados antigos do Mesa permanecem no disco.
+- **BREAKING:** variáveis `MESA_*` passam a `PARLEY_*` (`PARLEY_PRODUCTION`, `PARLEY_ENV`, `PARLEY_RATE_LIMIT_DISABLED`); o backend recusa iniciar com as antigas. Atualize o arquivo de ambiente antes de reiniciar o serviço.
+- **BREAKING:** scripts e pacotes Linux usam `parley-chat-app`. Reexecute o script de instalação a partir do repositório para localizar os novos artefatos.
+- Inalterados por compatibilidade criptográfica e de dados: rótulos `mesa-recovery-v1` e `mesa-invite-seed-v1`, chaves `mesa.*` do `localStorage`, protocolo `mesa://`, canais IPC `mesa:*`, header `x-mesa-media-type` e `__MESA_NATIVE__`.
+- Versão do produto **1.4.0** em `frontend/package.json`, `backend/Cargo.toml` e `frontend/electron/package.json`.
 
 ## [1.3.5] - 2026-10-16
 

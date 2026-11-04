@@ -16,7 +16,7 @@ A versão do produto está em três manifestos, e os três têm de ser o mesmo n
 - `frontend/package.json`
 - `frontend/electron/package.json`
 
-Os instaladores usam o número de `frontend/package.json` (o `electron-builder` lê esse manifesto, com o projecto em `frontend/`). Uma tag `v1.4.0` só é aceite se `frontend/electron/package.json` disser `1.2.0`. Se a tag não bater certo, o workflow falha antes de produzir instaladores.
+Os instaladores usam o número de `frontend/package.json` (o `electron-builder` lê esse manifesto, com o projecto em `frontend/`). Uma tag `v1.4.0` só é aceite se `frontend/electron/package.json` disser `1.4.0`. Se a tag não bater certo, o workflow falha antes de produzir instaladores.
 
 ## Disparar
 

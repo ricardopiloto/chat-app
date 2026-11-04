@@ -24,7 +24,7 @@ linux:
   synopsis: Chat e vídeo self-hosted com cifra de ponta a ponta.
   description: >
     Chat e vídeo self-hosted, com composição de câmaras e criptografia ponta a
-    ponta. Pensado para mesas de RPG e grupos pequenos que querem uma instância
+    ponta. Para amigos, famílias, equipes e comunidades que querem uma instância
     própria, sem o servidor ler o conteúdo das conversas.
   executableName: parley-chat-app
   maintainer: Parley
