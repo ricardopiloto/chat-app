@@ -16,12 +16,12 @@ A versão do produto está em três manifestos, e os três têm de ser o mesmo n
 - `frontend/package.json`
 - `frontend/electron/package.json`
 
-Os instaladores usam o número de `frontend/package.json` (o `electron-builder` lê esse manifesto, com o projecto em `frontend/`). Uma tag `v1.2.0` só é aceite se `frontend/electron/package.json` disser `1.2.0`. Se a tag não bater certo, o workflow falha antes de produzir instaladores.
+Os instaladores usam o número de `frontend/package.json` (o `electron-builder` lê esse manifesto, com o projecto em `frontend/`). Uma tag `v1.4.0` só é aceite se `frontend/electron/package.json` disser `1.2.0`. Se a tag não bater certo, o workflow falha antes de produzir instaladores.
 
 ## Disparar
 
 - **Sem publicar:** em GitHub Actions, correr `Desktop release` com *Run workflow* (`workflow_dispatch`). Os três jobs compilam e deixam os ficheiros nos artefactos da execução. Não é criada nenhuma GitHub Release.
-- **Release:** criar a tag `v*` (por exemplo `v1.2.0`) no commit que já tem os três manifestos actualizados. O job `release` cria uma GitHub Release **em rascunho** (`draft: true` em `softprops/action-gh-release`) com esse nome e anexa os instaladores. O rascunho não fica público até alguém o publicar na página da release. Um `workflow_dispatch` sem tag não corre esse job.
+- **Release:** criar a tag `v*` (por exemplo `v1.4.0`) no commit que já tem os três manifestos actualizados. O job `release` cria uma GitHub Release **em rascunho** (`draft: true` em `softprops/action-gh-release`) com esse nome e anexa os instaladores. O rascunho não fica público até alguém o publicar na página da release. Um `workflow_dispatch` sem tag não corre esse job.
 
 A escolha do rascunho é deliberada. A primeira release real não deve aparecer publicada sem uma revisão dos ficheiros.
 
@@ -33,13 +33,11 @@ A escolha do rascunho é deliberada. A primeira release real não deve aparecer 
 | Windows | `.exe` (NSIS) e `.msi`, sem assinatura Authenticode |
 | macOS | `.dmg` (a `.app` vai dentro do disco, não é publicada à parte), sem notarização |
 
-O nome de cada ficheiro inclui a versão de `frontend/package.json`, que tem de ser a mesma de `frontend/electron/package.json` (hoje `1.2.0`).
-
-Nos três formatos Linux, o nome do ficheiro, o binário instalado e o identificador do pacote usam `mesa-chat-app`, não `mesa`/`Mesa` (`frontend/electron-builder.yml`: `executableName`, `deb.packageName`, `rpm.packageName`, `artifactName`) — por exemplo `mesa-chat-app-1.2.0-amd64.deb`, `mesa-chat-app-1.2.0-x86_64.rpm`, `mesa-chat-app-1.2.0-x86_64.AppImage`. Motivo: `mesa`/`Mesa` é também o nome da biblioteca gráfica Mesa 3D (`mesa-libgallium`, `mesa-vulkan-drivers`, etc.), já instalada por omissão em praticamente qualquer distribuição Linux — confirmado em `dpkg -l | grep mesa` numa instalação Ubuntu comum. `productName` ("Mesa", mostrado no menu/dock/título da janela) e `appId` (`com.mesa.desktop`) não mudam, só o identificador de empacotamento. Windows e macOS não têm este risco de colisão (sem um espaço de nomes de pacotes partilhado) e continuam com `Mesa` no nome dos instaladores.
+O nome de cada ficheiro inclui a versão dos três manifestos (1.4.0). No Linux, o pacote, executável e `.desktop` usam `parley-chat-app`; o nome `parley` isolado colide com o aplicativo Parley do KDE. `productName` é `Parley` e `appId` é `com.parley.desktop`. Windows e macOS usam `Parley-<versão>` nos instaladores. A mudança do `appId` cria um perfil novo do Electron; a limpeza da instalação antiga ocorre após a primeira abertura, com consentimento.
 
 Os artefactos de uma tag ficam na GitHub Release `v*` (rascunho até ser publicada): `https://github.com/ricardopiloto/chat-app/releases`. Num disparo manual, ficam só nos artefactos dessa execução do workflow.
 
-O `.deb` e o `.rpm` instalam um `.desktop` (`mesa-chat-app.desktop`) com o ícone de `frontend/electron/icons/`. No Wayland, esse ícone só aparece na barra depois de instalar o pacote; uma janela de desenvolvimento ou um directório desempacotado continua com o símbolo genérico.
+O `.deb` e o `.rpm` instalam um `.desktop` (`parley-chat-app.desktop`) com o ícone de `frontend/electron/icons/`. No Wayland, esse ícone só aparece na barra depois de instalar o pacote; uma janela de desenvolvimento ou um directório desempacotado continua com o símbolo genérico.
 
 ## Instaladores por assinar
 

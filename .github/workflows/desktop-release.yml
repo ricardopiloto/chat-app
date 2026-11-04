@@ -54,7 +54,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: mesa-linux
+          name: parley-linux
           path: |
             frontend/release/*.AppImage
             frontend/release/*.deb
@@ -106,7 +106,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: mesa-windows
+          name: parley-windows
           path: |
             frontend/release/*.exe
             frontend/release/*.msi
@@ -154,7 +154,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: mesa-macos
+          name: parley-macos
           path: frontend/release/*.dmg
           if-no-files-found: error
 
@@ -167,7 +167,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          pattern: mesa-*
+          pattern: parley-*
           path: artifacts
           merge-multiple: true
 
@@ -184,6 +184,6 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           draft: true
-          name: Mesa ${{ github.ref_name }}
+          name: Parley ${{ github.ref_name }}
           body: Rascunho gerado por .github/workflows/desktop-release.yml. Publicar manualmente depois de rever os instaladores.
           files: artifacts/**

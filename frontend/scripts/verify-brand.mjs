@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 const root = resolve(fileURLToPath(new URL("../..", import.meta.url)));
 const inputs = ["frontend/src", "backend/src", "frontend/index.html", "README.md", "scripts", "infra"];
 const historical = [/^docs\/archive\//, /^openspec\/changes\/archive\//, /^docs\/v2\//];
-const omitted = new Set(["scripts/install-mesa.sh", "scripts/install-mesa.ps1", "infra/.env"]);
+const omitted = new Set(["infra/.env"]);
 const contractTokens = [
   /mesa-recovery-v1/g, /mesa-invite-seed-v1/g, /mesa:\/\//g, /mesa:[\w*-]+/g,
   /mesa\.(?:channelKey|instance|locale|theme|instance-admin-welcome|dev|soundPrefs|callPrefs|cameraBlur|call|pip|lastChannel|membersPanel)[\w.*:-]*/g,
@@ -28,13 +28,14 @@ function files(path) {
   return entries.flatMap((entry) => {
     const child = `${path}/${entry.name}`;
     if (entry.isDirectory()) return files(child);
-    return entry.isFile() && /\.(?:ts|tsx|rs|mjs|md|html|example)$/.test(entry.name) ? [child] : [];
+    return entry.isFile() && /\.(?:ts|tsx|rs|mjs|md|html|example|sh|ps1)$/.test(entry.name) ? [child] : [];
   });
 }
 const paths = inputs.flatMap((path) => path.includes(".") && !path.endsWith("/src") ? [path] : files(path));
 const failures = [];
 function isVisibleBrand(line, path) {
   let remainder = line;
+  if (path === "scripts/install-mesa.sh" && /\/Applications\/Mesa\.app/.test(line)) return false;
   if (path === "backend/src/config.rs") remainder = remainder.replace(/"MESA_(?:PRODUCTION|ENV|RATE_LIMIT_DISABLED)"/g, "");
   if (path === "README.md" && /(?:transição do Mesa|instalação antiga do Mesa|dados antiga do Mesa)/.test(line)) return false;
   for (const pattern of [...contractTokens, ...commonNouns]) remainder = remainder.replace(pattern, "");

@@ -83,3 +83,11 @@ Ver proposal.md. Observado no código e na infra:
 ## Open Questions
 
 - Nenhuma que mude escopo ou tarefas.
+
+## Implementação provisória da limpeza Windows (pendente de 1.1)
+
+O módulo de limpeza usa, provisoriamente, a chave de desinstalação com sufixo `com.mesa.desktop` **e** `DisplayName` exatamente `Mesa`, em `HKCU`. `HKLM` é apenas aviso manual. O argumento silencioso assumido é `/S` (NSIS). É uma hipótese baseada no `appId` anterior e no alvo NSIS do electron-builder, não uma observação de uma instalação real. Antes de marcar 2.1/2.2 como concluídas ou publicar, a tarefa 1.1 deve confirmar o nome real da chave, o `UninstallString`, o `InstallLocation` e o argumento. Se divergirem, ajustar o detector e repetir os testes.
+
+## Ícones reproduzíveis
+
+Executar `scripts/generate-parley-icons.sh` na raiz, com ImageMagick. O macOS usa `electron/icons/icon.png` de 1024 px como `mac.icon`; o electron-builder converte para o formato nativo no runner macOS. Não se mantém um `.icns` separado.

@@ -1,8 +1,14 @@
-import { app, BrowserWindow, desktopCapturer, ipcMain, net, protocol, session, shell } from "electron";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { app, BrowserWindow, desktopCapturer, dialog, ipcMain, net, protocol, session, shell } from "electron";
+import { access, appendFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join, normalize, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
+import { execFile } from "node:child_process";
+import { homedir } from "node:os";
+import { promisify } from "node:util";
+import { runLegacyCleanup, type LegacyPlatform } from "./legacy-cleanup.js";
+
+const execFileAsync = promisify(execFile);
 const DEV_URL = "https://127.0.0.1:1421";
 const APP_ORIGIN = "mesa://app";
 const BACKGROUND = "#10131c";
@@ -174,6 +180,50 @@ function createWindow(): BrowserWindow {
     void win.loadURL(`${APP_ORIGIN}/index.html`);
   }
   return win;
+}
+
+async function runPackagedLegacyCleanup(window: BrowserWindow): Promise<void> {
+  if (!app.isPackaged || isDev) return;
+  const platform = process.platform as LegacyPlatform;
+  if (!["win32", "darwin", "linux"].includes(platform)) return;
+  const data = app.getPath("userData");
+  const marker = join(data, "legacy-cleanup.done");
+  const logFile = join(data, "legacy-cleanup.log");
+  const exists = async (path: string) => { try { await access(path); return true; } catch { return false; } };
+  const registry = async () => {
+    if (platform !== "win32") return [];
+    const entries: { key: string; displayName: string; uninstall: string; location: string; scope: "HKCU" | "HKLM" }[] = [];
+    for (const scope of ["HKCU", "HKLM"] as const) {
+      const root = `${scope}\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall`;
+      let output = "";
+      try { output = (await execFileAsync("reg", ["query", root, "/s"], { windowsHide: true })).stdout; } catch { continue; }
+      for (const block of output.split(/(?=HKEY_)/i)) {
+        const key = block.match(/^([^\r\n]+)/)?.[1]?.trim() ?? "";
+        const field = (name: string) => block.match(new RegExp(`^\\s*${name}\\s+REG_SZ\\s+(.+)$`, "im"))?.[1]?.trim() ?? "";
+        if (key) entries.push({ key, displayName: field("DisplayName"), uninstall: field("UninstallString"), location: field("InstallLocation"), scope });
+      }
+    }
+    return entries;
+  };
+  await runLegacyCleanup(platform, homedir(), app.getPath("exe"), {
+    exists,
+    remove: async path => rm(path, { recursive: true, force: true }),
+    registry,
+    packages: async () => {
+      if (platform !== "linux") return [];
+      const result: ("deb" | "rpm")[] = [];
+      try { await execFileAsync("dpkg-query", ["-W", "-f=${Status}", "mesa-chat-app"]); result.push("deb"); } catch { /* absent */ }
+      try { await execFileAsync("rpm", ["-q", "mesa-chat-app"]); result.push("rpm"); } catch { /* absent */ }
+      return result;
+    },
+    execute: async (file, args) => { await execFileAsync(file, args, { windowsHide: true }); },
+    sleep: ms => new Promise(resolve => setTimeout(resolve, ms)),
+    markerExists: () => exists(marker),
+    mark: async () => { await writeFile(marker, new Date().toISOString(), "utf8"); },
+    confirm: async () => (await dialog.showMessageBox(window, { type: "question", buttons: ["Remover Mesa", "Agora não"], defaultId: 1, cancelId: 1, title: "Instalação anterior", message: "Remover o Mesa instalado?", detail: "Feche o Mesa antes de continuar. Seus dados antigos serão preservados." })).response === 0,
+    inform: async message => { await dialog.showMessageBox(window, { type: "info", title: "Remoção manual do Mesa", message: "A instalação anterior pode ser removida manualmente.", detail: message }); },
+    log: async message => { await appendFile(logFile, `${new Date().toISOString()} ${message}\n`, "utf8"); },
+  });
 }
 
 function onWayland(): boolean {
@@ -404,7 +454,8 @@ app.whenReady().then(async () => {
   registerInstanceIpc();
   registerPopoutIpc();
   registerUpdateIpc();
-  createWindow();
+  const mainWindow = createWindow();
+  if (app.isPackaged && !isDev) mainWindow.webContents.once("did-finish-load", () => { void runPackagedLegacyCleanup(mainWindow).catch(error => console.error("legacy cleanup failed", error)); });
   if (!isDev) {
     void checkForUpdate();
     const timer = setInterval(() => void checkForUpdate(), UPDATE_INTERVAL_MS);

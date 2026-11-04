@@ -1,12 +1,12 @@
-appId: com.mesa.desktop
-productName: Mesa
-copyright: Copyright © Mesa
+appId: com.parley.desktop
+productName: Parley
+copyright: Copyright © Parley
 extraMetadata:
-  name: mesa
-  author: Mesa
+  name: parley-chat-app
+  author: Parley
   description: Chat e vídeo self-hosted, com composição de câmaras e criptografia ponta a ponta.
   homepage: https://github.com/ricardopiloto/chat-app
-  desktopName: mesa-chat-app.desktop
+  desktopName: parley-chat-app.desktop
 directories:
   output: release
 files:
@@ -26,25 +26,25 @@ linux:
     Chat e vídeo self-hosted, com composição de câmaras e criptografia ponta a
     ponta. Pensado para mesas de RPG e grupos pequenos que querem uma instância
     própria, sem o servidor ler o conteúdo das conversas.
-  executableName: mesa-chat-app
-  maintainer: Mesa
+  executableName: parley-chat-app
+  maintainer: Parley
   syncDesktopName: true
-  artifactName: "mesa-chat-app-${version}-${arch}.${ext}"
+  artifactName: "parley-chat-app-${version}-${arch}.${ext}"
 deb:
-  packageName: mesa-chat-app
+  packageName: parley-chat-app
 rpm:
-  packageName: mesa-chat-app
+  packageName: parley-chat-app
 win:
   target:
     - nsis
     - msi
   icon: electron/icons/icon.ico
-  artifactName: "Mesa-${version}.${ext}"
+  artifactName: "Parley-${version}.${ext}"
 mac:
   target:
     - dmg
-  icon: electron/icons/icon.icns
+  icon: electron/icons/icon.png
   category: public.app-category.social-networking
   extendInfo:
-    NSCameraUsageDescription: A Mesa usa a câmara para os canais de voz e vídeo.
-    NSMicrophoneUsageDescription: A Mesa usa o microfone para os canais de voz e vídeo.
+    NSCameraUsageDescription: O Parley usa a câmara para os canais de voz e vídeo.
+    NSMicrophoneUsageDescription: O Parley usa o microfone para os canais de voz e vídeo.

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Product versions align with `frontend/package.json` and `backend/Cargo.toml` unless noted. Up to 0.8.1 `frontend/` was the v1 client; since 1.0.0 it holds the v2 client (the rewrite formerly developed as `frontend-v2/`).
 
+## [1.4.0] - 2026-11-04
+
+### Changed
+
+- O produto passa a chamar-se Parley, com novo logo, ícones e instaladores `Parley-…` e `parley-chat-app-…`.
+- **BREAKING:** o desktop usa `com.parley.desktop` e um perfil novo. Informe novamente a instância e entre; chaves de canal de voz coladas manualmente precisam ser repostas. Os dados antigos do Mesa permanecem no disco.
+- **BREAKING:** variáveis `MESA_*` passam a `PARLEY_*`; o backend recusa iniciar com as antigas. Atualize o ambiente antes de reiniciar o serviço.
+- **BREAKING:** scripts e pacotes Linux usam `parley-chat-app`. Reexecute o script de instalação a partir do repositório para localizar os novos artefatos.
+- Na primeira abertura empacotada, o Parley pede consentimento para remover a instalação anterior do Mesa. Pacotes que exigem elevação têm instrução manual.
+
 ## [Unreleased]
 
 ### Added

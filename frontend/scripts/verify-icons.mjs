@@ -65,6 +65,29 @@ check("members glyph is three people", iconMap.group === UserRoundGroup);
 check("groups glyph is unchanged", iconMap.groups === UsersRound);
 if (missing.length) console.error("missing:", missing.join(", "));
 
+const appRoot = resolve(root, "..");
+function pngInfo(path) {
+  const bytes = readFileSync(path);
+  if (bytes.toString("hex", 0, 8) !== "89504e470d0a1a0a") throw new Error(`invalid PNG: ${path}`);
+  return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20), color: bytes[25], data: bytes };
+}
+for (const name of ["parley-emblem", "parley-logo", "parley-mono"]) {
+  const path = join(appRoot, "docs/v2/parley_logo", `${name}-1024.png`);
+  const icon = pngInfo(path);
+  check(`${name} master is 1024px RGBA`, icon.width === 1024 && icon.height === 1024 && icon.color === 6);
+  if (name === "parley-mono") check("mono master has alpha", icon.color === 6);
+}
+for (const [path, size] of [
+  ["src/assets/logo.png", 256], ["src/assets/emblem.png", 128],
+  ["public/favicon.png", 64], ["public/apple-touch-icon.png", 180],
+  ...[16,24,32,48,64,128,256,512].map(size => [`electron/icons/${size}x${size}.png`, size]),
+  ["electron/icons/icon.png", 1024],
+]) {
+  try { const icon = pngInfo(join(root, path)); check(path, icon.width === size && icon.height === size && icon.color === 6); }
+  catch { check(path, false); }
+}
+check("Windows ICO exists", readFileSync(join(root, "electron/icons/icon.ico")).toString("hex", 0, 4) === "00000100");
+
 if (failed) {
   console.error(`${failed} check(s) failed`);
   process.exit(1);
