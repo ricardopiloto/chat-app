@@ -20,6 +20,9 @@ struct Row {
     email_canonical: Option<String>,
     email_verified_at: Option<String>,
     terms_accepted_at: Option<String>,
+    key_reminders: i64,
+    last_key_reminder_at: Option<String>,
+    key_reminder_count: i64,
 }
 
 fn map_row(row: Row) -> Result<AccountRecord, sqlx::Error> {
@@ -55,11 +58,14 @@ fn map_row(row: Row) -> Result<AccountRecord, sqlx::Error> {
                     .map_err(|e| sqlx::Error::Decode(Box::new(e)))
             })
             .transpose()?,
+        key_reminders: row.key_reminders != 0,
+        last_key_reminder_at: row.last_key_reminder_at.map(|v| DateTime::parse_from_rfc3339(&v).map(|d| d.with_timezone(&Utc)).map_err(|e| sqlx::Error::Decode(Box::new(e)))).transpose()?,
+        key_reminder_count: row.key_reminder_count,
     })
 }
 
 const COLS: &str =
-    "id, handle, password_hash, identity_pubkey, identity_vault, (recovery_vault IS NOT NULL AND recovery_verifier_pubkey IS NOT NULL) AS has_recovery_key, is_initial_operator, created_at, avatar_filename, avatar_content_type, display_name, email, email_canonical, email_verified_at, terms_accepted_at";
+    "id, handle, password_hash, identity_pubkey, identity_vault, (recovery_vault IS NOT NULL AND recovery_verifier_pubkey IS NOT NULL) AS has_recovery_key, is_initial_operator, created_at, avatar_filename, avatar_content_type, display_name, email, email_canonical, email_verified_at, terms_accepted_at, key_reminders, last_key_reminder_at, key_reminder_count";
 
 pub async fn count<'e, E>(executor: E) -> Result<i64, sqlx::Error>
 where

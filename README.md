@@ -37,7 +37,7 @@ Pensado para mesas de RPG que gravam ou transmitem sessões, e para qualquer gru
 
 ## A ideia
 
-Quem precisa de **chat + chamada** e, ao mesmo tempo, de **composição visual** (quem aparece onde na cena) costura hoje duas ferramentas: um chat tipo Discord e um programa de transmissão. A Mesa junta as duas, numa instância que o próprio grupo controla.
+Quem precisa de **chat + chamada** e, ao mesmo tempo, de **composição visual** (quem aparece onde na cena) costura hoje duas ferramentas: um chat tipo Discord e um programa de transmissão. O Parley junta as duas, numa instância que o próprio grupo controla.
 
 1. **Instância**: o processo que o operador corre (máquina local ou VPS). Hospeda vários **Servidores**.
 2. **Servidor**: unidade social (dono, cargos, canais, convites, membros).
@@ -56,6 +56,8 @@ Lista do que o cliente atual faz hoje. A checklist de paridade está em [`docs/v
 ### Conta e identidade
 - Registo (handle e palavra-passe de 8+ caracteres), com código de convite quando não é a primeira conta (`/invite/:code` ou `?invite=`).
 - No modo de registo aberto, a pessoa aceita os termos, confirma o e-mail por um link que vale 5 horas e conclui o cadastro com as chaves E2E geradas no cliente. O convite continua a funcionar com ou sem e-mail. O e-mail só é mostrado à própria conta; `RESET_EMAIL` pode usar o endereço verificado mais tarde para encaminhar a recuperação por chave.
+
+Com `KEY_REMINDERS=true` (desligado por padrão), uma conta com e-mail verificado recebe boas-vindas após o cadastro e até três lembretes, separados por pelo menos 24 horas, ao criar canais enquanto não tiver chave de recuperação. A própria conta pode desligar os lembretes em **Conta → Chave de recuperação** (`PATCH /api/auth/key-reminders`). O e-mail só leva a `PUBLIC_BASE_URL/account#recovery`: o serviço nunca recebe nem envia a chave, e os e-mails não carregam chaves, códigos ou tokens.
 - Numa instância vazia, o cadastro orienta a criação da conta de **Administrador da instância** e recomenda guardar a chave de recuperação. Não pede convite; o estado é consultado em `GET /api/instance/status`.
 - Login, logout com confirmação, restauro de sessão ao recarregar, troca de conta.
 - **Cliente desktop**: no primeiro arranque pede o endereço da instância. Um host sem esquema (por exemplo `chat.exemplo.com`) é lido como HTTPS; um endereço `http://` é recusado. **Trocar de instância**, no entrar, no criar conta, no menu da conta e no desbloqueio, esquece o endereço e a sessão e volta a pedir a instância. O browser servido pela própria instância não mostra essa acção.

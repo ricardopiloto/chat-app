@@ -182,6 +182,8 @@ export const ptBR: MessageTree = {
     recoveryReplaceButton: "Substituir chave",
     recoverySave: "Activar esta chave",
     recoverySaved: "Chave de recuperação guardada. O código anterior, se existia, deixou de funcionar.",
+    keyRemindersLabel: "Lembretes sobre a chave",
+    keyRemindersHint: "Receber e-mails de lembrete ao criar canais enquanto não houver uma chave de recuperação.",
     appearanceLabel: "Preferências",
     appearanceTitle: "Idioma e tema",
   },

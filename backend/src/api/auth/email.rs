@@ -20,6 +20,7 @@ pub struct RegisterConfig {
     mode: &'static str,
     turnstile_site_key: Option<String>,
     reset_email: bool,
+    key_reminders: bool,
 }
 
 pub async fn register_config(State(state): State<AppState>) -> Json<RegisterConfig> {
@@ -27,6 +28,7 @@ pub async fn register_config(State(state): State<AppState>) -> Json<RegisterConf
         mode: state.config.mode().unwrap_or(RegistoModo::Fechado).as_str(),
         turnstile_site_key: state.config.turnstile_site_key.clone(),
         reset_email: state.config.reset_email,
+        key_reminders: state.config.key_reminders,
     })
 }
 

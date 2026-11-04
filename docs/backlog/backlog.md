@@ -168,6 +168,25 @@ Pré-requisito de produto a decidir antes: **quem é o operador na UI** (só a c
 - Inclui, em princípio: emitir e revogar códigos de reset pela UI (hoje só `reset-code` na CLI), aprovar handoffs de contas recuperadas, definir configurações da instância (por exemplo modo de registo) e, depois, transferir o papel ou ter vários administradores.
 - Contas sem e-mail (instâncias antigas) não são um caso a tratar: a instância será reiniciada com as contas zeradas, então não há change prevista para adicionar e-mail a contas existentes.
 
+## 20. Registo por e-mail em produção — limite por IP e `TRUSTED_PROXY` (NÃO TESTADO)
+
+Origem: tarefa 6.4 da change arquivada `2026-11-03-email-registration` (a `email-password-reset` reutiliza os mesmos mecanismos). Registado em 2026-11-03.
+
+**O que já foi testado (local, 2026-11-03):** envio real pelo Resend (domínio `1nodado.com.br`, remetente `Parley <no-reply@1nodado.com.br>`) do e-mail de verificação, do e-mail de recuperação e do aviso de senha alterada; fluxo completo no navegador e no Electron; limites por IP e por e-mail em testes de contrato e unitários, sem proxy.
+
+**O que NÃO foi testado:** o comportamento dos limites por IP (5/h por IP e 3/h por e-mail, em `POST /api/auth/email/request` e `POST /api/auth/recovery/email/request`) **na topologia real de produção**. O backend identifica o cliente pelo IP da ligação TCP; se existir qualquer intermediário entre o utilizador e o backend (proxy reverso, túnel, rede Docker/bridge), todos os utilizadores podem chegar com o mesmo IP e o limite passa a ser **único para a instância inteira** (cinco pedidos de qualquer pessoa bloqueiam o registo por e-mail de todos). Com `TRUSTED_PROXY=true` o IP vem do cabeçalho `X-Real-IP`, só aceite quando a ligação vem de loopback, e esse cabeçalho tem de ser definido pelo intermediário.
+
+**Contexto de produção (informado em 2026-11-03):** o Nginx do servidor é usado só para o LiveKit; a aplicação (backend e frontend) NÃO passa por Nginx. Falta confirmar como o tráfego chega ao backend (directo no `BIND`, túnel, outro proxy?) e qual IP o backend vê.
+
+**A fazer:**
+- Confirmar a topologia real de entrada do tráfego da app em produção e o IP que o backend vê.
+- Com `REGISTO_MODO=aberto` em produção, pedir o e-mail de registo a partir de **dois IPs diferentes** (por exemplo telemóvel em 4G e computador) e confirmar baldes de limite separados; repetir ~6 pedidos do mesmo IP e confirmar 429 só para ele.
+- Se houver intermediário: decidir entre `TRUSTED_PROXY=true` com o cabeçalho `X-Real-IP` definido por ele, ou limite no próprio intermediário.
+- **Rever a validação de arranque:** hoje o modo `aberto` em produção exige `TRUSTED_PROXY=true` (`backend/src/config.rs`), mesmo sem proxy. Sem proxy a variável é inofensiva (o cabeçalho só vale com ligação de loopback), mas a exigência é enganadora; avaliar torná-la condicional ou reformular a mensagem.
+- **Actualizar `docs/deploy-producao.md`:** descreve o Nginx à frente da app (secção 9) e o `limit_req` de `/api/auth/email/`; deixar claro que isso só se aplica se a app realmente estiver atrás de um proxy.
+
+**Critério de pronto:** pedidos de e-mail de IPs distintos não se limitam entre si em produção; um IP forjado vindo de fora é ignorado; a documentação e a validação de arranque reflectem a topologia real.
+
 ---
 
 ## Itens a decidir (não são bem "backlog", mas ficam registados para não se perderem)

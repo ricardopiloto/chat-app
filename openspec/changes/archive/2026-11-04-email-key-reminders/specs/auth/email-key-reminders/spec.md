@@ -65,7 +65,17 @@ Quando uma conta com e-mail verificado cria um canal, o sistema SHALL enviar-lhe
 
 ### Requirement: Preferência para desligar lembretes
 
-O sistema SHALL ter por conta uma preferência de lembretes, activa por omissão, alterável pela própria conta autenticada, e SHALL respeitá-la em todos os lembretes de canal. Cada e-mail SHALL indicar onde a alterar.
+O sistema SHALL ter por conta uma preferência de lembretes, activa por omissão, alterável pela própria conta autenticada, e SHALL respeitá-la em todos os lembretes de canal. Cada e-mail SHALL indicar onde a alterar. O cliente SHALL mostrar o interruptor apenas quando o recurso de lembretes estiver activo na instância, e a configuração pública de registo SHALL informar esse estado.
+
+#### Scenario: Recurso desligado na instância
+
+- **WHEN** a instância tem o recurso de lembretes desligado
+- **THEN** a configuração pública informa `key_reminders: false` e a página de conta não mostra o interruptor
+
+#### Scenario: Recurso activo na instância
+
+- **WHEN** a instância tem o recurso de lembretes activo
+- **THEN** a configuração pública informa `key_reminders: true` e a página de conta mostra o interruptor
 
 #### Scenario: Lembretes desligados
 

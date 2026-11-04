@@ -17,6 +17,7 @@ use sqlx::SqliteConnection;
 use uuid::Uuid;
 
 pub mod email;
+pub mod key_reminders;
 pub mod login;
 pub mod recovery;
 pub mod recovery_email;
@@ -52,6 +53,7 @@ pub fn router() -> Router<AppState> {
         .route("/auth/recovery/key/redeem", post(recovery_key::redeem))
         .route("/auth/recovery-key", put(recovery_key::put_recovery_key))
         .route("/auth/display-name", patch(patch_display_name))
+        .route("/auth/key-reminders", patch(key_reminders::patch_preference))
 }
 
 async fn logout(

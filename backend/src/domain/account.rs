@@ -31,6 +31,9 @@ pub struct AccountRecord {
     pub email_canonical: Option<String>,
     pub email_verified_at: Option<DateTime<Utc>>,
     pub terms_accepted_at: Option<DateTime<Utc>>,
+    pub key_reminders: bool,
+    pub last_key_reminder_at: Option<DateTime<Utc>>,
+    pub key_reminder_count: i64,
 }
 
 impl AccountRecord {
@@ -56,6 +59,7 @@ impl AccountRecord {
             display_name: self.display_name.clone(),
             email: self.email.clone(),
             email_verified_at: self.email_verified_at,
+            key_reminders: self.key_reminders,
             session_token: None,
         }
     }
@@ -77,6 +81,7 @@ pub struct AuthAccount {
     pub display_name: Option<String>,
     pub email: Option<String>,
     pub email_verified_at: Option<DateTime<Utc>>,
+    pub key_reminders: bool,
     /// Clear session token, present only on responses that mint a session
     /// (login, register, operator-code redeem, recovery-key redeem).
     /// Native clients send it as `Authorization: Bearer <session_token>`.

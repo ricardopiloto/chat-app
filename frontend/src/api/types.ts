@@ -23,6 +23,7 @@ export interface Account {
   display_name?: string;
   email?: string | null;
   email_verified_at?: Timestamp | null;
+  key_reminders?: boolean;
   /** Present only on responses that mint a session. The web client ignores it. */
   session_token?: string;
 }

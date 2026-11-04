@@ -156,3 +156,7 @@ Layouts de cena (**Mestre em destaque**, **Painel**, **Faixa N-up**) aceitam **2
 ## Efeitos sonoros do frontend v2
 
 O frontend v2 toca dois sons curtos (nova menção e alguém a entrar na chamada). Os ficheiros `mention.mp3` e `call-join.mp3` ficam em `assets/audio/` e são copiados para `frontend/public/audio/` quando o Vite arranca (dev) ou faz o build; sem eles a funcionalidade fica silenciosa, sem erro. Cada pessoa liga ou desliga os efeitos em **Áudio & Vídeo**.
+
+## Lembretes da chave de recuperação
+
+Defina `KEY_REMINDERS=true` para activar os e-mails de boas-vindas depois do cadastro com e-mail verificado e os lembretes ao criar canais. O padrão é `false`; desligar a flag suspende novos envios sem mudar as contas. Configure `PUBLIC_BASE_URL` para que os links abram `/account#recovery`. No desenvolvimento, `LogSender` escreve a mensagem em `EMAIL_LOG_FILE` com extensão `.eml`; mantenha esse ficheiro privado. Em produção, configure `EMAIL_API_KEY` e `EMAIL_FROM` para o Resend. O endpoint autenticado `PATCH /api/auth/key-reminders` altera a preferência individual. Cada conta recebe no máximo três lembretes de canal, separados por 24 horas, apenas enquanto não tiver chave. Nenhum e-mail contém chaves, códigos, segredos ou tokens; o serviço nunca recebe nem envia a chave da pessoa.

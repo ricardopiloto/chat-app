@@ -4,7 +4,7 @@ import type { Account, IdentityVaultPayload, RegisterBody } from "../types";
 import type { RecoveryVault } from "../../crypto/recovery";
 
 export const auth = {
-  registrationConfig: () => http.get<{ mode: "fechado" | "aberto"; turnstile_site_key: string | null; reset_email: boolean }>("/api/auth/register/config"),
+  registrationConfig: () => http.get<{ mode: "fechado" | "aberto"; turnstile_site_key: string | null; reset_email: boolean; key_reminders?: boolean }>("/api/auth/register/config"),
   requestRecoveryEmail: (body: { email: string; website?: string; captcha_token?: string }) => http.post<{ ok: true }>("/api/auth/recovery/email/request", body),
   requestEmail: (body: { email: string; terms_accepted: boolean; website?: string; captcha_token?: string }) => http.post<{ ok: true }>("/api/auth/email/request", body),
   verifyEmail: (token: string) => http.post<{ email: string }>("/api/auth/email/verify", { token }),
@@ -34,6 +34,7 @@ export const auth = {
       recovery_verifier_pubkey: verifierPublicKey,
     }),
   setDisplayName: (displayName: string | null) => http.patch<Account>("/api/auth/display-name", { display_name: displayName }),
+  setKeyReminders: (enabled: boolean) => http.patch<Account>("/api/auth/key-reminders", { enabled }),
   uploadAvatar: (image: Blob | Uint8Array, mediaType: string) =>
     request<Account>("/api/auth/avatar", { method: "PUT", bytes: image, headers: { [MEDIA_TYPE_HEADER]: mediaType } }),
   removeAvatar: () => http.delete("/api/auth/avatar"),

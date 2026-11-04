@@ -15,8 +15,7 @@ const NAV = [
   { id: "appearance", icon: "palette", label: "account.navAppearance" },
 ];
 
-// "My account": the part of the profile page the backend supports. Name, photo, language and
-// theme only; there is no recovery e-mail, passkey, device list or peer-to-peer visibility.
+// "My account": the part of the profile page the backend supports.
 export function Account() {
   const session = useSession();
   const shell = useShell();
@@ -26,11 +25,21 @@ export function Account() {
   const [busy, setBusy] = createSignal(false);
   const [note, setNote] = createSignal<{ tone: "error" | "info"; text: string }>();
   const [showAdminWelcome, setShowAdminWelcome] = createSignal(false);
+  const [showKeyReminders, setShowKeyReminders] = createSignal(false);
   onMount(() => {
+    let cancelled = false;
+    void auth.registrationConfig().then(
+      (config) => { if (!cancelled) setShowKeyReminders(config.key_reminders === true); },
+      () => {},
+    );
     if (me().is_initial_operator && session.welcomeAccountId() === me().id) {
       setShowAdminWelcome(true);
       session.dismissWelcome();
     }
+    if (window.location.hash === "#recovery") {
+      requestAnimationFrame(() => document.getElementById("recovery")?.scrollIntoView());
+    }
+    onCleanup(() => { cancelled = true; });
   });
   const [currentPassword, setCurrentPassword] = createSignal("");
   const [nextPassword, setNextPassword] = createSignal("");
@@ -134,6 +143,14 @@ export function Account() {
       session.updateAccount({ ...me(), has_avatar: false });
     }, "shell.avatarError");
 
+  async function saveKeyReminders(event: Event & { currentTarget: HTMLInputElement }) {
+    const enabled = event.currentTarget.checked;
+    await run(async () => {
+      session.updateAccount(await auth.setKeyReminders(enabled));
+    }, "shell.saveError");
+    event.currentTarget.checked = me().key_reminders ?? true;
+  }
+
   return (
     <div class="mx-auto flex max-w-5xl flex-col gap-6 p-4 tablet:p-8 desktop:grid desktop:grid-cols-[220px_minmax(0,1fr)]">
       <nav class="flex flex-row gap-2 overflow-x-auto desktop:flex-col" aria-label={t("account.settings")}>
@@ -235,6 +252,7 @@ export function Account() {
           </form>
         </Card>
 
+        <section id="recovery">
         <Card icon="vpn_key" label={t("account.recoveryLabel")} title={t("account.recoveryTitle")}>
           <p class="text-body-sm text-on-surface-variant">
             {me().has_recovery_key ? t("account.recoveryReplace") : t("account.recoveryMissing")}
@@ -258,7 +276,17 @@ export function Account() {
               <Button variant="primary" type="submit" disabled={busy()}>{t("account.recoverySave")}</Button>
             </form>
           </Show>
+          <Show when={showKeyReminders()}>
+            <label class="mt-4 flex items-start gap-3 text-body-sm">
+              <input type="checkbox" class="mt-1" checked={me().key_reminders ?? true} disabled={busy()} onChange={(event) => void saveKeyReminders(event)} />
+              <span>
+                <strong class="block">{t("account.keyRemindersLabel")}</strong>
+                <span class="text-on-surface-variant">{t("account.keyRemindersHint")}</span>
+              </span>
+            </label>
+          </Show>
         </Card>
+        </section>
 
         <AudioVideoSettings />
 

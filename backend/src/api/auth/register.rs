@@ -11,7 +11,7 @@ use argon2::{
     Argon2, PasswordHasher,
 };
 use axum::extract::State;
-use axum::http::StatusCode;
+use axum::http::{HeaderMap, StatusCode};
 use axum::response::IntoResponse;
 use axum::Json;
 use axum_extra::extract::cookie::{Cookie, CookieJar, SameSite};
@@ -104,13 +104,14 @@ pub fn decode_pubkey(value: &str) -> Result<Vec<u8>, ApiError> {
 pub async fn register(
     State(state): State<AppState>,
     ClientIp(ip): ClientIp,
+    headers: HeaderMap,
     jar: CookieJar,
     Json(body): Json<RegisterBody>,
 ) -> Result<impl IntoResponse, ApiError> {
     if !state.config.rate_limit_disabled && !state.rate_limiter.allow_auth(ip) {
         return Err(ApiError::too_many_requests());
     }
-    let (account, jar, token) = register_inner(&state, jar, body).await?;
+    let (account, jar, token) = register_inner(&state, jar, body, super::recovery_email::wants_english(&headers)).await?;
     Ok((
         StatusCode::CREATED,
         jar,
@@ -122,6 +123,7 @@ pub async fn register_inner(
     state: &AppState,
     jar: CookieJar,
     body: RegisterBody,
+    english: bool,
 ) -> Result<(AccountRecord, CookieJar, String), ApiError> {
     let handle = body.handle.trim().to_string();
     if handle.is_empty() {
@@ -218,6 +220,9 @@ pub async fn register_inner(
                 email_canonical: verified_email.as_ref().map(|(_, canonical)| canonical.clone()),
                 email_verified_at: verified_email.as_ref().map(|_| now),
                 terms_accepted_at: verified_email.as_ref().map(|_| now),
+                key_reminders: true,
+                last_key_reminder_at: None,
+                key_reminder_count: 0,
             };
             db::account::create(&mut *tx, &record).await.map_err(|error| {
                 if let sqlx::Error::Database(db_error) = &error {
@@ -279,6 +284,9 @@ pub async fn register_inner(
             let token =
                 persist_session(&state.pool, record.id, state.config.session_ttl_secs).await?;
             let jar = with_session_cookie(jar, token.clone(), state.config.cookie_secure);
+            if state.config.key_reminders && record.email_verified_at.is_some() {
+                super::key_reminders::spawn_welcome(state.clone(), record.id, english);
+            }
             Ok((record, jar, token))
         }
         Err(e) => {

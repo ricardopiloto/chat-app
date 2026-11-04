@@ -65,6 +65,7 @@ mod tests {
             public_base_url: None,
             email_log_file: None,
             reset_email: false,
+            key_reminders: false,
             trusted_proxy: false,
             turnstile_secret: Default::default(),
             turnstile_site_key: None,

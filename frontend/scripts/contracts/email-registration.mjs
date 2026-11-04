@@ -7,6 +7,7 @@ const session = readFileSync(new URL("../../src/session/session.tsx", import.met
 for (const endpoint of ["/api/auth/register/config", "/api/auth/email/request", "/api/auth/email/verify"]) {
   assert.ok(auth.includes(endpoint), `${endpoint} missing`);
 }
+assert.match(auth, /registrationConfig:.*key_reminders\?: boolean/);
 assert.match(types, /email_token\?: string/);
 assert.match(session, /email_token: emailToken/);
 console.log("email registration API contracts: ok");

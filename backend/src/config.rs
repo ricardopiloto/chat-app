@@ -70,6 +70,7 @@ pub struct Config {
     pub public_base_url: Option<String>,
     pub email_log_file: Option<PathBuf>,
     pub reset_email: bool,
+    pub key_reminders: bool,
     pub trusted_proxy: bool,
     pub turnstile_secret: Secret,
     pub turnstile_site_key: Option<String>,
@@ -132,6 +133,7 @@ impl Config {
                 .filter(|s| !s.is_empty())
                 .map(PathBuf::from),
             reset_email: env_flag("RESET_EMAIL"),
+            key_reminders: env_flag("KEY_REMINDERS"),
             trusted_proxy: env_flag("TRUSTED_PROXY"),
             turnstile_secret: Secret::new(env::var("TURNSTILE_SECRET").unwrap_or_default()),
             turnstile_site_key: env::var("TURNSTILE_SITE_KEY")

@@ -72,6 +72,64 @@ pub fn recovery_completed(english: bool) -> Template {
     }
 }
 
+fn account_key_link(base_url: &str) -> String {
+    format!("{}/account#recovery", base_url.trim_end_matches('/'))
+}
+
+pub fn key_welcome(base_url: &str, has_key: bool, english: bool) -> Template {
+    let link = account_key_link(base_url);
+    let (subject, greeting, guidance, action, safety, preference) = if english {
+        (
+            "Welcome to Mesa",
+            "Welcome to Mesa.",
+            if has_key { "Your account already has a recovery key. Keep your copy in a safe place." } else { "Create a recovery key in your account settings and save your copy in a safe place." },
+            "Open account settings",
+            "Mesa never receives or sends your recovery key. This email does not ask for your password or recovery code.",
+            "You can change key reminder emails in your account settings.",
+        )
+    } else {
+        (
+            "Boas-vindas ao Mesa",
+            "Boas-vindas ao Mesa.",
+            if has_key { "Sua conta já tem uma chave de recuperação. Guarde sua cópia em um lugar seguro." } else { "Crie uma chave de recuperação nas configurações da conta e guarde sua cópia em um lugar seguro." },
+            "Abrir configurações da conta",
+            "O Mesa nunca recebe nem envia sua chave de recuperação. Este e-mail não pede sua senha nem seu código de recuperação.",
+            "Você pode alterar os e-mails de lembrete nas configurações da conta.",
+        )
+    };
+    Template {
+        subject: subject.into(),
+        html: format!("<p>{greeting}</p><p>{guidance}</p><p><a href=\"{}\">{action}</a></p><p>{safety}</p><p>{preference}</p>", html_escape(&link)),
+        text: format!("{greeting}\n{guidance}\n{action}: {link}\n{safety}\n{preference}"),
+    }
+}
+
+pub fn key_channel_reminder(base_url: &str, english: bool) -> Template {
+    let link = account_key_link(base_url);
+    let (subject, guidance, action, safety, preference) = if english {
+        (
+            "Save your Mesa recovery key",
+            "You created a channel. Access to its messages depends on your identity and recovery key. Create and save a recovery key in your account settings.",
+            "Open account settings",
+            "Mesa never receives or sends your recovery key. This email does not ask for your password or recovery code.",
+            "You can turn off key reminder emails in your account settings.",
+        )
+    } else {
+        (
+            "Guarde sua chave de recuperação do Mesa",
+            "Você criou um canal. O acesso às mensagens dele depende da sua identidade e da chave de recuperação. Crie e guarde uma chave de recuperação nas configurações da conta.",
+            "Abrir configurações da conta",
+            "O Mesa nunca recebe nem envia sua chave de recuperação. Este e-mail não pede sua senha nem seu código de recuperação.",
+            "Você pode desligar os e-mails de lembrete nas configurações da conta.",
+        )
+    };
+    Template {
+        subject: subject.into(),
+        html: format!("<p>{guidance}</p><p><a href=\"{}\">{action}</a></p><p>{safety}</p><p>{preference}</p>", html_escape(&link)),
+        text: format!("{guidance}\n{action}: {link}\n{safety}\n{preference}"),
+    }
+}
+
 pub fn verification(base_url: &str, token: &str, english: bool) -> Template {
     let link = format!(
         "{}/register#email_token={token}",
@@ -143,6 +201,28 @@ mod tests {
             assert!(!without_key.text.contains("/recover"));
             let notice = recovery_completed(english);
             assert!(!notice.text.contains("http"));
+        }
+    }
+
+    #[test]
+    fn key_reminder_templates_only_link_to_account_and_carry_no_key_material() {
+        for english in [false, true] {
+            for template in [
+                key_welcome("https://mesa.example/", false, english),
+                key_welcome("https://mesa.example/", true, english),
+                key_channel_reminder("https://mesa.example/", english),
+            ] {
+                assert!(template.text.contains("https://mesa.example/account#recovery"));
+                assert!(template.html.contains("https://mesa.example/account#recovery"));
+                assert_eq!(template.text.matches("https://").count(), 1);
+                assert_eq!(template.html.matches("https://").count(), 1);
+                assert!(!template.text.contains("email_token="));
+                assert!(!template.text.contains("recovery_vault"));
+                assert!(!template.text.contains("identity_pubkey"));
+                assert!(!template.text.contains("channel_key_sealed"));
+                assert!(!template.text.contains("secret-sentinel"));
+                assert!(if english { template.text.contains("never receives or sends") } else { template.text.contains("nunca recebe nem envia") });
+            }
         }
     }
 }

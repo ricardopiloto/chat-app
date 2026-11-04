@@ -11,7 +11,7 @@ use crate::domain::permissions;
 use crate::error::ApiError;
 use crate::AppState;
 use axum::extract::{Path, State};
-use axum::http::StatusCode;
+use axum::http::{HeaderMap, StatusCode};
 use axum::response::IntoResponse;
 use axum::Json;
 use serde::{Deserialize, Serialize};
@@ -31,6 +31,7 @@ pub struct CreateChannelBody {
 pub async fn create_channel(
     State(state): State<AppState>,
     AuthUser(account): AuthUser,
+    headers: HeaderMap,
     Path(server_id): Path<Uuid>,
     Json(body): Json<CreateChannelBody>,
 ) -> Result<impl IntoResponse, ApiError> {
@@ -55,6 +56,9 @@ pub async fn create_channel(
         body.channel_key_sealed.as_deref(),
     )
     .await?;
+    crate::api::auth::key_reminders::spawn_channel_reminder(
+        state.clone(), account.id, crate::api::auth::recovery_email::wants_english(&headers),
+    );
     Ok((StatusCode::CREATED, Json(channel)))
 }
 

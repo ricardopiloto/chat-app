@@ -1,0 +1,3 @@
+ALTER TABLE account ADD COLUMN key_reminders INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE account ADD COLUMN last_key_reminder_at TEXT;
+ALTER TABLE account ADD COLUMN key_reminder_count INTEGER NOT NULL DEFAULT 0;

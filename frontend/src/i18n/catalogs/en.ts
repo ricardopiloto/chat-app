@@ -181,6 +181,8 @@ export const en: MessageTree = {
     recoveryReplaceButton: "Replace key",
     recoverySave: "Activate this key",
     recoverySaved: "Recovery key saved. The previous code, if there was one, no longer works.",
+    keyRemindersLabel: "Recovery key reminders",
+    keyRemindersHint: "Receive reminder emails when creating channels until you have a recovery key.",
     appearanceLabel: "Preferences",
     appearanceTitle: "Language and theme",
   },

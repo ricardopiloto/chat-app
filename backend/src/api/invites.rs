@@ -307,6 +307,7 @@ pub async fn accept_invite(
                 recovery_verifier_pubkey: body.recovery_verifier_pubkey,
                 email_token: None,
             },
+            false,
         )
         .await?;
         let membership = db::membership::find(&state.pool, record.id, invite.server_id)

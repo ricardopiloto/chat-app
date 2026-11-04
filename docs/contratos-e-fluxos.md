@@ -42,6 +42,9 @@ Só os contratos que a **v2** consome. O backend tem mais rotas (listadas em [Ro
 | `PATCH` | `/api/auth/display-name` | `{ display_name: string \| null }` | `Account` | Handle não muda |
 | `PUT` / `DELETE` | `/api/auth/avatar` | bytes + `X-Mesa-Media-Type` / — | `Account` / sem corpo | JPEG, PNG, WebP, 1 MiB |
 | `GET` | `/api/accounts/{id}/avatar` | — | imagem | Usada em `<img src>` |
+| `PATCH` | `/api/auth/key-reminders` | `{ enabled: boolean }` | `Account` | Autenticada. Altera só a preferência da própria conta; `key_reminders` é devolvido apenas nas respostas de autenticação da própria conta |
+
+Com `KEY_REMINDERS=true` (desligado por padrão), contas com e-mail verificado recebem boas-vindas depois do cadastro e, enquanto não tiverem chave de recuperação, lembretes quando criarem canais pela API. Os lembretes de canal respeitam `key_reminders` (activo por padrão), no máximo um a cada 24 horas e três por conta; canais automáticos não contam. A reserva é atómica após a criação, e a entrega é assíncrona e independente do resultado da API. Os links apontam apenas para `PUBLIC_BASE_URL/account#recovery`. E-mails de lembrete nunca contêm chave, código, segredo de identidade, chave de canal ou token; o serviço nunca recebe nem envia a chave da pessoa.
 
 O link de e-mail é `PUBLIC_BASE_URL/register#email_token=…`: o fragmento é lido e removido pelo frontend, e o token é validado por POST. Vale por 5 horas e é consumido no cadastro. Com token válido, o e-mail, seu canônico, o instante de verificação e o aceite de termos são gravados na conta. `email` e `email_verified_at` só aparecem nas respostas da própria conta. Sem token, os clientes antigos mantêm o fluxo por convite e o e-mail fica nulo. Uma conta criada sem convite no modo aberto começa sem servidor e pode aceitar um convite depois.
 
