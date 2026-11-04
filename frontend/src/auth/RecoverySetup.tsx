@@ -22,7 +22,7 @@ export function RecoverySetup(props: {
     const url = URL.createObjectURL(new Blob([`${props.code}\n`], { type: "text/plain" }));
     const link = document.createElement("a");
     link.href = url;
-    link.download = "mesa-recovery-key.txt";
+    link.download = "parley-recovery-key.txt";
     link.click();
     URL.revokeObjectURL(url);
   }

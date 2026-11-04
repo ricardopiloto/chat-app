@@ -49,7 +49,7 @@ pub async fn unfurl(
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(5))
         .redirect(reqwest::redirect::Policy::none())
-        .user_agent("Mesa-Unfurl/0.1 (+self-hosted)")
+        .user_agent("Parley-Unfurl/0.1 (+self-hosted)")
         .build()
         .map_err(|_| ApiError::internal("unfurl client"))?;
 

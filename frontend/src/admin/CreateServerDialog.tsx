@@ -145,7 +145,7 @@ export function CreateServerDialog(props: {
             {t("mgmt.createServer.submit")}<Icon name="arrow_forward" />
           </Button>
         </footer>
-        <p class="mg-note"><Icon name="auto_awesome" />{t("mgmt.createServer.defaults", { text: "#geral", voice: "mesa" })}</p>
+        <p class="mg-note"><Icon name="auto_awesome" />{t("mgmt.createServer.defaults", { text: "#geral", voice: "parley" })}</p>
       </form>
     </Dialog>
   );

@@ -1,4 +1,4 @@
-# Mesa
+# Parley
 
 **Chat e vídeo self-hosted**, no espírito do Discord, com **composição nativa de câmeras** e **criptografia ponta a ponta (E2EE) por omissão**.
 
@@ -67,7 +67,7 @@ Com `KEY_REMINDERS=true` (desligado por padrão), uma conta com e-mail verificad
 - Perfil: nome a mostrar, avatar (JPEG, PNG ou WebP até 1 MiB), idioma **pt-BR / en** e tema **Sistema / Claro / Escuro**, todos persistentes.
 
 ### Servidores, membros e cargos
-- Criar servidor com **custódia da chave** obrigatória (cria também o canal de texto `geral` e o de voz `mesa`).
+- Criar servidor com **custódia da chave** obrigatória (cria também o canal de texto `geral` e o de voz `parley`).
 - Imagem do servidor, mensagem e canal de boas-vindas, apagar servidor confirmando o nome.
 - Membros com pesquisa, mudança de cargo, remoção. **Cargos** com 12 permissões (ver canais, gerir canais, gerir cargos, criar convites, enviar mensagens, apagar mensagens, anexar ficheiros, mencionar @todos, remover membros, silenciar membros, ligar-se à voz, falar). Quem não tem cargo vê e escreve nos canais de texto e participa nos de voz; só um cargo, um canal privado ou o silenciamento reduzem isso, reordenação e cargo de sistema do dono.
 - **Convites** em dois passos, pré-visualização sem sessão, aceitar com registo inline ou com sessão. Os novos links levam a chave do servidor selada no fragmento `#` (não enviado ao backend), permitindo entrar mesmo sem outro membro online; convites antigos continuam com handoff online. No desktop, o link usa o endereço HTTPS da instância guardada, para quem o abre poder criar a conta.
@@ -287,7 +287,7 @@ chat-backend reset-code <handle>
 
 O comando imprime o código uma vez (30 minutos por omissão) e a base guarda só o hash. Entrega-se por um canal que já se use com essa pessoa. O procedimento completo está em [Senha esquecida](docs/operar-instancia.md#senha-esquecida-código-do-operador).
 
-A pessoa abre **Esqueci a senha**, escolhe **Tenho um código do operador**, escreve o handle, o código e a senha nova, e confirma que a identidade será nova. A Mesa gera um par de chaves novo, apaga a chave de recuperação se existia, e encerra todas as sessões. Os servidores voltam a abrir quando um membro que ainda tem a chave do servidor estiver online e voltar a selar o envelope. Servidores em que esta conta era a única com a chave, e a custódia da chave de voz, não voltam.
+A pessoa abre **Esqueci a senha**, escolhe **Tenho um código do operador**, escreve o handle, o código e a senha nova, e confirma que a identidade será nova. O Parley gera um par de chaves novo, apaga a chave de recuperação se existia, e encerra todas as sessões. Os servidores voltam a abrir quando um membro que ainda tem a chave do servidor estiver online e voltar a selar o envelope. Servidores em que esta conta era a única com a chave, e a custódia da chave de voz, não voltam.
 
 Handle inexistente e código errado recebem a mesma resposta. Várias falhas seguidas invalidam o código: é preciso esperar ou pedir um código novo.
 
@@ -343,8 +343,8 @@ O Vite serve a SPA e faz proxy de `/api`, `/ws`, `/health` e `/rtc` para o backe
 | `DEFAULT_INVITE_TTL_SECS` | `300` | Validade dos convites |
 | `COOKIE_SECURE` | desligado | Marca o cookie como `Secure` (ligar com HTTPS) |
 | `ATTACHMENTS_DIR` / `AVATARS_DIR` | `./data/attachments` / `./data/avatars` | Onde ficam os ficheiros |
-| `MESA_PRODUCTION` ou `MESA_ENV` | desligado | Modo produção (recusa as credenciais de exemplo) |
-| `MESA_RATE_LIMIT_DISABLED` | desligado | Desliga o limite de pedidos (testes) |
+| `PARLEY_PRODUCTION` ou `PARLEY_ENV` | desligado | Modo produção (recusa as credenciais de exemplo) |
+| `PARLEY_RATE_LIMIT_DISABLED` | desligado | Desliga o limite de pedidos (testes) |
 | `LIVEKIT_EGRESS_FILE_PREFIX` | — | Só para a gravação, fora do escopo da v2 |
 
 ### Verificação
@@ -388,13 +388,15 @@ A aplicação avisa com uma faixa persistente quando há uma release publicada m
 
 | Via | Instalar | Atualizar |
 |---|---|---|
-| Linha de comando, Linux/macOS | Execute `scripts/install-mesa.sh` a partir de uma cópia deste repositório. Requer `curl` e `python3`; no Linux instala AppImage com entrada no menu, no macOS copia a app do DMG para `/Applications`. | Execute o mesmo script novamente. |
-| Linha de comando, Windows | Execute `scripts/install-mesa.ps1` no PowerShell a partir de uma cópia deste repositório. `-Silent` usa o modo silencioso do NSIS. | Execute o mesmo script novamente. |
+| Linha de comando, Linux/macOS | Execute `scripts/install-mesa.sh` a partir de uma cópia deste repositório. Requer `curl` e `python3`; no Linux instala AppImage com entrada no menu, no macOS copia a app do DMG para `/Applications`. | Reexecute o script a partir do repositório para obter a versão nova. |
+| Linha de comando, Windows | Execute `scripts/install-mesa.ps1` no PowerShell a partir de uma cópia deste repositório. `-Silent` usa o modo silencioso do NSIS. | Reexecute o script a partir do repositório para obter a versão nova. |
 | Linux, download direto | Descarregue AppImage, `.deb` ou `.rpm` da release. | Descarregue e instale o pacote mais recente; para AppImage, substitua o ficheiro anterior. |
 | Windows, download direto | Descarregue o instalador NSIS `.exe` ou o `.msi`. | Execute o instalador mais recente do mesmo formato. |
 | macOS, download direto | Abra o `.dmg` e copie a app para `/Applications`. | Substitua a app pela versão do novo `.dmg`. |
 
 Os scripts verificam o SHA-256 do instalador contra o `SHA256SUMS` da mesma release antes da instalação. Releases antigas sem esse manifesto requerem download e instalação diretos. Veja também [Distribuição desktop](#distribuição-desktop) para formatos e avisos de SmartScreen/Gatekeeper.
+
+Na transição do Mesa para o Parley, instale o Parley e remova a instalação antiga do Mesa. O perfil desktop novo começa vazio: informe o endereço da instância e entre de novo. O histórico e as chaves dos servidores voltam pelo login; chaves de canal de voz que você colou à mão precisam ser coladas de novo. A pasta de dados antiga do Mesa permanece no disco e não é apagada pela instalação.
 
 ## Distribuição desktop
 
@@ -404,9 +406,9 @@ Os instaladores de cada versão ficam em **[github.com/ricardopiloto/chat-app/re
 
 | Sistema | Formatos | Observação |
 |---|---|---|
-| **Linux** | `mesa-chat-app-<versão>-x86_64.AppImage`, `mesa-chat-app-<versão>-amd64.deb`, `mesa-chat-app-<versão>-x86_64.rpm` | O `.deb`/`.rpm` instalam o binário como `mesa-chat-app` (não `mesa`) para não colidir com os pacotes da biblioteca gráfica Mesa 3D (`mesa-libgallium`, `mesa-vulkan-drivers`, etc.) já presentes na maioria das distribuições. O `.AppImage` não precisa de instalação — torná-lo executável e correr. |
-| **Windows** | `.exe` (NSIS) ou `.msi` | Qualquer um dos dois instala a aplicação; use o `.msi` se precisar de implantação silenciosa/empresarial. |
-| **macOS** | `.dmg` | Contém a `.app` para arrastar para `Applications`. |
+| **Linux** | `parley-chat-app-<versão>-x86_64.AppImage`, `parley-chat-app-<versão>-amd64.deb`, `parley-chat-app-<versão>-x86_64.rpm` | O `.deb`/`.rpm` instalam o binário como `parley-chat-app` para evitar colisão com o pacote Parley do KDE. O `.AppImage` não precisa de instalação — torná-lo executável e correr. |
+| **Windows** | `Parley-<versão>.exe` (NSIS) ou `Parley-<versão>.msi` | Qualquer um dos dois instala a aplicação; use o `.msi` se precisar de implantação silenciosa/empresarial. |
+| **macOS** | `Parley-<versão>.dmg` | Contém a `.app` para arrastar para `Applications`. |
 
 ### Instaladores sem assinatura
 

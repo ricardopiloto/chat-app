@@ -64,7 +64,7 @@ async fn voice_create_requires_custody() {
         .request(
             "POST",
             &format!("/api/servers/{server_id}/channels"),
-            Some(json!({ "name": "mesa", "type": "voice_video" })),
+            Some(json!({ "name": "parley", "type": "voice_video" })),
             Some(&cookie),
         )
         .await;
@@ -74,7 +74,7 @@ async fn voice_create_requires_custody() {
         .request(
             "POST",
             &format!("/api/servers/{server_id}/channels"),
-            Some(voice_body("mesa")),
+            Some(voice_body("parley")),
             Some(&cookie),
         )
         .await;

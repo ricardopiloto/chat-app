@@ -31,9 +31,9 @@ pub fn recovery_with_key(base_url: &str, handle: &str, english: bool) -> Templat
         fragment_value(handle)
     );
     let (subject, intro, action, reminder) = if english {
-        ("Mesa password recovery", "A password recovery was requested for", "Open recovery with your recovery key", "Your recovery key is still required. This email cannot reset your password. If you did not request this, ignore it.")
+        ("Parley password recovery", "A password recovery was requested for", "Open recovery with your recovery key", "Your recovery key is still required. This email cannot reset your password. If you did not request this, ignore it.")
     } else {
-        ("Recuperação de senha do Mesa", "Foi solicitada uma recuperação de senha para", "Abrir recuperação com sua chave", "Sua chave de recuperação continua necessária. Este e-mail não redefine sua senha. Se não fez o pedido, ignore esta mensagem.")
+        ("Recuperação de senha do Parley", "Foi solicitada uma recuperação de senha para", "Abrir recuperação com sua chave", "Sua chave de recuperação continua necessária. Este e-mail não redefine sua senha. Se não fez o pedido, ignore esta mensagem.")
     };
     let safe_handle = html_escape(handle);
     Template {
@@ -48,9 +48,9 @@ pub fn recovery_with_key(base_url: &str, handle: &str, english: bool) -> Templat
 
 pub fn recovery_without_key(handle: &str, english: bool) -> Template {
     let (subject, intro, body) = if english {
-        ("Mesa password recovery", "A password recovery was requested for", "This account has no recovery key. Ask the instance operator for a reset code. After signing in, create and save a recovery key in your account settings. If you did not request this, ignore this message.")
+        ("Parley password recovery", "A password recovery was requested for", "This account has no recovery key. Ask the instance operator for a reset code. After signing in, create and save a recovery key in your account settings. If you did not request this, ignore this message.")
     } else {
-        ("Recuperação de senha do Mesa", "Foi solicitada uma recuperação de senha para", "Esta conta não tem chave de recuperação. Peça um código de reset ao operador da instância. Depois de entrar, crie e guarde uma chave de recuperação nas configurações da conta. Se não fez o pedido, ignore esta mensagem.")
+        ("Recuperação de senha do Parley", "Foi solicitada uma recuperação de senha para", "Esta conta não tem chave de recuperação. Peça um código de reset ao operador da instância. Depois de entrar, crie e guarde uma chave de recuperação nas configurações da conta. Se não fez o pedido, ignore esta mensagem.")
     };
     Template {
         subject: subject.into(),
@@ -61,9 +61,9 @@ pub fn recovery_without_key(handle: &str, english: bool) -> Template {
 
 pub fn recovery_completed(english: bool) -> Template {
     let (subject, body) = if english {
-        ("Mesa password changed", "Your Mesa account password was reset. If you did not do this, contact the instance operator immediately.")
+        ("Parley password changed", "Your Parley account password was reset. If you did not do this, contact the instance operator immediately.")
     } else {
-        ("Senha do Mesa alterada", "A senha da sua conta Mesa foi redefinida. Se não foi você, entre em contato com o operador da instância imediatamente.")
+        ("Senha do Parley alterada", "A senha da sua conta Parley foi redefinida. Se não foi você, entre em contato com o operador da instância imediatamente.")
     };
     Template {
         subject: subject.into(),
@@ -80,20 +80,20 @@ pub fn key_welcome(base_url: &str, has_key: bool, english: bool) -> Template {
     let link = account_key_link(base_url);
     let (subject, greeting, guidance, action, safety, preference) = if english {
         (
-            "Welcome to Mesa",
-            "Welcome to Mesa.",
+            "Welcome to Parley",
+            "Welcome to Parley.",
             if has_key { "Your account already has a recovery key. Keep your copy in a safe place." } else { "Create a recovery key in your account settings and save your copy in a safe place." },
             "Open account settings",
-            "Mesa never receives or sends your recovery key. This email does not ask for your password or recovery code.",
+            "Parley never receives or sends your recovery key. This email does not ask for your password or recovery code.",
             "You can change key reminder emails in your account settings.",
         )
     } else {
         (
-            "Boas-vindas ao Mesa",
-            "Boas-vindas ao Mesa.",
+            "Boas-vindas ao Parley",
+            "Boas-vindas ao Parley.",
             if has_key { "Sua conta já tem uma chave de recuperação. Guarde sua cópia em um lugar seguro." } else { "Crie uma chave de recuperação nas configurações da conta e guarde sua cópia em um lugar seguro." },
             "Abrir configurações da conta",
-            "O Mesa nunca recebe nem envia sua chave de recuperação. Este e-mail não pede sua senha nem seu código de recuperação.",
+            "O Parley nunca recebe nem envia sua chave de recuperação. Este e-mail não pede sua senha nem seu código de recuperação.",
             "Você pode alterar os e-mails de lembrete nas configurações da conta.",
         )
     };
@@ -108,18 +108,18 @@ pub fn key_channel_reminder(base_url: &str, english: bool) -> Template {
     let link = account_key_link(base_url);
     let (subject, guidance, action, safety, preference) = if english {
         (
-            "Save your Mesa recovery key",
+            "Save your Parley recovery key",
             "You created a channel. Access to its messages depends on your identity and recovery key. Create and save a recovery key in your account settings.",
             "Open account settings",
-            "Mesa never receives or sends your recovery key. This email does not ask for your password or recovery code.",
+            "Parley never receives or sends your recovery key. This email does not ask for your password or recovery code.",
             "You can turn off key reminder emails in your account settings.",
         )
     } else {
         (
-            "Guarde sua chave de recuperação do Mesa",
+            "Guarde sua chave de recuperação do Parley",
             "Você criou um canal. O acesso às mensagens dele depende da sua identidade e da chave de recuperação. Crie e guarde uma chave de recuperação nas configurações da conta.",
             "Abrir configurações da conta",
-            "O Mesa nunca recebe nem envia sua chave de recuperação. Este e-mail não pede sua senha nem seu código de recuperação.",
+            "O Parley nunca recebe nem envia sua chave de recuperação. Este e-mail não pede sua senha nem seu código de recuperação.",
             "Você pode desligar os e-mails de lembrete nas configurações da conta.",
         )
     };
@@ -137,15 +137,15 @@ pub fn verification(base_url: &str, token: &str, english: bool) -> Template {
     );
     let (subject, introduction, action, expiry) = if english {
         (
-            "Confirm your email for Mesa",
-            "Confirm your email to create your Mesa account.",
+            "Confirm your email for Parley",
+            "Confirm your email to create your Parley account.",
             "Open the registration form",
             "This link expires in 5 hours.",
         )
     } else {
         (
-            "Confirme seu e-mail para o Mesa",
-            "Confirme seu e-mail para criar sua conta no Mesa.",
+            "Confirme seu e-mail para o Parley",
+            "Confirme seu e-mail para criar sua conta no Parley.",
             "Abrir formulário de cadastro",
             "Este link expira em 5 horas.",
         )
@@ -159,9 +159,9 @@ pub fn verification(base_url: &str, token: &str, english: bool) -> Template {
 
 pub fn existing_account(english: bool) -> Template {
     let (subject, body) = if english {
-        ("Mesa account already exists", "An account already uses this email address. Sign in with your handle and password. If you did not request this, you can ignore this message.")
+        ("Parley account already exists", "An account already uses this email address. Sign in with your handle and password. If you did not request this, you can ignore this message.")
     } else {
-        ("Conta Mesa já existente", "Uma conta já usa este endereço de e-mail. Entre com seu nome de usuário e senha. Se você não pediu isso, pode ignorar esta mensagem.")
+        ("Conta Parley já existente", "Uma conta já usa este endereço de e-mail. Entre com seu nome de usuário e senha. Se você não pediu isso, pode ignorar esta mensagem.")
     };
     Template {
         subject: subject.into(),
@@ -176,10 +176,10 @@ mod tests {
     #[test]
     fn links_use_only_fragment_and_notice_has_no_registration_link() {
         for english in [false, true] {
-            let template = verification("https://mesa.example", "abc123", english);
+            let template = verification("https://parley.example", "abc123", english);
             assert!(template
                 .text
-                .contains("https://mesa.example/register#email_token=abc123"));
+                .contains("https://parley.example/register#email_token=abc123"));
             assert!(!template.text.contains("?email_token="));
             assert!(!template.text.contains("/abc123"));
             let notice = existing_account(english);
@@ -191,10 +191,10 @@ mod tests {
     #[test]
     fn recovery_messages_never_carry_reset_authority() {
         for english in [false, true] {
-            let with_key = recovery_with_key("https://mesa.example/", "a&b", english);
+            let with_key = recovery_with_key("https://parley.example/", "a&b", english);
             assert!(with_key
                 .text
-                .contains("https://mesa.example/recover#handle=a%26b"));
+                .contains("https://parley.example/recover#handle=a%26b"));
             assert!(!with_key.text.contains("?handle="));
             assert!(!with_key.text.contains("email_token"));
             let without_key = recovery_without_key("alice", english);
@@ -208,12 +208,12 @@ mod tests {
     fn key_reminder_templates_only_link_to_account_and_carry_no_key_material() {
         for english in [false, true] {
             for template in [
-                key_welcome("https://mesa.example/", false, english),
-                key_welcome("https://mesa.example/", true, english),
-                key_channel_reminder("https://mesa.example/", english),
+                key_welcome("https://parley.example/", false, english),
+                key_welcome("https://parley.example/", true, english),
+                key_channel_reminder("https://parley.example/", english),
             ] {
-                assert!(template.text.contains("https://mesa.example/account#recovery"));
-                assert!(template.html.contains("https://mesa.example/account#recovery"));
+                assert!(template.text.contains("https://parley.example/account#recovery"));
+                assert!(template.html.contains("https://parley.example/account#recovery"));
                 assert_eq!(template.text.matches("https://").count(), 1);
                 assert_eq!(template.html.matches("https://").count(), 1);
                 assert!(!template.text.contains("email_token="));

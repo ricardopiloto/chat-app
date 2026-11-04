@@ -95,7 +95,7 @@ export const mgmtPtBR: MessageTree = {
       invalidTitle: "Convite indisponível",
       invalid: "Este convite é inválido, expirou ou foi revogado. Peça um novo link a quem convidou você.",
       invalidHelp: "Peça um novo link a quem convidou você e tente de novo.",
-      reserved: "Mesa reservada",
+      reserved: "Servidor reservado",
       title: "Você foi convidado para a mesa",
       lead: "Crie sua identidade para puxar uma cadeira e receber a chave de cifra da mesa.",
       signedIn: "Você entrou como @{name}. Aceite o convite para entrar na mesa com esta conta.",

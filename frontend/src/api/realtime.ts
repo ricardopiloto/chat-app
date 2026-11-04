@@ -71,7 +71,7 @@ export function socketUrl(): string {
     return `${scheme}//${location.host}/ws`;
   }
   const base = currentInstance().baseUrl;
-  if (!base) throw new Error("No Mesa instance is configured");
+  if (!base) throw new Error("No Parley instance is configured");
   const url = new URL(base);
   url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
   url.pathname = "/ws";

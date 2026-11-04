@@ -70,5 +70,5 @@ async fn create_server_requires_custody_and_bootstraps_text_and_voice() {
     assert!(types.contains(&"voice_video"));
     let voice = arr.iter().find(|c| c["type"] == "voice_video").unwrap();
     assert_eq!(voice["has_channel_key"], true);
-    assert_eq!(voice["name"], "mesa");
+    assert_eq!(voice["name"], "parley");
 }

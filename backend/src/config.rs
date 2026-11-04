@@ -60,7 +60,7 @@ pub struct Config {
     pub attachments_dir: PathBuf,
     /// Plaintext user/server avatar images.
     pub avatars_dir: PathBuf,
-    /// `MESA_PRODUCTION=1|true` or `MESA_ENV=production`.
+    /// `PARLEY_PRODUCTION=1|true` or `PARLEY_ENV=production`.
     pub production: bool,
     /// When true, login/register skip the in-process IP limiter (TestApp default).
     pub rate_limit_disabled: bool,
@@ -84,13 +84,27 @@ fn env_flag(name: &str) -> bool {
 }
 
 pub fn production_from_env() -> bool {
-    env_flag("MESA_PRODUCTION")
-        || env::var("MESA_ENV")
+    env_flag("PARLEY_PRODUCTION")
+        || env::var("PARLEY_ENV")
             .map(|v| v.eq_ignore_ascii_case("production"))
             .unwrap_or(false)
 }
 
 impl Config {
+    /// Reject obsolete configuration before production validation, even in development.
+    pub fn legacy_env_error(lookup: impl Fn(&str) -> Option<String>) -> Option<String> {
+        for (old, new) in [
+            ("MESA_PRODUCTION", "PARLEY_PRODUCTION"),
+            ("MESA_ENV", "PARLEY_ENV"),
+            ("MESA_RATE_LIMIT_DISABLED", "PARLEY_RATE_LIMIT_DISABLED"),
+        ] {
+            if lookup(old).is_some() {
+                return Some(format!("{old} está descontinuada; renomeie para {new}"));
+            }
+        }
+        None
+    }
+
     pub fn from_env() -> Self {
         Self {
             database_url: env::var("DATABASE_URL")
@@ -121,7 +135,7 @@ impl Config {
                 .map(PathBuf::from)
                 .unwrap_or_else(|_| PathBuf::from("./data/avatars")),
             production: production_from_env(),
-            rate_limit_disabled: env_flag("MESA_RATE_LIMIT_DISABLED"),
+            rate_limit_disabled: env_flag("PARLEY_RATE_LIMIT_DISABLED"),
             registo_modo: env::var("REGISTO_MODO").unwrap_or_else(|_| "fechado".into()),
             email_api_key: Secret::new(env::var("EMAIL_API_KEY").unwrap_or_default()),
             email_from: env::var("EMAIL_FROM").ok().filter(|s| !s.trim().is_empty()),
@@ -202,13 +216,43 @@ impl Config {
         }
         if self.uses_example_livekit_keys() {
             return Err(
-                "MESA_PRODUCTION: recuse LIVEKIT_API_KEY=instkey e LIVEKIT_API_SECRET de exemplo; use chaves únicas"
+                "PARLEY_PRODUCTION: recuse LIVEKIT_API_KEY=instkey e LIVEKIT_API_SECRET de exemplo; use chaves únicas"
                     .into(),
             );
         }
         if !self.cookie_secure {
-            return Err("MESA_PRODUCTION exige COOKIE_SECURE=true".into());
+            return Err("PARLEY_PRODUCTION exige COOKIE_SECURE=true".into());
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod legacy_env_tests {
+    use super::Config;
+    use std::collections::HashMap;
+
+    fn error(values: &[(&str, &str)]) -> Option<String> {
+        let env: HashMap<_, _> = values.iter().copied().collect();
+        Config::legacy_env_error(|name| env.get(name).map(|value| (*value).to_owned()))
+    }
+
+    #[test]
+    fn refuses_each_legacy_variable_without_production() {
+        for (old, new) in [
+            ("MESA_PRODUCTION", "PARLEY_PRODUCTION"),
+            ("MESA_ENV", "PARLEY_ENV"),
+            ("MESA_RATE_LIMIT_DISABLED", "PARLEY_RATE_LIMIT_DISABLED"),
+        ] {
+            let message = error(&[(old, "")]).expect("legacy variable must be rejected even when empty");
+            assert!(message.contains(old) && message.contains(new));
+            assert!(error(&[(old, "1"), (new, "1")]).is_some());
+        }
+    }
+
+    #[test]
+    fn accepts_clean_and_new_only_environments() {
+        assert_eq!(error(&[]), None);
+        assert_eq!(error(&[("PARLEY_PRODUCTION", "1"), ("PARLEY_ENV", "production"), ("PARLEY_RATE_LIMIT_DISABLED", "true")]), None);
     }
 }

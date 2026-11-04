@@ -16,6 +16,10 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
+    if let Some(msg) = Config::legacy_env_error(|name| std::env::var(name).ok()) {
+        tracing::error!("{msg}");
+        std::process::exit(1);
+    }
     let config = Config::from_env();
     if let Err(msg) = config.validate() {
         tracing::error!("{msg}");

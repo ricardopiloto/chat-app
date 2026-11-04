@@ -78,7 +78,7 @@ export function planRequest(path: string, opts: RequestOptions = {}): PlannedReq
   const headers = new Headers(opts.headers);
   if (!isNative()) return { url: path, transport: "browser", ...toInit(opts, "include", headers) };
   const base = currentInstance().baseUrl;
-  if (!base) throw new ApiError(0, "No Mesa instance is configured");
+  if (!base) throw new ApiError(0, "No Parley instance is configured");
   const token = currentInstance().sessionToken;
   if (token) headers.set("authorization", `Bearer ${token}`);
   return {

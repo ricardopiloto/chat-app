@@ -18,6 +18,10 @@ const concat = (...parts) => {
   return out;
 };
 
+export function recoverySalt(handle) {
+  return blake2b(concat(text.encode("mesa-recovery-v1"), text.encode(handle.trim().toLowerCase())), { dkLen: 16 });
+}
+
 async function vaultKey(password, salt, usage) {
   const raw = await argon2id({
     password: text.encode(password),

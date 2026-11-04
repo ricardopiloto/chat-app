@@ -27,8 +27,9 @@
     "verify:email-reset": "node --experimental-strip-types scripts/verify-email-reset.mjs",
     "verify:http-timeout": "node scripts/verify-http-timeout.mjs",
     "verify:popout-grid": "node scripts/verify-popout-grid.mjs",
+    "verify:brand": "node scripts/verify-brand.mjs --self-test",
     "verify:icons": "node scripts/verify-icons.mjs",
-    "electron:dev": "tsc -p electron/tsconfig.json && tsc -p electron/tsconfig.preload.json && mv -f electron/dist/preload.js electron/dist/preload.cjs && cp electron/screen-picker.html electron/dist/screen-picker.html && MESA_ELECTRON_DEV=1 electron electron/dist/main.js",
+    "electron:dev": "tsc -p electron/tsconfig.json && tsc -p electron/tsconfig.preload.json && mv -f electron/dist/preload.js electron/dist/preload.cjs && cp electron/screen-picker.html electron/dist/screen-picker.html && PARLEY_ELECTRON_DEV=1 electron electron/dist/main.js",
     "electron:build": "npm run build && tsc -p electron/tsconfig.json && tsc -p electron/tsconfig.preload.json && mv -f electron/dist/preload.js electron/dist/preload.cjs && cp electron/screen-picker.html electron/dist/screen-picker.html && electron-builder --config electron-builder.yml"
   },
   "dependencies": {

@@ -9,6 +9,7 @@ export {
   deriveRecovery,
   newRecoveryCode,
   recoveryPayloadHash,
+  recoverySalt,
   recoverySignMessage,
   signRecovery,
   signWithRecoveryCode,

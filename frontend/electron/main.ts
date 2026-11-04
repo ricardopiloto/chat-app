@@ -15,7 +15,7 @@ interface InstanceState {
   sessionToken: string | null;
 }
 
-const isDev = process.env.MESA_ELECTRON_DEV === "1";
+const isDev = process.env.PARLEY_ELECTRON_DEV === "1";
 let instance: InstanceState = { baseUrl: null, sessionToken: null };
 let availableUpdate: { version: string; url: string } | null = null;
 

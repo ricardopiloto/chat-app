@@ -1,46 +1,50 @@
-# Review — Desenvolvedor Fullstack (revisão final)
+# Review — Desenvolvedor Fullstack
 
 **Change:** rebrand-parley
-**Data:** 2026-11-03
+**Data:** 2026-11-04
 **Veredito geral:** Aprovado com ressalvas
 
-O bloqueante da revisão anterior (rótulos criptográficos `mesa-recovery-v1` e `mesa-invite-seed-v1` sem proteção) está resolvido: `design.md` decisão 1, spec `brand-identity` e tarefa 4.4, que usa o `test:contracts` já existente (`frontend/scripts/contracts/reference.mjs`). As demais recomendações foram incorporadas (recusa de partida do backend, documentos e runbook, varredura de e-mails, ordem de implementação, plano de ícones).
+Revisão refeita contra o código atual (as três changes de e-mail e a de onboarding já estão commitadas e arquivadas, árvore limpa). Contexto lido: artefatos da change e `review-architect.md`, `backend/src/{config,main,lib,email_templates}.rs`, `backend/tests/contract/auth_email_reset.rs`, `frontend/{package.json,electron-builder.yml,vite.config.ts}`, `frontend/electron/{main.ts,tsconfig.json,icons/}`, `frontend/src/{i18n,crypto,api,assets}`, `frontend/scripts/*`, `scripts/install-mesa.sh`, `.github/workflows/desktop-release.yml`, `docs/deploy-producao.md`. Verificação no repo: `openspec validate rebrand-parley --strict` passa. Não há CI de testes, só o workflow de release; o gate local são `cargo test` e os `npm run …`.
 
 ## 1. Desenvolvimento do backend
-Veredito: OK
-- Superfície pequena e clara: `backend/src/config.rs` (hoje linhas 69, 70, 106 e as mensagens 150 e 155), `api/servers.rs:85`, `api/unfurl.rs:52`, `api/voice.rs:602`. A recusa de partida cabe em `Config` (a validação já devolve erro de string, como em `config.rs:155`).
-- Variáveis novas da change `email-registration` (`EMAIL_*`, `PUBLIC_BASE_URL`, `REGISTO_MODO`, `TURNSTILE_*`) não usam o prefixo `MESA_`, então não entram na recusa nem precisam de troca.
-- `backend/src/email_templates.rs` (da change em andamento) tem "Mesa" fixo em assuntos e corpos (linhas 6, 8, 19, entre outras) e `production_boot.rs:85` usa `"Mesa <noreply@example.com>"`. Estão cobertos pela varredura da tarefa 4.3; como são arquivos ainda não commitados, só dá para trocá-los depois do commit da `email-registration`.
-- Testes de contrato `servers.rs:73` e `channels.rs:67,77` já estão listados na 4.3.
+Veredito: Atenção
+- **Onde fica a recusa de partida.** `Config::from_env()` devolve `Self` (sem `Result`) e `validate()` é chamado em `main.rs` e em `lib.rs::build_state`. A recusa por `MESA_*` tem de valer **mesmo sem `PARLEY_PRODUCTION`** (é o ponto da spec), então não pode ficar dentro de `validate()` depois de uma checagem de produção. Especificar uma função separada (por exemplo `Config::legacy_env_error()`), chamada em `main.rs` antes de `validate()`, e que **recebe o ambiente por parâmetro**: testes que mexem em variáveis de ambiente reais são racionais só em série e a suíte corre em paralelo. Tasks 3.1/3.2 não dizem isto.
+- **Contratos e testes que citam variáveis e textos.** A 3.2 cita «os testes de contrato que citam as variáveis», mas há também os que fixam **textos de e-mail**: `auth_email_reset.rs` confere «Senha do Mesa alterada» (linhas ~301 e ~372) e vários testes constroem remetentes `"Mesa <mesa@example.org>"`. Trocar os templates (22 ocorrências de «Mesa» em `email_templates.rs`) sem isto quebra a suíte. Incluir na 4.3 a lista desses testes.
+- **Uma ocorrência é só dado de teste**: `create_server_body("Mesa")` em vários testes não tem relação com a marca; não renomear.
+- Sem migração nem mudança de API. `User-Agent` do unfurl, prefixo da gravação e nome do canal de voz são strings simples (4.3).
 
 ## 2. Desenvolvimento do frontend
 Veredito: Atenção
-- Catálogos i18n: `en.ts` e `pt-BR.ts` estão sendo alterados agora pela `email-registration`; trocar o nome nesses dois arquivos antes do commit dela gera conflito. Já coberto pela nota de ordem, mas a lista de arquivos em conflito deve constar nela.
-- `Logo.tsx` mantém as duas variantes; o emblema do urso dentro do disco foi visto legível a 16 px. Nada mais a fazer além da tarefa 5.4.
-- Módulo da limpeza (`frontend/electron/`): o `tsconfig.json` do Electron tem `"include": ["main.ts", "preload.ts"]` e `module: Node16`, com `electron/package.json` do tipo ESM. Um arquivo novo precisa entrar nesse `include` e ser importado com extensão `.js` a partir do `main.ts`. Isto não está nas tarefas. Incluir na 2.1.
+- **Varredura de «Mesa» precisa de um guarda automático, não só leitura.** São ~56 ocorrências em `frontend/src` e `backend/src`, mais catálogos `legacy/*` e textos novos das changes de e-mail e de onboarding. A tarefa 4.1 usa «linha a linha» e `grep` manual. Acrescentar um `scripts/verify-brand.mjs` com **lista de permissão** dos identificadores intocáveis (`mesa.*`, `mesa://`, `mesa:*`, `x-mesa-media-type`, `__MESA_NATIVE__`, `mesa-recovery-v1`, `mesa-invite-seed-v1`) que falha com qualquer outro «Mesa/mesa» visível; fica no mesmo padrão dos `verify-*.mjs`.
+- **Ícones:** `frontend/src/assets/{logo,emblem}.png` e `frontend/public/*` existem; `frontend/electron/icons/` ainda tem `android/`, `ios/`, `Square*Logo.png`, `StoreLogo.png` e `icon.icns` (sobras do Tauri), como a 5.2 já prevê. A 5.2 corretamente manda confirmar por `grep` que nada os referencia.
+- **Teste do módulo de limpeza.** O padrão `node --experimental-strip-types` dos `verify-*.mjs` só roda TypeScript com **sintaxe apagável** (sem `enum`, sem parâmetros-propriedade). O módulo de `electron/` é compilado por `tsc` (`module: Node16`, `noUnusedLocals`) e importado por `main.ts` com `.js`; o teste importaria o `.ts` direto. Escrever o módulo só com tipos e funções puras (já previsto: funções injetáveis) e dizer isso na 2.1 evita retrabalho.
+- Sem UI nova além do diálogo nativo de confirmação (`dialog` do Electron, que `main.ts` ainda não importa).
 
 ## 3. Deploy e operação
 Veredito: Atenção
-- Runbook da instância (tarefa 8.1): além de `MESA_PRODUCTION` para `PARLEY_PRODUCTION`, conferir o nome de exibição em `EMAIL_FROM` no `/etc/mesa/mesa.env` real e qualquer outra variável que cite o nome antigo. A verificação por `/health` não pega erro de e-mail; adicionar um envio de teste do e-mail de confirmação.
-- CI: não há esteira de testes, só `desktop-release.yml`. A verificação dos ícones de Windows e macOS depende de uma tag de teste (6.2), porque `.icns` e instalador NSIS/MSI não são gerados na máquina de desenvolvimento Linux. Deixar explícito na 5.2 que o `electron-builder --dir` local cobre só Linux.
-- Mudança de `mac.icon` e `win.icon` em `electron-builder.yml` (hoje `icon.ico` e `icon.icns`): se o macOS passar a usar PNG de 1024, remover o `icon.icns` antigo para não coexistirem duas fontes.
-- Versão 1.4.0 em três arquivos (`package.json` do frontend já está modificado pela change em andamento).
+- **Roteiro de produção (8.1) assume uma topologia que mudou.** `docs/deploy-producao.md` descreve `systemd` + `/etc/mesa/mesa.env` + Nginx servindo `dist`; foi informado que o Nginx atende só o LiveKit e a entrada do tráfego da app está por confirmar (backlog, item 20). Confirmar onde a variável `MESA_PRODUCTION` está de fato definida antes de escrever o roteiro, porque **uma variável esquecida impede o backend de subir** (é o desenho), então a ordem «editar o ambiente antes de reiniciar» é crítica.
+- **CI:** `desktop-release.yml` usa nomes `mesa-linux`, `mesa-windows`, `mesa-macos` (artefatos) e `pattern: mesa-*` no download, além do nome da release «Mesa …». A 6.2 diz «nomes dos artefatos e da release»; precisa renomear **os dois lados do par upload/download** e o `pattern` juntos, senão o job de publicação não encontra nada. A tag precisa casar com `frontend/electron/package.json` (1.4.0).
+- **Scripts de instalação:** `install-mesa.sh` tem ~10 mensagens com o prefixo «Mesa:», o nome do AppImage (`mesa-chat-app.AppImage`), `Name=Mesa` do atalho e o ícone; o filtro do instalador no Python usa extensão e arquitetura (`encontrados {len(candidates)}`). Os nomes dos **próprios ficheiros** `install-mesa.sh/.ps1` não estão na decisão; manter ou renomear é escolha de produto (URLs antigas deixam de existir se renomear). Registrar.
+- **`electron-builder.yml`:** além de `appId`, `productName`, `copyright` e `artifactName`, há `extraMetadata.name: mesa`, `author`, `maintainer: Mesa`, `desktopName: mesa-chat-app.desktop`, `deb/rpm.packageName`. A 6.1 não lista `extraMetadata.name` nem `maintainer`/`desktopName` explicitamente; incluir para não restar «mesa».
+- **Observabilidade:** a limpeza grava só em log; para depurar «não removeu o Mesa» num usuário, definir onde esse log fica (arquivo em `userData` do Parley, não só console) e que o diálogo de falha mostra o passo manual.
 
 ## 4. Qualidade de código
 Veredito: Atenção
-- **Limpeza no Windows.** O desinstalador NSIS do electron-builder costuma reexecutar-se de uma cópia temporária, então iniciar o processo e esperar o `exit` não prova que a remoção terminou. Ele também falha ou pede para fechar o app se o Mesa estiver aberto. A tarefa 2.2 deve: (a) confirmar o resultado pela ausência da chave do registro ou da pasta depois de uma espera com limite de tempo; (b) avisar no diálogo para fechar o Mesa; (c) cair no passo manual quando o limite estoura. Os testes do módulo (2.1) devem cobrir "desinstalador retorna sem remover".
-- **Identificação da chave de registro** (tarefa 1.1): fixar o critério (nome da chave e `DisplayName`) para nunca executar um desinstalador de outro programa.
-- **Testabilidade:** o padrão do projeto é `node --experimental-strip-types` sobre arquivos `.mjs` que importam `.ts` (`scripts/invite-handoff.test.mjs`). Para o módulo da limpeza funcionar nesse padrão, ele não pode importar `electron`; recebe tudo por injeção (já previsto em 2.1). Adicionar o script correspondente em `package.json` (por exemplo `verify:legacy-cleanup`) à tarefa, para a verificação ser reproduzível.
-- A recusa de partida do backend (3.1) tem testes previstos para os cenários da spec; confirmar que cobrem a variável `MESA_*` definida junto com `PARLEY_*`.
+- Testes previstos: módulo de limpeza (2.1–2.3), recusa de variáveis (3.1), contratos (4.4), ícones (5.3). Faltam: o `verify-brand.mjs` acima, o ajuste dos testes de e-mail (§1) e um teste do `electron-builder --dir` em CI para o `appId` novo (hoje só a tag de teste da 6.2).
+- **Cenário que a spec não tem e o código revela:** o `localStorage` do desktop vive em `userData`, e `userData` muda de nome (ver review do arquiteto). A spec garante preservação só para o cliente web; sem decisão, nenhuma tarefa cobre o que acontece com `mesa.channelKey.*` e com a sessão do desktop.
+- Resiliência: o desinstalador NSIS assíncrono está bem tratado (estado em vez de código de retorno, espera com limite). Concorrência: a marca de execução única em `userData` impede dupla execução entre janelas.
+- Tarefas manuais (1.1, 2.4, 5.4, parte da 6.2) exigem Windows, macOS e um runner de CI; não há dono. Não bloqueiam o resto, mas a 2.4 decide o plano B do NSIS, então o grupo 2 deve começar pela 1.1.
 
 ## 5. Execução das decisões arquiteturais
 Veredito: OK
-- Tarefas seguem o `design.md`: intocáveis preservados, `appId` novo, pacote `parley-chat-app`, variáveis sem legado, servidor atual não renomeado, limpeza com confirmação e plano B (NSIS) previsto.
-- Sem novo conflito de arquitetura; os pontos acima são de implementação.
+- As decisões (intocáveis, `appId`, limpeza na primeira execução, recusa de `MESA_*`, pacotes `parley-chat-app`) estão coerentes com o código real. A lista de intocáveis confere, e a chave `mesa.instance-admin-welcome:<id>` da change de onboarding já segue o prefixo preservado.
+- Limitações técnicas que a implementação revelaria e a arquitetura não endereça estão abaixo.
 
 ## Bloqueantes antes de implementar
 - nenhum
 
 ## Limitações técnicas a reportar ao Arquiteto
-- Desinstalador NSIS assíncrono e Mesa em execução: o design assume remoção síncrona; a tarefa 2.2 precisa de confirmação por estado, com o plano B do NSIS (decisão 3) se não funcionar de forma confiável.
-- A lista de arquivos em conflito com `email-registration` é ampla (`README.md`, docs de deploy e operação, `frontend/package.json`, catálogos i18n, `Auth.tsx`, `config.rs`, testes de contrato). A nota de ordem deve citá-la.
+- **`userData` do desktop:** a mudança de nome deixa o novo perfil sem `mesa.channelKey.*` (chaves de canal de voz coladas à mão) e sem a sessão; decidir aceitar/fixar/migrar e registrar cenário na spec.
+- **Topologia de produção** do roteiro 8.1 (Nginx só para LiveKit; entrada da app por confirmar).
+- **Notas de ordem desatualizadas** em `tasks.md`, no Risks e no plano de migração (as changes de e-mail já estão commitadas).
+- **Pesquisa de colisão do nome (1.2)** ainda aberta e irreversível depois de publicar `appId`/pacotes: fazer antes de implementar.

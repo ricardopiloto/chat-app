@@ -19,7 +19,7 @@ function failureText(error: unknown): string {
   return t("instance.unexpected");
 }
 
-/** Asks for a Mesa address and stores it only after GET /health succeeds. */
+/** Asks for a Parley address and stores it only after GET /health succeeds. */
 export function InstanceConnect(props: { onSaved: () => void }) {
   const [address, setAddress] = createSignal("");
   const [problem, setProblem] = createSignal("");

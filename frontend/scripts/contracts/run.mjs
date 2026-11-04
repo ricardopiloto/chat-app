@@ -7,6 +7,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import nacl from "tweetnacl";
+import { blake2b } from "@noble/hashes/blake2b";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const args = process.argv.slice(2);
@@ -17,6 +18,7 @@ const opt = (name, fallback) => {
 const implPath = resolve(opt("--impl", join(here, "reference.mjs")));
 const vectorsPath = resolve(opt("--vectors", join(here, "../../../docs/v2/contracts/vectors/crypto-vectors.json")));
 const impl = await import(pathToFileURL(implPath).href);
+const reference = await import(pathToFileURL(join(here, "reference.mjs")).href);
 const vectors = JSON.parse(readFileSync(vectorsPath, "utf8"));
 
 const bytes = (b64) => Uint8Array.from(Buffer.from(b64, "base64"));
@@ -40,6 +42,13 @@ function check(name, fn) {
 const expect = (cond, msg) => {
   if (!cond) throw new Error(msg);
 };
+check("recovery: domain label matches reference", () => {
+  expect(same(impl.recoverySalt(" Alice "), reference.recoverySalt(" Alice ")), "recovery salt differs");
+});
+check("recovery: changed domain label would fail", () => {
+  const changed = blake2b(new TextEncoder().encode("parley-recovery-v1alice"), { dkLen: 16 });
+  expect(!same(changed, reference.recoverySalt("Alice")), "changed label unexpectedly matches");
+});
 const rejects = async (fn) => {
   try {
     await fn();

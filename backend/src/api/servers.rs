@@ -82,7 +82,7 @@ pub async fn create_server(
         &state.pool,
         server.id,
         account.id,
-        "mesa".into(),
+        "parley".into(),
         ChannelType::VoiceVideo,
         Some(4),
         None,

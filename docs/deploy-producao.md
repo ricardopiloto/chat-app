@@ -1,4 +1,4 @@
-# Publicar a Mesa em produção — chat.1nodado.com.br
+# Publicar o Parley em produção — chat.1nodado.com.br
 
 Guia passo-a-passo para subir a instância num servidor (VPS ou máquina própria) exposto na
 internet através do domínio **chat.1nodado.com.br**, com HTTPS, LiveKit e systemd.
@@ -93,6 +93,8 @@ sudo usermod -aG docker "$USER"   # sair e voltar a entrar na sessão para aplic
 
 Crie um utilizador de sistema dedicado para correr a aplicação (evite root):
 
+Os comandos abaixo documentam a instância atual, que conserva o usuário `mesa`, a unit e os diretórios `/opt/mesa` e `/etc/mesa`. Em instalações novas, use `parley` e os caminhos `/opt/parley` e `/etc/parley`, ajustando todos os comandos e a unit de forma consistente.
+
 ```bash
 sudo useradd --system --create-home --shell /usr/sbin/nologin mesa
 ```
@@ -109,7 +111,7 @@ cd /opt/mesa
 ## 4. LiveKit em produção
 
 **Nunca** use o par de chaves de exemplo (`instkey` / `instsecretinstsecretinstsecret12`) em
-produção — o backend recusa arrancar com elas quando `MESA_PRODUCTION=1` (`Config::validate`).
+produção — o backend recusa arrancar com elas quando `PARLEY_PRODUCTION=1` (`Config::validate`).
 
 Gere chaves únicas:
 
@@ -181,7 +183,7 @@ Crie `/etc/mesa/mesa.env` (fora do repo, `600`, dono `mesa`):
 ```bash
 sudo mkdir -p /etc/mesa
 sudo tee /etc/mesa/mesa.env > /dev/null <<'EOF'
-MESA_PRODUCTION=1
+PARLEY_PRODUCTION=1
 
 DATABASE_URL=sqlite:///opt/mesa/data/chat.db?mode=rwc
 BIND=127.0.0.1:8080
@@ -200,7 +202,7 @@ REGISTO_MODO=fechado
 # Para abrir após testar Resend, termos/privacidade e Nginx:
 # REGISTO_MODO=aberto
 # EMAIL_API_KEY=<chave Resend>
-# EMAIL_FROM=Mesa <noreply@seu-dominio.example>
+# EMAIL_FROM="Parley <noreply@seu-dominio.example>"
 # PUBLIC_BASE_URL=https://chat.1nodado.com.br
 # TRUSTED_PROXY=true
 # TURNSTILE_SECRET=<segredo opcional>
@@ -239,7 +241,7 @@ sudo chown -R mesa:mesa /opt/mesa
 ```bash
 sudo tee /etc/systemd/system/mesa-backend.service > /dev/null <<'EOF'
 [Unit]
-Description=Mesa backend (Axum)
+Description=Parley backend (Axum)
 After=network.target docker.service
 
 [Service]

@@ -70,7 +70,7 @@ export const chatEn: MessageTree = {
     jump: "Jump to present",
     state: {
       loading: "Loading messages…",
-      noKey: "Waiting for a member to come online. This server's key arrives when someone who already has it opens Mesa.",
+      noKey: "Waiting for a member to come online. This server's key arrives when someone who already has it opens Parley.",
       error: "Could not load the messages.",
       retry: "Try again",
       empty: "No messages yet. Say hello!",

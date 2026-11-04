@@ -55,7 +55,7 @@ Erros estáveis do fluxo: `registration_closed` (403), `terms_required`, `email_
 | Método | Caminho | Pedido | Resposta | Notas |
 |--------|---------|--------|----------|-------|
 | `GET` | `/api/servers` | — | `Server[]` | `has_unread`, `has_voice` por servidor |
-| `POST` | `/api/servers` | `{ name, custody_ack, channel_key_sealed }` | `Server` | Cria o servidor, o canal `geral` e o canal de voz `mesa` com chave |
+| `POST` | `/api/servers` | `{ name, custody_ack, channel_key_sealed }` | `Server` | Cria o servidor, o canal `geral` e o canal de voz `parley` com chave |
 | `DELETE` | `/api/servers/{id}` | — | sem corpo | Só o dono. Emite `server.deleted` |
 | `GET` / `PUT` / `DELETE` | `/api/servers/{id}/image` | — / bytes / — | imagem / `Server` / sem corpo | Imagem do servidor |
 | `GET` / `PATCH` | `/api/servers/{id}/welcome` | `Partial<WelcomeSettings>` | `WelcomeSettings` | Canal e modelo de boas-vindas |
@@ -222,7 +222,7 @@ sequenceDiagram
     C->>O: mostrar a chave do canal uma vez para guardar
     C->>C: channel_key_sealed = seal(chave do canal, pubkey do dono)
     C->>B: POST /api/servers (name, custody_ack, channel_key_sealed)
-    B->>B: criar servidor, canal geral, canal de voz mesa, cargo Dono
+    B->>B: criar servidor, canal geral, canal de voz parley, cargo Dono
     B->>B: guardar channel_key.sealed_blob
     B-->>C: Server
     C->>C: envelope = seal(chave do servidor, pubkey do dono)

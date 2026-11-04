@@ -228,7 +228,7 @@ async fn unavailable_fake_provider_cannot_change_the_public_response() {
     let mut state = app.state.clone();
     state.email_sender = Arc::new(chat_backend::email_sender::ResendSender::new(
         chat_backend::config::Secret::new("fake"),
-        "Mesa <mesa@example.org>".into(),
+        "Parley <parley@example.org>".into(),
         "http://127.0.0.1:1".into(),
     ));
     let router = chat_backend::router(state);
@@ -298,7 +298,7 @@ async fn operator_reset_sends_notice_and_password_change_does_not() {
     assert_eq!(status, StatusCode::OK);
     assert!(email_file(&app, "password_reset_notice")
         .await
-        .contains("Senha do Mesa alterada"));
+        .contains("Senha do Parley alterada"));
 }
 
 #[tokio::test]
@@ -369,7 +369,7 @@ async fn key_reset_sends_notice() {
     assert_eq!(status, StatusCode::OK);
     assert!(email_file(&app, "password_reset_notice")
         .await
-        .contains("Senha do Mesa alterada"));
+        .contains("Senha do Parley alterada"));
 }
 
 #[tokio::test]
@@ -386,7 +386,7 @@ async fn provider_failure_does_not_prevent_operator_reset() {
     let mut state = app.state.clone();
     state.email_sender = Arc::new(chat_backend::email_sender::ResendSender::new(
         chat_backend::config::Secret::new("fake"),
-        "Mesa <mesa@example.org>".into(),
+        "Parley <parley@example.org>".into(),
         "http://127.0.0.1:1".into(),
     ));
     let router = chat_backend::router(state);

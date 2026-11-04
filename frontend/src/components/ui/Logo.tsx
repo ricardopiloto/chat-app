@@ -11,7 +11,7 @@ export function Logo(props: { variant?: "emblem" | "full"; size?: number; class?
       src={props.variant === "full" ? logo : emblem}
       width={size()}
       height={size()}
-      alt="Mesa"
+      alt="Parley"
       draggable={false}
     />
   );

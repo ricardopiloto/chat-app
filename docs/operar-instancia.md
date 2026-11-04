@@ -2,6 +2,8 @@
 
 Guia para um operador publicar a instância na própria máquina. Meta: instância respondendo no navegador em menos de 30 minutos (SC-001).
 
+Em instalações novas use o nome Parley. A instância atual conserva o usuário `mesa` e os diretórios `/opt/mesa` e `/etc/mesa`; esses caminhos não precisam ser renomeados.
+
 ## Pré-requisitos
 
 - Linux (validado em Fedora). Docker Engine + Compose (grupo `docker` ou `sudo`).
@@ -31,7 +33,7 @@ Para participantes **fora da LAN do operador**, abra as mesmas portas no router/
 
 ## 2. Backend
 
-Por omissão o processo escuta só em **127.0.0.1:8080**. Mantenha `BIND=127.0.0.1:8080` até criar a conta de Administrador da instância; só então exponha o serviço. Na LAN tem de exportar `BIND=0.0.0.0:8080` **explicitamente**. Sem `MESA_PRODUCTION`, as chaves LiveKit de exemplo (`instkey` / o secret em `infra/livekit.yaml`) ainda arrancam — só para este caminho de 30 minutos.
+Por omissão o processo escuta só em **127.0.0.1:8080**. Mantenha `BIND=127.0.0.1:8080` até criar a conta de Administrador da instância; só então exponha o serviço. Na LAN tem de exportar `BIND=0.0.0.0:8080` **explicitamente**. Sem `PARLEY_PRODUCTION`, as chaves LiveKit de exemplo (`instkey` / o secret em `infra/livekit.yaml`) ainda arrancam — só para este caminho de 30 minutos.
 
 ```bash
 cd backend
@@ -52,7 +54,7 @@ export REGISTO_MODO=fechado               # padrão; convite obrigatório após 
 # export REGISTO_MODO=aberto
 # export PUBLIC_BASE_URL=https://127.0.0.1:1421
 # export EMAIL_LOG_FILE=/tmp/mesa-email.log   # diagnósticos; link no .eml vizinho privado
-# export EMAIL_FROM='Mesa <noreply@example.com>'
+# export EMAIL_FROM='Parley <noreply@example.com>'
 # export EMAIL_API_KEY=<chave Resend>         # ausente: usa LogSender
 # export TRUSTED_PROXY=false                  # true só atrás de Nginx local confiável
 # export TURNSTILE_SECRET=<segredo opcional>
@@ -67,7 +69,7 @@ cargo run
 
 Não use o par de exemplo LiveKit como receita de produção. Perfil explícito:
 
-- `MESA_PRODUCTION=1` (ou `true`) **ou** `MESA_ENV=production`
+- `PARLEY_PRODUCTION=1` (ou `true`) **ou** `PARLEY_ENV=production`
 - `LIVEKIT_API_KEY` e `LIVEKIT_API_SECRET` **únicos** (distintos de `instkey` / `instsecretinstsecretinstsecret12`); alinhar `infra/livekit.yaml`
 - `COOKIE_SECURE=true` (HTTPS no reverse proxy TLS à frente do único processo Axum)
 - `BIND=127.0.0.1:8080` (recomendado) e o proxy termina TLS; LAN pública na máquina sem proxy continua a precisar de `BIND=0.0.0.0:8080` explícito
@@ -125,7 +127,7 @@ chat-backend reset-code <handle>
 chat-backend reset-code <handle> --ttl-minutes 15
 ```
 
-O comando imprime um código de 26 caracteres (grupos de 4) e o prazo. Por omissão vale 30 minutos. A base guarda só o hash. Um segundo código para o mesmo handle invalida o primeiro. Cinco tentativas erradas também o invalidam. Entregue o código por um canal que já use com essa pessoa (presencial, mensagem fora da Mesa). Não o guarde em ticket nem em log.
+O comando imprime um código de 26 caracteres (grupos de 4) e o prazo. Por omissão vale 30 minutos. A base guarda só o hash. Um segundo código para o mesmo handle invalida o primeiro. Cinco tentativas erradas também o invalidam. Entregue o código por um canal que já use com essa pessoa (presencial, mensagem fora do Parley). Não o guarde em ticket nem em log.
 
 A pessoa abre **Esqueci a senha** no ecrã de entrada, escolhe **Tenho um código do operador**, escreve o handle, o código e uma senha nova, e confirma o aviso. Entra com uma **identidade nova**. Os servidores voltam a abrir quando alguém que ainda tem a chave estiver online. Servidores em que essa conta era a única com a chave, e a custódia da chave de voz, não voltam. A sessão antiga deixa de valer.
 
@@ -142,7 +144,7 @@ A pessoa abre **Esqueci a senha** no ecrã de entrada, escolhe **Tenho um códig
 
 Cenas de câmera (Fase 2) não abrem portas novas: são só composições da grade no canal de vídeo. Trocar de cena não reinicia a chamada.
 
-A SPA segue o visual **Mesa / Nocturne** (tema claro/escuro, shell com sidebar). Não há portas nem processos novos — só o frontend em `1421` (dev) ou o estático de `frontend/dist` servido pelo Nginx.
+A SPA segue o visual **Parley / Nocturne** (tema claro/escuro, shell com sidebar). Não há portas nem processos novos — só o frontend em `1421` (dev) ou o estático de `frontend/dist` servido pelo Nginx.
 
 Layouts de cena (**Mestre em destaque**, **Painel**, **Faixa N-up**) aceitam **2–8** câmeras/slots por cena; a família de layout e o número são independentes. Continuam só dados SQLite + API, sem portas novas.
 
@@ -151,7 +153,7 @@ Layouts de cena (**Mestre em destaque**, **Painel**, **Faixa N-up**) aceitam **2
 - Canais de voz **antigos** (sem `channel_key` na base) não permitem **Gravar** / **Religar** — recrie o canal de voz após actualizar o backend (migração `0006_*`).
 - Ao criar um canal de voz, o cliente gera a chave de mídia do canal: guarde-a (checkbox de custódia) — o servidor só guarda o envelope selado.
 - Artefacto de gravação (LiveKit Egress) é **opcional**. Sem storage configurado, Gravar falha com erro claro e a E2EE **não** fica desligada a falso.
-- Para activar artefacto: configure o LiveKit Egress na instância e exporte `LIVEKIT_EGRESS_FILE_PREFIX` (caminho/prefixo de ficheiro aceite pelo egress, ex. `/out/mesa` ou `s3://bucket/mesa`). Não abre portas novas além das já listadas.
+- Para activar artefacto: configure o LiveKit Egress na instância e exporte `LIVEKIT_EGRESS_FILE_PREFIX` (caminho/prefixo de ficheiro aceite pelo egress, ex. `/out/parley` ou `s3://bucket/parley`). Não abre portas novas além das já listadas.
 
 ## Efeitos sonoros do frontend v2
 

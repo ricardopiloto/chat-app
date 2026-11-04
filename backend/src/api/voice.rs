@@ -599,7 +599,7 @@ pub async fn egress_start(
         ));
     };
 
-    let filepath = format!("{prefix}/mesa-{channel_id}-{recording_id}.mp4");
+    let filepath = format!("{prefix}/parley-{channel_id}-{recording_id}.mp4");
     let room = channel_id.to_string();
     match try_start_egress(&state, &room, &filepath).await {
         Ok(egress_id) => {

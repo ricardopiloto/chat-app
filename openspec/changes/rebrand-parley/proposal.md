@@ -16,8 +16,9 @@ Premissa do autor: há **uma única instância** em produção (chat.1nodado.com
 - **Limpeza da instalação anterior**: na primeira execução, o Parley procura uma instalação do Mesa, pergunta ao usuário e a remove (escopo e limites por plataforma no design). A pasta de dados do Mesa não é apagada.
 - **BREAKING** Variáveis de ambiente passam de `MESA_*` a `PARLEY_*`, sem leitura legada. O backend **recusa partir** se encontrar `MESA_PRODUCTION`, `MESA_ENV` ou `MESA_RATE_LIMIT_DISABLED`, para não desligar o modo produção em silêncio.
 - **BREAKING** Pacotes Linux e artefatos passam a `parley-chat-app` / `Parley-…` (o nome `parley` sozinho colide com o pacote Parley do KDE).
-- A pasta de dados do Electron **não** é fixada: ela segue o nome novo e o usuário informa a instância e entra de novo uma vez.
+- A pasta de dados do Electron **não** é fixada: ela segue o nome novo e o usuário informa a instância e entra de novo uma vez. Perdem-se só as cópias locais do desktop (sessão e chaves de canal de voz coladas à mão); as chaves de servidor voltam pelo login, e a pasta antiga fica no disco (design, decisão 10).
 - **Intocáveis** (continuam `mesa`): rótulos criptográficos `mesa-recovery-v1` e `mesa-invite-seed-v1`; chaves `mesa.*` do `localStorage`; protocolo `mesa://`; canais IPC `mesa:*`; header `x-mesa-media-type`; global `__MESA_NATIVE__`. Specs, docs e changes históricas também ficam.
+- Guarda automático `npm run verify:brand`: falha com qualquer «Mesa/mesa» visível fora da lista de intocáveis.
 - Documentação operacional e release: `docs/deploy-producao.md`, `docs/operar-instancia.md`, `docs/desktop-release.md`, `CHANGELOG.md`, versão 1.4.0.
 - Deploy na instância real com runbook (editar `/etc/mesa/mesa.env` antes de reiniciar). Usuário de sistema, diretórios e unit do servidor atual não são renomeados.
 
@@ -38,7 +39,7 @@ Premissa do autor: há **uma única instância** em produção (chat.1nodado.com
 - Electron: `frontend/electron/main.ts` (limpeza da instalação anterior e `ELECTRON_DEV`), `frontend/electron-builder.yml`, `frontend/electron/package.json`, `frontend/electron/icons/**`.
 - Backend: `backend/src/config.rs`, `api/servers.rs`, `api/unfurl.rs`, `api/voice.rs`; testes de contrato (`servers.rs`, `channels.rs`).
 - CI e distribuição: `.github/workflows/desktop-release.yml`, `scripts/install-mesa.sh`, `scripts/install-mesa.ps1`, `README.md`, `CHANGELOG.md`.
-- Docs operacionais: `docs/deploy-producao.md`, `docs/operar-instancia.md`, `docs/desktop-release.md`.
-- Produção: `/etc/mesa/mesa.env` na instância atual e `systemd`.
+- Docs operacionais: `docs/deploy-producao.md`, `docs/operar-instancia.md`, `docs/desktop-release.md`. Também `docs/contratos-e-fluxos.md`, `docs/arquitetura-tecnica.md` e `infra/.env.example`.
+- Produção: o arquivo de ambiente da instância atual (documentado como `/etc/mesa/mesa.env`, com `systemd`) e a topologia real de entrada do tráfego, ainda por confirmar (backlog, item 20).
 - Logo: mestres aprovados em `docs/v2/parley_logo/` (SVG e PNG 1024); a change gera os ícones derivados deles.
-- Ordem: implementar depois de `email-registration` estar concluída e commitada, porque ambas alteram `backend/src/config.rs`.
+- Ordem: a pré-condição (as changes de e-mail e de onboarding commitadas e arquivadas, `0a3ba79`) está cumprida. A pesquisa de colisão do nome (tarefa 1.2) vem antes de qualquer implementação.

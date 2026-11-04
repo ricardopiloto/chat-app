@@ -371,7 +371,7 @@ async fn failed_http_provider_does_not_change_created_channel() {
     let mut state = app.state.clone();
     state.email_sender = Arc::new(chat_backend::email_sender::ResendSender::new(
         chat_backend::config::Secret::new("fake-api-key"),
-        "Mesa <noreply@example.org>".into(),
+        "Parley <noreply@example.org>".into(),
         format!("http://{address}"),
     ));
     app.router = chat_backend::router(state);

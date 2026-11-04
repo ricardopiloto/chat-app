@@ -1,4 +1,4 @@
-// Which Mesa instance this client talks to, and the session token used instead of the cookie.
+// Which Parley instance this client talks to, and the session token used instead of the cookie.
 // The web build never reads or writes this: `isNative()` is false and every save is a no-op.
 // Inside Electron the values live in a JSON file owned by the main process. A dev-only flag
 // simulates native mode in a browser and then uses localStorage.
@@ -126,7 +126,7 @@ export async function saveSessionToken(token: string): Promise<void> {
   await writePersisted(state);
 }
 
-/** Drops the token and keeps the instance URL. Logout stays on the same Mesa. */
+/** Drops the token and keeps the instance URL. Logout stays on the same Parley. */
 export async function clearSessionToken(): Promise<void> {
   if (!isNative()) return;
   state = { ...state, sessionToken: null };

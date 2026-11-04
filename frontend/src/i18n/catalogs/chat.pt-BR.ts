@@ -70,7 +70,7 @@ export const chatPtBR: MessageTree = {
     jump: "Saltar para o presente",
     state: {
       loading: "Carregando mensagens…",
-      noKey: "Aguardando um membro online. A chave deste servidor chega quando alguém que já a tem abrir o Mesa.",
+      noKey: "Aguardando um membro online. A chave deste servidor chega quando alguém que já a tem abrir o Parley.",
       error: "Não foi possível carregar as mensagens.",
       retry: "Tentar de novo",
       empty: "Ainda não há mensagens. Diga olá!",

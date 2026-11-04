@@ -49,3 +49,19 @@ A limpeza SHALL NOT apagar a pasta de dados do Mesa. A limpeza SHALL ocorrer no 
 #### Scenario: Segunda execução
 - **WHEN** o Parley abre pela segunda vez
 - **THEN** não procura nem pergunta sobre o Mesa
+
+### Requirement: O perfil novo do aplicativo começa limpo e o usuário é informado
+
+Depois de instalar o Parley, o aplicativo desktop SHALL abrir com um perfil de dados novo, sem a sessão nem as cópias locais guardadas pelo Mesa. O sistema SHALL NOT apagar nem alterar a pasta de dados do Mesa. A documentação SHALL informar que a pessoa informa a instância e entra de novo, e que as chaves de canal de voz coladas à mão precisam ser coladas de novo. As chaves de servidor SHALL voltar depois do login a partir do servidor, sem pedir a chave de recuperação.
+
+#### Scenario: Primeiro uso do perfil novo
+- **WHEN** o Parley abre pela primeira vez e a pessoa informa a instância e entra
+- **THEN** não há sessão anterior, e o histórico dos servidores de que ela participa fica legível sem pedir a chave de recuperação
+
+#### Scenario: Chave de canal de voz colada à mão
+- **WHEN** a pessoa tinha colado a chave de um canal de voz no Mesa e abre o Parley
+- **THEN** o canal pede a chave de novo, e a pasta de dados do Mesa continua no disco
+
+#### Scenario: Pasta de dados antiga intacta
+- **WHEN** o Parley termina de abrir pela primeira vez
+- **THEN** a pasta de dados do Mesa continua no disco, sem alteração
