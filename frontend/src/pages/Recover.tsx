@@ -1,7 +1,9 @@
-import { Show, createSignal } from "solid-js";
+import { Show, createSignal, onCleanup, onMount } from "solid-js";
 import { A } from "@solidjs/router";
-import { ApiError } from "../api";
+import { ApiError, auth } from "../api";
 import { AuthField, AuthFrame, bindValue } from "../auth/AuthFrame";
+import { RecoverEmailRequest } from "../auth/RecoverEmailRequest";
+import { parseRecoverFragment } from "../auth/recoverFragment";
 import { Button, Icon, Segmented } from "../components/ui";
 import { t } from "../i18n";
 import { useSession } from "../session/session";
@@ -26,6 +28,21 @@ export function Recover() {
   const [accepted, setAccepted] = createSignal(false);
   const [busy, setBusy] = createSignal(false);
   const [problem, setProblem] = createSignal("");
+  const [emailConfig, setEmailConfig] = createSignal<{ reset_email: boolean; turnstile_site_key: string | null }>();
+
+  onMount(() => {
+    if (window.location.hash.startsWith("#handle=")) {
+      const linkedHandle = parseRecoverFragment(window.location.hash);
+      window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
+      if (linkedHandle) {
+        setPath("key");
+        setHandle(linkedHandle);
+      }
+    }
+    let cancelled = false;
+    void auth.registrationConfig().then((config) => { if (!cancelled) setEmailConfig(config); }, () => {});
+    onCleanup(() => { cancelled = true; });
+  });
 
   async function submit(event: SubmitEvent) {
     event.preventDefault();
@@ -56,7 +73,11 @@ export function Recover() {
   }
 
   return (
-    <AuthFrame headline={t("recover.headline")} text={t("recover.pitch")} features={[]}>
+    <AuthFrame headline={t("recover.headline")} text={emailConfig()?.reset_email ? t("recoverEmail.pitch") : t("recover.pitch")} features={[]}>
+      <div class="flex min-w-0 flex-col gap-6">
+      <Show when={emailConfig()?.reset_email}>
+        <RecoverEmailRequest siteKey={emailConfig()?.turnstile_site_key ?? null} />
+      </Show>
       <form class="flex flex-col gap-5" onSubmit={submit} noValidate>
         <Segmented
           fill
@@ -99,6 +120,7 @@ export function Recover() {
         </Button>
         <A href="/" class="text-center text-body-sm text-primary hover:underline">{t("recover.back")}</A>
       </form>
+      </div>
     </AuthFrame>
   );
 }

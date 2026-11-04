@@ -69,6 +69,7 @@ pub struct Config {
     pub email_from: Option<String>,
     pub public_base_url: Option<String>,
     pub email_log_file: Option<PathBuf>,
+    pub reset_email: bool,
     pub trusted_proxy: bool,
     pub turnstile_secret: Secret,
     pub turnstile_site_key: Option<String>,
@@ -130,6 +131,7 @@ impl Config {
                 .ok()
                 .filter(|s| !s.is_empty())
                 .map(PathBuf::from),
+            reset_email: env_flag("RESET_EMAIL"),
             trusted_proxy: env_flag("TRUSTED_PROXY"),
             turnstile_secret: Secret::new(env::var("TURNSTILE_SECRET").unwrap_or_default()),
             turnstile_site_key: env::var("TURNSTILE_SITE_KEY")
@@ -158,12 +160,17 @@ impl Config {
     /// Fail closed before bind when the production profile is active.
     pub fn validate(&self) -> Result<(), String> {
         let mode = self.mode()?;
-        if self.production && mode == RegistoModo::Aberto {
+        if self.production && (mode == RegistoModo::Aberto || self.reset_email) {
+            let feature = if mode == RegistoModo::Aberto {
+                "REGISTO_MODO=aberto"
+            } else {
+                "RESET_EMAIL=true"
+            };
             if self.email_api_key.is_empty() {
-                return Err("REGISTO_MODO=aberto exige EMAIL_API_KEY em produção".into());
+                return Err(format!("{feature} exige EMAIL_API_KEY em produção"));
             }
             if self.email_from.is_none() {
-                return Err("REGISTO_MODO=aberto exige EMAIL_FROM em produção".into());
+                return Err(format!("{feature} exige EMAIL_FROM em produção"));
             }
             let url = self.public_base_url.as_deref().unwrap_or("");
             let parsed = reqwest::Url::parse(url).ok();
@@ -180,12 +187,12 @@ impl Config {
                     && value.fragment().is_none()
             });
             if !valid {
-                return Err(
-                    "REGISTO_MODO=aberto exige PUBLIC_BASE_URL HTTPS pública em produção".into(),
-                );
+                return Err(format!(
+                    "{feature} exige PUBLIC_BASE_URL HTTPS pública em produção"
+                ));
             }
             if !self.trusted_proxy {
-                return Err("REGISTO_MODO=aberto exige TRUSTED_PROXY=true em produção".into());
+                return Err(format!("{feature} exige TRUSTED_PROXY=true em produção"));
             }
         }
         if !self.production {

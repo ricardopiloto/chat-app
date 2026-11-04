@@ -51,6 +51,7 @@ export const en: MessageTree = {
     inviteCode: "Invitation code",
     invitePlaceholder: "Paste the invitation code",
     inviteHint: "Required after the first account on the instance.",
+    inviteOptionalHint: "Optional. Use it to join a server right away.",
     inviteError: "Enter a valid invitation that is still available to create the account.",
     handleTaken: "This handle is already taken.",
     tooMany: "Too many attempts. Wait a moment and try again.",
@@ -106,6 +107,15 @@ export const en: MessageTree = {
     download: "Download .txt",
     saved: "I saved this code somewhere safe.",
     savedRequired: "Confirm that you saved the code before continuing.",
+  },
+  recoverEmail: {
+    pitch: "Start with your verified email to find your handle. You still need your recovery key or an operator code to set a new password.",
+    title: "Forgot your handle?",
+    intro: "Request a message at your account's verified email. It explains the next step without resetting your password.",
+    email: "Account email",
+    send: "Send instructions",
+    sent: "If an account has this verified email, we will send instructions. Check your inbox.",
+    captchaRequired: "Complete the verification to continue.",
   },
   unlock: {
     headline: "The warmth of a physical table with the inviolability of modern cryptography.",

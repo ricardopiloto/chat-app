@@ -3,6 +3,7 @@ mod common;
 
 mod attachments;
 mod auth_email_registration;
+mod auth_email_reset;
 mod auth_rate_limit;
 mod auth_recovery;
 mod auth_recovery_key;

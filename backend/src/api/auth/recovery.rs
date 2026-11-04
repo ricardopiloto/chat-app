@@ -330,6 +330,7 @@ fn publish(state: &AppState, account_id: Uuid, pubkey: &[u8], done: &CredentialD
 pub async fn redeem_code(
     State(state): State<AppState>,
     ClientIp(ip): ClientIp,
+    headers: HeaderMap,
     jar: CookieJar,
     Json(body): Json<RedeemCodeBody>,
 ) -> Result<(CookieJar, Json<crate::domain::account::AuthAccount>), ApiError> {
@@ -367,6 +368,11 @@ pub async fn redeem_code(
         }
     }
     let (token, account_id) = outcome?;
+    super::recovery_email::spawn_reset_notice(
+        state.clone(),
+        account_id,
+        super::recovery_email::wants_english(&headers),
+    );
     let account = db::account::find_by_id(&state.pool, account_id)
         .await?
         .ok_or_else(ApiError::unauthorized)?;

@@ -23,6 +23,7 @@ fn sample() -> Config {
         email_from: None,
         public_base_url: None,
         email_log_file: None,
+        reset_email: false,
         trusted_proxy: false,
         turnstile_secret: Default::default(),
         turnstile_site_key: None,
@@ -98,4 +99,19 @@ fn open_production_requires_each_security_setting() {
     let debug = format!("{cfg:?}");
     assert!(!debug.contains("private-api-key"));
     assert!(!debug.contains("private-turnstile-key"));
+}
+
+#[test]
+fn email_reset_in_closed_production_requires_email_security_settings() {
+    let mut cfg = sample();
+    cfg.reset_email = true;
+    assert!(cfg.validate().unwrap_err().contains("EMAIL_API_KEY"));
+    cfg.email_api_key = chat_backend::config::Secret::new("private-api-key");
+    assert!(cfg.validate().unwrap_err().contains("EMAIL_FROM"));
+    cfg.email_from = Some("Mesa <noreply@example.com>".into());
+    assert!(cfg.validate().unwrap_err().contains("PUBLIC_BASE_URL"));
+    cfg.public_base_url = Some("https://mesa.example.com".into());
+    assert!(cfg.validate().unwrap_err().contains("TRUSTED_PROXY"));
+    cfg.trusted_proxy = true;
+    assert!(cfg.validate().is_ok());
 }

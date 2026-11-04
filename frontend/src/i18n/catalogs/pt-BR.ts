@@ -52,6 +52,7 @@ export const ptBR: MessageTree = {
     inviteCode: "Código de convite",
     invitePlaceholder: "Cole o código do convite",
     inviteHint: "Necessário após a primeira conta da instância.",
+    inviteOptionalHint: "Opcional. Use se quiser entrar já em um servidor.",
     inviteError: "Informe um convite válido e ainda disponível para criar a conta.",
     handleTaken: "Este handle já está em uso.",
     tooMany: "Muitas tentativas. Aguarde um instante e tente de novo.",
@@ -107,6 +108,15 @@ export const ptBR: MessageTree = {
     download: "Descarregar .txt",
     saved: "Guardei este código num lugar seguro.",
     savedRequired: "Confirme que guardou o código antes de continuar.",
+  },
+  recoverEmail: {
+    pitch: "Comece pelo e-mail verificado para encontrar seu nome de usuário. A chave de recuperação ou o código do operador ainda são necessários para definir uma nova senha.",
+    title: "Esqueceu seu nome de usuário?",
+    intro: "Peça uma mensagem para o e-mail verificado da conta. Ela indica o próximo passo, sem redefinir a senha.",
+    email: "E-mail da conta",
+    send: "Enviar instruções",
+    sent: "Se houver uma conta com esse e-mail verificado, enviaremos as instruções. Confira sua caixa de entrada.",
+    captchaRequired: "Conclua a verificação para continuar.",
   },
   unlock: {
     headline: "O calor da mesa física com a inviolabilidade da cifra moderna.",

@@ -130,6 +130,26 @@ impl RateLimiter {
         )
     }
 
+    pub fn allow_recovery_email_ip(&self, ip: Option<IpAddr>) -> bool {
+        self.check(
+            &format!(
+                "recovery-email:ip:{}",
+                ip.map(|v| v.to_string())
+                    .unwrap_or_else(|| "unknown".into())
+            ),
+            EMAIL_IP_LIMIT,
+            EMAIL_WINDOW,
+        )
+    }
+
+    pub fn allow_recovery_email_address(&self, canonical: &str) -> bool {
+        self.check(
+            &format!("recovery-email:address:{canonical}"),
+            EMAIL_ADDRESS_LIMIT,
+            EMAIL_WINDOW,
+        )
+    }
+
     pub fn allow_handle_check(&self, ip: Option<IpAddr>) -> bool {
         let who = ip
             .map(|a| a.to_string())
@@ -299,6 +319,50 @@ mod tests {
         }
         assert!(!lim.allow_email_address(&b));
         assert!(lim.allow_auth(Some(first)));
+    }
+
+    #[test]
+    fn registration_and_recovery_email_buckets_are_independent() {
+        let lim = RateLimiter::new();
+        let registration_ip = Some("127.0.0.1".parse().unwrap());
+        let recovery_ip = Some("127.0.0.2".parse().unwrap());
+        for _ in 0..EMAIL_IP_LIMIT {
+            assert!(lim.allow_email_ip(registration_ip));
+        }
+        assert!(!lim.allow_email_ip(registration_ip));
+        for _ in 0..EMAIL_IP_LIMIT {
+            assert!(lim.allow_recovery_email_ip(registration_ip));
+        }
+        assert!(!lim.allow_recovery_email_ip(registration_ip));
+
+        for _ in 0..EMAIL_IP_LIMIT {
+            assert!(lim.allow_recovery_email_ip(recovery_ip));
+        }
+        assert!(!lim.allow_recovery_email_ip(recovery_ip));
+        for _ in 0..EMAIL_IP_LIMIT {
+            assert!(lim.allow_email_ip(recovery_ip));
+        }
+        assert!(!lim.allow_email_ip(recovery_ip));
+
+        let registration_address = "registration@example.org";
+        let recovery_address = "recovery@example.org";
+        for _ in 0..EMAIL_ADDRESS_LIMIT {
+            assert!(lim.allow_email_address(registration_address));
+        }
+        assert!(!lim.allow_email_address(registration_address));
+        for _ in 0..EMAIL_ADDRESS_LIMIT {
+            assert!(lim.allow_recovery_email_address(registration_address));
+        }
+        assert!(!lim.allow_recovery_email_address(registration_address));
+
+        for _ in 0..EMAIL_ADDRESS_LIMIT {
+            assert!(lim.allow_recovery_email_address(recovery_address));
+        }
+        assert!(!lim.allow_recovery_email_address(recovery_address));
+        for _ in 0..EMAIL_ADDRESS_LIMIT {
+            assert!(lim.allow_email_address(recovery_address));
+        }
+        assert!(!lim.allow_email_address(recovery_address));
     }
 
     #[test]

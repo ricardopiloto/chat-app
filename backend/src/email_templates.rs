@@ -4,6 +4,74 @@ pub struct Template {
     pub text: String,
 }
 
+fn html_escape(value: &str) -> String {
+    value
+        .replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+}
+
+fn fragment_value(value: &str) -> String {
+    let mut out = String::new();
+    for byte in value.bytes() {
+        if byte.is_ascii_alphanumeric() || b"-._~".contains(&byte) {
+            out.push(byte as char);
+        } else {
+            out.push_str(&format!("%{byte:02X}"));
+        }
+    }
+    out
+}
+
+pub fn recovery_with_key(base_url: &str, handle: &str, english: bool) -> Template {
+    let link = format!(
+        "{}/recover#handle={}",
+        base_url.trim_end_matches('/'),
+        fragment_value(handle)
+    );
+    let (subject, intro, action, reminder) = if english {
+        ("Mesa password recovery", "A password recovery was requested for", "Open recovery with your recovery key", "Your recovery key is still required. This email cannot reset your password. If you did not request this, ignore it.")
+    } else {
+        ("Recuperação de senha do Mesa", "Foi solicitada uma recuperação de senha para", "Abrir recuperação com sua chave", "Sua chave de recuperação continua necessária. Este e-mail não redefine sua senha. Se não fez o pedido, ignore esta mensagem.")
+    };
+    let safe_handle = html_escape(handle);
+    Template {
+        subject: subject.into(),
+        html: format!(
+            "<p>{intro} @{safe_handle}.</p><p><a href=\"{}\">{action}</a></p><p>{reminder}</p>",
+            html_escape(&link)
+        ),
+        text: format!("{intro} @{handle}.\n{action}: {link}\n{reminder}"),
+    }
+}
+
+pub fn recovery_without_key(handle: &str, english: bool) -> Template {
+    let (subject, intro, body) = if english {
+        ("Mesa password recovery", "A password recovery was requested for", "This account has no recovery key. Ask the instance operator for a reset code. After signing in, create and save a recovery key in your account settings. If you did not request this, ignore this message.")
+    } else {
+        ("Recuperação de senha do Mesa", "Foi solicitada uma recuperação de senha para", "Esta conta não tem chave de recuperação. Peça um código de reset ao operador da instância. Depois de entrar, crie e guarde uma chave de recuperação nas configurações da conta. Se não fez o pedido, ignore esta mensagem.")
+    };
+    Template {
+        subject: subject.into(),
+        html: format!("<p>{intro} @{}.</p><p>{body}</p>", html_escape(handle)),
+        text: format!("{intro} @{handle}.\n{body}"),
+    }
+}
+
+pub fn recovery_completed(english: bool) -> Template {
+    let (subject, body) = if english {
+        ("Mesa password changed", "Your Mesa account password was reset. If you did not do this, contact the instance operator immediately.")
+    } else {
+        ("Senha do Mesa alterada", "A senha da sua conta Mesa foi redefinida. Se não foi você, entre em contato com o operador da instância imediatamente.")
+    };
+    Template {
+        subject: subject.into(),
+        html: format!("<p>{body}</p>"),
+        text: body.into(),
+    }
+}
+
 pub fn verification(base_url: &str, token: &str, english: bool) -> Template {
     let link = format!(
         "{}/register#email_token={token}",
@@ -59,6 +127,22 @@ mod tests {
             let notice = existing_account(english);
             assert!(!notice.text.contains("register"));
             assert!(!notice.html.contains("email_token"));
+        }
+    }
+
+    #[test]
+    fn recovery_messages_never_carry_reset_authority() {
+        for english in [false, true] {
+            let with_key = recovery_with_key("https://mesa.example/", "a&b", english);
+            assert!(with_key
+                .text
+                .contains("https://mesa.example/recover#handle=a%26b"));
+            assert!(!with_key.text.contains("?handle="));
+            assert!(!with_key.text.contains("email_token"));
+            let without_key = recovery_without_key("alice", english);
+            assert!(!without_key.text.contains("/recover"));
+            let notice = recovery_completed(english);
+            assert!(!notice.text.contains("http"));
         }
     }
 }

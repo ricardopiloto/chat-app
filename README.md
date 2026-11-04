@@ -55,13 +55,13 @@ Lista do que o cliente atual faz hoje. A checklist de paridade está em [`docs/v
 
 ### Conta e identidade
 - Registo (handle e palavra-passe de 8+ caracteres), com código de convite quando não é a primeira conta (`/invite/:code` ou `?invite=`).
-- No modo de registo aberto, a pessoa aceita os termos, confirma o e-mail por um link que vale 5 horas e conclui o cadastro com as chaves E2E geradas no cliente. O convite continua a funcionar com ou sem e-mail. O e-mail só é mostrado à própria conta; a recuperação de senha por e-mail não faz parte deste fluxo.
+- No modo de registo aberto, a pessoa aceita os termos, confirma o e-mail por um link que vale 5 horas e conclui o cadastro com as chaves E2E geradas no cliente. O convite continua a funcionar com ou sem e-mail. O e-mail só é mostrado à própria conta; `RESET_EMAIL` pode usar o endereço verificado mais tarde para encaminhar a recuperação por chave.
 - Numa instância vazia, o cadastro orienta a criação da conta de **Administrador da instância** e recomenda guardar a chave de recuperação. Não pede convite; o estado é consultado em `GET /api/instance/status`.
 - Login, logout com confirmação, restauro de sessão ao recarregar, troca de conta.
 - **Cliente desktop**: no primeiro arranque pede o endereço da instância. Um host sem esquema (por exemplo `chat.exemplo.com`) é lido como HTTPS; um endereço `http://` é recusado. **Trocar de instância**, no entrar, no criar conta, no menu da conta e no desbloqueio, esquece o endereço e a sessão e volta a pedir a instância. O browser servido pela própria instância não mostra essa acção.
 - **Identidade criptográfica** gerada no navegador, protegida por um cofre cifrado com a palavra-passe (guardado no dispositivo e no servidor, sempre cifrado).
 - Desbloqueio em dispositivo novo (cofre remoto) e **recuperação de identidade** (nova identidade) quando a palavra-passe do cofre se perde.
-- **Esqueci a senha** (`/recover`): sem e-mail. Há alteração com a senha actual, chave de recuperação, ou código do operador. O passo a passo está em [Reset de senha](#reset-de-senha).
+- **Esqueci a senha** (`/recover`): com `RESET_EMAIL=true`, o e-mail verificado ajuda a encontrar o handle e o caminho certo. A reposição continua a exigir a chave de recuperação ou um código do operador. O passo a passo está em [Reset de senha](#reset-de-senha).
 - Perfil: nome a mostrar, avatar (JPEG, PNG ou WebP até 1 MiB), idioma **pt-BR / en** e tema **Sistema / Claro / Escuro**, todos persistentes.
 
 ### Servidores, membros e cargos
@@ -271,7 +271,7 @@ flowchart TD
 
 ## Reset de senha
 
-Não há recuperação por e-mail. A senha abre o cofre da identidade neste dispositivo. Há três caminhos.
+O e-mail verificado pode iniciar o caminho, mas não autoriza a reposição. Com `RESET_EMAIL=true` (desligado por padrão), informe o e-mail em **Esqueci a senha**. Se a conta tiver chave de recuperação, a mensagem contém o handle e `PUBLIC_BASE_URL/recover#handle=…`; se não tiver, orienta a pedir um código ao operador. O link apenas preenche o handle. A senha abre o cofre da identidade neste dispositivo. Há três caminhos para a alterar ou repor.
 
 **Alterar senha**, quando a pessoa ainda sabe a actual. Em Minha conta. A identidade fica a mesma: o cliente volta a cifrar o cofre com a senha nova. As outras sessões terminam e esta continua. Mensagens e servidores não mudam.
 

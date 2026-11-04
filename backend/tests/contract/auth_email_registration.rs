@@ -169,6 +169,65 @@ async fn ip_limit_is_enforced_and_test_disable_bypasses_it() {
 }
 
 #[tokio::test]
+async fn rejected_requests_count_toward_ip_limit() {
+    let app = TestApp::with_config(|c| {
+        open(c);
+        c.rate_limit_disabled = false;
+    })
+    .await;
+    for n in 0..5 {
+        let body = if n % 2 == 0 {
+            json!({"email":"bad address"})
+        } else {
+            json!({"email":"bad address","terms_accepted":true})
+        };
+        let (status, error, _) = app
+            .request("POST", "/api/auth/email/request", Some(body), None)
+            .await;
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+        assert_eq!(
+            error["code"],
+            if n % 2 == 0 {
+                "terms_required"
+            } else {
+                "email_invalid"
+            }
+        );
+    }
+    let (status, _, _) = app
+        .request(
+            "POST",
+            "/api/auth/email/request",
+            Some(json!({"email":"bad address"})),
+            None,
+        )
+        .await;
+    assert_eq!(status, StatusCode::TOO_MANY_REQUESTS);
+}
+
+#[tokio::test]
+async fn request_validation_errors_keep_their_precedence_before_ip_limit() {
+    let app = TestApp::with_config(|c| {
+        open(c);
+        c.rate_limit_disabled = false;
+        c.turnstile_secret = chat_backend::config::Secret::new("secret");
+    })
+    .await;
+    for (body, expected_code) in [
+        (json!({"email":"bad address"}), "terms_required"),
+        (json!({"email":"bad address","terms_accepted":true}), "email_invalid"),
+        (json!({"email":"a@mailinator.com","terms_accepted":true}), "email_domain_blocked"),
+        (json!({"email":"a@example.org","terms_accepted":true}), "captcha_failed"),
+    ] {
+        let (status, error, _) = app
+            .request("POST", "/api/auth/email/request", Some(body), None)
+            .await;
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+        assert_eq!(error["code"], expected_code);
+    }
+}
+
+#[tokio::test]
 async fn token_validation_and_single_use() {
     let app = TestApp::with_config(open).await;
     let token = issued_token(&app, "alice@example.org").await;

@@ -19,6 +19,7 @@ use uuid::Uuid;
 pub mod email;
 pub mod login;
 pub mod recovery;
+pub mod recovery_email;
 pub mod recovery_key;
 pub mod register;
 pub mod session;
@@ -42,6 +43,7 @@ pub fn router() -> Router<AppState> {
         .route("/auth/identity", put(put_identity))
         .route("/auth/password", put(recovery::change_password))
         .route("/auth/recovery/code/redeem", post(recovery::redeem_code))
+        .route("/auth/recovery/email/request", post(recovery_email::request))
         .route(
             "/auth/recovery/key/challenge",
             post(recovery_key::challenge),

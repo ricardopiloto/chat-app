@@ -196,6 +196,7 @@ DEFAULT_INVITE_TTL_SECS=300
 ATTACHMENTS_DIR=/opt/mesa/data/attachments
 AVATARS_DIR=/opt/mesa/data/avatars
 REGISTO_MODO=fechado
+# RESET_EMAIL=true  # opcional; e-mail verificado encaminha para a recuperação por chave
 # Para abrir após testar Resend, termos/privacidade e Nginx:
 # REGISTO_MODO=aberto
 # EMAIL_API_KEY=<chave Resend>
@@ -217,7 +218,7 @@ coincidir exactamente com `infra/livekit.yaml`. Confirme que `LIVEKIT_WS_URL` us
 esquema do LiveKit — um `ws://` aqui deixaria o browser a tentar WebSocket inseguro a partir de
 uma página HTTPS, que a maioria dos browsers bloqueia (*mixed content*).
 
-`REGISTO_MODO` aceita `fechado` (padrão) ou `aberto`. No perfil de produção, `aberto` só arranca
+`REGISTO_MODO` aceita `fechado` (padrão) ou `aberto`. `RESET_EMAIL` começa desligado e, quando ativo, habilita apenas o encaminhamento por e-mail verificado para `/recover#handle=…`; não autoriza reset. No perfil de produção, `aberto` ou `RESET_EMAIL=true` só arrancam
 com `EMAIL_API_KEY`, `EMAIL_FROM`, `PUBLIC_BASE_URL` HTTPS público e `TRUSTED_PROXY=true`.
 `TURNSTILE_SECRET` e `TURNSTILE_SITE_KEY` ativam o captcha; configure o par em conjunto.
 `REGISTO_DOMINIOS_BLOQUEADOS` aponta para uma lista adicional (um domínio por linha), somada

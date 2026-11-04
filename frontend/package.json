@@ -24,6 +24,7 @@
     "verify:instance": "node scripts/verify-instance.mjs",
     "verify:instance-setup": "node --experimental-strip-types scripts/verify-instance-setup.mjs",
     "verify:email-registration": "node --experimental-strip-types scripts/verify-email-registration.mjs",
+    "verify:email-reset": "node --experimental-strip-types scripts/verify-email-reset.mjs",
     "verify:http-timeout": "node scripts/verify-http-timeout.mjs",
     "verify:popout-grid": "node scripts/verify-popout-grid.mjs",
     "verify:icons": "node scripts/verify-icons.mjs",

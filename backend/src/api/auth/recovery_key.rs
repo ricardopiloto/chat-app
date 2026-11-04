@@ -4,7 +4,7 @@ use super::session::AuthUser;
 use crate::{db, error::ApiError, rate_limit::ClientIp, AppState};
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
 use axum::extract::State;
-use axum::http::StatusCode;
+use axum::http::{HeaderMap, StatusCode};
 use axum::Json;
 use axum_extra::extract::cookie::CookieJar;
 use base64::Engine;
@@ -246,6 +246,7 @@ pub async fn start(
 pub async fn redeem(
     State(state): State<AppState>,
     ClientIp(ip): ClientIp,
+    headers: HeaderMap,
     jar: CookieJar,
     Json(body): Json<RedeemKeyBody>,
 ) -> Result<(CookieJar, Json<crate::domain::account::AuthAccount>), ApiError> {
@@ -266,6 +267,11 @@ pub async fn redeem(
         }
     }
     let (token, account_id, revoked) = outcome?;
+    super::recovery_email::spawn_reset_notice(
+        state.clone(),
+        account_id,
+        super::recovery_email::wants_english(&headers),
+    );
     state.ws.close_sessions(account_id, &revoked);
     let updated = db::account::find_by_id(&state.pool, account_id)
         .await?

@@ -47,6 +47,7 @@ export DEFAULT_INVITE_TTL_SECS=300  # 5 minutos (produto); labs podem sobrescrev
 export ATTACHMENTS_DIR=./data/attachments   # blobs cifrados no cliente (opaco no disco)
 export AVATARS_DIR=./data/avatars           # avatares de conta e imagens de servidor (JPEG/PNG/WebP em claro, ≤1 MiB)
 export REGISTO_MODO=fechado               # padrão; convite obrigatório após a primeira conta
+# export RESET_EMAIL=true                 # opcional; pedido de recuperação por e-mail verificado
 # Para testar o cadastro por e-mail localmente:
 # export REGISTO_MODO=aberto
 # export PUBLIC_BASE_URL=https://127.0.0.1:1421
@@ -74,7 +75,7 @@ Não use o par de exemplo LiveKit como receita de produção. Perfil explícito:
 
 Com o perfil de produção, o processo **não arranca** se as chaves forem as de exemplo ou se o cookie não for Secure. Não há processo BFF: o browser fala com este Axum (opcionalmente via proxy TLS).
 
-Com `REGISTO_MODO=aberto` em produção, o arranque exige `EMAIL_API_KEY`, `EMAIL_FROM`,
+Com `REGISTO_MODO=aberto` ou `RESET_EMAIL=true` em produção, o arranque exige `EMAIL_API_KEY`, `EMAIL_FROM`,
 `PUBLIC_BASE_URL` HTTPS público e `TRUSTED_PROXY=true`. `TURNSTILE_SECRET` e
 `TURNSTILE_SITE_KEY` formam o captcha opcional; `REGISTO_DOMINIOS_BLOQUEADOS` adiciona domínios
 à lista embutida. `EMAIL_LOG_FILE` guarda só diagnósticos no desenvolvimento/testes com
@@ -117,7 +118,7 @@ Não copie `spike/` — é descartável. Este binário é o produto.
 
 ### Senha esquecida (código do operador)
 
-Não há e-mail. Quem perdeu a senha pede um código a quem opera a máquina. No host, com o mesmo `DATABASE_URL` do serviço:
+Com `RESET_EMAIL=true`, a pessoa pode pedir instruções pelo e-mail verificado em `POST /api/auth/recovery/email/request`. A resposta é genérica; o e-mail só revela o handle e encaminha ao fluxo por chave. Sem chave de recuperação, continua necessário pedir um código a quem opera a máquina. Com a flag desligada, o endpoint responde 404. Configure `PUBLIC_BASE_URL` para o link; sem `EMAIL_API_KEY`, `LogSender` grava a mensagem de desenvolvimento. No host, com o mesmo `DATABASE_URL` do serviço:
 
 ```bash
 chat-backend reset-code <handle>

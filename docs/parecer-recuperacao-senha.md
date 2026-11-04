@@ -4,6 +4,12 @@ Análise do código e das propostas existentes em 8 de outubro de 2026. Revisão
 
 ## Recomendação
 
+### Encaminhamento por e-mail verificado (novembro de 2026)
+
+O pedido `POST /api/auth/recovery/email/request` serve para lembrar o handle e levar a pessoa ao fluxo existente com chave. O e-mail não autoriza um reset: a assinatura derivada da chave de recuperação ou o código emitido pelo operador continuam indispensáveis. O link usa `PUBLIC_BASE_URL/recover#handle=…`, para manter o handle fora dos logs do proxy. Contas sem chave recebem instruções para pedir o código ao operador, sem link de reset.
+
+Um reset baseado apenas na caixa de e-mail poderia substituir a identidade. Clientes que já têm as chaves de servidor entregam automaticamente novos envelopes em `handleHandoffEvent` (`frontend/src/crypto/keyHandoff.ts`) quando recebem `key_handoff.requested`. Assim, quem controlasse a caixa de e-mail ganharia acesso ao histórico cifrado após o handoff. O código do operador mantém uma pessoa no circuito para esse caso; o caminho por chave preserva a identidade. Após ambos os resets, a conta com e-mail verificado recebe um aviso sem link de ação.
+
 Adotar como caminho principal a **chave de recuperação gerada no cliente**, que preserva a identidade criptográfica (opção B). Manter o **código emitido pelo operador**, que cria nova identidade (opção A), como contingência para contas antigas ou sem chave de recuperação.
 
 A senha de login também cifra o cofre da chave privada (`frontend/src/crypto/vault.ts`, `frontend/src/session/session.tsx`). Portanto, trocar apenas `password_hash` permitiria entrar, mas não abriria a identidade nem as chaves dos servidores.

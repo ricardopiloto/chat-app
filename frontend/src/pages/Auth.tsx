@@ -190,7 +190,7 @@ export function Auth() {
 
         <Show when={registering()}>
           <Show when={verifiedEmail()}><p class="notice min-w-0 break-words" role="status">{t("emailRegistration.verified")}: <strong>{verifiedEmail()}</strong></p></Show>
-          <Show when={variant() !== "setup"}><AuthField label={t("auth.inviteCode")} lead={<Icon name="confirmation_number" class="text-[18px]" />} hint={t("auth.inviteHint")}>
+          <Show when={variant() !== "setup"}><AuthField label={t("auth.inviteCode")} lead={<Icon name="confirmation_number" class="text-[18px]" />} hint={t(verifiedEmail() && registrationConfig()?.mode === "aberto" ? "auth.inviteOptionalHint" : "auth.inviteHint")}>
             <input name="invite" autocomplete="off" spellcheck={false} placeholder={t("auth.invitePlaceholder")} {...bindValue(invite, setInvite)} />
           </AuthField></Show>
           <Show when={variant() === "setup"}><p class="text-body-sm font-semibold text-on-surface">{t("setup.recoveryRecommended")}</p></Show>

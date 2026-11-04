@@ -19,12 +19,14 @@ use uuid::Uuid;
 pub struct RegisterConfig {
     mode: &'static str,
     turnstile_site_key: Option<String>,
+    reset_email: bool,
 }
 
 pub async fn register_config(State(state): State<AppState>) -> Json<RegisterConfig> {
     Json(RegisterConfig {
         mode: state.config.mode().unwrap_or(RegistoModo::Fechado).as_str(),
         turnstile_site_key: state.config.turnstile_site_key.clone(),
+        reset_email: state.config.reset_email,
     })
 }
 
@@ -39,7 +41,7 @@ pub struct RequestBody {
     captcha_token: Option<String>,
 }
 
-async fn verify_captcha(
+pub(crate) async fn verify_captcha(
     state: &AppState,
     token: Option<&str>,
     ip: Option<std::net::IpAddr>,
@@ -95,19 +97,19 @@ pub async fn request(
     if state.config.mode().ok() != Some(RegistoModo::Aberto) {
         return Err(code(StatusCode::FORBIDDEN, "registration_closed"));
     }
+    if !state.config.rate_limit_disabled && !state.rate_limiter.allow_email_ip(ip) {
+        return Err(ApiError::too_many_requests());
+    }
     if !body.terms_accepted {
         return Err(code(StatusCode::BAD_REQUEST, "terms_required"));
-    }
-    if !verify_captcha(&state, body.captcha_token.as_deref(), ip).await {
-        return Err(code(StatusCode::BAD_REQUEST, "captcha_failed"));
     }
     let (email, canonical) =
         normalize(&body.email).map_err(|_| code(StatusCode::BAD_REQUEST, "email_invalid"))?;
     if domain_blocked(&email, state.config.registo_dominios_bloqueados.as_deref()) {
         return Err(code(StatusCode::BAD_REQUEST, "email_domain_blocked"));
     }
-    if !state.config.rate_limit_disabled && !state.rate_limiter.allow_email_ip(ip) {
-        return Err(ApiError::too_many_requests());
+    if !verify_captcha(&state, body.captcha_token.as_deref(), ip).await {
+        return Err(code(StatusCode::BAD_REQUEST, "captcha_failed"));
     }
     let generic = (StatusCode::ACCEPTED, Json(serde_json::json!({"ok": true})));
     if !body.website.is_empty() {
