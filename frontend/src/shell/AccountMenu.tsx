@@ -1,4 +1,5 @@
 import { For, Show, createEffect, createSignal, onCleanup } from "solid-js";
+import { useNavigate } from "@solidjs/router";
 import { auth, avatarUrl, useAuthedSrc } from "../api";
 import { clearInstance, isNative } from "../api/instance";
 import { Avatar, Button, Icon, MonoLabel } from "../components/ui";
@@ -15,6 +16,7 @@ const row = "flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-
 // yourself, sign out. The photo is changed on the account page.
 export function AccountMenu(props: { onClose: () => void }) {
   const session = useSession();
+  const navigate = useNavigate();
   const shell = useShell();
   const me = () => session.account()!;
   const avatar = useAuthedSrc(() => (me().has_avatar ? avatarUrl(me().id) : undefined));
@@ -111,6 +113,10 @@ export function AccountMenu(props: { onClose: () => void }) {
             {t("instance.switch")}
           </button>
         </Show>
+        <button type="button" role="menuitem" class={row} onClick={() => { void session.logout().then(() => { props.onClose(); if (!isNative()) navigate("/login", { replace: true }); }); }}>
+          <Icon name="switch_account" class="text-[20px] text-on-surface-variant" />
+          {t("unlock.switch")}
+        </button>
         <button type="button" role="menuitem" class={`${row} !text-error`} onClick={() => setSigningOut(true)}>
           <Icon name="logout" class="text-[20px]" />
           {t("shell.signOut")}

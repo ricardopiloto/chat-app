@@ -1,5 +1,5 @@
 import { render } from "solid-js/web";
-import { Match, Switch, createSignal, onCleanup, onMount } from "solid-js";
+import { Match, Switch, Suspense, lazy, createSignal, onCleanup, onMount } from "solid-js";
 import { Route, Router, useLocation } from "@solidjs/router";
 import { AppQueryProvider } from "./api";
 import { AppShell } from "./shell/AppShell";
@@ -9,7 +9,11 @@ import { Foundation } from "./pages/Foundation";
 import { Invite } from "./pages/Invite";
 import { CallPopoutWindow } from "./voice/CallPopoutWindow";
 import { Unlock } from "./pages/Unlock";
-import { InstanceConnect } from "./auth/InstanceConnect";
+import { entryScreen } from "./auth/entryScreen";
+import { nativeEntry, setNativeEntry } from "./auth/nativeEntry";
+import { readInstanceStatus, resetInstanceStatus } from "./auth/instanceStatus";
+const WebPublicHome = lazy(() => import("./pages/WebPublicHome").then((m) => ({ default: m.WebPublicHome })));
+const ElectronHome = lazy(() => import("./pages/ElectronHome").then((m) => ({ default: m.ElectronHome })));
 import { currentInstance, isNative, loadInstance, subscribeInstance } from "./api/instance";
 import { SessionProvider, useSession } from "./session/session";
 import { applyTheme, themeMode, watchSystemTheme } from "./shell/theme";
@@ -20,6 +24,7 @@ captureInviteFragment();
 import "./tokens.css";
 import "./styles.css";
 import "./components/ui.css";
+import "./entry.css";
 import "./voice.css";
 import "./mgmt.css";
 import "./chat.css";
@@ -38,44 +43,39 @@ function popoutChannelId(pathname: string, hash: string): string | null {
 function Gate() {
   const session = useSession();
   const where = useLocation();
-  const [pickInstance, setPickInstance] = createSignal<boolean | null>(isNative() ? null : false);
+  const native = isNative();
+  const [baseUrl, setBaseUrl] = createSignal<string | null>(native ? null : "web");
+  const [initialSetup, setInitialSetup] = createSignal(false);
+  const [instanceLoaded, setInstanceLoaded] = createSignal(!native);
+  let lastPhase = session.phase();
   onMount(() => {
     onCleanup(watchSystemTheme(themeMode));
-    if (!isNative()) return;
-    void loadInstance().then((saved) => setPickInstance(!saved.baseUrl));
-    onCleanup(subscribeInstance(() => setPickInstance(!currentInstance().baseUrl)));
+    if (native) {
+      void loadInstance().then((saved) => { setBaseUrl(saved.baseUrl); setInstanceLoaded(true); });
+      onCleanup(subscribeInstance(() => { setBaseUrl(currentInstance().baseUrl); resetInstanceStatus(); setNativeEntry("home"); }));
+    }
+    if (!native && where.pathname === "/") void readInstanceStatus().then((value) => setInitialSetup(value?.initial_setup === true));
   });
-  return (
-    <Switch>
-      <Match when={where.pathname === "/__foundation"}>
-        <Foundation />
-      </Match>
-      <Match when={pickInstance() === true}>
-        <InstanceConnect onSaved={() => void session.restore()} />
-      </Match>
-      <Match when={pickInstance() === null || session.phase() === "loading"}>
-        <main class="grid min-h-dvh place-items-center bg-background text-on-surface-variant">{t("auth.loading")}</main>
-      </Match>
-      <Match when={where.pathname.startsWith("/invite/") && !where.search.includes("signin") && ["anonymous", "ready"].includes(session.phase())}>
-        <Invite />
-      </Match>
-      <Match when={session.phase() === "anonymous" && where.pathname === "/recover"}>
-        <Recover />
-      </Match>
-      <Match when={session.phase() === "anonymous"}>
-        <Auth />
-      </Match>
-      <Match when={(session.phase() === "locked" || session.phase() === "ready") && popoutChannelId(where.pathname, where.hash)}>
-        {(channelId) => <CallPopoutWindow channelId={channelId()} />}
-      </Match>
-      <Match when={session.phase() === "locked"}>
-        <Unlock />
-      </Match>
-      <Match when={session.phase() === "ready"}>
-        <AppShell />
-      </Match>
-    </Switch>
-  );
+  const destination = () => {
+    const phase = session.phase();
+    if ((lastPhase === "locked" || lastPhase === "ready") && phase === "anonymous") setInitialSetup(false);
+    if (native && (lastPhase === "locked" || lastPhase === "ready") && phase === "anonymous") setNativeEntry("home");
+    lastPhase = phase;
+    return entryScreen({ native, baseUrl: native && !instanceLoaded() ? null : baseUrl(), phase, pathname: where.pathname, search: where.search, hash: where.hash, initialSetup: initialSetup(), nativeEntry: nativeEntry() });
+  };
+  const loading = <main class="grid min-h-dvh place-items-center bg-background text-on-surface-variant">{t("auth.loading")}</main>;
+  return <Switch>
+    <Match when={destination() === "foundation"}><Foundation /></Match>
+    <Match when={destination() === "home-desktop"}><Suspense fallback={loading}><ElectronHome baseUrl={baseUrl()} onSaved={() => void session.restore()} /></Suspense></Match>
+    <Match when={destination() === "home-web"}><Suspense fallback={loading}><WebPublicHome /></Suspense></Match>
+    <Match when={destination() === "loading"}>{loading}</Match>
+    <Match when={destination() === "invite"}><Invite /></Match>
+    <Match when={destination() === "recover"}><Recover /></Match>
+    <Match when={destination() === "auth"}><Auth /></Match>
+    <Match when={destination() === "call-popout"}>{(popoutChannelId(where.pathname, where.hash)) && <CallPopoutWindow channelId={popoutChannelId(where.pathname, where.hash)!} />}</Match>
+    <Match when={destination() === "unlock"}><Unlock /></Match>
+    <Match when={destination() === "app"}><AppShell /></Match>
+  </Switch>;
 }
 
 const root = document.getElementById("root");

@@ -73,7 +73,7 @@ export function Recover() {
   }
 
   return (
-    <AuthFrame headline={t("recover.headline")} text={emailConfig()?.reset_email ? t("recoverEmail.pitch") : t("recover.pitch")} features={[]}>
+    <AuthFrame single headline={t("recover.headline")} text={emailConfig()?.reset_email ? t("recoverEmail.pitch") : t("recover.pitch")} features={[]}>
       <div class="flex min-w-0 flex-col gap-6">
       <Show when={emailConfig()?.reset_email}>
         <RecoverEmailRequest siteKey={emailConfig()?.turnstile_site_key ?? null} />
@@ -114,11 +114,11 @@ export function Recover() {
         <Show when={problem()}>
           <p class="notice error" role="alert">{problem()}</p>
         </Show>
-        <Button variant="primary" type="submit" disabled={busy()} class="!py-3.5">
+        <Button variant="primary" type="submit" disabled={busy()} class="entry-control !py-3.5">
           <Icon name="lock_reset" />
           {busy() ? t("auth.waiting") : t("recover.submit")}
         </Button>
-        <A href="/" class="text-center text-body-sm text-primary hover:underline">{t("recover.back")}</A>
+        <A href="/" class="ui-button secondary entry-control">{t("recover.back")}</A>
       </form>
       </div>
     </AuthFrame>

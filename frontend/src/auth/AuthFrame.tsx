@@ -1,14 +1,33 @@
 import { Show, type JSX } from "solid-js";
-import { Badge, Icon, Logo } from "../components/ui";
+import { Badge, Button, Icon, Logo } from "../components/ui";
 import { LanguageSwitch } from "../shell/LanguageSwitch";
 import { ThemeSwitch } from "../shell/ThemeSwitch";
 import { t } from "../i18n";
+import mascot from "../assets/parley-mascot.webp"; // From docs/v2/parley_logo/mascote/parley-mascote-acenando-transparente.png.
+import { clearInstance, currentInstance, isNative } from "../api/instance";
 
 export type Feature = { icon: string; title: string; text: string };
 
 // Page frame shared by the sign-in and unlock screens: a slim top bar, a brand panel on the left
 // and the task on the right. On narrow screens the brand panel collapses to its header.
-export function AuthFrame(props: { headline: string; text: string; features: Feature[]; children: JSX.Element }) {
+export function AuthFrame(props: { headline: string; text: string; features: Feature[]; single?: boolean; hideInstancePanel?: boolean; cardHeader?: JSX.Element; children: JSX.Element }) {
+  if (props.single) return (
+    <div class="flex min-h-dvh flex-col bg-background text-on-surface">
+      <header class="flex items-center justify-between gap-3 px-4 py-3 tablet:px-8">
+        <div class="flex items-center gap-2"><Logo size={32} /><span class="font-display text-headline-sm">{t("shell.brand")}</span></div>
+        <div class="flex items-center gap-2"><LanguageSwitch /><ThemeSwitch /></div>
+      </header>
+      <main class="mx-auto flex w-full max-w-[560px] flex-1 flex-col justify-center gap-5 px-4 py-8">
+        <div class="flex items-center gap-4"><img src={mascot} alt={t("entry.mascotAlt")} class="h-24 w-24 object-contain" /><div><h1 class="font-display text-headline-lg">{props.headline}</h1><p class="text-body-sm text-on-surface-variant">{props.text}</p></div></div>
+        <Show when={!props.hideInstancePanel && isNative() && currentInstance().baseUrl}><div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-outline-variant bg-surface-container p-4 text-body-sm"><span>{t("entry.selectedInstance")}: {currentInstance().baseUrl}</span><Button variant="secondary" class="entry-control" onClick={() => void clearInstance()}>{t("entry.change")}</Button></div></Show>
+        <section class="rounded-xl border border-outline-variant bg-surface-container-low p-6">
+          <Show when={props.cardHeader}><div class="mb-5 flex flex-wrap items-center justify-between gap-3"><div class="flex items-center gap-2"><Logo size={28} /><span class="font-display text-headline-sm">{t("shell.brand")}</span></div><div class="flex flex-wrap gap-2">{props.cardHeader}</div></div></Show>
+          {props.children}
+        </section>
+        <p class="text-center text-body-sm text-on-surface-variant">{t("entry.encryption")}</p>
+      </main>
+    </div>
+  );
   return (
     <div class="flex min-h-dvh flex-col bg-background text-on-surface">
       <header class="flex items-center justify-between gap-3 px-4 py-3 tablet:px-8">
@@ -90,7 +109,7 @@ export function AuthField(props: {
         <label class="text-body-sm font-semibold text-on-surface">{props.label}</label>
         {props.aside}
       </div>
-      <div class="auth-input flex items-center gap-2 rounded-md border border-outline-variant bg-surface-container-lowest px-3 transition-colors focus-within:border-primary-container" classList={{ "!border-error": !!props.error }}>
+      <div class="auth-input entry-control flex items-center gap-2 rounded-md border border-outline-variant bg-surface-container-lowest px-3 transition-colors focus-within:border-primary-container" classList={{ "!border-error": !!props.error }}>
         <Show when={props.lead}>
           <span class="font-code text-on-surface-variant">{props.lead}</span>
         </Show>

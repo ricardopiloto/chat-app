@@ -24,3 +24,9 @@ A prancha `parley-mascote-aventureiro.png` foi preservada integralmente.
 - `parley-mascote-cabeca.png` — cabeça-balão ilustrada na prancha; 250 × 240 px. Para o ícone oficial da aplicação, usar os masters vetoriais da pasta superior.
 
 Recortes feitos nas dimensões nativas, sem reconstrução por IA, incluindo apenas o personagem de cada região e sem o título da prancha.
+
+## Versões com fundo transparente
+
+Os arquivos `*-transparente.png` são as versões com canal alfa (RGBA) dos mesmos recortes, para uso sobre qualquer fundo e nos dois temas. Dimensões: `parley-mascote-principal-transparente.png` 1074 × 1464 px; `parley-mascote-acenando-transparente.png` 1177 × 1336 px; `parley-mascote-mapa-transparente.png` 1167 × 1347 px; `parley-mascote-cabeca-transparente.png` 1280 × 1229 px.
+
+Use sempre as versões transparentes nas telas, no README e nos materiais. As versões com fundo escuro ficam como registro dos recortes originais. Na aplicação, `frontend/src/assets/parley-mascot.webp` é derivado de `parley-mascote-acenando-transparente.png` (recortado à área visível, 640 px de altura, WebP com alfa); a cabeça-balão do logo continua vindo dos masters vetoriais da pasta superior.

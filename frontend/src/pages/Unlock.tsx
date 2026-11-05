@@ -1,8 +1,9 @@
 import { Show, createSignal } from "solid-js";
+import { useNavigate } from "@solidjs/router";
 import { AuthField, AuthFrame, bindValue } from "../auth/AuthFrame";
 import { Avatar, Badge, Button, Dialog, Icon, MonoLabel } from "../components/ui";
 import { avatarUrl, useAuthedSrc } from "../api";
-import { clearInstance, isNative } from "../api/instance";
+import { clearInstance, currentInstance, isNative } from "../api/instance";
 import { IdentityUnlockError } from "../crypto/identity";
 import { t } from "../i18n";
 import { useSession } from "../session/session";
@@ -14,6 +15,11 @@ const MIN_PASSWORD = 8;
 // available because losing the password is exactly when it is needed.
 export function Unlock() {
   const session = useSession();
+  const navigate = useNavigate();
+  async function switchAccount() {
+    await session.logout();
+    if (!isNative()) navigate("/login", { replace: true });
+  }
   const me = () => session.account()!;
   const avatar = useAuthedSrc(() => (me().has_avatar ? avatarUrl(me().id) : undefined));
   const [password, setPassword] = createSignal("");
@@ -60,39 +66,24 @@ export function Unlock() {
   const name = () => me().display_name || me().handle;
 
   return (
-    <AuthFrame
-      headline={t("unlock.headline")}
-      text={t("unlock.pitch")}
-      features={[
-        { icon: "key", title: t("unlock.featureKeys"), text: t("unlock.featureKeysText") },
-        { icon: "verified_user", title: t("unlock.featureZero"), text: t("unlock.featureZeroText") },
-      ]}
-    >
+    <AuthFrame single hideInstancePanel headline={t("unlock.returnTitle")} text={t("unlock.returnIntro")} features={[]}>
       <form class="flex flex-col gap-5" onSubmit={submit} noValidate>
-        <Badge tone="primary" mono icon="shield">
-          {t(noLocalCopy() ? "unlock.chipMissing" : "unlock.chipLocked")}
-        </Badge>
-        <div>
-          <h2 class="font-display text-headline-lg">{t("unlock.title")}</h2>
-          <p class="mt-2 text-body-md text-on-surface-variant">{t("unlock.intro", { handle: me().handle })}</p>
-        </div>
-
-        <div class="flex items-center justify-between gap-4 rounded-lg bg-surface-container p-4">
-          <div class="flex items-center gap-3">
+        <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-outline-variant bg-surface-container p-4">
+          <div class="flex min-w-0 items-center gap-3">
             <Avatar name={name()} src={avatar()} size="lg" />
-            <div class="flex flex-col">
-              <span class="font-display text-headline-sm">{name()}</span>
-              <span class="font-code text-label-code-sm text-secondary">
-                @{me().handle} · {t("unlock.sessionActive")}
-              </span>
+            <div class="min-w-0">
+              <p class="truncate font-display text-headline-sm">{name()}</p>
+              <p class="truncate font-code text-label-code-sm text-on-surface-variant">@{me().handle}</p>
             </div>
           </div>
-          <Button onClick={() => void session.logout()}>
-            <Icon name="switch_account" />
-            {t("unlock.switch")}
-          </Button>
+          <Badge tone="primary" mono icon="shield">{t("entry.onDevice")}</Badge>
         </div>
-
+        <Show when={isNative() && currentInstance().baseUrl}>
+          <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-outline-variant bg-surface-container p-4">
+            <div class="min-w-0"><p class="text-label-code-sm text-on-surface-variant">{t("unlock.accountInstance")}</p><p class="break-all">{currentInstance().baseUrl}</p></div>
+            <Button variant="secondary" class="entry-control" onClick={() => void switchAccount()}>{t("unlock.otherAccess")}</Button>
+          </div>
+        </Show>
         <div class="notice warn flex items-start gap-3" role="status">
           <Icon name="warning" class="mt-0.5 text-primary" />
           <div>
@@ -103,10 +94,9 @@ export function Unlock() {
 
         <AuthField
           label={t("unlock.password")}
-          aside={<span class="font-code text-label-code-sm text-on-surface-variant">{t("unlock.kdf")}</span>}
           lead={<Icon name="lock" class="text-[18px]" />}
           trail={
-            <button type="button" class="grid h-8 w-8 place-items-center rounded-full text-on-surface-variant hover:text-on-surface" title={revealed() ? t("auth.hidePassword") : t("auth.showPassword")} aria-label={revealed() ? t("auth.hidePassword") : t("auth.showPassword")} aria-pressed={revealed()} onClick={() => setRevealed(!revealed())}>
+            <button type="button" class="grid h-10 w-12 place-items-center rounded-full text-on-surface-variant hover:text-on-surface" title={revealed() ? t("auth.hidePassword") : t("auth.showPassword")} aria-label={revealed() ? t("auth.hidePassword") : t("auth.showPassword")} aria-pressed={revealed()} onClick={() => setRevealed(!revealed())}>
               <Icon name={revealed() ? "visibility_off" : "visibility"} class="text-[20px]" />
             </button>
           }
@@ -122,7 +112,7 @@ export function Unlock() {
           </p>
         </Show>
 
-        <Button variant="primary" type="submit" disabled={busy()} class="!py-3.5 text-body-lg">
+        <Button variant="primary" type="submit" disabled={busy()} class="entry-control !py-3.5 text-body-lg">
           <Icon name="key" />
           {busy() ? t("auth.waiting") : t("unlock.button")}
         </Button>
@@ -133,6 +123,7 @@ export function Unlock() {
           <span class="h-px flex-1 bg-outline-variant" />
         </div>
 
+        <p class="text-body-sm text-on-surface-variant"><strong>{t("unlock.helpTitle")}</strong> {t("unlock.helpText")}</p>
         <div class="flex flex-col gap-3 rounded-lg bg-surface-container p-4 tablet:flex-row tablet:items-center tablet:justify-between">
           <div>
             <h3 class="flex items-center gap-2 font-display text-headline-sm">
@@ -142,7 +133,7 @@ export function Unlock() {
             <p class="mt-1 text-body-sm text-on-surface-variant">{t("unlock.recoverText")}</p>
             <p class="mt-2 text-body-sm text-on-surface-variant">{t("auth.forgotVaultHelp")}</p>
           </div>
-          <Button disabled={busy()} onClick={() => setConfirming(true)}>
+          <Button class="entry-control shrink-0 whitespace-nowrap" disabled={busy()} onClick={() => setConfirming(true)}>
             <Icon name="autorenew" />
             {t("unlock.recoverButton")}
           </Button>
@@ -150,7 +141,7 @@ export function Unlock() {
 
         <p class="text-center text-body-sm text-on-surface-variant">
           {t("unlock.notYou", { handle: me().handle })}{" "}
-          <button type="button" class="inline-flex min-h-6 items-center text-primary underline" onClick={() => void session.logout()}>
+          <button type="button" class="inline-flex min-h-6 items-center text-primary underline" onClick={() => void switchAccount()}>
             {t("unlock.switchLink")}
           </button>
           <Show when={isNative()}>
@@ -178,8 +169,8 @@ export function Unlock() {
       <Dialog open={confirming()} title={t("unlock.confirmTitle")} onClose={() => setConfirming(false)}>
         <p>{t("auth.recoveryWarning")}</p>
         <div class="flex flex-wrap justify-end gap-3">
-          <Button onClick={() => setConfirming(false)}>{t("shell.cancel")}</Button>
-          <Button variant="danger" disabled={busy()} onClick={() => void recover()}>
+          <Button class="entry-control" onClick={() => setConfirming(false)}>{t("shell.cancel")}</Button>
+          <Button variant="danger" class="entry-control" disabled={busy()} onClick={() => void recover()}>
             <Icon name="autorenew" />
             {t("auth.generateKeys")}
           </Button>

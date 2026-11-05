@@ -4,6 +4,7 @@
 import { createContext, createSignal, onMount, useContext, type JSX } from "solid-js";
 import { auth, invites, queryClient, type Account, type Membership } from "../api";
 import { clearSessionToken, isNative, loadInstance, saveSessionToken } from "../api/instance";
+import { resetInstanceStatus } from "../auth/instanceStatus";
 import { b64, fromB64, generateIdentity, hasLocalVault, IdentityUnlockError, persistIdentity, unlockIdentity, wrapIdentity, type Identity } from "../crypto/identity";
 import {
   canonicalIdentityVaultJson,
@@ -114,6 +115,7 @@ function createSession() {
       recovery_vault: recovery?.vault,
       recovery_verifier_pubkey: recovery ? b64(recovery.verifierPublicKey) : undefined,
     });
+    resetInstanceStatus();
     await keepNativeSession(me);
     await persistIdentity(me.id, fresh, password);
     if (me.is_initial_operator) {
@@ -270,6 +272,7 @@ function createSession() {
   }
 
   function invalidate(): void {
+    resetInstanceStatus();
     forgetServerKeys();
     setAccount(undefined);
     setIdentity(undefined);

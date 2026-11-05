@@ -1,0 +1,9 @@
+.entry-control {
+  box-sizing: border-box;
+  min-height: 3.125rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html:has(.public-home) { scroll-behavior: smooth; }
+}
+.public-home [tabindex="-1"]:focus { outline: none; }

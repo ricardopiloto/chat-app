@@ -1,6 +1,6 @@
 import { createSignal } from "solid-js";
 import { checkInstance, saveInstanceUrl } from "../api/instance";
-import { Button, Icon } from "../components/ui";
+import { Button, Dialog, Icon } from "../components/ui";
 import { t } from "../i18n";
 import { AuthField, AuthFrame, bindValue } from "./AuthFrame";
 
@@ -20,7 +20,7 @@ function failureText(error: unknown): string {
 }
 
 /** Asks for a Parley address and stores it only after GET /health succeeds. */
-export function InstanceConnect(props: { onSaved: () => void }) {
+export function InstanceConnect(props: { onSaved: () => void; dialog?: boolean; onClose?: () => void }) {
   const [address, setAddress] = createSignal("");
   const [problem, setProblem] = createSignal("");
   const [busy, setBusy] = createSignal(false);
@@ -40,6 +40,14 @@ export function InstanceConnect(props: { onSaved: () => void }) {
     }
   }
 
+  const form = () => <form class="flex flex-col gap-5" onSubmit={(event) => void submit(event)}>
+        <p class="text-body-md text-on-surface-variant">{t("instance.intro")}</p>
+        <AuthField label={t("instance.address")} error={problem()} lead={<Icon name="link" class="text-[18px]" />}>
+          <input type="text" inputMode="url" autocapitalize="none" spellcheck={false} autocomplete="url" placeholder={t("instance.placeholder")} required disabled={busy()} {...bindValue(address, setAddress)} />
+        </AuthField>
+        <Button type="submit" variant="primary" disabled={busy()} class="entry-control">{busy() ? t("instance.checking") : t("instance.continue")}</Button>
+      </form>;
+  if (props.dialog) return <Dialog open title={t("instance.title")} onClose={() => props.onClose?.()}>{form()}</Dialog>;
   return (
     <AuthFrame headline={t("instance.headline")} text={t("instance.pitch")} features={features()}>
       <form class="flex flex-col gap-5" onSubmit={(event) => void submit(event)}>

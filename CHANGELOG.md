@@ -9,6 +9,26 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-11-04
+
+### Added
+
+- Página pública do Parley no navegador, servida em `/` para quem não tem sessão: cabeçalho com «Entrar», hero com um print real do aplicativo (dados de demonstração), princípios, três recursos, faixa de privacidade, passos para começar com o mascote, perguntas frequentes e rodapé, em pt-BR e en. «Hospedar» abre o guia `docs/deploy-producao.md` em nova aba; «Entrar» leva a `/login`. A página tem um único `h1`, link de salto, navegação rotulada, perguntas frequentes operáveis por teclado, respeita `prefers-reduced-motion`, não faz pedidos autenticados e define `noindex` só em `/`. Um visitante de instância ainda vazia vai direto ao cadastro da primeira conta (a página aparece de imediato e a consulta de estado roda em segundo plano, com limite de 3 s; falha, `429` ou tempo esgotado contam como instância já configurada).
+- Tela inicial do desktop (Electron) com mascote, painel «Instância selecionada», «Entrar», «Criar uma conta» e «Conheça o Parley», que abre no navegador do sistema. O aplicativo não tem página de marketing: a primeira tela é esta. O endereço da instância passa a ser pedido num diálogo (abre sozinho no primeiro início), com a mesma validação de `GET /health`; «Trocar de instância» volta a esta tela.
+- Desbloqueio como «conta salva»: cartão com título de retorno, avatar, nome e `@handle` com a etiqueta «Neste dispositivo», painel da instância somente leitura no desktop com «Usar outra conta ou instância», campo da senha do cofre com «Mostrar/Ocultar» (`aria-pressed`) e o texto «Não consigo desbloquear». «Recuperar identidade» continua sempre visível, com o aviso e a confirmação de antes.
+- Escolha da tela de entrada como função pura (`frontend/src/auth/entryScreen.ts`) com tabela de precedência testável, sinal `nativeEntry` para o desktop (`home`, `login`, `register`) e módulo `instanceStatus.ts` que compartilha uma consulta de `GET /api/instance/status` por visita.
+- `npm run verify:entry-screens` (tabela de casos da escolha de tela, paridade pt/en, ausência de cores literais, arquivos do sistema de design intactos) e `npm run verify:instance-status` (uma consulta por visita, tempo limite, `429`, expiração e invalidação depois de criada a primeira conta). `frontend/scripts/measure-controls.mjs` mede as alturas dos controles no navegador (`playwright-core` via `npx`, sem dependência no projeto).
+- Documentação: relatório de fidelidade em `docs/design-ref/parley-entry-fidelity.md` com capturas por estado, tema e largura e comparações lado a lado com os protótipos (`docs/design-ref/parley-entry-captures/`), e a tela inicial do desktop descrita em `docs/desktop-release.md`.
+
+### Changed
+
+- Login e cadastro viram um **cartão único** com o controle «Entrar»/«Criar conta», visível em todos os estados (inclusive o pedido de verificação por e-mail e o formulário com e-mail verificado), exceto na primeira conta. O conteúdo de «Criar conta» continua guiado pelo modo de registro da instância: `aberto` pede o e-mail, `fechado` pede o convite, a primeira conta mostra o cadastro inicial e `?invite=` abre o formulário com convite. O cadastro com e-mail permanece igual na web e no aplicativo. Campos, ordem das etapas, mensagens e contratos de API não mudam, e o login continua pedindo handle e senha.
+- «Voltar ao início» e «Trocar de instância» passam a ser botões do sistema de design. Depois de «Trocar de conta», a web vai ao login (antes caía na página pública) e o desktop vai à tela inicial.
+- Controles das telas de entrada com uma só altura (50 px, diferença de até 1 px medida no navegador): `entry-control` em `frontend/src/entry.css`. Os alternadores de tema e de idioma ficam iguais (pílula de 36 px, mesma borda e mesmo estado ativo).
+- O mascote nas telas é a versão com fundo transparente (`frontend/src/assets/parley-mascot.webp`, a partir de `parley-mascote-acenando-transparente.png`); o README da pasta do mascote documenta as versões transparentes.
+- Catálogos pt-BR e en ganham as chaves da página pública, da tela inicial do desktop e do desbloqueio.
+- Sem mudança de backend, banco, contratos de API, `tokens.css`, `tailwind.config.ts`, `components/ui.css` nem `components/ui/*`.
+
 ## [1.4.0] - 2026-11-04
 
 ### Added

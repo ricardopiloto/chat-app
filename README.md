@@ -1,6 +1,6 @@
 <p align="center">
   <img src="docs/v2/parley_logo/parley-logo-1024.png" alt="Parley" width="240">
-  <img src="docs/v2/parley_logo/mascote/parley-mascote-principal.png" alt="Mascote do Parley: urso aventureiro com cabeça em forma de balão de conversa" width="200">
+  <img src="docs/v2/parley_logo/mascote/parley-mascote-principal-transparente.png" alt="Mascote do Parley: urso aventureiro com cabeça em forma de balão de conversa" width="200">
 </p>
 
 # Parley

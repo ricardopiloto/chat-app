@@ -49,3 +49,7 @@ No primeiro arranque isso aparece como aviso, não como um instalador "verificad
 - **macOS:** o Gatekeeper pode recusar o `.dmg` com "cannot be opened because the developer cannot be verified". Quem confia na origem abre *Privacy & Security* e permite a aplicação, ou usa o menu de contexto *Open*. O pacote declara à mesma o uso da câmara e do microfone (`NSCameraUsageDescription` e `NSMicrophoneUsageDescription`), para o sistema mostrar o diálogo de permissão em vez de o recusar em silêncio.
 
 Estes avisos mantêm-se enquanto não houver certificados. Não são um passo que o instalador trate sozinho.
+
+## Tela inicial e escolha da instância
+
+O aplicativo abre na tela inicial com a instância selecionada, ou informa que ainda não há nenhuma. **Entrar** e **Criar uma conta** usam a mesma autenticação da web. Sem instância, essas ações abrem o diálogo de endereço. O endereço só é guardado depois de `GET /health` responder com sucesso. **Alterar** abre o mesmo diálogo; **Trocar de instância** limpa a seleção e retorna à tela inicial. Os links externos, incluindo **Conheça o Parley**, abrem no navegador do sistema pelo tratamento existente em `frontend/electron/main.ts`.

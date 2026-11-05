@@ -1,6 +1,9 @@
 import { Show, createSignal, onCleanup, onMount } from "solid-js";
 import { A, useLocation } from "@solidjs/router";
-import { ApiError, auth, instance } from "../api";
+import { ApiError, auth } from "../api";
+import { readInstanceStatus } from "../auth/instanceStatus";
+import { nativeEntry, setNativeEntry } from "../auth/nativeEntry";
+import { useNavigate } from "@solidjs/router";
 import { clearInstance, currentInstance, isNative } from "../api/instance";
 import { AuthField, AuthFrame, bindValue } from "../auth/AuthFrame";
 import { InstanceSetupIntro } from "../auth/InstanceSetupIntro";
@@ -35,9 +38,10 @@ function failureText(error: unknown, mode: AuthMode): string {
 export function Auth() {
   const session = useSession();
   const where = useLocation();
+  const navigate = useNavigate();
   const presetInvite = inviteFromLocation(where.pathname, where.search);
 
-  const [mode, setMode] = createSignal<AuthMode>(presetInvite && !where.search.includes("signin") ? "register" : "login");
+  const [mode, setMode] = createSignal<AuthMode>(presetInvite && !where.search.includes("signin") || isNative() && nativeEntry() === "register" ? "register" : "login");
   const [handle, setHandle] = createSignal("");
   const [password, setPassword] = createSignal("");
   const [invite, setInvite] = createSignal(presetInvite);
@@ -71,7 +75,7 @@ export function Auth() {
         ).finally(() => { if (!cancelled) setVerifyingEmail(false); });
       } else setEmailProblem(t("emailRegistration.emailTokenInvalid"));
     }
-    void instance.status().then(
+    void readInstanceStatus().then(
       (status) => {
         if (cancelled) return;
         const next = resolveSetupVariant(status);
@@ -81,7 +85,7 @@ export function Auth() {
           setRecoveryChoice("now");
         }
       },
-      (error) => { if (!cancelled) setVariant(resolveSetupVariant(undefined, error)); },
+
     );
     onCleanup(() => { cancelled = true; });
   });
@@ -115,7 +119,7 @@ export function Auth() {
         } else {
           await session.register({ ...credentials, inviteCode: inviteForVariant(variant(), invite()), emailToken: emailToken() });
         }
-      } else await session.login(credentials);
+      } else { await session.login(credentials); if (!isNative() && where.pathname === "/login") navigate("/", { replace: true }); }
     } catch (error) {
       if (error instanceof ApiError && error.code === "email_token_invalid") {
         setEmailToken(undefined);
@@ -138,6 +142,17 @@ export function Auth() {
 
   return (
     <AuthFrame
+      single
+      cardHeader={<>
+        <Show when={isNative() || variant() !== "setup"}>
+          <Button variant="secondary" class="entry-control" onClick={() => isNative() ? setNativeEntry("home") : navigate("/")}>
+            <Icon name="arrow_back" />{t("entry.backHome")}
+          </Button>
+        </Show>
+        <Show when={isNative()}>
+          <Button variant="secondary" class="entry-control" onClick={() => void clearInstance()}>{t("instance.switch")}</Button>
+        </Show>
+      </>}
       headline={t("auth.headline")}
       text={t("auth.pitch")}
       features={[
@@ -146,24 +161,24 @@ export function Auth() {
         { icon: "dns", title: t("auth.featureSelfHosted"), text: t("auth.featureSelfHostedText") },
       ]}
     >
+      <div class="flex flex-col gap-5">
+      <Show when={variant() !== "setup"}><Segmented
+        fill
+        label={t("auth.mode")}
+        value={mode()}
+        options={[
+          { value: "login", label: t("auth.login") },
+          { value: "register", label: t("auth.register") },
+        ]}
+        onChange={(next) => {
+          setMode(next);
+          setProblem("");
+        }}
+      /></Show>
       <Show when={!verifyingEmail()} fallback={<p class="text-body-md">{t("emailRegistration.verifying")}</p>}>
       <Show when={!showEmailRequest()} fallback={<EmailRequest siteKey={registrationConfig()?.turnstile_site_key ?? null} error={emailProblem()} onLogin={() => setMode("login")} onUseInvite={() => setUseInviteForm(true)} />}>
       <form class="flex flex-col gap-5" onSubmit={submit} noValidate>
         <Show when={variant() === "setup"}><InstanceSetupIntro /></Show>
-        <Show when={variant() !== "setup"}><Segmented
-          fill
-          label={t("auth.mode")}
-          value={mode()}
-          options={[
-            { value: "login", label: t("auth.login") },
-            { value: "register", label: t("auth.register") },
-          ]}
-          onChange={(next) => {
-            setMode(next);
-            setProblem("");
-          }}
-        /></Show>
-
         <AuthField label={t("auth.handle")} aside={<span class="font-code text-label-code-sm text-on-surface-variant">{t("auth.handleExample")}</span>} lead="@" hint={t("auth.handleHint")}>
           <input name="handle" autocomplete="username" autocapitalize="none" spellcheck={false} required placeholder={t("auth.handlePlaceholder")} {...bindValue(handle, setHandle)} />
         </AuthField>
@@ -179,7 +194,7 @@ export function Auth() {
           }
           lead={<Icon name="key" class="text-[18px]" />}
           trail={
-            <button type="button" class="grid h-8 w-8 place-items-center rounded-full text-on-surface-variant hover:text-on-surface" title={revealed() ? t("auth.hidePassword") : t("auth.showPassword")} aria-label={revealed() ? t("auth.hidePassword") : t("auth.showPassword")} aria-pressed={revealed()} onClick={() => setRevealed(!revealed())}>
+            <button type="button" class="grid h-10 w-12 place-items-center rounded-full text-on-surface-variant hover:text-on-surface" title={revealed() ? t("auth.hidePassword") : t("auth.showPassword")} aria-label={revealed() ? t("auth.hidePassword") : t("auth.showPassword")} aria-pressed={revealed()} onClick={() => setRevealed(!revealed())}>
               <Icon name={revealed() ? "visibility_off" : "visibility"} class="text-[20px]" />
             </button>
           }
@@ -215,7 +230,7 @@ export function Auth() {
           </p>
         </Show>
 
-        <Button variant="primary" type="submit" disabled={busy()} class="!py-3.5 text-body-lg">
+        <Button variant="primary" type="submit" disabled={busy()} class="entry-control !py-3.5 text-body-lg">
           <Icon name={registering() ? "person_add" : "login"} />
           {busy() ? t("auth.waiting") : registering() ? t("auth.createButton") : t("auth.loginButton")}
         </Button>
@@ -227,7 +242,7 @@ export function Auth() {
         </div>
 
         <Button
-          class="!py-3.5"
+          class="entry-control !py-3.5"
           onClick={() => {
             setMode(registering() ? "login" : "register");
             setProblem("");
@@ -236,11 +251,6 @@ export function Auth() {
           {registering() ? t("auth.haveAccount") : t("auth.newAccount")}
         </Button></Show>
 
-        <Show when={isNative()}>
-          <button type="button" class="self-center inline-flex min-h-6 items-center text-body-sm text-primary underline" onClick={() => void clearInstance()}>
-            {t("instance.switch")}
-          </button>
-        </Show>
 
         <p class="flex items-center justify-between gap-3 font-code text-label-code-sm text-on-surface-variant">
           <span class="flex items-center gap-1.5">
@@ -252,6 +262,7 @@ export function Auth() {
       </form>
       </Show>
       </Show>
+      </div>
     </AuthFrame>
   );
 }

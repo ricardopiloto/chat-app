@@ -70,13 +70,13 @@ export function EmailRequest(props: { siteKey: string | null; error?: string; on
           </label>
           <Show when={props.siteKey}><div ref={captchaElement} class="min-w-0 overflow-hidden" /></Show>
           <Show when={problem() || props.error}><p class="notice error break-words" role="alert">{problem() || props.error}</p></Show>
-          <Button type="submit" variant="primary" disabled={busy()}>{busy() ? t("auth.waiting") : t("emailRegistration.send")}</Button>
+          <Button type="submit" variant="primary" disabled={busy()} class="entry-control">{busy() ? t("auth.waiting") : t("emailRegistration.send")}</Button>
         </form>
       }>
         <p class="notice break-words" role="status">{t("emailRegistration.sent")}</p>
       </Show>
-      <button type="button" class="text-body-sm text-primary underline" onClick={props.onUseInvite}>{t("emailRegistration.useInvite")}</button>
-      <button type="button" class="text-body-sm text-primary underline" onClick={props.onLogin}>{t("auth.haveAccount")}</button>
+      <Button variant="secondary" class="entry-control" onClick={props.onUseInvite}>{t("emailRegistration.useInvite")}</Button>
+      <Button variant="secondary" class="entry-control" onClick={props.onLogin}>{t("auth.haveAccount")}</Button>
     </div>
   );
 }
