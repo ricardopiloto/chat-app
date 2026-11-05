@@ -5,6 +5,10 @@
 
 # Parley
 
+> [!IMPORTANT]
+> **Instância oficial do Parley:** [parley.1nodado.com.br](https://parley.1nodado.com.br/)
+> Acesse pelo navegador ou use esse endereço ao configurar o aplicativo desktop.
+
 **Self-hosted chat and video**, in the spirit of Discord, with **native camera composition** and **end-to-end encryption (E2EE) by default**.
 
 Parley gives friends, families, teams, communities, and creators a private instance of their own. Instances do not federate, and the server cannot read conversation content under normal operation.
