@@ -6,8 +6,8 @@
 # Parley
 
 > [!IMPORTANT]
-> **Instância oficial do Parley:** [parley.1nodado.com.br](https://parley.1nodado.com.br/)
-> Acesse pelo navegador ou use esse endereço ao configurar o aplicativo desktop.
+> **Official Parley instance:** [parley.1nodado.com.br](https://parley.1nodado.com.br/)
+> Access through your browser or use this address to setup the desktop app. If you do this, you'll be using the official server.
 
 **Self-hosted chat and video**, in the spirit of Discord, with **native camera composition** and **end-to-end encryption (E2EE) by default**.
 
