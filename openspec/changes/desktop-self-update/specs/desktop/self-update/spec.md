@@ -21,6 +21,10 @@ O aplicativo empacotado SHALL escolher entre dois modos. No modo **automático**
 - **WHEN** o aplicativo roda como AppImage e o arquivo do AppImage é gravável
 - **THEN** o modo é automático
 
+#### Scenario: AppImage instalado pelo script mantém o caminho
+- **WHEN** o AppImage foi instalado por `install-mesa.sh` (arquivo `parley-chat-app.AppImage`, sem versão no nome) e a atualização é instalada
+- **THEN** o arquivo novo ocupa o mesmo caminho e o atalho do menu continua válido
+
 #### Scenario: Linux AppImage sem permissão de escrita ou pacote deb/rpm
 - **WHEN** o AppImage está num local não gravável, ou o aplicativo foi instalado por `.deb` ou `.rpm`
 - **THEN** o modo é aviso
@@ -48,6 +52,10 @@ O aplicativo empacotado SHALL verificar se há versão publicada mais nova uma �
 - **WHEN** a verificação falha por falta de rede ou resposta inválida
 - **THEN** a aplicação continua normalmente e nada é mostrado
 
+#### Scenario: Versão publicada igual ou menor
+- **WHEN** a release publicada tem versão igual ou menor que a instalada
+- **THEN** nada é baixado nem mostrado
+
 #### Scenario: Release em rascunho
 - **WHEN** a release mais recente ainda é um rascunho
 - **THEN** nenhuma atualização é oferecida ou baixada
@@ -58,6 +66,10 @@ No modo automático, o aplicativo SHALL baixar a versão nova em segundo plano, 
 #### Scenario: Download concluído
 - **WHEN** o download da versão nova termina com o digest conferido
 - **THEN** um toast persistente mostra a versão pronta com «Reiniciar agora» e «Depois»
+
+#### Scenario: Download termina depois de dispensar o aviso
+- **WHEN** a pessoa dispensou o toast de aviso e o download termina depois
+- **THEN** o toast «pronta» aparece
 
 #### Scenario: Reiniciar agora
 - **WHEN** a pessoa escolhe «Reiniciar agora» sem chamada em andamento

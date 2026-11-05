@@ -6,7 +6,7 @@
 
 Em aplicação empacotada, o sistema SHALL consultar a última release publicada uma única vez por abertura do aplicativo, depois que a janela principal carregou, sem repetir a consulta por intervalo. Nas formas de instalação que não se atualizam sozinhas (macOS, Linux `.deb` e `.rpm` e Windows `.msi`), quando a release for mais recente que a versão instalada, o sistema SHALL apresentar toast persistente com a versão, a ligação à release e a instrução de atualização manual, que a pessoa pode dispensar até a próxima abertura. Nessas formas o sistema SHALL NOT descarregar ou aplicar automaticamente uma atualização. Nas formas que se atualizam sozinhas (Windows NSIS e Linux AppImage), o comportamento é o da capacidade `desktop/self-update`. Erros de rede SHALL manter a aplicação funcional.
 
-#### Scenario: Nova release em forma de instalação sem self-update
+#### Scenario: Nova release
 - **WHEN** uma release publicada tem versão posterior à instalada e o aplicativo foi instalado como DMG, `.deb`, `.rpm` ou `.msi`
 - **THEN** o toast permanece visível durante a sessão até ser dispensado
 
