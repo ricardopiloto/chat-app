@@ -1,10 +1,10 @@
 # assets/audio
 
-Efeitos sonoros curtos da aplicação, gerados no Suno a partir de `docs/prompts/efeitos-sonoros-suno.md`.
+Short application sound effects generated with Suno from [`docs/prompts/efeitos-sonoros-suno.md`](../../docs/prompts/efeitos-sonoros-suno.md).
 
-| Arquivo | Efeito | Duração alvo |
+| File | Effect | Target duration |
 |---|---|---|
-| `mention.mp3` | Chega uma notificação para o usuário (menção ou resposta) | ≤ 0,7 s |
-| `call-join.mp3` | Uma nova pessoa entra numa chamada de voz/vídeo em andamento | ≤ 1,0 s |
+| `mention.mp3` | A user receives a mention or reply notification | ≤ 0.7 s |
+| `call-join.mp3` | Someone joins an ongoing voice/video call | ≤ 1.0 s |
 
-Os arquivos serão colocados aqui manualmente. A ligação deles ao frontend v2 é a spec `frontend-v2-sound-effects`.
+Place the files here manually. The `frontend-v2-sound-effects` specification covers their integration with the v2 frontend.

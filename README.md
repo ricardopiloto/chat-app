@@ -1,335 +1,131 @@
 <p align="center">
   <img src="docs/v2/parley_logo/parley-logo-1024.png" alt="Parley" width="240">
-  <img src="docs/v2/parley_logo/mascote/parley-mascote-principal-transparente.png" alt="Mascote do Parley: urso aventureiro com cabeça em forma de balão de conversa" width="200">
+  <img src="docs/v2/parley_logo/mascote/parley-mascote-principal-transparente.png" alt="Parley mascot: an adventurous bear with a speech-bubble head" width="200">
 </p>
 
 # Parley
 
-**Chat e vídeo self-hosted**, no espírito do Discord, com **composição nativa de câmeras** e **criptografia ponta a ponta (E2EE) por omissão**.
+**Self-hosted chat and video**, in the spirit of Discord, with **native camera composition** and **end-to-end encryption (E2EE) by default**.
 
-Para amigos, famílias, equipes, comunidades e criadores: qualquer grupo que queira uma instância própria, sem federação e sem o servidor a ler o conteúdo das conversas.
+Parley gives friends, families, teams, communities, and creators a private instance of their own. Instances do not federate, and the server cannot read conversation content under normal operation.
 
 | | |
-|--|--|
-| **Estado** | **1.4.0** — backend, frontend v2 e cliente desktop Electron (ver [CHANGELOG.md](CHANGELOG.md)) |
-| **Baixar** | [Instaladores desktop (Windows/macOS/Linux)](https://github.com/ricardopiloto/chat-app/releases) — ver [Distribuição desktop](#distribuição-desktop) |
-| **Stack** | Backend Rust (Axum + SQLite) · Frontend **v2** SolidJS (Vite, Tailwind) · Cliente desktop Electron · LiveKit (voz/vídeo) |
-| **Frontend** | [`frontend/`](frontend/) é o cliente atual (v2). A versão 0.8.1 da v1 permanece no histórico Git para rollback |
-| **Operação** | [docs/operar-instancia.md](docs/operar-instancia.md) · [docs/deploy-producao.md](docs/deploy-producao.md) |
-| **Integração** | [docs/contratos-e-fluxos.md](docs/contratos-e-fluxos.md) |
-| **Arquitetura** | [docs/arquitetura-tecnica.md](docs/arquitetura-tecnica.md) |
-| **Produto** | [docs/product-brief.md](docs/product-brief.md) |
+|---|---|
+| **Status** | **1.5.0** — Rust backend, v2 frontend, and Electron desktop client ([changelog](CHANGELOG.md)) |
+| **Download** | [Desktop releases for Windows, macOS, and Linux](https://github.com/ricardopiloto/chat-app/releases) |
+| **Stack** | Rust (Axum + SQLite), SolidJS (Vite + Tailwind), Electron, LiveKit |
+| **Frontend** | [`frontend/`](frontend/) is the current v2 client. The v1 0.8.1 release remains in Git history for rollback. |
+| **Operations** | [Run an instance](docs/operar-instancia.md) · [Production deployment](docs/deploy-producao.md) |
+| **Integration** | [Contracts and flows](docs/contratos-e-fluxos.md) · [Technical architecture](docs/arquitetura-tecnica.md) |
+| **Product** | [Product brief](docs/product-brief.md) |
 
-> Este README descreve a **v2**. A versão anterior do documento (centrada na v1) está em [`docs/archive/README-v1.md`](docs/archive/README-v1.md).
+This README describes **v2**. The previous, v1-focused README is archived at [`docs/archive/README-v1.md`](docs/archive/README-v1.md).
 
-## Por que usar o Parley?
+## Why Parley?
 
-- **Ninguém lê as suas conversas.** Mensagens, arquivos e chamadas são cifrados ponta a ponta por padrão, com as chaves geradas no seu dispositivo. Nem quem hospeda o servidor consegue abrir o conteúdo.
-- **Os dados ficam com você.** Sem telemetria, sem anúncios, sem federação e sem depender de uma nuvem fechada: você escolhe onde a instância roda e quem entra.
-- **Chat, voz e vídeo no mesmo lugar.** Canais de texto, salas de voz e vídeo, compartilhamento de tela e convites, sem costurar ferramentas.
-- **Vídeo com palco próprio.** A composição de câmeras escolhe quem aparece onde, em reuniões, lives, aulas e gravações, sem programa de transmissão à parte.
-- **Fácil de subir e de manter.** Um backend em Rust com SQLite embutido, instaladores para Windows, macOS e Linux e poucas portas abertas.
-- **Para qualquer grupo.** Amigos, famílias, equipes, comunidades, escolas, criadores de conteúdo e grupos de RPG e outros jogos. Se vocês precisam conversar em privado, o Parley serve.
+- **Private conversations:** Messages, attachments, and calls are encrypted on the client. Even the instance operator cannot decrypt them under normal operation.
+- **Your infrastructure and data:** No telemetry, advertising, federation, or mandatory hosted cloud. You choose where the instance runs and who joins.
+- **One place for text, voice, and video:** Text channels, voice rooms, screen sharing, invitations, and camera composition for meetings, streams, classes, and recordings.
+- **Simple self-hosting:** A Rust backend with embedded SQLite, desktop installers, and a small number of exposed ports.
 
-## Índice
+## How it works
 
-1. [Por que usar o Parley?](#por-que-usar-o-parley)
-2. [A ideia](#a-ideia)
-2. [Funcionalidades](#funcionalidades)
-3. [Telas](#telas)
-4. [Arquitetura](#arquitetura)
-5. [Criptografia (E2EE)](#criptografia-e2ee)
-6. [Reset de senha](#reset-de-senha)
-7. [Contratos Frontend ↔ Backend](#contratos-frontend--backend)
-8. [Fluxos de integração](#fluxos-de-integração)
-9. [Arranque rápido (dev)](#arranque-rápido-dev)
-10. [Estrutura do repositório](#estrutura-do-repositório)
-11. [Instalar e atualizar](#instalar-e-atualizar)
-12. [Distribuição desktop](#distribuição-desktop)
-13. [Fora de escopo e diferido](#fora-de-escopo-e-diferido)
+An **instance** is the process run by an operator, locally or on a VPS. It hosts multiple **servers**. Each server has an owner, roles, members, invitations, and **text** or **voice/video channels**. Voice channels have a stage with camera-composition scenes. There is no federation between instances.
 
----
+The first registered account becomes the **instance administrator**. Later accounts join by invitation by default. With `REGISTO_MODO=aberto`, users may also join after confirming an email address, initially without belonging to a server. Currently, the administrator marker grants no extra permissions and does not add the account to a server. The **operator** is the person with host access who can run maintenance commands. Create the first account before exposing the instance to the internet.
 
-## A ideia
+## Features
 
-Quem precisa de **chat + chamada** e, ao mesmo tempo, de controle sobre quem vê o quê costura hoje serviços de terceiros, cada um com os seus dados e os seus termos. O Parley junta chat, voz e vídeo numa instância que o próprio grupo controla, e quando a conversa vira reunião, live ou gravação, a **composição de câmeras** decide quem aparece onde.
+The current client supports the following. See the [v2 parity checklist](docs/v2/parity-checklist.md) and [frontend specifications](openspec/specs/frontend-v2/) for detailed requirements.
 
-1. **Instância**: o processo que o operador corre (máquina local ou VPS). Hospeda vários **Servidores**.
-2. **Servidor**: unidade social (dono, cargos, canais, convites, membros).
-3. **Canal**: **texto** ou **voz/vídeo**. O canal de voz tem palco com composição de câmeras (cena).
+### Accounts and identity
 
-Não há federação entre instâncias: o que corre na tua máquina fica na tua máquina. A primeira conta registada é o **Administrador da instância**; as seguintes entram por convite por padrão. Com `REGISTO_MODO=aberto`, também podem entrar após confirmar um e-mail, sem convite e sem pertencer inicialmente a um servidor. Por ora, o marcador de administrador não concede permissões extras nem associa a conta a um servidor. O **operador** é quem tem acesso ao host e pode executar comandos de manutenção; no self-host local as duas pessoas podem coincidir. Configure a primeira conta antes de expor a instância à internet.
+- Registration with a handle and password of at least eight characters. Subsequent accounts normally use an invitation (`/invite/:code` or `?invite=`).
+- Open registration with terms acceptance and an email confirmation link valid for five hours. The client generates E2EE keys during registration. Invitations work with or without an email address; only the account owner sees their email.
+- Optional recovery-key reminders with `KEY_REMINDERS=true` (off by default): a verified account receives a welcome email and up to three reminders, at least 24 hours apart, when creating channels without a recovery key. Users can disable reminders under **Account → Recovery key** (`PATCH /api/auth/key-reminders`). Emails only link to `PUBLIC_BASE_URL/account#recovery`; they contain no keys, codes, or tokens.
+- Login, logout confirmation, session restoration, account switching, and a password-protected local and remote identity vault.
+- On first launch, the desktop client asks for the instance URL. A hostname without a scheme uses HTTPS; `http://` is rejected. **Switch instance** clears the saved address and session. The browser client does not show this action.
+- Identity recovery on a new device or after losing the vault password; password recovery through a recovery key or operator-issued code.
+- Persistent display name, avatar (JPEG, PNG, or WebP, up to 1 MiB), language (pt-BR/en), and theme (system/light/dark).
 
-**Porquê self-host?** O operador escolhe onde vivem metadados e ficheiros; SQLite embutido e poucas portas (API, LiveKit, TURN) permitem subir a sua instância em menos de 30 minutos; não há rede social global nem diretório obrigatório.
+### Servers, channels, and chat
 
----
+- Create a server with mandatory key custody and default `geral` text and `parley` voice channels. Configure its image, welcome message, roles, members, invitations, and channels.
+- Twelve role permissions, private and public channels, per-member/role/everyone channel rules, an effective-access inspector, and timed channel muting.
+- Two-step invitations with anonymous preview and inline registration. New links carry a sealed server key in the URL fragment, which is not sent to the backend; older links use online handoff. Desktop invitations use the configured HTTPS instance URL.
+- E2EE text messages, replies, deletion by permission, `@` mentions, `@todos`, emoji autocomplete and reactions, and up to ten encrypted attachments of 5 MiB each per message.
+- Link previews (up to five per message), typing indicators, read state, day separators, reconnection recovery, client-side decrypted search (`#channel term` or `Ctrl/Cmd+F`), and persistent mention/reply notifications.
+- The server can see reaction metadata but not encrypted message bodies. Link previews cause the server to fetch the URL.
 
-## Funcionalidades
+### Voice and video
 
-Lista do que o cliente atual faz hoje. A checklist de paridade está em [`docs/v2/parity-checklist.md`](docs/v2/parity-checklist.md); o comportamento exigido está nos specs em [`openspec/specs/frontend-v2/`](openspec/specs/frontend-v2/).
+- A pre-join room with device preview, microphone meter, background blur, and a listen-only option where permitted.
+- Microphone, deafen, camera, screen-share, and leave controls; audio-only fallback when camera access fails.
+- Three composition layouts (Featured Speaker, Panel, Strip), two to eight seats, a bench for unseated participants, a drag-and-drop scene editor, and an equal-size grid with optional screen-share spotlight.
+- A draggable picture-in-picture player and, on desktop, a separate view-only call window. The separate window does not publish media or play room audio.
+- Voice-channel E2EE status, a persistent disabled warning, and a **Reconnect E2EE** flow that validates the channel key against its sealed server copy.
+- Audio/video device settings, a test sound, preview, blur preferences, and synchronized speaking indicators.
 
-### Conta e identidade
-- Registo (handle e palavra-passe de 8+ caracteres), com código de convite quando não é a primeira conta (`/invite/:code` ou `?invite=`).
-- No modo de registo aberto, a pessoa aceita os termos, confirma o e-mail por um link que vale 5 horas e conclui o cadastro com as chaves E2E geradas no cliente. O convite continua a funcionar com ou sem e-mail. O e-mail só é mostrado à própria conta; `RESET_EMAIL` pode usar o endereço verificado mais tarde para encaminhar a recuperação por chave.
+### Sound and accessibility
 
-Com `KEY_REMINDERS=true` (desligado por padrão), uma conta com e-mail verificado recebe boas-vindas após o cadastro e até três lembretes, separados por pelo menos 24 horas, ao criar canais enquanto não tiver chave de recuperação. A própria conta pode desligar os lembretes em **Conta → Chave de recuperação** (`PATCH /api/auth/key-reminders`). O e-mail só leva a `PUBLIC_BASE_URL/account#recovery`: o serviço nunca recebe nem envia a chave, e os e-mails não carregam chaves, códigos ou tokens.
-- Numa instância vazia, o cadastro orienta a criação da conta de **Administrador da instância** e recomenda guardar a chave de recuperação. Não pede convite; o estado é consultado em `GET /api/instance/status`.
-- Login, logout com confirmação, restauro de sessão ao recarregar, troca de conta.
-- **Cliente desktop**: no primeiro arranque pede o endereço da instância. Um host sem esquema (por exemplo `chat.exemplo.com`) é lido como HTTPS; um endereço `http://` é recusado. **Trocar de instância**, no entrar, no criar conta, no menu da conta e no desbloqueio, esquece o endereço e a sessão e volta a pedir a instância. O browser servido pela própria instância não mostra essa acção.
-- **Identidade criptográfica** gerada no navegador, protegida por um cofre cifrado com a palavra-passe (guardado no dispositivo e no servidor, sempre cifrado).
-- Desbloqueio em dispositivo novo (cofre remoto) e **recuperação de identidade** (nova identidade) quando a palavra-passe do cofre se perde.
-- **Esqueci a senha** (`/recover`): com `RESET_EMAIL=true`, o e-mail verificado ajuda a encontrar o handle e o caminho certo. A reposição continua a exigir a chave de recuperação ou um código do operador. O passo a passo está em [Reset de senha](#reset-de-senha).
-- Perfil: nome a mostrar, avatar (JPEG, PNG ou WebP até 1 MiB), idioma **pt-BR / en** e tema **Sistema / Claro / Escuro**, todos persistentes.
+Two optional sounds announce a new mention/reply or someone joining the current call. They respect deafen and output-device settings, are never the sole signal, and can be previewed or disabled under **Audio & Video**. The files live in `assets/audio/` and are copied into `frontend/public/audio/` by Vite.
 
-### Servidores, membros e cargos
-- Criar servidor com **custódia da chave** obrigatória (cria também o canal de texto `geral` e o de voz `parley`).
-- Imagem do servidor, mensagem e canal de boas-vindas, apagar servidor confirmando o nome.
-- Membros com pesquisa, mudança de cargo, remoção. **Cargos** com 12 permissões (ver canais, gerir canais, gerir cargos, criar convites, enviar mensagens, apagar mensagens, anexar ficheiros, mencionar @todos, remover membros, silenciar membros, ligar-se à voz, falar). Quem não tem cargo vê e escreve nos canais de texto e participa nos de voz; só um cargo, um canal privado ou o silenciamento reduzem isso, reordenação e cargo de sistema do dono.
-- **Convites** em dois passos, pré-visualização sem sessão, aceitar com registo inline ou com sessão. Os novos links levam a chave do servidor selada no fragmento `#` (não enviado ao backend), permitindo entrar mesmo sem outro membro online; convites antigos continuam com handoff online. No desktop, o link usa o endereço HTTPS da instância guardada, para quem o abre poder criar a conta.
-- Painel de Membros com presença (online / offline) e aviso quando um convite é consumido.
+The UI supports responsive layouts, light and dark themes, Portuguese and English, context menus via right click or long press, reconnection messages, empty/error states, and `Esc` to close dialogs.
 
-### Canais e acesso
-- Criar canal de texto ou voz (visibilidade pública ou privada, "visível a novos membros"), renomear inline (hífens, 32 caracteres), apagar (o último canal de cada tipo é protegido).
-- **ACL por canal**: regras por membro, cargo ou todos, com efeito (permitir / negar) e nível (ler, escrever, ouvir, falar), mais um **inspector de acesso efetivo** que explica fator a fator.
-- **Silenciar** membro num canal (5, 10, 15, 30 minutos ou outro valor) e dessilenciar.
+## Screenshots
 
-### Chat de texto (E2EE)
-- O corpo das mensagens é cifrado no cliente; o servidor recebe o *ciphertext* e os metadados necessários. Tempo real, agrupamento por remetente em intervalos de até 5 minutos, separadores de dia, saltar para o presente.
-- **Quem está a digitar**: uma linha acima da caixa de composição, com os nomes dos outros membros do canal aberto. Não mostra o texto, não inclui a própria pessoa e some ao limpar, enviar, mudar de canal ou após uns segundos sem renovação. Quem não pode escrever, ou está silenciado, não anuncia; quem não pode ler o canal não recebe.
-- Responder com citação, apagar por permissão, **menções** (`@`, e `@todos` para quem tem a permissão) e autocompletar de emoji (`:shortcode:`), selector de emoji.
-- **Reações com emoji** em mensagens de texto, com anexos ou com citação: pills com contagem e autores, alternância por clique e sincronização em tempo real. A reação é metadado visível ao servidor, enquanto o corpo da mensagem permanece cifrado.
-- **Anexos** de imagem (ficheiro ou colar), até 10 por mensagem e 5 MiB cada, cifrados no cliente, com *lightbox* (zoom, download, navegação).
-- Pré-visualização de links (até 5 por mensagem).
-- Marcar canal como lido e recuperar mensagens perdidas após reconexão.
+Current Parley screenshots are in [`docs/screenshots/`](docs/screenshots/). Voice and video screenshots in [`docs/v2/fidelity/`](docs/v2/fidelity/) predate the rebrand and still show the old logo.
 
-### Pesquisa e notificações
-- Pesquisa livre em todos os canais de texto, **decifrando no cliente**, com o atalho `#canal termo` e `Ctrl/Cmd+F`.
-- Notificações persistentes de menção e resposta, marcar uma ou todas como lidas, *deep-link* para a mensagem, canais com novidade e indicadores por servidor.
+| Login | Chat | Call stage |
+|:---:|:---:|:---:|
+| ![Login](docs/screenshots/login.png) | ![Chat](docs/screenshots/chat.png) | ![Call stage](docs/v2/fidelity/frontend-v2-voice-video/stage-composicao.png) |
 
-### Voz e vídeo (LiveKit)
-- **Pré-entrada** (*green room*): pré-visualização com blur, medidor do microfone, calibração de dispositivos, "No canal agora" e as ações *Entrar*, *Testar vídeo* (faixa sintética, sem tocar na câmera real) e *Entrar (ouvir)* para quem só pode ouvir.
-- Controlos no painel do utilizador: microfone, ensurdecer, câmera, partilha de ecrã, terminar. Entrada só com áudio quando a câmera falha ou é negada.
-- **Blur de fundo** em três níveis (sem, leve, forte), indicadores de fala sincronizados no palco, na grade e na sidebar, duração da chamada.
-- **Vista Composição**: três layouts (Mestre em Destaque, Painel, Faixa), de 2 a 8 posições, faixa "No banco" para quem não tem posição. **Editor de cena** com arrastar-e-largar, número de posições e confirmação de alterações por guardar.
-- **Vista Grade**: câmeras e partilhas de ecrã, com destaque de uma partilha (*spotlight*) sem interromper as transmissões.
-- **PiP flutuante**: mini-player arrastável com encaixe nos 4 cantos, visível ao navegar para fora do canal; "Voltar ao palco" e terminar direto no PiP.
-- Quem já está no canal vê outra pessoa entrar, e a câmara quando a faixa fica disponível, sem recarregar a página nem sair e voltar.
-- **Janela da chamada** (só no desktop): "Abrir numa nova janela" abre a grade numa segunda janela do sistema, só a ver, sem ocupar lugar nem publicar média. Essa janela não reproduz o áudio da sala, para não devolver a voz de quem fala. Sem uma partilha em destaque, os mosaicos têm o mesmo tamanho e preenchem a janela. Enquanto está aberta, a janela principal não mostra o cartão de "chamada noutro sítio". O browser não oferece o botão.
-- **E2EE de canal de voz** com chip de estado, faixa permanente "E2EE desligada" (quem e quando) e **Religar E2EE** mediante a chave do canal, validada contra a cópia selada no servidor.
-- Página **Áudio & Vídeo**: escolha de microfone, saída e câmera, medidor em tempo real, som de teste, pré-visualização e blur partilhado com a chamada.
-- Entrar noutro canal de voz sai do anterior; apagar o canal ou o servidor encerra a chamada.
-
-### Efeitos sonoros
-- Dois sons curtos: **nova menção ou resposta** e **alguém entrou na chamada em que está**. Nunca são o único aviso, não tocam com o utilizador ensurdecido, usam a saída de áudio escolhida e falham em silêncio (autoplay recusado, ficheiro em falta).
-- A menção não toca se o canal está aberto e a janela em foco; rajadas contam como um só toque.
-- Interruptor e pré-escuta em **Áudio & Vídeo**; a escolha fica neste dispositivo. Os ficheiros vivem em `assets/audio/` e são copiados para `frontend/public/audio/` quando o Vite arranca.
-
-### Transversal
-- Responsivo (gaveta abaixo de 768 px, sem scroll horizontal), modo claro e escuro com contraste verificado, português (pt-BR) e inglês, menu de contexto por clique direito e toque longo, faixa de reconexão do WebSocket, estados vazios e de erro por lista, diálogos com `Esc`.
-
----
-
-## Telas
-
-Capturas reais da v2 com a marca Parley (tema escuro, pt-BR), em [`docs/screenshots/`](docs/screenshots/). As telas de voz e vídeo (palco, grade, editor de cena, PiP e configurações de áudio e vídeo) ainda são as capturas anteriores à troca de marca, em [`docs/v2/fidelity/`](docs/v2/fidelity/), e mostram o logo antigo. Cada tela foi comparada com o seu mockup em [`docs/v2/mesa_*`](docs/v2/).
-
-### Entrada e conta
-
-| Entrar / criar conta | Desbloqueio do cofre | Menu da conta |
-|:--:|:--:|:--:|
-| ![Login](docs/screenshots/login.png) | ![Desbloqueio](docs/screenshots/unlock-local.png) | ![Menu da conta](docs/screenshots/account-menu.png) |
-
-### Shell e chat de texto
-
-| Shell com canais e Membros | Chat com respostas, menções e anexos |
-|:--:|:--:|
-| ![Shell](docs/screenshots/shell.png) | ![Chat](docs/screenshots/chat.png) |
-
-| Pesquisa global | Notificações | Lightbox de anexos |
-|:--:|:--:|:--:|
-| ![Pesquisa](docs/screenshots/pesquisa.png) | ![Notificações](docs/screenshots/notificacoes.png) | ![Lightbox](docs/screenshots/lightbox.png) |
-
-### Administração do servidor
-
-| Cargos e permissões | Membros | Convidar (passo 1) |
-|:--:|:--:|:--:|
-| ![Cargos](docs/screenshots/cargos-lista.png) | ![Membros](docs/screenshots/membros.png) | ![Convidar](docs/screenshots/convidar-passo1.png) |
-
-| Permissões do canal (ACL) | Inspetor de acesso | Criar canal de voz com custódia |
-|:--:|:--:|:--:|
-| ![ACL](docs/screenshots/permissoes-canal.png) | ![Inspetor](docs/screenshots/inspecionar-acesso.png) | ![Canal de voz](docs/screenshots/criar-canal-voz.png) |
-
-### Voz e vídeo
-
-As câmeras verdes são o dispositivo de vídeo falso do Chromium usado nos testes.
-
-| Pré-entrada (*green room*) | Palco em Composição |
-|:--:|:--:|
-| ![Green room](docs/v2/fidelity/frontend-v2-voice-video/green-room.png) | ![Composição](docs/v2/fidelity/frontend-v2-voice-video/stage-composicao.png) |
-
-| Editor de cena | Grade |
-|:--:|:--:|
-| ![Editor de cena](docs/v2/fidelity/frontend-v2-voice-video/editor-mestre.png) | ![Grade](docs/v2/fidelity/frontend-v2-voice-video/grade-1280.png) |
-
-| Grade com partilha e destaque | PiP flutuante |
-|:--:|:--:|
-| ![Partilha](docs/v2/fidelity/frontend-v2-voice-video/grade-share-1280.png) | ![PiP](docs/v2/fidelity/frontend-v2-voice-video/pip-1600.png) |
-
-| E2EE desligada (modo claro) | Religar E2EE | Áudio & Vídeo |
-|:--:|:--:|:--:|
-| ![Faixa](docs/v2/fidelity/frontend-v2-voice-video/review-claro-e2ee-faixa.png) | ![Diálogo](docs/v2/fidelity/frontend-v2-voice-video/review-escuro-e2ee-dialogo.png) | ![Áudio e Vídeo](docs/v2/fidelity/frontend-v2-voice-video/av-968.png) |
-
----
-
-## Arquitetura
+## Architecture and encryption
 
 ```mermaid
 flowchart LR
-    subgraph Browser["Navegador (frontend, SolidJS)"]
-        UI["UI e estado<br/>(TanStack Query)"]
-        CR["Criptografia local<br/>identidade, chaves, cifra"]
-        LK["livekit-client<br/>+ worker E2EE"]
-    end
-
-    subgraph Dev["Vite dev server :1421 (HTTPS)"]
-        PX["proxy /api /ws /health /rtc"]
-    end
-
-    subgraph Backend["Backend Rust (Axum) :8080"]
-        REST["REST /api/*"]
-        WS["WebSocket /ws<br/>hub de eventos"]
-        DB[("SQLite<br/>so ciphertext e metadados")]
-        FS[("Ficheiros<br/>anexos e avatares")]
-        TK["Emissor de tokens LiveKit"]
-    end
-
-    LKS["LiveKit server :7880<br/>SFU de voz e video"]
-
-    UI -->|JSON, cookie ou Bearer| PX
-    UI <-->|eventos| PX
-    PX --> REST
-    PX --> WS
-    REST --> DB
-    REST --> FS
-    REST --> TK
-    WS --- DB
-    LK <-->|WebRTC, frames cifrados| LKS
-    LK -->|signalling /rtc| PX
-    PX --> LKS
-    TK -.->|chave de API, nunca no browser| LKS
-    CR --- UI
-    CR --- LK
+    Client["Browser or Electron client<br/>SolidJS + client-side encryption"]
+    Proxy["Vite proxy in development<br/>reverse proxy in production"]
+    API["Rust Axum API<br/>SQLite + WebSocket"]
+    LiveKit["LiveKit SFU<br/>encrypted media"]
+    Client <-->|"REST and WebSocket"| Proxy
+    Proxy <--> API
+    Client <-->|"E2EE WebRTC"| LiveKit
+    API -->|"issues access tokens"| LiveKit
 ```
 
-- **Frontend v2** (`frontend/`): SPA SolidJS. No browser servido pela instância, o REST em `/api/*` usa o cookie `Session` (mesma origem). O cliente desktop (`frontend/electron/`) carrega a mesma SPA, fala com a instância HTTPS escolhida e autentica com `Authorization: Bearer`. Os dois escutam o `/ws` e falam com o LiveKit por WebRTC. Toda a cifra acontece no cliente. A aplicação empacotada avisa quando há uma release mais recente; a instalação dessa versão é manual.
-- **Backend** (`backend/`): API Axum sobre SQLite. Valida sessão e permissões, guarda *ciphertext* e metadados, difunde eventos por WebSocket e emite tokens do LiveKit. O segredo de API do LiveKit nunca sai do backend.
-- **LiveKit** (`infra/`): SFU em Docker Compose. A mídia chega cifrada (Insertable Streams), por isso o SFU não a lê.
-- **Em produção** o proxy do Vite é substituído por um *reverse proxy* da instância; o cliente continua a falar com uma única origem. Ver [docs/deploy-producao.md](docs/deploy-producao.md).
+The browser uses the same-origin `Session` cookie. Electron loads the same SPA from a selected HTTPS instance and uses `Authorization: Bearer`. Both listen to `/ws` and use LiveKit for calls. The backend validates permissions, stores ciphertext and operational metadata, broadcasts events, and issues LiveKit tokens. The LiveKit API secret stays on the backend. LiveKit receives encrypted media frames through Insertable Streams.
 
-### Camadas do frontend v2
+| Layer | Encrypted content | Visible to the server |
+|---|---|---|
+| Text and attachments | Message body and attachment bytes | Sender, time, IDs, membership, and other operational metadata |
+| Voice and video | Media frames | Channel and E2EE state metadata |
 
-```mermaid
-flowchart TB
-    subgraph app["frontend/src"]
-        shell["shell/ (rail, sidebar, topbar, estado do servidor)"]
-        pages["pages/ e auth/ (rotas)"]
-        chat["chat/ (timeline, composer, anexos, pesquisa)"]
-        admin["admin/ (servidor, cargos, canais, convites)"]
-        voice["voice/ (sessao de chamada, palco, grade, PiP)"]
-        crypto["crypto/ (identidade, cofre, chaves)"]
-        api["api/ (http, realtime, tipos, endpoints)"]
-    end
-    shell --> api
-    pages --> api
-    chat --> api
-    chat --> crypto
-    admin --> api
-    admin --> crypto
-    voice --> api
-    voice --> crypto
-    api --> net(("REST + WS"))
-```
+A client-generated NaCl box identity is stored in an AES-256-GCM vault whose key is derived from the password with Argon2id. The server stores the public key and encrypted vault, never the secret key. The owner's client generates a 32-byte server key and distributes it in sealed envelopes for members. That key encrypts messages, attachments, and call media. Each voice channel also has a 32-byte custody key used to reconnect E2EE; the client checks a supplied key against its sealed copy. See the [byte-level formats and test vectors](docs/v2/contracts/crypto-formats.md).
 
----
+The server still sees metadata. The link-preview endpoint (`POST /api/unfurl`) fetches submitted URLs, so the server sees those URLs.
 
-## Criptografia (E2EE)
+## Password recovery
 
-**Objetivo:** o processo servidor (e quem o opera) não deve poder ler o conteúdo das conversas nem decifrar a mídia em condições normais.
+A verified email can identify the account and point to the correct recovery path when `RESET_EMAIL=true` (off by default), but it does not authorize a reset. The email link only pre-fills the handle.
 
-| Camada | O que fica cifrado | Quem vê em claro |
-|--------|--------------------|------------------|
-| **Texto e anexos** | Corpo da mensagem (`content_ciphertext`) e bytes dos anexos | Só clientes com a chave do servidor |
-| **Voz e vídeo** | Frames, via Insertable Streams do LiveKit | Só participantes com a chave do servidor |
-| **Metadados** | Quem enviou, quando, ids, membros, estado E2EE do canal | O servidor (necessário para operar) |
+1. **Change password:** If the current password is known, the client re-encrypts the same identity vault. Other sessions end; the current session and message history remain.
+2. **Recovery key:** A previously saved, one-time-displayed key opens the vault, proves possession, and sets a new password while preserving identity and server keys. Replacing the recovery key invalidates the old one.
+3. **Operator code:** If the recovery key is unavailable, the operator runs `chat-backend reset-code <handle>` on the host and delivers the one-use code through an existing trusted channel. It expires after 30 minutes by default. This creates a new identity, removes any recovery key, and ends all sessions. Other members must be online to re-encrypt server keys for the new identity. Servers where this was the only key holder and voice-channel custody keys cannot be recovered.
 
-Limitações assumidas: o servidor vê metadados, e a pré-visualização de links (`POST /api/unfurl`) faz o servidor buscar o URL, logo ele vê esse URL.
+Invalid handles and codes receive the same response. Repeated failed attempts invalidate a code. See [instance operations](docs/operar-instancia.md) and [authentication contracts](docs/contratos-e-fluxos.md).
 
-### Hierarquia de chaves
+## Development quickstart
 
-```mermaid
-flowchart TD
-    PW["Palavra-passe"] -->|Argon2id| WK["Chave de cofre AES-256"]
-    WK -->|AES-GCM| VAULT["Cofre da identidade<br/>(servidor e IndexedDB)"]
-    VAULT --> ID["Identidade: par NaCl box<br/>chave publica vai ao servidor"]
-    ID -->|selar para a chave publica| ENV["Envelope da chave do servidor<br/>(um por membro)"]
-    ENV --> SK["Chave do servidor 32 bytes"]
-    SK -->|AES-256-GCM| MSG["Mensagens e anexos"]
-    SK -->|ExternalE2EEKeyProvider| MEDIA["Frames de voz e video"]
-    ID -->|selar para si| CK["Chave do canal de voz 32 bytes<br/>(custodia)"]
-    CK -->|autoriza| RELIGAR["Religar E2EE do canal"]
-```
-
-- **Identidade**: par `nacl.box` gerado no cliente. O servidor guarda a chave pública e o **cofre** (a chave secreta cifrada com AES-256-GCM, chave derivada por Argon2id). Nunca recebe a chave secreta.
-- **Chave do servidor**: 32 bytes gerados no cliente do dono, distribuídos por **envelopes** (caixa selada para a chave pública de cada membro). Cifra mensagens, anexos e a mídia das chamadas.
-- **Chave do canal de voz**: 32 bytes gerados na criação do canal e confirmados com `custody_ack`. O servidor guarda uma cópia **selada para o custodiante**. Serve para **religar a E2EE**: o cliente abre a cópia selada (`GET .../voice/channel-key`) e só aceita a chave colada se for a mesma.
-- Formatos byte a byte e vetores de teste: [`docs/v2/contracts/crypto-formats.md`](docs/v2/contracts/crypto-formats.md) e `npm run test:contracts`.
-
----
-
-## Reset de senha
-
-O e-mail verificado pode iniciar o caminho, mas não autoriza a reposição. Com `RESET_EMAIL=true` (desligado por padrão), informe o e-mail em **Esqueci a senha**. Se a conta tiver chave de recuperação, a mensagem contém o handle e `PUBLIC_BASE_URL/recover#handle=…`; se não tiver, orienta a pedir um código ao operador. O link apenas preenche o handle. A senha abre o cofre da identidade neste dispositivo. Há três caminhos para a alterar ou repor.
-
-**Alterar senha**, quando a pessoa ainda sabe a actual. Em Minha conta. A identidade fica a mesma: o cliente volta a cifrar o cofre com a senha nova. As outras sessões terminam e esta continua. Mensagens e servidores não mudam.
-
-**Chave de recuperação**, quando a pessoa guardou o código. É opcional e cria-se no registo, ao aceitar um convite, ou depois em Minha conta. O código mostra-se uma vez. O servidor guarda só um cofre cifrado e uma chave pública de verificação, nunca o código em si. Em **Esqueci a senha**, a escolha é **Tenho a chave de recuperação**. O navegador abre o cofre com esse código, prova que o possui, e define a senha nova. A identidade e as chaves dos servidores mantêm-se, por isso o histórico continua legível. Substituir a chave invalida o código anterior.
-
-**Código do operador**, quando não há chave de recuperação ou ela também se perdeu. Quem opera a instância emite um código de uso único no host:
+Requires Docker, Rust/Cargo, and a recent Node.js version. Run each component in a separate terminal:
 
 ```bash
-chat-backend reset-code <handle>
-```
-
-O comando imprime o código uma vez (30 minutos por omissão) e a base guarda só o hash. Entrega-se por um canal que já se use com essa pessoa. O procedimento completo está em [Senha esquecida](docs/operar-instancia.md#senha-esquecida-código-do-operador).
-
-A pessoa abre **Esqueci a senha**, escolhe **Tenho um código do operador**, escreve o handle, o código e a senha nova, e confirma que a identidade será nova. O Parley gera um par de chaves novo, apaga a chave de recuperação se existia, e encerra todas as sessões. Os servidores voltam a abrir quando um membro que ainda tem a chave do servidor estiver online e voltar a selar o envelope. Servidores em que esta conta era a única com a chave, e a custódia da chave de voz, não voltam.
-
-Handle inexistente e código errado recebem a mesma resposta. Várias falhas seguidas invalidam o código: é preciso esperar ou pedir um código novo.
-
-As rotas destes três caminhos estão em [Autenticação e conta](docs/contratos-e-fluxos.md#autenticação-e-conta).
-
----
-
-## Contratos Frontend ↔ Backend
-
-Rotas REST, eventos WebSocket e a política de alteração do backend: [docs/contratos-e-fluxos.md](docs/contratos-e-fluxos.md#contratos-frontend--backend).
-
-## Fluxos de integração
-
-Registo, convite, mensagens, voz, E2EE e reconexão, em diagrama: [docs/contratos-e-fluxos.md](docs/contratos-e-fluxos.md#fluxos-de-integração).
-
----
-
-## Arranque rápido (dev)
-
-Pré-requisitos: Docker, Rust (cargo) e uma versão recente do Node.
-
-```bash
-# 1) LiveKit (porta 7880)
-cd infra && cp .env.example .env   # se necessário
+# LiveKit (:7880)
+cd infra
+cp .env.example .env  # if needed
 docker compose up -d
 
-# 2) Backend (porta 8080, só localhost por omissão)
+# Backend (:8080, bound to localhost by default)
 cd backend
 export DATABASE_URL=sqlite://chat.db?mode=rwc
 export LIVEKIT_API_KEY=instkey
@@ -338,105 +134,81 @@ export LIVEKIT_WS_URL=ws://127.0.0.1:7880
 export COOKIE_SECURE=false
 cargo run
 
-# 3) Frontend v2 (https://localhost:1421, aceitar o certificado de desenvolvimento)
+# Frontend (https://localhost:1421; accept the development certificate)
 cd frontend
 npm install
 npm run dev
 ```
 
-O Vite serve a SPA e faz proxy de `/api`, `/ws`, `/health` e `/rtc` para o backend (`8080`) e o LiveKit (`7880`), de modo que o navegador fala sempre com uma só origem. A primeira conta registada passa a ser o Administrador da instância.
+Vite proxies `/api`, `/ws`, `/health`, and `/rtc`, keeping the browser on one origin. The first registered account becomes the instance administrator.
 
-### Variáveis do backend
-
-| Variável | Omissão | Função |
-|----------|---------|--------|
-| `DATABASE_URL` | `sqlite://chat.db?mode=rwc` | Base de dados |
-| `BIND` | `127.0.0.1:8080` | Endereço de escuta |
-| `LIVEKIT_WS_URL` | `ws://127.0.0.1:7880` | URL do LiveKit devolvido a quem entra |
-| `LIVEKIT_API_KEY` / `LIVEKIT_API_SECRET` | par de exemplo | Credenciais do LiveKit. **Obrigatório trocar em produção** |
-| `SESSION_TTL_SECS` | `604800` (7 dias) | Duração da sessão |
-| `DEFAULT_INVITE_TTL_SECS` | `300` | Validade dos convites |
-| `COOKIE_SECURE` | desligado | Marca o cookie como `Secure` (ligar com HTTPS) |
-| `ATTACHMENTS_DIR` / `AVATARS_DIR` | `./data/attachments` / `./data/avatars` | Onde ficam os ficheiros |
-| `PARLEY_PRODUCTION` ou `PARLEY_ENV` | desligado | Modo produção (recusa as credenciais de exemplo) |
-| `PARLEY_RATE_LIMIT_DISABLED` | desligado | Desliga o limite de pedidos (testes) |
-| `LIVEKIT_EGRESS_FILE_PREFIX` | — | Só para a gravação, fora do escopo da v2 |
-
-### Verificação
+| Backend variable | Default | Purpose |
+|---|---|---|
+| `DATABASE_URL` | `sqlite://chat.db?mode=rwc` | Database |
+| `BIND` | `127.0.0.1:8080` | Listen address |
+| `LIVEKIT_WS_URL` | `ws://127.0.0.1:7880` | LiveKit URL returned to clients |
+| `LIVEKIT_API_KEY` / `LIVEKIT_API_SECRET` | Example pair | LiveKit credentials; **replace in production** |
+| `SESSION_TTL_SECS` | `604800` | Session lifetime in seconds (seven days) |
+| `DEFAULT_INVITE_TTL_SECS` | `300` | Invitation lifetime in seconds |
+| `COOKIE_SECURE` | Off | Set the `Secure` cookie flag when using HTTPS |
+| `ATTACHMENTS_DIR` / `AVATARS_DIR` | `./data/attachments` / `./data/avatars` | File locations |
+| `PARLEY_PRODUCTION` or `PARLEY_ENV` | Off | Production mode; rejects example credentials |
+| `PARLEY_RATE_LIMIT_DISABLED` | Off | Disable rate limiting for tests |
+| `LIVEKIT_EGRESS_FILE_PREFIX` | Unset | Recording support, outside v2 scope |
 
 ```bash
 cd frontend
-npm run build               # tsc + vite build
-npm run lint                # eslint
-npm run test:contracts      # vetores criptográficos (24 casos)
-npm run verify:i18n-keys    # chaves usadas = chaves em pt-BR e en
-npm run verify:sound        # chegadas, janela de repouso e preferência dos efeitos sonoros
-npm run verify:chat         # lógica de chat, incluindo agrupamento por tempo
-
-cd ../backend && cargo test # contratos e integração da API
+npm run build
+npm run lint
+npm run test:contracts
+npm run verify:i18n-keys
+npm run verify:sound
+npm run verify:chat
+cd ../backend && cargo test
 ```
 
----
-
-## Estrutura do repositório
+## Repository layout
 
 ```text
-backend/          # API Axum, SQLite, tokens LiveKit, hub de WebSocket
-frontend/         # SPA SolidJS v2 e shell Electron (frontend/electron/)
-infra/            # Docker Compose do LiveKit
-scripts/          # Instalação e atualização do cliente desktop (Linux, macOS, Windows)
-openspec/         # Specs e changes da v2 (specs/ = estado atual, changes/ = trabalho)
-docs/             # Produto, arquitetura, operação, contratos e mockups (docs/v2/)
-specs/            # Specs históricas da v1 (Speckit)
-assets/audio/     # Efeitos sonoros curtos (mention.mp3, call-join.mp3), copiados para o frontend
-CHANGELOG.md      # Versionamento
+backend/       Axum API, SQLite, LiveKit tokens, WebSocket hub
+frontend/      SolidJS v2 SPA and Electron shell
+infra/         LiveKit Docker Compose configuration
+scripts/       Desktop install and update scripts
+openspec/      Current v2 specifications and change proposals
+docs/          Product, architecture, operations, contracts, and mockups
+specs/         Historical v1 Speckit specifications
+assets/audio/  Short notification sounds
+CHANGELOG.md   Release history
 ```
 
-- Trabalho em curso: `openspec list` (ou [`openspec/changes/`](openspec/changes/)). A reescrita está em [`docs/v2/TR-frontend-v2.md`](docs/v2/TR-frontend-v2.md).
-- Fidelidade visual: [`docs/v2/fidelity-protocol.md`](docs/v2/fidelity-protocol.md) e [`docs/v2/AUDIT-fidelity.md`](docs/v2/AUDIT-fidelity.md).
+For ongoing work, run `openspec list` or browse [`openspec/changes/`](openspec/changes/). See the [v2 technical requirements](docs/v2/TR-frontend-v2.md), [visual fidelity protocol](docs/v2/fidelity-protocol.md), and [fidelity audit](docs/v2/AUDIT-fidelity.md).
 
----
+## Install and update
 
-## Instalar e atualizar
+The app displays a persistent notice when a newer release is available. Updates are **manual on every platform**; the app does not download or run installers in the background. Download from the [GitHub releases page](https://github.com/ricardopiloto/chat-app/releases), or rerun the repository's install script.
 
-A aplicação avisa com uma faixa persistente quando há uma release publicada mais recente. A atualização é **manual em todas as plataformas**: a aplicação não descarrega nem executa instaladores em segundo plano. A faixa leva à [página de releases](https://github.com/ricardopiloto/chat-app/releases), onde pode descarregar a versão nova. Também pode executar novamente o script de instalação para instalar a última versão publicada.
+| Platform | Installation |
+|---|---|
+| Linux/macOS script | Run `scripts/install-mesa.sh` from a repository checkout. It requires `curl` and `python3`; Linux installs an AppImage with a menu entry, and macOS copies the app from the DMG to `/Applications`. Rerun it to update. |
+| Windows script | Run `scripts/install-mesa.ps1` in PowerShell from a repository checkout. `-Silent` uses NSIS silent mode. Rerun it to update. |
+| Linux direct | Download an AppImage, `.deb`, or `.rpm`. Replace the previous AppImage or install the newer package to update. |
+| Windows direct | Download and run the NSIS `.exe` or `.msi`; update with the newer installer of the same type. |
+| macOS direct | Open the `.dmg` and copy the `.app` to `/Applications`; replace it to update. |
 
-| Via | Instalar | Atualizar |
+The scripts verify installer SHA-256 hashes against `SHA256SUMS` from the same release. Older releases without that manifest require a direct download and installation.
+
+When moving from Mesa to Parley, install Parley and remove the old Mesa installation. The new desktop profile starts empty: enter the instance URL and sign in again. Server history and keys return after login; manually supplied voice-channel keys must be entered again. Installation does not delete the old Mesa data folder.
+
+### Desktop packages
+
+| Platform | Release files | Notes |
 |---|---|---|
-| Linha de comando, Linux/macOS | Execute `scripts/install-mesa.sh` a partir de uma cópia deste repositório. Requer `curl` e `python3`; no Linux instala AppImage com entrada no menu, no macOS copia a app do DMG para `/Applications`. | Reexecute o script a partir do repositório para obter a versão nova. |
-| Linha de comando, Windows | Execute `scripts/install-mesa.ps1` no PowerShell a partir de uma cópia deste repositório. `-Silent` usa o modo silencioso do NSIS. | Reexecute o script a partir do repositório para obter a versão nova. |
-| Linux, download direto | Descarregue AppImage, `.deb` ou `.rpm` da release. | Descarregue e instale o pacote mais recente; para AppImage, substitua o ficheiro anterior. |
-| Windows, download direto | Descarregue o instalador NSIS `.exe` ou o `.msi`. | Execute o instalador mais recente do mesmo formato. |
-| macOS, download direto | Abra o `.dmg` e copie a app para `/Applications`. | Substitua a app pela versão do novo `.dmg`. |
+| Linux | `parley-chat-app-<version>-x86_64.AppImage`, `-amd64.deb`, `-x86_64.rpm` | Deb and RPM install the binary as `parley-chat-app` to avoid conflict with KDE Parley. Make the AppImage executable before running it. |
+| Windows | `Parley-<version>.exe` (NSIS) or `.msi` | MSI also supports enterprise or silent deployment. |
+| macOS | `Parley-<version>.dmg` | Drag the contained app to Applications. |
 
-Os scripts verificam o SHA-256 do instalador contra o `SHA256SUMS` da mesma release antes da instalação. Releases antigas sem esse manifesto requerem download e instalação diretos. Veja também [Distribuição desktop](#distribuição-desktop) para formatos e avisos de SmartScreen/Gatekeeper.
+Windows and macOS installers are currently unsigned and not notarized. SmartScreen or Gatekeeper may ask users to confirm they trust the download. The project has no Authenticode certificate or Apple Developer account, and the release workflow does not sign packages. See the [desktop release guide](docs/desktop-release.md); GitHub releases start as drafts.
 
-Na transição do Mesa para o Parley, instale o Parley e remova a instalação antiga do Mesa. O perfil desktop novo começa vazio: informe o endereço da instância e entre de novo. O histórico e as chaves dos servidores voltam pelo login; chaves de canal de voz que você colou à mão precisam ser coladas de novo. A pasta de dados antiga do Mesa permanece no disco e não é apagada pela instalação.
+## Deferred work
 
-## Distribuição desktop
-
-### Baixar
-
-Os instaladores de cada versão ficam em **[github.com/ricardopiloto/chat-app/releases](https://github.com/ricardopiloto/chat-app/releases)**. Escolha o ficheiro da sua plataforma:
-
-| Sistema | Formatos | Observação |
-|---|---|---|
-| **Linux** | `parley-chat-app-<versão>-x86_64.AppImage`, `parley-chat-app-<versão>-amd64.deb`, `parley-chat-app-<versão>-x86_64.rpm` | O `.deb`/`.rpm` instalam o binário como `parley-chat-app` para evitar colisão com o pacote Parley do KDE. O `.AppImage` não precisa de instalação — torná-lo executável e correr. |
-| **Windows** | `Parley-<versão>.exe` (NSIS) ou `Parley-<versão>.msi` | Qualquer um dos dois instala a aplicação; use o `.msi` se precisar de implantação silenciosa/empresarial. |
-| **macOS** | `Parley-<versão>.dmg` | Contém a `.app` para arrastar para `Applications`. |
-
-### Instaladores sem assinatura
-
-Os instaladores de Windows e macOS **não são assinados nem notarizados**. No primeiro arranque o Windows mostra o aviso do SmartScreen ("Windows protected your PC") e o macOS mostra o aviso do Gatekeeper ("developer cannot be verified"). A aplicação só abre depois de a pessoa confirmar que confia na origem. Isto não está resolvido: o projecto não tem certificado Authenticode nem conta Apple Developer, e o workflow de release não tenta assinar.
-
-O processo de publicar uma versão, os formatos (AppImage, deb, rpm, msi, exe, dmg) e o facto de a GitHub Release nascer em rascunho estão em [docs/desktop-release.md](docs/desktop-release.md).
-
-## Fora de escopo e diferido
-
-- Federação entre instâncias.
-- Gravação de cenas (LiveKit Egress), incompatível com a E2EE; sem UI na v2.
-- Múltiplas cenas nomeadas por canal, co-diretor e *templates* de cena partilháveis.
-- MLS, multi-dispositivo, Passkeys e semente BIP-39.
-- Rolagem de dados, ferramentas VTT, telemetria de rede e perfil estendido.
-- Outros sons além de menção e chegada à chamada, volume ajustável e notificações do sistema.
-- Um único binário Rust que seja ao mesmo tempo cliente e servidor. O cliente desktop actual é Electron; só `backend/` é Rust. A aplicação não descarrega nem aplica atualizações sozinha.
+Federation; scene recording through LiveKit Egress (incompatible with current E2EE); multiple named scenes per channel, co-directors, and shared scene templates; MLS, multiple devices, passkeys, and BIP-39 seeds; dice rolling, VTT tools, network telemetry, and extended profiles; additional sounds, adjustable sound volume, and system notifications; a single Rust binary for both client and server. The current desktop client is Electron and does not apply updates itself.

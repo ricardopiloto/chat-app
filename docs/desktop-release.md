@@ -1,55 +1,53 @@
-# Release do cliente desktop
+# Desktop client releases
 
-## Manifesto de integridade e aviso de versão
+## Integrity manifest and update notice
 
-O job de release gera `SHA256SUMS` a partir dos seis instaladores e anexa o manifesto à mesma GitHub Release em rascunho. Antes de publicar, confirme que os seis ficheiros e o manifesto estão presentes. Os scripts `scripts/install-mesa.sh` e `scripts/install-mesa.ps1` só instalam releases publicadas com esse manifesto e verificam o SHA-256 antes de executar o instalador. Reexecutar o script reinstala a versão publicada mais recente. Uma release antiga sem manifesto continua a poder ser instalada por download direto.
+The release job generates `SHA256SUMS` for the six installers and attaches it to the same draft GitHub release. Before publishing, confirm that all six files and the manifest are present. `scripts/install-mesa.sh` and `scripts/install-mesa.ps1` install only published releases with this manifest and verify SHA-256 before running an installer. Rerunning a script reinstalls the latest published version. Older releases without a manifest can still be installed by direct download.
 
-O aplicativo empacotado consulta a última release publicada no arranque e a cada seis horas. Se houver versão mais recente, mostra uma faixa com ligação para a release. A aplicação da atualização é manual em todos os formatos; não há feed `latest*.yml` nem `electron-updater` neste fluxo.
+The packaged app checks the latest published release on launch and every six hours. If a newer version exists, it displays a banner linking to the release. Updates are manual for every package format; this flow has no `latest*.yml` feed or `electron-updater`.
 
-O workflow [`.github/workflows/desktop-release.yml`](../.github/workflows/desktop-release.yml) empacota o shell Electron com `electron-builder`. Não corre em cada push.
+[`.github/workflows/desktop-release.yml`](../.github/workflows/desktop-release.yml) packages the Electron shell with `electron-builder`. It does not run on every push.
 
-## Bater a versão
+## Bump the version
 
-A versão do produto está em três manifestos, e os três têm de ser o mesmo número. `frontend/package.json` é a fonte de verdade; os outros dois seguem-no.
+The product version appears in three manifests. All three must match; `frontend/package.json` is the source of truth.
 
 - `backend/Cargo.toml`
 - `frontend/package.json`
 - `frontend/electron/package.json`
 
-Os instaladores usam o número de `frontend/package.json` (o `electron-builder` lê esse manifesto, com o projecto em `frontend/`). Uma tag `v1.4.0` só é aceite se `frontend/electron/package.json` disser `1.4.0`. Se a tag não bater certo, o workflow falha antes de produzir instaladores.
+The installers use the version in `frontend/package.json` (`electron-builder` reads this manifest with `frontend/` as the project). A tag such as `v1.4.0` is accepted only when `frontend/electron/package.json` says `1.4.0`. Otherwise, the workflow fails before producing installers.
 
-## Disparar
+## Trigger a build
 
-- **Sem publicar:** em GitHub Actions, correr `Desktop release` com *Run workflow* (`workflow_dispatch`). Os três jobs compilam e deixam os ficheiros nos artefactos da execução. Não é criada nenhuma GitHub Release.
-- **Release:** criar a tag `v*` (por exemplo `v1.4.0`) no commit que já tem os três manifestos actualizados. O job `release` cria uma GitHub Release **em rascunho** (`draft: true` em `softprops/action-gh-release`) com esse nome e anexa os instaladores. O rascunho não fica público até alguém o publicar na página da release. Um `workflow_dispatch` sem tag não corre esse job.
+- **Build without publishing:** In GitHub Actions, run **Desktop release** with **Run workflow** (`workflow_dispatch`). The three build jobs leave files in the run artifacts. No GitHub release is created.
+- **Prepare a release:** Create a `v*` tag, for example `v1.4.0`, on a commit where all three manifests have been updated. The `release` job creates a **draft** GitHub release (`draft: true` in `softprops/action-gh-release`) and attaches the installers. It remains private until someone publishes it on the release page. A manual run without a tag does not execute this job.
 
-A escolha do rascunho é deliberada. A primeira release real não deve aparecer publicada sem uma revisão dos ficheiros.
+The draft is deliberate so the files can be reviewed before the first real release becomes public.
 
-## O que cada plataforma produz
+## Platform output
 
-| Runner | Ficheiros |
-| --- | --- |
+| Runner | Files |
+|---|---|
 | Linux | `.AppImage`, `.deb`, `.rpm` |
-| Windows | `.exe` (NSIS) e `.msi`, sem assinatura Authenticode |
-| macOS | `.dmg` (a `.app` vai dentro do disco, não é publicada à parte), sem notarização |
+| Windows | `.exe` (NSIS) and `.msi`, without Authenticode signatures |
+| macOS | `.dmg` (containing the `.app`), without notarization |
 
-O nome de cada ficheiro inclui a versão dos três manifestos (1.4.0). No Linux, o pacote, executável e `.desktop` usam `parley-chat-app`; o nome `parley` isolado colide com o aplicativo Parley do KDE. `productName` é `Parley` e `appId` é `com.parley.desktop`. Windows e macOS usam `Parley-<versão>` nos instaladores. A mudança do `appId` cria um perfil novo do Electron; a limpeza da instalação antiga ocorre após a primeira abertura, com consentimento.
+Each filename includes the version from the three manifests. On Linux, the package, executable, and `.desktop` file use `parley-chat-app`; `parley` alone conflicts with KDE's Parley application. `productName` is `Parley` and `appId` is `com.parley.desktop`. Windows and macOS installers use `Parley-<version>`. The changed `appId` creates a new Electron profile; old-installation cleanup happens after the first launch, with consent.
 
-Os artefactos de uma tag ficam na GitHub Release `v*` (rascunho até ser publicada): `https://github.com/ricardopiloto/chat-app/releases`. Num disparo manual, ficam só nos artefactos dessa execução do workflow.
+Tagged builds appear on the draft `v*` release at [GitHub releases](https://github.com/ricardopiloto/chat-app/releases). Manual builds appear only in that workflow run's artifacts.
 
-O `.deb` e o `.rpm` instalam um `.desktop` (`parley-chat-app.desktop`) com o ícone de `frontend/electron/icons/`. No Wayland, esse ícone só aparece na barra depois de instalar o pacote; uma janela de desenvolvimento ou um directório desempacotado continua com o símbolo genérico.
+The `.deb` and `.rpm` install `parley-chat-app.desktop` with the icon from `frontend/electron/icons/`. On Wayland, the taskbar icon appears only after package installation; a development window or unpacked directory may retain a generic icon.
 
-## Instaladores por assinar
+## Unsigned installers
 
-Os instaladores de Windows e de macOS **não são assinados nem notarizados**. Não há certificado Authenticode nem conta Apple Developer neste repositório, e o workflow não define variáveis de assinatura.
+Windows and macOS installers are **unsigned and not notarized**. This repository has no Authenticode certificate or Apple Developer account, and the workflow defines no signing variables.
 
-No primeiro arranque isso aparece como aviso, não como um instalador "verificado":
+- **Windows:** SmartScreen may block the `.exe` or `.msi` with “Windows protected your PC.” Users who trust the source can choose **More info** and **Run anyway**.
+- **macOS:** Gatekeeper may reject the app because its developer cannot be verified. Users who trust the source can allow it under **Privacy & Security** or use the context menu's **Open** action. The package still declares camera and microphone use (`NSCameraUsageDescription` and `NSMicrophoneUsageDescription`) so the system shows permission dialogs.
 
-- **Windows:** o SmartScreen pode bloquear o `.exe` ou o `.msi` com "Windows protected your PC". Quem confia na origem escolhe *More info* e *Run anyway*.
-- **macOS:** o Gatekeeper pode recusar o `.dmg` com "cannot be opened because the developer cannot be verified". Quem confia na origem abre *Privacy & Security* e permite a aplicação, ou usa o menu de contexto *Open*. O pacote declara à mesma o uso da câmara e do microfone (`NSCameraUsageDescription` e `NSMicrophoneUsageDescription`), para o sistema mostrar o diálogo de permissão em vez de o recusar em silêncio.
+These warnings remain until signing credentials are available; the installer does not resolve them automatically.
 
-Estes avisos mantêm-se enquanto não houver certificados. Não são um passo que o instalador trate sozinho.
+## Start screen and instance selection
 
-## Tela inicial e escolha da instância
-
-O aplicativo abre na tela inicial com a instância selecionada, ou informa que ainda não há nenhuma. **Entrar** e **Criar uma conta** usam a mesma autenticação da web. Sem instância, essas ações abrem o diálogo de endereço. O endereço só é guardado depois de `GET /health` responder com sucesso. **Alterar** abre o mesmo diálogo; **Trocar de instância** limpa a seleção e retorna à tela inicial. Os links externos, incluindo **Conheça o Parley**, abrem no navegador do sistema pelo tratamento existente em `frontend/electron/main.ts`.
+The app opens on its start screen with the selected instance, or indicates that none has been selected. **Sign in** and **Create account** use the same authentication as the web client. Without an instance, those actions open the address dialog. The address is saved only after `GET /health` succeeds. **Change** opens the same dialog; **Switch instance** clears the selection and returns to the start screen. External links, including **Learn about Parley**, open in the system browser through the existing handler in `frontend/electron/main.ts`.
