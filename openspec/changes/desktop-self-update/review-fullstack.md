@@ -45,3 +45,9 @@ Veredito: Bloqueante
 - Renomeação do arquivo AppImage pelo atualizador vs. caminho fixo do `.desktop` criado pelo script de instalação.
 - Import CommonJS do `electron-updater` em build ESM: não muda a arquitetura, mas pede o import por default.
 - Ausência de toast persistente no frontend: D6 do `design.md` assume um mecanismo que não existe.
+
+## Revalidação do plano de migração — prova em campo (2026-11-05)
+Escopo: apenas o ajuste do plano de migração e a nova tarefa 5.5. Não é uma análise completa.
+- **Tarefa 5.5:** é uma verificação manual pós-publicação (instalar a ≥1.5.1 em um Windows NSIS e em um Linux AppImage, publicar a release seguinte e confirmar toast, instalação ao fechar e conteúdo correto de `latest.yml`/`latest-linux.yml`); tem verificação objetiva e fallback (modo aviso; 1.5.2 de teste). A change passa a ter 20 tarefas.
+- Nenhuma mudança de código, de dependência ou de workflow decorre do ajuste; a numeração do plano de migração foi corrigida (itens 3 a 5).
+- Veredito: **sem pendências abertas.**

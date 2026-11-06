@@ -4,7 +4,11 @@
 
 The release job generates `SHA256SUMS` for the six installers and attaches it to the same draft GitHub release. Before publishing, confirm that all six files and the manifest are present. `scripts/install-mesa.sh` and `scripts/install-mesa.ps1` install only published releases with this manifest and verify SHA-256 before running an installer. Rerunning a script reinstalls the latest published version. Older releases without a manifest can still be installed by direct download.
 
-The packaged app checks the latest published release on launch and every six hours. If a newer version exists, it displays a banner linking to the release. Updates are manual for every package format; this flow has no `latest*.yml` feed or `electron-updater`.
+The packaged app checks once after its main window loads, with no interval and no GitHub REST API request. Windows NSIS and Linux AppImages in writable directories download a newer published release in the background. A persistent toast offers **Restart now** or **Later**; choosing Later leaves the app running and installs on exit. A connected call requires confirmation before restarting. macOS DMG, Windows MSI, Linux deb/rpm, and AppImages in non-writable directories only show a release link; they require manual installation. A failed automatic download falls back to that notice. Version 1.5.0 has no self-updater: install the first version containing it manually once.
+
+The update feed consists of `latest.yml` (Windows), `latest-linux.yml` (AppImage), and generated `*.blockmap` files for Windows installers (and macOS if produced). The AppImage embeds its blockmap, with `blockMapSize` in `latest-linux.yml`; no separate AppImage `.blockmap` is produced. The workflow uploads them alongside the six installers. The updater checks the downloaded file against the SHA-512 digest in the feed; the install scripts use the separate `SHA256SUMS`. The feed and notice see only published, non-prerelease releases. A draft does not offer an update. The test-only `PARLEY_UPDATE_FEED_URL` accepts only `http(s)` loopback hosts (`127.0.0.1` or `localhost`); other hosts are ignored. Updater logs go to `parley-updater.log` under Electron's `app.getPath("logs")`.
+
+The Linux install script uses `~/.local/bin/parley-chat-app.AppImage`, with no version in the local filename, so an update keeps its desktop shortcut. A manually downloaded AppImage with a version in its filename can be renamed by the updater. AppImage needs FUSE 2 on many distributions; `--appimage-extract-and-run` is a workaround when FUSE 2 is unavailable.
 
 [`.github/workflows/desktop-release.yml`](../.github/workflows/desktop-release.yml) packages the Electron shell with `electron-builder`. It does not run on every push.
 
@@ -16,12 +20,12 @@ The product version appears in three manifests. All three must match; `frontend/
 - `frontend/package.json`
 - `frontend/electron/package.json`
 
-The installers use the version in `frontend/package.json` (`electron-builder` reads this manifest with `frontend/` as the project). A tag such as `v1.4.0` is accepted only when `frontend/electron/package.json` says `1.4.0`. Otherwise, the workflow fails before producing installers.
+The installers use the version in `frontend/package.json` (`electron-builder` reads this manifest with `frontend/` as the project). A three-number tag such as `v1.5.1` is accepted only when `frontend/electron/package.json` says `1.4.0`. Otherwise, the workflow fails before producing installers.
 
 ## Trigger a build
 
 - **Build without publishing:** In GitHub Actions, run **Desktop release** with **Run workflow** (`workflow_dispatch`). The three build jobs leave files in the run artifacts. No GitHub release is created.
-- **Prepare a release:** Create a `v*` tag, for example `v1.4.0`, on a commit where all three manifests have been updated. The `release` job creates a **draft** GitHub release (`draft: true` in `softprops/action-gh-release`) and attaches the installers. It remains private until someone publishes it on the release page. A manual run without a tag does not execute this job.
+- **Prepare a release:** Create a `vX.Y.Z` tag, for example `v1.5.1`, on a commit where all three manifests have been updated. The `release` job creates a **draft** GitHub release (`draft: true` in `softprops/action-gh-release`) and attaches the installers, feed files, and checksums. It remains private until someone publishes it on the release page. A manual run without a tag does not execute this job.
 
 The draft is deliberate so the files can be reviewed before the first real release becomes public.
 
@@ -35,7 +39,7 @@ The draft is deliberate so the files can be reviewed before the first real relea
 
 Each filename includes the version from the three manifests. On Linux, the package, executable, and `.desktop` file use `parley-chat-app`; `parley` alone conflicts with KDE's Parley application. `productName` is `Parley` and `appId` is `com.parley.desktop`. Windows and macOS installers use `Parley-<version>`. The changed `appId` creates a new Electron profile; old-installation cleanup happens after the first launch, with consent.
 
-Tagged builds appear on the draft `v*` release at [GitHub releases](https://github.com/ricardopiloto/chat-app/releases). Manual builds appear only in that workflow run's artifacts.
+Tagged builds appear on the draft `vX.Y.Z` release at [GitHub releases](https://github.com/ricardopiloto/chat-app/releases). Manual builds appear only in that workflow run's artifacts.
 
 The `.deb` and `.rpm` install `parley-chat-app.desktop` with the icon from `frontend/electron/icons/`. On Wayland, the taskbar icon appears only after package installation; a development window or unpacked directory may retain a generic icon.
 

@@ -1,4 +1,4 @@
-import { Show, createEffect, createSignal, onCleanup, onMount } from "solid-js";
+import { Show, createEffect, onCleanup, onMount } from "solid-js";
 import { t } from "../i18n";
 import { Toast } from "../components/ui";
 import { createToast } from "../lib/toast";
@@ -13,6 +13,7 @@ import { useSoundEffects } from "../sound/triggers";
 import { Sidebar } from "./Sidebar";
 import { createShellState, ShellProvider, useShell } from "./state";
 import { Topbar } from "./Topbar";
+import { UpdateToast } from "./UpdateToast";
 
 // Layout: top bar over [navigation | main | members]. Navigation (rail + sidebar) sits beside the
 // content from 768px up; below that it is a drawer over the content with a backdrop that closes it.
@@ -20,16 +21,10 @@ function Frame() {
   const shell = useShell();
   const session = useSession();
   const welcomeToast = createToast(6000);
-  const [availableUpdate, setAvailableUpdate] = createSignal<{ version: string; url: string } | null>(null);
   useSoundEffects();
 
   onMount(() => {
     if (session.welcomeAccountId() === session.account()?.id) welcomeToast.flash(t("account.adminWelcome"));
-    const native = window.mesaNative;
-    if (!native) return;
-    const unsubscribe = native.onUpdateAvailable(setAvailableUpdate);
-    void native.availableUpdate().then(setAvailableUpdate).catch(() => undefined);
-    onCleanup(unsubscribe);
   });
 
   createEffect(() => {
@@ -42,12 +37,6 @@ function Frame() {
   return (
     <div class="app-shell flex h-dvh flex-col overflow-hidden bg-background text-on-surface">
       <Topbar />
-      <Show when={availableUpdate()}>{(update) =>
-        <div class="flex items-center justify-center gap-3 bg-surface-container-high px-4 py-1.5 text-body-sm text-on-surface-variant" role="status">
-          <span>{t("shell.updateAvailable", { version: update().version })}</span>
-          <a class="font-semibold underline" href={update().url} target="_blank" rel="noopener noreferrer">{t("shell.updateManually")}</a>
-        </div>
-      }</Show>
       <Show when={shell.delivery() !== "connected"}>
         <p class="bg-surface-container-high px-4 py-1.5 text-center text-body-sm text-on-surface-variant" role="status">
           {t("shell.reconnecting")}
@@ -76,6 +65,7 @@ function Frame() {
       </div>
       <Hosts />
       <Toast show={!!welcomeToast.message()} message={welcomeToast.message()} />
+      <UpdateToast />
     </div>
   );
 }

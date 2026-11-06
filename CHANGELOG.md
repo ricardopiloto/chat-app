@@ -9,6 +9,10 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+### Added
+
+- Desktop self-update checks once on launch. Windows NSIS and writable Linux AppImages download a published update and offer a restart or installation on exit; macOS, MSI, deb, rpm, and non-writable AppImages show a manual release link. The release workflow attaches `latest.yml`, `latest-linux.yml`, and separate `*.blockmap` files for Windows installers (and macOS if produced) to a draft release tagged `vX.Y.Z`; the AppImage embeds its blockmap. Installers remain unsigned and macOS is not notarized. Users on 1.5.0 must install the first updater release manually once.
+
 ## [1.5.0] - 2026-11-04
 
 ### Added

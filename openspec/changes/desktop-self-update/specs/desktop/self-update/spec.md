@@ -7,7 +7,7 @@ Faz o aplicativo desktop empacotado do Parley atualizar-se sozinho no Windows (i
 ## ADDED Requirements
 
 ### Requirement: O modo de atualização depende da plataforma e do formato de instalação
-O aplicativo empacotado SHALL escolher entre dois modos. No modo **automático** (Windows instalado pelo instalador NSIS e Linux executado como AppImage em arquivo gravável), SHALL baixar e instalar atualizações. No modo **aviso** (macOS, Linux `.deb` e `.rpm`, Windows instalado pelo `.msi` e qualquer caso em que o formato não possa ser identificado com segurança), SHALL apenas informar a versão nova. Na dúvida SHALL escolher o modo aviso. Em desenvolvimento (aplicativo não empacotado) SHALL NOT verificar nem baixar nada.
+O aplicativo empacotado SHALL escolher entre dois modos. No modo **automático** (Windows instalado pelo instalador NSIS e Linux executado como AppImage em diretório gravável), SHALL baixar e instalar atualizações. No modo **aviso** (macOS, Linux `.deb` e `.rpm`, Windows instalado pelo `.msi` e qualquer caso em que o formato não possa ser identificado com segurança), SHALL apenas informar a versão nova. Na dúvida SHALL escolher o modo aviso. Em desenvolvimento (aplicativo não empacotado) SHALL NOT verificar nem baixar nada.
 
 #### Scenario: Windows com instalador NSIS
 - **WHEN** o aplicativo foi instalado pelo `.exe` NSIS
@@ -18,7 +18,7 @@ O aplicativo empacotado SHALL escolher entre dois modos. No modo **automático**
 - **THEN** o modo é aviso, e nenhum instalador NSIS é baixado sobre a instalação do MSI
 
 #### Scenario: Linux AppImage gravável
-- **WHEN** o aplicativo roda como AppImage e o arquivo do AppImage é gravável
+- **WHEN** o aplicativo roda como AppImage e o diretório do arquivo do AppImage é gravável (o atualizador substitui o arquivo dentro desse diretório)
 - **THEN** o modo é automático
 
 #### Scenario: AppImage instalado pelo script mantém o caminho
@@ -26,7 +26,7 @@ O aplicativo empacotado SHALL escolher entre dois modos. No modo **automático**
 - **THEN** o arquivo novo ocupa o mesmo caminho e o atalho do menu continua válido
 
 #### Scenario: Linux AppImage sem permissão de escrita ou pacote deb/rpm
-- **WHEN** o AppImage está num local não gravável, ou o aplicativo foi instalado por `.deb` ou `.rpm`
+- **WHEN** o diretório do AppImage não é gravável (ainda que o arquivo seja), ou o aplicativo foi instalado por `.deb` ou `.rpm`
 - **THEN** o modo é aviso
 
 #### Scenario: macOS

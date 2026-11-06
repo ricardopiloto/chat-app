@@ -1,0 +1,28 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { resolveUpdateMode, isNewerVersion, parseReleaseTag, isLoopbackFeedUrl } from '../electron/updateMode.ts';
+
+const builder = readFileSync(new URL('../electron-builder.yml', import.meta.url), 'utf8');
+const productName = /^productName:\s*(.+)$/m.exec(builder)?.[1]?.trim();
+assert(productName);
+const marker = `Uninstall ${productName}.exe`;
+const input = { platform: 'win32', isPackaged: true, env: {}, execPath: 'C:\\Parley\\Parley.exe', fileExists: path => path.endsWith(marker), isWritable: () => false };
+assert.equal(resolveUpdateMode(input), 'auto');
+assert.equal(resolveUpdateMode({ ...input, fileExists: () => false }), 'notify');
+assert.equal(resolveUpdateMode({ ...input, isPackaged: false }), 'off');
+assert.equal(resolveUpdateMode({ ...input, platform: 'darwin' }), 'notify');
+assert.equal(resolveUpdateMode({ ...input, platform: 'linux', env: {} }), 'notify');
+assert.equal(resolveUpdateMode({ ...input, platform: 'linux', env: { APPIMAGE: '/tmp/parley.AppImage' }, isWritable: path => path === '/tmp' }), 'auto');
+assert.equal(resolveUpdateMode({ ...input, platform: 'linux', env: { APPIMAGE: '/tmp/parley.AppImage' }, isWritable: path => path === '/tmp/parley.AppImage' }), 'notify');
+assert.equal(resolveUpdateMode({ ...input, platform: 'linux', env: { APPIMAGE: 'parley.AppImage' }, isWritable: () => true }), 'notify');
+assert.deepEqual(parseReleaseTag('https://github.com/ricardopiloto/chat-app/releases/tag/v1.5.2'), { version: '1.5.2', url: 'https://github.com/ricardopiloto/chat-app/releases/tag/v1.5.2' });
+assert.deepEqual(parseReleaseTag('/ricardopiloto/chat-app/releases/tag/v1.5.2'), { version: '1.5.2', url: 'https://github.com/ricardopiloto/chat-app/releases/tag/v1.5.2' });
+assert.deepEqual(parseReleaseTag('/ricardopiloto/chat-app/releases/tag/v1.5.2', 'http://127.0.0.1:1234'), { version: '1.5.2', url: 'http://127.0.0.1:1234/ricardopiloto/chat-app/releases/tag/v1.5.2' });
+for (const url of ['https://github.com/other/chat-app/releases/tag/v1.5.2', 'https://evil.com/ricardopiloto/chat-app/releases/tag/v1.5.2', 'https://github.com/ricardopiloto/chat-app/releases/tag/bad', 'https://github.com/ricardopiloto/chat-app/releases/tag/v1.5.2.3', 'https://github.com/ricardopiloto/chat-app/releases/tag/v1.5.2-beta', 'https://github.com/ricardopiloto/chat-app/releases/tag/1.5.2', 'https://github.com/ricardopiloto/chat-app/releases/tag/v1.5.2?x=1', 'https://github.com/ricardopiloto/chat-app/releases/tag/v1.5.2#x']) assert.equal(parseReleaseTag(url), null);
+assert.equal(parseReleaseTag('https://github.com/ricardopiloto/chat-app/releases/tag/v1.5.2', 'http://127.0.0.1:1234'), null);
+assert.equal(isNewerVersion('1.5.1', '1.5.0'), true);
+assert.equal(isNewerVersion('1.5.0', '1.5.0'), false);
+assert.equal(isNewerVersion('1.4.9', '1.5.0'), false);
+for (const url of ['http://127.0.0.1:1234/', 'https://localhost:3000/']) assert(isLoopbackFeedUrl(url));
+for (const url of ['https://example.com', 'http://127.0.0.2', 'file:///tmp/feed', 'http://user@localhost:3000']) assert(!isLoopbackFeedUrl(url));
+console.log('update mode checks passed');

@@ -35,13 +35,15 @@ Fluxo (texto): abertura → `did-finish-load` → `resolveUpdateMode` → `off` 
 `resolveUpdateMode({ platform, isPackaged, env, execPath, fileExists, isWritable })` devolve `"auto" | "notify" | "off"`:
 - `!isPackaged` → `off`.
 - `win32` → `auto` somente se existir o desinstalador do NSIS (`Uninstall Parley.exe`) ao lado de `process.execPath`; caso contrário (`.msi` ou ausente) → `notify`.
-- `linux` → `auto` somente se `env.APPIMAGE` existir e o arquivo for gravável (`fs.access(W_OK)`); caso contrário → `notify`.
+- `linux` → `auto` somente se `env.APPIMAGE` for um caminho absoluto e o **diretório** do arquivo (`dirname(APPIMAGE)`) for gravável (`fs.access(W_OK)`); caso contrário → `notify`. A checagem é do diretório, não do arquivo: o `AppImageUpdater` do `electron-updater` faz `unlink` do AppImage e `mv -f` do novo arquivo para dentro do diretório, de modo que um arquivo gravável numa pasta somente leitura falharia ao instalar.
 - `darwin` e demais → `notify`.
 *Por quê o desinstalador:* é um marcador gravado pelo instalador NSIS e ausente no MSI, sem depender de registro do Windows. Se o nome do produto mudar, o teste do módulo falha e o modo cai para `notify`, que é o lado seguro.
 
 ### D3. Modo aviso consulta o redirecionamento de `releases/latest`, não a API
 `net.fetch("https://github.com/ricardopiloto/chat-app/releases/latest", { redirect: "manual" })`; o cabeçalho `Location` contém `.../releases/tag/vX.Y.Z`. Lê-se a tag, valida-se o host e o caminho, e compara-se com `app.getVersion()`. Rascunhos e pré-lançamentos não aparecem nesse redirecionamento. Remove o limite de 60 pedidos/hora/IP e o `setInterval`.
 *Alternativa descartada:* manter a API REST uma vez por abertura. Funcionaria, mas mantém dois caminhos de rede com formatos diferentes; o redirecionamento é mais simples e já cobre rascunho/pré-lançamento.
+
+`parseReleaseTag(location, origin = "https://github.com")` resolve o `Location` (absoluto ou relativo) contra `origin`, exige que a origem do resultado coincida com `origin` e que o caminho seja exatamente `/ricardopiloto/chat-app/releases/tag/vX.Y.Z` (três partes, sem sufixo, consulta nem fragmento). Em produção a origem é sempre `https://github.com`; com `PARLEY_UPDATE_FEED_URL` (aceita apenas loopback, D7) a origem é a do feed local, o que permite testar o modo aviso contra um redirecionamento em `127.0.0.1` sem afrouxar a regra de produção.
 
 ### D4. Estado único `UpdateState` entre main e renderer
 Um tipo discriminado: `{ kind: "notify", version, url } | { kind: "ready", version, url }`. O main guarda o último estado e o reenvia em `mesa:update-state` (substitui `mesa:update-available`); `availableUpdate()` passa a devolver esse estado para janelas que abrem depois. Falha de download ou de digest (`autoUpdater` evento `error`) converte o estado em `notify` com o link da release. Estados intermediários (verificando, baixando) não vão ao renderer: o spec só exige o toast ao final.
@@ -66,6 +68,12 @@ O `install-mesa.sh` grava o AppImage como `~/.local/bin/parley-chat-app.AppImage
 - `desktop-release.yml`: cada job de plataforma sobe também `latest*.yml` e `*.blockmap`; o job `release` mantém a contagem de seis instaladores (o `find` já filtra por extensão) e o `SHA256SUMS` só sobre eles; a validação da tag passa a exigir `^v[0-9]+\.[0-9]+\.[0-9]+$` antes de qualquer empacotamento.
 - macOS não gera `latest-mac.yml` útil (sem `zip`/assinatura); como o modo é aviso, ele não é publicado e não é pedido.
 
+### D10. Restrições por plataforma (referência)
+- **Windows.** NSIS é instalado por usuário (`oneClick`, sem `perMachine`), então a atualização silenciosa não pede elevação; o `.msi` não tem canal de atualização e só avisa. Os instaladores não são assinados: o `electron-updater` não confere editor, e o download feito pelo Node não carrega a marca de «baixado da internet», mas o SmartScreen e antivírus ainda podem alertar na primeira instalação manual.
+- **macOS.** O `electron-updater` só instala no macOS com o app **assinado e notarizado**, e usa o alvo `zip` e `latest-mac.yml`, que não existem aqui (só `dmg`). Por isso o macOS fica sempre em **modo aviso**, que depende apenas de `releases/latest`. Se um dia houver assinatura, muda-se `resolveUpdateMode` (darwin → automático), o alvo do builder e o workflow.
+- **Linux.** Só o AppImage atualiza sozinho, e somente com `APPIMAGE` definido e o **diretório** do arquivo gravável; `.deb` e `.rpm` são do gerenciador de pacotes e só avisam. O AppImage em execução é substituído por `unlink` e `mv`, o que o Linux permite. O AppImage exige FUSE 2 em várias distribuições (por exemplo, Fedora e Ubuntu recentes), um requisito do formato e não do atualizador; vai para a documentação, com `--appimage-extract-and-run` como contorno.
+- Como o macOS, o `.msi`, o `.deb`, o `.rpm` e o AppImage não gravável dependem **só do modo aviso**, ele é o caminho mais exposto: o `Location` do redirecionamento de `releases/latest` precisa ser legível pelo `net.fetch` do Electron (ver tarefa 2.2).
+
 ## Risks / Trade-offs
 
 - [Sem assinatura, o SmartScreen pode avisar na instalação feita pelo atualizador] → documentar; a confiança está em HTTPS + digest do feed + controle do repositório (já descrito no spec).
@@ -81,5 +89,6 @@ O `install-mesa.sh` grava o AppImage como `~/.local/bin/parley-chat-app.AppImage
 
 1. Implementar e verificar localmente com feed em loopback (ver tarefas).
 2. Subir a versão para ≥1.5.1 nos três manifestos (`frontend/package.json`, `frontend/electron/package.json`, lockfiles) e criar a tag `vX.Y.Z`.
-3. O workflow gera o rascunho com instaladores + feed; testar a atualização real no Windows instalando a 1.5.1 e publicando uma 1.5.2 de teste.
-4. Rollback: despublicar a release (voltar a rascunho) faz o feed deixar de oferecer a versão; quem já atualizou segue na nova. O modo aviso permanece como fallback.
+3. O workflow gera o rascunho com instaladores + feed; publicar a ≥1.5.1 e instalá-la à mão em um Windows (NSIS) e em um Linux (AppImage).
+4. **Prova em campo:** a atualização real é provada pela release **seguinte**, prevista para ser a da `parley-server-standalone` (≥1.6.0): quem está na ≥1.5.1 deve recebê-la pelo toast «A versão X está pronta». Isso dispensa uma release de teste descartável; a verificação local com feed em loopback (tarefa 5.3) continua sendo a prova antes de publicar. Se for preciso provar antes da próxima release, publica-se uma 1.5.2 de teste, como no plano original. Se a atualização automática falhar, o modo aviso mostra o link da release.
+5. Rollback: despublicar a release (voltar a rascunho) faz o feed deixar de oferecer a versão; quem já atualizou segue na nova. O modo aviso permanece como fallback.

@@ -12,7 +12,8 @@ export interface CallPopoutRequest {
   serverKey: string | null;
 }
 
-export interface AvailableUpdate {
+export interface UpdateState {
+  kind: "notify" | "ready";
   version: string;
   url: string;
 }
@@ -30,11 +31,12 @@ contextBridge.exposeInMainWorld("mesaNative", {
   openCallPopout: (request: CallPopoutRequest): Promise<void> => ipcRenderer.invoke("mesa:open-call-popout", request),
   closeCallPopout: (): Promise<void> => ipcRenderer.invoke("mesa:close-call-popout"),
   takeCallPopout: (): Promise<CallPopoutRequest | null> => ipcRenderer.invoke("mesa:take-call-popout"),
-  availableUpdate: (): Promise<AvailableUpdate | null> => ipcRenderer.invoke("mesa:available-update"),
-  onUpdateAvailable: (listener: (update: AvailableUpdate) => void): (() => void) => {
-    const wrapped = (_event: Electron.IpcRendererEvent, update: AvailableUpdate) => listener(update);
-    ipcRenderer.on("mesa:update-available", wrapped);
-    return () => ipcRenderer.removeListener("mesa:update-available", wrapped);
+  updateState: (): Promise<UpdateState | null> => ipcRenderer.invoke("mesa:available-update"),
+  restartForUpdate: (): Promise<void> => ipcRenderer.invoke("mesa:update-restart"),
+  onUpdateState: (listener: (update: UpdateState) => void): (() => void) => {
+    const wrapped = (_event: Electron.IpcRendererEvent, update: UpdateState) => listener(update);
+    ipcRenderer.on("mesa:update-state", wrapped);
+    return () => ipcRenderer.removeListener("mesa:update-state", wrapped);
   },
   onCallPopoutClosed: (listener: (channelId: string) => void): (() => void) => {
     const wrapped = (_event: Electron.IpcRendererEvent, channelId: string) => listener(channelId);

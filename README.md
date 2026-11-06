@@ -189,8 +189,7 @@ For ongoing work, run `openspec list` or browse [`openspec/changes/`](openspec/c
 
 ## Install and update
 
-The app displays a persistent notice when a newer release is available. Updates are **manual on every platform**; the app does not download or run installers in the background. Download from the [GitHub releases page](https://github.com/ricardopiloto/chat-app/releases), or rerun the repository's install script.
-
+From the first release containing the updater, packaged desktop apps check once on launch, without a periodic check or the GitHub REST API. Windows NSIS and Linux AppImages in writable directories download published updates in the background; the toast offers a restart, or the update installs when the app closes. A connected call requires confirmation before restarting. macOS, Windows MSI, Linux deb/rpm, and AppImages in non-writable directories show a release link and require manual updating. Version 1.5.0 users must install the first updater release manually once. Download from the [GitHub releases page](https://github.com/ricardopiloto/chat-app/releases), or rerun the repository's install script.
 | Platform | Installation |
 |---|---|
 | Linux/macOS script | Run `scripts/install-mesa.sh` from a repository checkout. It requires `curl` and `python3`; Linux installs an AppImage with a menu entry, and macOS copies the app from the DMG to `/Applications`. Rerun it to update. |
@@ -207,7 +206,7 @@ When moving from Mesa to Parley, install Parley and remove the old Mesa installa
 
 | Platform | Release files | Notes |
 |---|---|---|
-| Linux | `parley-chat-app-<version>-x86_64.AppImage`, `-amd64.deb`, `-x86_64.rpm` | Deb and RPM install the binary as `parley-chat-app` to avoid conflict with KDE Parley. Make the AppImage executable before running it. |
+| Linux | `parley-chat-app-<version>-x86_64.AppImage`, `-amd64.deb`, `-x86_64.rpm` | Deb and RPM install the binary as `parley-chat-app` to avoid conflict with KDE Parley. Make the AppImage executable before running it. Many distributions require FUSE 2; use `--appimage-extract-and-run` if unavailable. |
 | Windows | `Parley-<version>.exe` (NSIS) or `.msi` | MSI also supports enterprise or silent deployment. |
 | macOS | `Parley-<version>.dmg` | Drag the contained app to Applications. |
 
@@ -215,4 +214,4 @@ Windows and macOS installers are currently unsigned and not notarized. SmartScre
 
 ## Deferred work
 
-Federation; scene recording through LiveKit Egress (incompatible with current E2EE); multiple named scenes per channel, co-directors, and shared scene templates; MLS, multiple devices, passkeys, and BIP-39 seeds; dice rolling, VTT tools, network telemetry, and extended profiles; additional sounds, adjustable sound volume, and system notifications; a single Rust binary for both client and server. The current desktop client is Electron and does not apply updates itself.
+Federation; scene recording through LiveKit Egress (incompatible with current E2EE); multiple named scenes per channel, co-directors, and shared scene templates; MLS, multiple devices, passkeys, and BIP-39 seeds; dice rolling, VTT tools, network telemetry, and extended profiles; additional sounds, adjustable sound volume, and system notifications; a single Rust binary for both client and server. The current desktop client is Electron.

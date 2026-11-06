@@ -1,5 +1,6 @@
 import { app, BrowserWindow, desktopCapturer, dialog, ipcMain, net, protocol, session, shell } from "electron";
 import { access, appendFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { accessSync, constants, createWriteStream, existsSync } from "node:fs";
 import { dirname, join, normalize, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -7,14 +8,17 @@ import { execFile } from "node:child_process";
 import { homedir } from "node:os";
 import { promisify } from "node:util";
 import { runLegacyCleanup, type LegacyPlatform } from "./legacy-cleanup.js";
+import { isLoopbackFeedUrl, isNewerVersion, parseReleaseTag, resolveUpdateMode } from "./updateMode.js";
+import updater from "electron-updater";
+
+const { autoUpdater } = updater;
 
 const execFileAsync = promisify(execFile);
 const DEV_URL = "https://127.0.0.1:1421";
 const APP_ORIGIN = "mesa://app";
 const BACKGROUND = "#10131c";
 const INSTANCE_FILE = "mesa-instance.json";
-const LATEST_RELEASE = "https://api.github.com/repos/ricardopiloto/chat-app/releases/latest";
-const UPDATE_INTERVAL_MS = 6 * 60 * 60 * 1000;
+const LATEST_RELEASE = "https://github.com/ricardopiloto/chat-app/releases/latest";
 
 interface InstanceState {
   baseUrl: string | null;
@@ -23,45 +27,129 @@ interface InstanceState {
 
 const isDev = process.env.PARLEY_ELECTRON_DEV === "1";
 let instance: InstanceState = { baseUrl: null, sessionToken: null };
-let availableUpdate: { version: string; url: string } | null = null;
+type UpdateState = { kind: "notify" | "ready"; version: string; url: string };
+let availableUpdate: UpdateState | null = null;
+let restartRequested = false;
 
-function versionParts(value: string): number[] | null {
-  const match = /^v?(\d+)\.(\d+)\.(\d+)(?:\.(\d+))?$/.exec(value);
-  if (!match) return null;
-  return [Number(match[1]), Number(match[2]), Number(match[3]), match[4] ? Number(match[4]) : 0];
+function publishUpdate(state: UpdateState): void {
+  availableUpdate = state;
+  for (const window of BrowserWindow.getAllWindows()) window.webContents.send("mesa:update-state", state);
 }
 
-function isNewerVersion(candidate: string, current: string): boolean {
-  const next = versionParts(candidate);
-  const installed = versionParts(current);
-  if (!next || !installed) return false;
-  for (let index = 0; index < 4; index++) {
-    if (next[index] !== installed[index]) return next[index] > installed[index];
-  }
-  return false;
+function updateFeed(): string | null {
+  const feed = process.env.PARLEY_UPDATE_FEED_URL;
+  if (!feed) return null;
+  if (isLoopbackFeedUrl(feed)) return feed;
+  console.warn("Ignoring non-loopback update feed");
+  return null;
 }
 
-async function checkForUpdate(): Promise<void> {
+function releaseUrl(version: string, origin: string): string {
+  return new URL(`/ricardopiloto/chat-app/releases/tag/v${version}`, origin).href;
+}
+
+async function checkForUpdate(feed: string | null): Promise<void> {
   try {
-    const response = await net.fetch(LATEST_RELEASE, {
-      headers: { Accept: "application/vnd.github+json", "Cache-Control": "no-cache" },
-      signal: AbortSignal.timeout(10_000),
+    const endpoint = feed && isLoopbackFeedUrl(feed) ? new URL("releases/latest", feed.endsWith("/") ? feed : `${feed}/`).href : LATEST_RELEASE;
+    const redirectUrl = await new Promise<string | null>(resolve => {
+      const request = net.request({ url: endpoint, redirect: "manual" });
+      let settled = false;
+      const finish = (url: string | null): void => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeout);
+        resolve(url);
+      };
+      const timeout = setTimeout(() => {
+        finish(null);
+        request.abort();
+        console.warn("update check timed out");
+      }, 10_000);
+      request.on("redirect", (_status, _method, url) => {
+        finish(url);
+        request.abort();
+      });
+      request.on("response", response => {
+        if (response.statusCode !== 200) console.warn("unexpected update response", response.statusCode);
+        finish(null);
+        request.abort();
+      });
+      request.on("error", error => {
+        if (!settled) console.warn("update check failed", error);
+        finish(null);
+      });
+      request.end();
     });
-    if (!response.ok) throw new Error(`GitHub releases returned ${response.status}`);
-    const release = await response.json() as { tag_name?: unknown; html_url?: unknown; draft?: unknown; prerelease?: unknown };
-    if (release.draft || release.prerelease || typeof release.tag_name !== "string" || typeof release.html_url !== "string") return;
-    if (!isNewerVersion(release.tag_name, app.getVersion())) return;
-    const url = new URL(release.html_url);
-    if (url.protocol !== "https:" || url.hostname !== "github.com" || !url.pathname.startsWith("/ricardopiloto/chat-app/releases/tag/")) return;
-    availableUpdate = { version: release.tag_name.replace(/^v/, ""), url: url.href };
-    for (const window of BrowserWindow.getAllWindows()) window.webContents.send("mesa:update-available", availableUpdate);
+    const release = redirectUrl && parseReleaseTag(redirectUrl, feed ? new URL(feed).origin : undefined);
+    if (!release || !isNewerVersion(release.version, app.getVersion())) return;
+    publishUpdate({ kind: "notify", ...release });
   } catch (error) {
     console.warn("update check failed", error);
   }
 }
 
+async function checkAutomatically(feed: string | null): Promise<void> {
+  const origin = feed ? new URL(feed).origin : "https://github.com";
+  let candidate: string | null = null;
+  let failed = false;
+  let writeLog = (level: string, message: unknown): void => { console.warn(`updater ${level}`, message); };
+  try {
+    const logDir = app.getPath("logs");
+    await mkdir(logDir, { recursive: true });
+    const log = createWriteStream(join(logDir, "parley-updater.log"), { flags: "a" });
+    log.on("error", error => {
+      console.warn("updater log failed", error);
+      writeLog = (level, message) => { console.warn(`updater ${level}`, message); };
+    });
+    writeLog = (level, message) => {
+      try { log.write(`${new Date().toISOString()} ${level} ${String(message)}\n`); }
+      catch (error) { console.warn("updater log failed", error); }
+    };
+  } catch (error) {
+    console.warn("updater log setup failed", error);
+  }
+  try {
+    autoUpdater.logger = {
+      info: message => writeLog("INFO", message),
+      warn: message => writeLog("WARN", message),
+      error: message => writeLog("ERROR", message),
+      debug: message => writeLog("DEBUG", message),
+    };
+  } catch (error) {
+    console.warn("updater logger setup failed", error);
+  }
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.allowPrerelease = false;
+  autoUpdater.allowDowngrade = false;
+  if (feed) autoUpdater.setFeedURL(feed);
+  autoUpdater.on("update-available", info => { candidate = info.version; });
+  autoUpdater.on("update-downloaded", info => {
+    if (failed || availableUpdate?.kind === "ready" || !isNewerVersion(info.version, app.getVersion())) return;
+    publishUpdate({ kind: "ready", version: info.version, url: releaseUrl(info.version, origin) });
+  });
+  const fallBack = (error: unknown): void => {
+    writeLog("ERROR", error);
+    if (failed || availableUpdate?.kind === "ready") return;
+    failed = true;
+    if (candidate && isNewerVersion(candidate, app.getVersion())) {
+      publishUpdate({ kind: "notify", version: candidate, url: releaseUrl(candidate, origin) });
+    } else {
+      void checkForUpdate(feed);
+    }
+  };
+  autoUpdater.on("error", fallBack);
+  try { await autoUpdater.checkForUpdates(); } catch (error) { fallBack(error); }
+}
+
 function registerUpdateIpc(): void {
   ipcMain.handle("mesa:available-update", () => availableUpdate);
+  ipcMain.handle("mesa:update-restart", () => {
+    if (availableUpdate?.kind !== "ready" || restartRequested) return;
+    restartRequested = true;
+    if (popout && !popout.isDestroyed()) popout.close();
+    autoUpdater.quitAndInstall(false, true);
+  });
 }
 
 function instancePath(): string {
@@ -456,11 +544,12 @@ app.whenReady().then(async () => {
   registerUpdateIpc();
   const mainWindow = createWindow();
   if (app.isPackaged && !isDev) mainWindow.webContents.once("did-finish-load", () => { void runPackagedLegacyCleanup(mainWindow).catch(error => console.error("legacy cleanup failed", error)); });
-  if (!isDev) {
-    void checkForUpdate();
-    const timer = setInterval(() => void checkForUpdate(), UPDATE_INTERVAL_MS);
-    app.on("before-quit", () => clearInterval(timer));
-  }
+  mainWindow.webContents.once("did-finish-load", () => {
+    const mode = resolveUpdateMode({ platform: process.platform, isPackaged: app.isPackaged && !isDev, env: process.env, execPath: process.execPath,
+      fileExists: existsSync, isWritable: path => { try { accessSync(path, constants.W_OK); return true; } catch { return false; } } });
+    if (mode === "auto") void checkAutomatically(updateFeed());
+    else if (mode === "notify") void checkForUpdate(updateFeed());
+  });
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });

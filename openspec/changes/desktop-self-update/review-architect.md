@@ -43,3 +43,10 @@ Veredito: Atenção
 
 ## Bloqueantes antes de implementar
 - Definir e especificar como o AppImage atualizado mantém o atalho/caminho estável criado por `install-mesa.sh` (nome do artefato, symlink ou recriação do `.desktop`), com cenário no spec e tarefa de verificação ponta a ponta no Linux.
+
+## Revalidação do plano de migração — prova em campo (2026-11-05)
+Escopo: apenas o ajuste do plano de migração (a release seguinte, prevista como a da `parley-server-standalone`, passa a ser a prova em campo, no lugar de uma 1.5.2 descartável). Não é uma análise completa.
+- **Dependência de calendário:** a prova real só acontece quando houver uma segunda release. Mitigação já nos artefatos: a prova local com feed em loopback antes de publicar (tarefa 5.3) e a opção de publicar uma 1.5.2 de teste se for preciso provar antes.
+- **Sem canário:** publicar uma release de conteúdo (a do servidor) como primeiro teste público do atualizador expõe todos os usuários da ≥1.5.1 de uma vez. O risco é limitado pelo modo aviso, que mostra o link da release se o download ou a verificação falhar, e pela regra de que o rascunho só vira atualização quando publicado.
+- Coerente com a ordem de entrega (atualizador primeiro, standalone depois) e com a tarefa 5.3 da standalone, que parte do workflow alterado por esta change.
+- Veredito: **sem pendências abertas.**
