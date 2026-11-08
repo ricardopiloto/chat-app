@@ -18,15 +18,28 @@ O sistema SHALL apresentar uma vista "Composição" com três layouts nomeados �
 - **THEN** a disposição de Composição é preservada tal como estava antes de alternar
 
 ### Requirement: Editor de cena com atribuição por arrastar e selector de layout
-O sistema SHALL permitir, a quem tem permissão de administração do canal, entrar num modo de edição que substitui a vista de Composição, permitindo: arrastar (ou tocar-para-atribuir) um ocupante do banco para uma posição numerada; devolver um ocupante ao banco ao clicar na sua posição; escolher o número de posições (2 a 8); escolher qual dos três layouts nomeados está activo (com pré-visualização); e guardar ou descartar as alterações.
 
-#### Scenario: Reduzir o número de posições com ocupantes atribuídos
-- **WHEN** o administrador reduz o número de posições para um valor menor do que o número de posições actualmente ocupadas
-- **THEN** o sistema pede explicitamente para escolher quais posições remover, antes de aplicar a redução
+O sistema SHALL permitir exclusivamente ao criador registado do canal entrar no modo de edição da cena, atribuir e retirar ocupantes das posições, escolher de 2 a 8 posições e um dos três layouts nomeados, e guardar ou descartar alterações. O servidor SHALL recusar mutações de cena por qualquer outra conta, incluindo o dono do servidor quando não for o criador desse canal.
+
+#### Scenario: Criador edita a cena
+
+- **WHEN** o criador do canal abre a Composição
+- **THEN** a acção «Editar cena» está disponível e as alterações válidas podem ser guardadas
+
+#### Scenario: Dono que não criou o canal
+
+- **WHEN** o dono do servidor abre um canal criado por outra conta
+- **THEN** não vê a acção de edição e qualquer pedido directo de mutação da cena é recusado
 
 #### Scenario: Fechar o editor com alterações por guardar
-- **WHEN** o administrador tenta sair do modo de edição com alterações ainda não guardadas
-- **THEN** o sistema apresenta uma confirmação com as opções Cancelar, Descartar e Guardar, sem perder as alterações silenciosamente
+
+- **WHEN** o criador tenta sair do modo de edição com alterações ainda não guardadas
+- **THEN** o sistema apresenta uma confirmação com Cancelar, Descartar e Guardar
+
+#### Scenario: Reduzir o número de posições com ocupantes atribuídos
+
+- **WHEN** o criador reduz as posições para menos do que as posições ocupadas
+- **THEN** o sistema pede que escolha quais posições remover antes de aplicar a redução
 
 ### Requirement: Uma única cena editável por canal
 O sistema SHALL editar apenas a cena actualmente activa de cada canal de voz — SHALL NOT apresentar uma lista de múltiplas cenas nomeadas para criar, duplicar, activar ou apagar. Múltiplas cenas por canal é funcionalidade futura registada em `docs/backlog/backlog.md` (item G10).

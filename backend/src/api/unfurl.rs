@@ -29,7 +29,157 @@ pub struct UnfurlResult {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub site_name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub provider: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub embed_url: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub media_url: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Provider {
+    YouTube,
+    Vimeo,
+    Spotify,
+    SoundCloud,
+    TikTok,
+}
+
+impl Provider {
+    fn name(self) -> &'static str {
+        match self {
+            Self::YouTube => "youtube",
+            Self::Vimeo => "vimeo",
+            Self::Spotify => "spotify",
+            Self::SoundCloud => "soundcloud",
+            Self::TikTok => "tiktok",
+        }
+    }
+    fn endpoint(self) -> &'static str {
+        match self {
+            Self::YouTube => "https://www.youtube.com/oembed?format=json",
+            Self::Vimeo => "https://vimeo.com/api/oembed.json",
+            Self::Spotify => "https://open.spotify.com/oembed",
+            Self::SoundCloud => "https://soundcloud.com/oembed?format=json",
+            Self::TikTok => "https://www.tiktok.com/oembed",
+        }
+    }
+}
+
+fn provider_for(url: &Url) -> Option<Provider> {
+    match url.host_str()? {
+        "youtube.com"
+        | "www.youtube.com"
+        | "m.youtube.com"
+        | "youtu.be"
+        | "www.youtube-nocookie.com" => Some(Provider::YouTube),
+        "vimeo.com" | "www.vimeo.com" | "player.vimeo.com" => Some(Provider::Vimeo),
+        "open.spotify.com" => Some(Provider::Spotify),
+        "soundcloud.com" | "www.soundcloud.com" | "m.soundcloud.com" => Some(Provider::SoundCloud),
+        "tiktok.com" | "www.tiktok.com" | "vm.tiktok.com" | "m.tiktok.com" => {
+            Some(Provider::TikTok)
+        }
+        _ => None,
+    }
+}
+
+#[derive(Deserialize)]
+struct OEmbedBody {
+    title: String,
+    thumbnail_url: String,
+    provider_name: String,
+    html: String,
+}
+
+fn iframe_embed_url(provider: Provider, html: &str) -> Option<String> {
+    let lower = html.to_ascii_lowercase();
+    let start = lower.find("<iframe")?;
+    let end = html[start..].find('>')? + start;
+    let tag = &html[start + "<iframe".len()..end];
+    // Require an actual attribute boundary, rather than matching data-src or another name.
+    let src = tag.split_ascii_whitespace().find_map(|part| {
+        let (name, value) = part.split_once('=')?;
+        if name.eq_ignore_ascii_case("src") {
+            let quote = value.chars().next()?;
+            if quote == '"' || quote == '\'' {
+                return value[1..].split(quote).next();
+            }
+        }
+        None
+    })?;
+    let src = src.replace("&amp;", "&");
+    let url = Url::parse(&src).ok()?;
+    if url.scheme() != "https"
+        || !url.username().is_empty()
+        || url.password().is_some()
+        || url.port().is_some()
+    {
+        return None;
+    }
+    let host = url.host_str()?;
+    match provider {
+        Provider::YouTube if matches!(host, "www.youtube.com" | "www.youtube-nocookie.com") => {
+            let mut parts = url.path_segments()?;
+            if parts.next()? != "embed" {
+                return None;
+            }
+            let id = parts.next()?;
+            if id.is_empty()
+                || !id
+                    .bytes()
+                    .all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-')
+                || parts.next().is_some()
+            {
+                return None;
+            }
+            Some(format!("https://www.youtube-nocookie.com/embed/{id}"))
+        }
+        Provider::Vimeo if host == "player.vimeo.com" => Some(url.to_string()),
+        Provider::Spotify if host == "open.spotify.com" => Some(url.to_string()),
+        Provider::SoundCloud if host == "w.soundcloud.com" => Some(url.to_string()),
+        Provider::TikTok if host == "www.tiktok.com" => Some(url.to_string()),
+        _ => None,
+    }
+}
+
+fn parse_oembed_body(provider: Provider, raw: &str, original_url: &str) -> Option<UnfurlResult> {
+    let body: OEmbedBody = serde_json::from_str(raw).ok()?;
+    if body.title.trim().is_empty() || body.provider_name.trim().is_empty() {
+        return None;
+    }
+    let embed_url = iframe_embed_url(provider, &body.html)?;
+    Some(UnfurlResult {
+        url: original_url.to_string(),
+        kind: "embed".into(),
+        title: Some(body.title),
+        description: None,
+        image_url: Some(body.thumbnail_url),
+        site_name: Some(body.provider_name),
+        provider: Some(provider.name().into()),
+        embed_url: Some(embed_url),
+        media_url: None,
+        error: None,
+    })
+}
+
+async fn fetch_oembed(
+    client: &reqwest::Client,
+    provider: Provider,
+    original_url: &str,
+) -> Option<UnfurlResult> {
+    let response = client
+        .get(provider.endpoint())
+        .query(&[("url", original_url)])
+        .send()
+        .await
+        .ok()?;
+    if response.status() != reqwest::StatusCode::OK {
+        return None;
+    }
+    let body = response.text().await.ok()?;
+    parse_oembed_body(provider, &body, original_url)
 }
 
 pub async fn unfurl(
@@ -53,6 +203,12 @@ pub async fn unfurl(
         .build()
         .map_err(|_| ApiError::internal("unfurl client"))?;
 
+    if let Some(provider) = provider_for(&parsed) {
+        if let Some(result) = fetch_oembed(&client, provider, raw).await {
+            return Ok(Json(result));
+        }
+    }
+
     let response = match fetch_ssrf_safe(&client, parsed.clone()).await {
         Ok(r) => r,
         Err(UnfurlFetchError::Blocked(msg)) => return Err(ApiError::bad_request(msg)),
@@ -68,10 +224,6 @@ pub async fn unfurl(
         .unwrap_or("")
         .to_ascii_lowercase();
 
-    if content_length_exceeds_unfurl_cap(response.headers()) {
-        return Ok(Json(failed_card(raw, parsed.host_str())));
-    }
-
     if content_type.starts_with("image/") {
         let image_url = response.url().clone();
         return Ok(Json(UnfurlResult {
@@ -81,8 +233,31 @@ pub async fn unfurl(
             description: None,
             image_url: Some(image_url.to_string()),
             site_name: image_url.host_str().map(str::to_string),
+            provider: None,
+            embed_url: None,
+            media_url: None,
             error: None,
         }));
+    }
+
+    if content_type.starts_with("video/") {
+        let media_url = response.url().clone();
+        return Ok(Json(UnfurlResult {
+            url: raw.to_string(),
+            kind: "video".into(),
+            title: None,
+            description: None,
+            image_url: None,
+            site_name: media_url.host_str().map(str::to_string),
+            provider: None,
+            embed_url: None,
+            media_url: Some(media_url.to_string()),
+            error: None,
+        }));
+    }
+
+    if content_length_exceeds_unfurl_cap(response.headers()) {
+        return Ok(Json(failed_card(raw, parsed.host_str())));
     }
 
     let bytes = match read_capped_body(response).await {
@@ -118,6 +293,9 @@ pub async fn unfurl(
         description,
         image_url,
         site_name,
+        provider: None,
+        embed_url: None,
+        media_url: None,
         error: None,
     }))
 }
@@ -130,6 +308,9 @@ fn failed_card(raw: &str, host: Option<&str>) -> UnfurlResult {
         description: None,
         image_url: None,
         site_name: host.map(str::to_string),
+        provider: None,
+        embed_url: None,
+        media_url: None,
         error: Some("unfurl_failed".into()),
     }
 }
@@ -328,5 +509,97 @@ mod tests {
         assert!(content_length_exceeds_unfurl_cap(&h));
         h.insert(CONTENT_LENGTH, HeaderValue::from_static("100"));
         assert!(!content_length_exceeds_unfurl_cap(&h));
+    }
+
+    #[test]
+    fn provider_hosts() {
+        for (host, provider) in [
+            ("youtube.com", Provider::YouTube),
+            ("www.youtube.com", Provider::YouTube),
+            ("m.youtube.com", Provider::YouTube),
+            ("youtu.be", Provider::YouTube),
+            ("www.youtube-nocookie.com", Provider::YouTube),
+            ("vimeo.com", Provider::Vimeo),
+            ("www.vimeo.com", Provider::Vimeo),
+            ("player.vimeo.com", Provider::Vimeo),
+            ("open.spotify.com", Provider::Spotify),
+            ("soundcloud.com", Provider::SoundCloud),
+            ("www.soundcloud.com", Provider::SoundCloud),
+            ("m.soundcloud.com", Provider::SoundCloud),
+            ("tiktok.com", Provider::TikTok),
+            ("www.tiktok.com", Provider::TikTok),
+            ("vm.tiktok.com", Provider::TikTok),
+            ("m.tiktok.com", Provider::TikTok),
+        ] {
+            assert_eq!(
+                provider_for(&Url::parse(&format!("https://{host}/test")).unwrap()),
+                Some(provider)
+            );
+        }
+        assert_eq!(
+            provider_for(&Url::parse("https://youtube.com.evil.test/").unwrap()),
+            None
+        );
+    }
+
+    #[test]
+    fn oembed_body_decision() {
+        let body = r#"{"title":"A video","thumbnail_url":"https://img.example/a.jpg","provider_name":"YouTube","html":"<iframe src='https://www.youtube.com/embed/abc123?autoplay=1'></iframe>"}"#;
+        let result = parse_oembed_body(Provider::YouTube, body, "https://youtu.be/abc123").unwrap();
+        assert_eq!(result.kind, "embed");
+        assert_eq!(result.title.as_deref(), Some("A video"));
+        assert_eq!(
+            result.image_url.as_deref(),
+            Some("https://img.example/a.jpg")
+        );
+        assert_eq!(result.site_name.as_deref(), Some("YouTube"));
+        assert_eq!(result.provider.as_deref(), Some("youtube"));
+        assert_eq!(
+            result.embed_url.as_deref(),
+            Some("https://www.youtube-nocookie.com/embed/abc123")
+        );
+        assert!(parse_oembed_body(Provider::YouTube, "", "https://youtu.be/abc123").is_none());
+        assert!(
+            parse_oembed_body(Provider::YouTube, "{bad json", "https://youtu.be/abc123").is_none()
+        );
+    }
+
+    #[test]
+    fn iframe_hosts_and_rewriting() {
+        for (provider, html, expected) in [
+            (
+                Provider::YouTube,
+                "<iframe src=\"https://www.youtube.com/embed/abc123?feature=oembed\"></iframe>",
+                "https://www.youtube-nocookie.com/embed/abc123",
+            ),
+            (
+                Provider::Vimeo,
+                "<iframe src=\"https://player.vimeo.com/video/123\"></iframe>",
+                "https://player.vimeo.com/video/123",
+            ),
+            (
+                Provider::Spotify,
+                "<iframe src=\"https://open.spotify.com/embed/track/abc\"></iframe>",
+                "https://open.spotify.com/embed/track/abc",
+            ),
+            (
+                Provider::SoundCloud,
+                "<iframe src=\"https://w.soundcloud.com/player/?url=abc\"></iframe>",
+                "https://w.soundcloud.com/player/?url=abc",
+            ),
+            (
+                Provider::TikTok,
+                "<iframe src=\"https://www.tiktok.com/embed/v2/123\"></iframe>",
+                "https://www.tiktok.com/embed/v2/123",
+            ),
+        ] {
+            assert_eq!(iframe_embed_url(provider, html).as_deref(), Some(expected));
+        }
+        assert!(iframe_embed_url(
+            Provider::Vimeo,
+            "<iframe src='https://evil.test/video/123'></iframe>"
+        )
+        .is_none());
+        assert!(iframe_embed_url(Provider::Vimeo, "<div>no iframe</div>").is_none());
     }
 }

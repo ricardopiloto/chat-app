@@ -41,7 +41,7 @@ export const chatEn: MessageTree = {
       failed: "This attachment could not be opened.",
       loading: "Decrypting…",
     },
-    preview: { video: "Video", open: "Open link" },
+    preview: { video: "Video", open: "Open link", play: "Play", clickToPlay: "Click to play" },
     composer: {
       placeholder: "Message #{name}… (@ mentions, : emoji)",
       attach: "Attach image",

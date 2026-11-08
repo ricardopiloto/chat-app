@@ -246,6 +246,9 @@ export interface LinkPreview {
   description?: string;
   image_url?: string;
   site_name?: string;
+  provider?: string;
+  embed_url?: string;
+  media_url?: string;
   error?: string;
 }
 

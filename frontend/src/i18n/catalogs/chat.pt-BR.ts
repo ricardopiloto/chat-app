@@ -41,7 +41,7 @@ export const chatPtBR: MessageTree = {
       failed: "Não foi possível abrir este anexo.",
       loading: "Decifrando…",
     },
-    preview: { video: "Vídeo", open: "Abrir link" },
+    preview: { video: "Vídeo", open: "Abrir link", play: "Reproduzir", clickToPlay: "Clique para reproduzir" },
     composer: {
       placeholder: "Conversar em #{name}… (@ menciona, : emoji)",
       attach: "Anexar imagem",

@@ -9,9 +9,37 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-11-08
+
 ### Added
 
+- Pré-visualização de links: URLs do YouTube, Vimeo, Spotify, SoundCloud e TikTok são resolvidas pelo oEmbed oficial de cada provedor e aparecem como miniatura com selo do provedor e botão de play — o player de terceiros só carrega ao clique explícito, nunca automaticamente. Um link directo para um arquivo de vídeo (`.mp4`, `.webm`, etc.) toca inline com um player nativo, sem precisar de clique.
+
+### Changed
+
+- A política de segurança de conteúdo (CSP) passa a permitir `frame-src` para os cinco hosts de embed acima (`www.youtube-nocookie.com`, `player.vimeo.com`, `open.spotify.com`, `w.soundcloud.com`, `www.tiktok.com`), além do já existente `challenges.cloudflare.com`.
+
+### Fixed
+
+- Painel de gestão de webhook de canal: a URL de publicação e o token mostrados uma vez passam a aparecer numa faixa alinhada com o botão de copiar (antes ficavam sobrepostos); os campos de nome e o seletor de avatar passam a usar o estilo padrão da aplicação. O painel agora mostra a imagem real do avatar configurado, em vez de só o texto "tem avatar"/"sem avatar".
+
+## [1.6.0] - 2026-11-08
+
+### Added
+
+- Webhooks de canal: uma conta de integração dedicada por canal de texto (nome e avatar próprios), criada e gerida por quem administra o canal, com URL secreta mostrada uma única vez. Aceita publicação externa (`POST /api/webhooks/{id}/{token}`) com limite de tamanho e de taxa por webhook e origem; revogar desactiva o link sem apagar a conta nem o histórico, e reactivar reaproveita a mesma identidade. Mensagens da integração guardam um retrato do nome e avatar no momento do envio (alterações posteriores não reescrevem o histórico) e levam um selo visível, nunca aparecendo como pessoa. Como o conteúdo chega em claro ao servidor mesmo em canais com E2EE, activar um webhook exige confirmação explícita do gestor e o canal mostra um aviso a todos os leitores.
 - Desktop self-update checks once on launch. Windows NSIS and writable Linux AppImages download a published update and offer a restart or installation on exit; macOS, MSI, deb, rpm, and non-writable AppImages show a manual release link. The release workflow attaches `latest.yml`, `latest-linux.yml`, and separate `*.blockmap` files for Windows installers (and macOS if produced) to a draft release tagged `vX.Y.Z`; the AppImage embeds its blockmap. Installers remain unsigned and macOS is not notarized. Users on 1.5.0 must install the first updater release manually once.
+- Supressão de ruído explícita também no teste de microfone das definições (`getUserMedia`), alinhado com o que a chamada real já pedia por omissão ao LiveKit; um algoritmo de supressão mais avançado fica registado no backlog para o futuro.
+
+### Changed
+
+- **BREAKING (comportamento):** abrir um canal de voz entra directamente na chamada, sem tela de pré-entrada. Quem pode falar entra com o microfone ligado por omissão (respeitando a preferência salva de microfone desligado) e a câmara sempre desligada, podendo ligá-la depois; quem só pode ouvir entra em modo de escuta. Uma falha ao entrar mostra erro com nova tentativa manual e acesso a Áudio & Vídeo, sem repetição automática. O teste de vídeo com faixa sintética («Testar vídeo») deixa de estar acessível nesta tela; o teste local de câmara continua nas definições.
+- **BREAKING (requisito, não de API pública):** a janela principal do Electron passa a ter uma barra de título própria, no estilo VSCode/Discord, em vez da decoração nativa do sistema — reverte a decisão anterior de o shell desktop ser só um wrapper fino sem chrome acrescentado. `titleBarOverlay` no Windows preserva snap/Aero nativos; o macOS mantém os "semáforos" nativos só reposicionados; o Linux desenha controlos próprios. O diálogo de partilha de tela e a janela de popout de chamada continuam com decoração nativa.
+- A janela flutuante (PiP) da chamada adapta tamanho e posição ao espaço disponível em janelas menores, preservando arrastar, encaixar nos cantos e os controlos.
+- Partilha de tela pode começar tanto em Composição como em Grade (antes só em Grade); a vista muda automaticamente para Grade quando a partilha é iniciada com sucesso, e quem está a partilhar fica claramente identificado na Grade.
+- Edição da cena activa passa a ser exclusiva de quem criou o canal; o dono do servidor deixa de ter esse privilégio automático.
+- Mudança de cargo ou de ACL de um canal durante uma chamada actualiza o acesso efectivo de quem já está ligado em tempo real, incluindo a retirada imediata da permissão de falar quando revogada, e remover um membro do servidor encerra a chamada dessa pessoa imediatamente nos outros clientes — sem precisar de recarregar. (A reconciliação completa da lista de presença após uma reconexão com eventos perdidos durante o corte continua em investigação.)
+- Diagnóstico mais detalhado (sem expor segredos) para a falha de primeira abertura do popout de chamada no Windows; a correcção definitiva da sequência de preparação ainda depende de reprodução confirmada no Windows.
 
 ## [1.5.0] - 2026-11-04
 
