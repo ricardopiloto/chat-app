@@ -60,6 +60,7 @@ pub struct Channel {
     pub created_by_account_id: Uuid,
     pub e2ee_enabled: bool,
     pub has_channel_key: bool,
+    pub has_active_webhook: bool,
     pub visibility: ChannelVisibility,
     pub visible_to_new_members: bool,
     /// Effective permission for the requesting account (list/get responses).

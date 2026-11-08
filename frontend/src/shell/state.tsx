@@ -95,6 +95,7 @@ export function createShellState(props: { account: () => Account; identity: () =
   };
 
   createEffect(() => {
+    void resync();
     let stale = false;
     for (const each of servers.data ?? []) {
       const startedAtGeneration = occupancyGeneration;
@@ -228,6 +229,18 @@ export function createShellState(props: { account: () => Account; identity: () =
               void cache.invalidateQueries({ queryKey: queryKeys.channels(about) });
               void cache.invalidateQueries({ queryKey: queryKeys.roles(about) });
             }
+            break;
+          case "member_role.changed":
+          case "role.changed":
+          case "member.removed":
+            if (about) {
+              void cache.invalidateQueries({ queryKey: queryKeys.members(about) });
+              void cache.invalidateQueries({ queryKey: queryKeys.roles(about) });
+              void cache.invalidateQueries({ queryKey: queryKeys.channels(about) });
+            }
+            break;
+          case "channel_acl.changed":
+            if (about) void cache.invalidateQueries({ queryKey: queryKeys.channels(about) });
             break;
         }
         listeners.forEach((handler) => handler(message));

@@ -15,6 +15,7 @@ struct Row {
     visibility: String,
     visible_to_new_members: i64,
     has_channel_key: i64,
+    has_active_webhook: i64,
 }
 
 fn map_row(row: Row) -> Result<Channel, sqlx::Error> {
@@ -33,6 +34,7 @@ fn map_row(row: Row) -> Result<Channel, sqlx::Error> {
         created_by_account_id: created_by,
         e2ee_enabled: row.e2ee_enabled != 0,
         has_channel_key: row.has_channel_key != 0,
+        has_active_webhook: row.has_active_webhook != 0,
         visibility: ChannelVisibility::parse(&row.visibility)
             .ok_or_else(|| sqlx::Error::Decode("invalid channel visibility".into()))?,
         visible_to_new_members: row.visible_to_new_members != 0,
@@ -42,7 +44,8 @@ fn map_row(row: Row) -> Result<Channel, sqlx::Error> {
 
 const SELECT_COLS: &str = "c.id, c.server_id, c.name, c.type, c.grid_slot_count,
          c.created_by_account_id, c.e2ee_enabled, c.visibility, c.visible_to_new_members,
-         CASE WHEN ck.channel_id IS NOT NULL THEN 1 ELSE 0 END AS has_channel_key";
+         CASE WHEN ck.channel_id IS NOT NULL THEN 1 ELSE 0 END AS has_channel_key,
+         CASE WHEN cw.channel_id IS NOT NULL THEN 1 ELSE 0 END AS has_active_webhook";
 
 pub async fn create(pool: &SqlitePool, channel: &Channel) -> Result<(), sqlx::Error> {
     sqlx::query(
@@ -98,6 +101,7 @@ pub async fn find_by_id(pool: &SqlitePool, id: Uuid) -> Result<Option<Channel>, 
         "SELECT {SELECT_COLS}
          FROM channel c
          LEFT JOIN channel_key ck ON ck.channel_id = c.id
+         LEFT JOIN channel_webhook cw ON cw.channel_id = c.id AND cw.revoked_at IS NULL
          WHERE c.id = ?"
     ))
     .bind(id.to_string())
@@ -114,6 +118,7 @@ pub async fn list_by_server(
         "SELECT {SELECT_COLS}
          FROM channel c
          LEFT JOIN channel_key ck ON ck.channel_id = c.id
+         LEFT JOIN channel_webhook cw ON cw.channel_id = c.id AND cw.revoked_at IS NULL
          WHERE c.server_id = ? ORDER BY c.created_at"
     ))
     .bind(server_id.to_string())

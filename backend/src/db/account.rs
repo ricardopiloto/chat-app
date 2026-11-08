@@ -5,6 +5,7 @@ use uuid::Uuid;
 
 #[derive(sqlx::FromRow)]
 struct Row {
+    is_system_account: i64,
     id: String,
     handle: String,
     password_hash: String,
@@ -27,6 +28,7 @@ struct Row {
 
 fn map_row(row: Row) -> Result<AccountRecord, sqlx::Error> {
     Ok(AccountRecord {
+        is_system_account: row.is_system_account != 0,
         id: Uuid::parse_str(&row.id).map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
         handle: row.handle,
         password_hash: row.password_hash,
@@ -59,19 +61,26 @@ fn map_row(row: Row) -> Result<AccountRecord, sqlx::Error> {
             })
             .transpose()?,
         key_reminders: row.key_reminders != 0,
-        last_key_reminder_at: row.last_key_reminder_at.map(|v| DateTime::parse_from_rfc3339(&v).map(|d| d.with_timezone(&Utc)).map_err(|e| sqlx::Error::Decode(Box::new(e)))).transpose()?,
+        last_key_reminder_at: row
+            .last_key_reminder_at
+            .map(|v| {
+                DateTime::parse_from_rfc3339(&v)
+                    .map(|d| d.with_timezone(&Utc))
+                    .map_err(|e| sqlx::Error::Decode(Box::new(e)))
+            })
+            .transpose()?,
         key_reminder_count: row.key_reminder_count,
     })
 }
 
 const COLS: &str =
-    "id, handle, password_hash, identity_pubkey, identity_vault, (recovery_vault IS NOT NULL AND recovery_verifier_pubkey IS NOT NULL) AS has_recovery_key, is_initial_operator, created_at, avatar_filename, avatar_content_type, display_name, email, email_canonical, email_verified_at, terms_accepted_at, key_reminders, last_key_reminder_at, key_reminder_count";
+    "is_system_account, id, handle, password_hash, identity_pubkey, identity_vault, (recovery_vault IS NOT NULL AND recovery_verifier_pubkey IS NOT NULL) AS has_recovery_key, is_initial_operator, created_at, avatar_filename, avatar_content_type, display_name, email, email_canonical, email_verified_at, terms_accepted_at, key_reminders, last_key_reminder_at, key_reminder_count";
 
 pub async fn count<'e, E>(executor: E) -> Result<i64, sqlx::Error>
 where
     E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
 {
-    let (n,): (i64,) = sqlx::query_as("SELECT COUNT(*) FROM account")
+    let (n,): (i64,) = sqlx::query_as("SELECT COUNT(*) FROM account WHERE is_system_account = 0")
         .fetch_one(executor)
         .await?;
     Ok(n)
@@ -106,8 +115,8 @@ where
     E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
 {
     sqlx::query(
-        "INSERT INTO account (id, handle, password_hash, identity_pubkey, identity_vault, is_initial_operator, created_at, display_name, email, email_canonical, email_verified_at, terms_accepted_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO account (id, handle, password_hash, identity_pubkey, identity_vault, is_initial_operator, created_at, display_name, email, email_canonical, email_verified_at, terms_accepted_at, is_system_account)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(record.id.to_string())
     .bind(&record.handle)
@@ -121,6 +130,7 @@ where
     .bind(&record.email_canonical)
     .bind(record.email_verified_at.map(|v| v.to_rfc3339()))
     .bind(record.terms_accepted_at.map(|v| v.to_rfc3339()))
+    .bind(i64::from(record.is_system_account))
     .execute(executor)
     .await?;
     Ok(())

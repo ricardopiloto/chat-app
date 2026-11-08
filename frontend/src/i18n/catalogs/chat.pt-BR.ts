@@ -7,6 +7,7 @@ export const chatPtBR: MessageTree = {
       descPublic: "Canal de texto · visível a todo o servidor",
       descPrivate: "Canal de texto privado",
       e2ee: "E2EE ativa",
+      webhookActive: "Integra\u00e7\u00e3o em claro",
       search: "Pesquisar neste canal",
       members: "Alternar painel de membros",
     },
@@ -17,6 +18,7 @@ export const chatPtBR: MessageTree = {
     },
     day: { today: "Hoje", yesterday: "Ontem" },
     row: {
+      webhookBadge: "Integra\u00e7\u00e3o",
       owner: "Dono",
       you: "você",
       reply: "Responder",

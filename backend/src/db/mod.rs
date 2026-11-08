@@ -13,6 +13,7 @@ pub mod channel_acl;
 pub mod channel_key;
 pub mod channel_mute;
 pub mod channel_role;
+pub mod channel_webhook;
 pub mod e2ee_audit;
 pub mod grid;
 pub mod invite;

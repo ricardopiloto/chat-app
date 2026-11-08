@@ -21,6 +21,7 @@ export interface UpdateState {
 // Set before the page runs. The renderer treats this flag as "inside the Mesa shell"
 // and does not sniff the user agent.
 contextBridge.exposeInMainWorld("__MESA_NATIVE__", true);
+contextBridge.exposeInMainWorld("mesaPlatform", process.platform);
 
 contextBridge.exposeInMainWorld("mesaNative", {
   loadInstance: (): Promise<InstanceState> => ipcRenderer.invoke("mesa:load-instance"),
@@ -28,6 +29,14 @@ contextBridge.exposeInMainWorld("mesaNative", {
   saveSessionToken: (token: string): Promise<void> => ipcRenderer.invoke("mesa:save-session-token", token),
   clearSessionToken: (): Promise<void> => ipcRenderer.invoke("mesa:clear-session-token"),
   clearInstance: (): Promise<void> => ipcRenderer.invoke("mesa:clear-instance"),
+  minimize: (): Promise<void> => ipcRenderer.invoke("mesa:minimize"),
+  toggleMaximize: (): Promise<void> => ipcRenderer.invoke("mesa:toggle-maximize"),
+  close: (): Promise<void> => ipcRenderer.invoke("mesa:close"),
+  onWindowMaximizedChange: (listener: (maximized: boolean) => void): (() => void) => {
+    const wrapped = (_event: Electron.IpcRendererEvent, maximized: boolean) => listener(maximized);
+    ipcRenderer.on("mesa:window-maximized", wrapped);
+    return () => ipcRenderer.removeListener("mesa:window-maximized", wrapped);
+  },
   openCallPopout: (request: CallPopoutRequest): Promise<void> => ipcRenderer.invoke("mesa:open-call-popout", request),
   closeCallPopout: (): Promise<void> => ipcRenderer.invoke("mesa:close-call-popout"),
   takeCallPopout: (): Promise<CallPopoutRequest | null> => ipcRenderer.invoke("mesa:take-call-popout"),

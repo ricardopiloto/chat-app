@@ -15,6 +15,7 @@ const contractTokens = [
   /mesaNative/g, /MesaNativeBridge/g, /data-mesa-turnstile/g, /mesaTurnstile/g,
   /docs\/v2\/mesa_\*/g,
   /scripts\/install-mesa\.(?:sh|ps1)/g,
+  /--mesa-title-bar/g,
 ];
 const commonNouns = [
   /\bmesas? de RPG\b/g, /\bmesa física\b/g, /\buma mesa\b/g,
@@ -37,7 +38,7 @@ function isVisibleBrand(line, path) {
   let remainder = line;
   if (path === "scripts/install-mesa.sh" && /\/Applications\/Mesa\.app/.test(line)) return false;
   if (path === "backend/src/config.rs") remainder = remainder.replace(/"MESA_(?:PRODUCTION|ENV|RATE_LIMIT_DISABLED)"/g, "");
-  if (path === "README.md" && /(?:transição do Mesa|instalação antiga do Mesa|dados antiga do Mesa)/.test(line)) return false;
+  if (path === "README.md" && /(?:transição do Mesa|instalação antiga do Mesa|dados antiga do Mesa|moving from Mesa to Parley)/i.test(line)) return false;
   for (const pattern of [...contractTokens, ...commonNouns]) remainder = remainder.replace(pattern, "");
   return /(?<![A-Za-z])mesa(?![A-Za-z])/i.test(remainder);
 }

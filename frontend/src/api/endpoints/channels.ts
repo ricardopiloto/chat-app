@@ -1,5 +1,5 @@
-import { http } from "../http";
-import type { AccessReport, AclEntry, AclEntryInput, Channel, CreateChannelBody, Mentionable, Mute, MyMute } from "../types";
+import { MEDIA_TYPE_HEADER, http, request } from "../http";
+import type { AccessReport, AclEntry, AclEntryInput, Channel, ChannelWebhook, ChannelWebhookSecret, CreateChannelBody, Mentionable, Mute, MyMute } from "../types";
 
 export const channels = {
   listForServer: (serverId: string) => http.get<Channel[]>(`/api/servers/${serverId}/channels`),
@@ -24,4 +24,17 @@ export const mutes = {
   set: (channelId: string, accountId: string, durationMinutes: number) =>
     http.put<Mute>(`/api/channels/${channelId}/mutes/${accountId}`, { duration_minutes: durationMinutes }),
   clear: (channelId: string, accountId: string) => http.delete(`/api/channels/${channelId}/mutes/${accountId}`),
+};
+
+export const webhooks = {
+  get: (channelId: string) => http.get<ChannelWebhook | null>(`/api/channels/${channelId}/webhooks`),
+  createOrReactivate: (channelId: string, body: { consent_cleartext: boolean; display_name?: string }) =>
+    http.post<ChannelWebhookSecret>(`/api/channels/${channelId}/webhooks`, body),
+  rename: (channelId: string, webhookId: string, displayName: string) =>
+    http.patch<ChannelWebhook>(`/api/channels/${channelId}/webhooks/${webhookId}`, { display_name: displayName }),
+  rotate: (channelId: string, webhookId: string) =>
+    http.post<ChannelWebhookSecret>(`/api/channels/${channelId}/webhooks/${webhookId}/rotate`),
+  uploadAvatar: (channelId: string, webhookId: string, image: Blob | Uint8Array, mediaType: string) =>
+    request<ChannelWebhook>(`/api/channels/${channelId}/webhooks/${webhookId}/avatar`, { method: "PUT", bytes: image, headers: { [MEDIA_TYPE_HEADER]: mediaType } }),
+  revoke: (channelId: string, webhookId: string) => http.delete(`/api/channels/${channelId}/webhooks/${webhookId}`),
 };

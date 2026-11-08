@@ -1,6 +1,6 @@
 import type { MessageTree } from "../messages";
 
-// Text for voice and video: green room, stage, scene editor, call controls, floating player, encryption.
+// Text for voice and video: stage, scene editor, call controls, floating player, encryption.
 export const voicePtBR: MessageTree = {
   call: {
     cancel: "Cancelar",
@@ -10,6 +10,7 @@ export const voicePtBR: MessageTree = {
     live: "Ao vivo",
     participants: "{n} na chamada",
     connecting: "Entrando na chamada…",
+    joinRetry: "Tentar novamente",
     reconnecting: "Reconectando à chamada…",
     audioBlocked: "O navegador bloqueou o áudio. Toque para ativar o som.",
     controls: "Controles da chamada",
@@ -67,37 +68,17 @@ export const voicePtBR: MessageTree = {
       noKey: "Este canal usa E2EE e a chave não está neste dispositivo. Peça a chave a quem administra o canal.",
       unavailable: "A chamada não está disponível agora. Tente novamente em instantes.",
       failed: "Não foi possível entrar na chamada. Tente novamente.",
+      popoutToken: "Não foi possível obter acesso à chamada para esta janela. Verifique sua conexão e tente novamente.",
+      livekitConnect: "Não foi possível conectar esta janela à chamada. Verifique sua conexão e tente novamente.",
       kicked: "A chamada terminou.",
     },
     green: {
-      back: "Cancelar e voltar",
-      inCall: "{n} em chamada agora",
-      empty: "Ninguém na chamada ainda",
-      previewTag: "Pré-visualização local (offline)",
       cameraOff: "Câmera desligada",
-      listenOnlyPreview: "Você entra só para ouvir",
-      micReady: "Microfone pronto",
-      micOff: "Microfone desligado",
       level: "Nível do microfone",
-      camOn: "Câmera ativa",
-      camOff: "Câmera desligada",
-      micOnBtn: "Microfone ativo",
-      micOffBtn: "Microfone desligado",
-      synced: "Padrões sincronizados do perfil",
-      denied: "O navegador negou o acesso. Permita câmera e microfone nas configurações do site e tente novamente.",
-      join: "Entrar na chamada",
-      joining: "Entrando…",
-      testVideo: "Testar vídeo (sintético)",
-      listen: "Entrar (apenas ouvir)",
-      note: "A escolha de câmera e microfone ativos respeita a sua configuração guardada e não precisa de reconfiguração a cada entrada.",
-      devices: "Calibração de dispositivos",
       micDevice: "Dispositivo de entrada",
       outDevice: "Dispositivo de saída",
       camDevice: "Câmera",
       testSound: "Testar som de saída",
-      now: "No canal agora",
-      session: "{n} na sessão",
-      state: { talking: "Microfone ligado", muted: "Em silêncio", listening: "Modo ouvinte", screen: "Transmissão de tela" },
     },
     devices: { default: "Padrão do sistema", allow: "Permitir acesso aos dispositivos" },
     editor: {

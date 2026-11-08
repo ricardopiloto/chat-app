@@ -1,5 +1,5 @@
 // The channel's active scene as the stage sees it: loaded once, kept current by `grid.updated`, and
-// saved through PUT /grid. Only the server owner can save; everyone else just follows.
+// saved through PATCH on the active scene by the channel creator; everyone else just follows.
 import { createSignal, onCleanup } from "solid-js";
 import { grid as gridApi, type GridLayout, type RealtimeEnvelope } from "../api";
 import { emptyScene, fromWire, toWire, type Scene } from "./scene";
@@ -8,6 +8,7 @@ export function createSceneStore(channelId: () => string, subscribe: (h: (m: Rea
   const [scene, setScene] = createSignal<Scene>(emptyScene());
   const [loaded, setLoaded] = createSignal(false);
   const [name, setName] = createSignal("");
+  const [activeSceneId, setActiveSceneId] = createSignal("");
   let latest = 0;
 
   async function load() {
@@ -24,7 +25,10 @@ export function createSceneStore(channelId: () => string, subscribe: (h: (m: Rea
     }
   }
   void load();
-  void gridApi.scenes(channelId()).then((list) => setName(list.scenes.find((x) => x.id === list.active_scene_id)?.name ?? "")).catch(() => undefined);
+  void gridApi.scenes(channelId()).then((list) => {
+    setActiveSceneId(list.active_scene_id);
+    setName(list.scenes.find((x) => x.id === list.active_scene_id)?.name ?? "");
+  }).catch(() => undefined);
 
   const stop = subscribe((message) => {
     const mine = message.payload.channel_id === channelId();
@@ -34,14 +38,18 @@ export function createSceneStore(channelId: () => string, subscribe: (h: (m: Rea
       setScene(fromWire(message.payload.grid as GridLayout));
       setLoaded(true);
     }
-    if (message.event === "scene.changed") void load();
+    if (message.event === "scene.changed") {
+      if (typeof message.payload.active_scene_id === "string") setActiveSceneId(message.payload.active_scene_id);
+      void load();
+    }
   });
   onCleanup(stop);
 
   async function save(next: Scene): Promise<void> {
-    const saved = await gridApi.save(channelId(), toWire(next));
+    const sceneId = activeSceneId() || (await gridApi.scenes(channelId())).active_scene_id;
+    const saved = await gridApi.saveScene(channelId(), sceneId, toWire(next));
     latest++;
-    setScene(fromWire(saved));
+    setScene(fromWire(saved.layout));
   }
 
   return { scene, name, loaded, save, reload: load };

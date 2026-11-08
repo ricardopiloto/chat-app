@@ -15,7 +15,7 @@ export function ElectronHome(props: { baseUrl: string | null; onSaved: () => voi
     if (!props.baseUrl) setDialog(true);
     else setNativeEntry(mode);
   }
-  return <div class="flex min-h-dvh flex-col bg-background text-on-surface">
+  return <div class="flex min-h-[calc(100dvh-var(--mesa-title-bar))] flex-col bg-background text-on-surface">
     <header class="flex items-center justify-between gap-2 p-4"><div class="flex items-center gap-2"><Logo size={32}/><span class="font-display text-headline-sm">{t("shell.brand")}</span></div><div class="flex gap-2"><LanguageSwitch/><ThemeSwitch/></div></header>
     <main class="mx-auto flex w-full max-w-[540px] flex-1 flex-col justify-center gap-5 px-4 py-8">
       <img src={mascot} alt={t("entry.mascotAlt")} class="mx-auto h-48 w-48 object-contain"/>

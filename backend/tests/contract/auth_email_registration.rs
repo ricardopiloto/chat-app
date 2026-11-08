@@ -215,9 +215,18 @@ async fn request_validation_errors_keep_their_precedence_before_ip_limit() {
     .await;
     for (body, expected_code) in [
         (json!({"email":"bad address"}), "terms_required"),
-        (json!({"email":"bad address","terms_accepted":true}), "email_invalid"),
-        (json!({"email":"a@mailinator.com","terms_accepted":true}), "email_domain_blocked"),
-        (json!({"email":"a@example.org","terms_accepted":true}), "captcha_failed"),
+        (
+            json!({"email":"bad address","terms_accepted":true}),
+            "email_invalid",
+        ),
+        (
+            json!({"email":"a@mailinator.com","terms_accepted":true}),
+            "email_domain_blocked",
+        ),
+        (
+            json!({"email":"a@example.org","terms_accepted":true}),
+            "captcha_failed",
+        ),
     ] {
         let (status, error, _) = app
             .request("POST", "/api/auth/email/request", Some(body), None)

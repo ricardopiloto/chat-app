@@ -1,5 +1,5 @@
 // The call's controls, pinned in the user panel and only while a call is on: microphone, deafen,
-// camera (with its blur menu), screen share (only in the grid view) and hang up. They never overlay
+// camera (with its blur menu), screen share and hang up. They never overlay
 // the video.
 import { Show, createSignal } from "solid-js";
 import { Icon } from "../components/ui";
@@ -7,7 +7,7 @@ import { t } from "../i18n";
 import { isNative } from "../api/instance";
 import { useCall } from "./callSession";
 import { prefs, type BlurLevel } from "./devices";
-import { callView } from "./view";
+import { setCallView } from "./view";
 
 const LEVELS: BlurLevel[] = ["off", "light", "strong"];
 
@@ -83,7 +83,7 @@ export function CallControls() {
             </div>
           </Show>
         </span>
-        <Show when={callView() === "grid" && !listenOnly()}>
+        <Show when={!listenOnly()}>
           <button
             type="button"
             class={toggle}
@@ -91,7 +91,10 @@ export function CallControls() {
             aria-pressed={call.screen()}
             title={call.screen() ? t("call.screenStop") : t("call.screenStart")}
             aria-label={call.screen() ? t("call.screenStop") : t("call.screenStart")}
-            onClick={() => void call.setScreen(!call.screen())}
+            onClick={() => {
+              const on = !call.screen();
+              void call.setScreen(on).then((started) => { if (on && started) setCallView("grid"); });
+            }}
           >
             <Icon name={call.screen() ? "stop_screen_share" : "screen_share"} />
           </button>

@@ -27,7 +27,7 @@ export function Stage(props: { channel: Channel }) {
   const elapsed = createElapsed(since);
   const count = () => call.participants().length;
   const listeners = () => call.participants().filter((p) => p.listener).length;
-  const canEdit = () => shell.owner() && callView() === "composition" && !editing();
+  const canEdit = () => shell.meId() === props.channel.created_by_account_id && callView() === "composition" && !editing();
 
   const viewOptions = (): { value: CallView; label: string; icon: string }[] => [
     { value: "composition", label: t("call.view.composition"), icon: "view_quilt" },
@@ -57,13 +57,18 @@ export function Stage(props: { channel: Channel }) {
             {t("call.editScene")}
           </Button>
         </Show>
-        <Show when={callView() === "grid" && !editing()}>
+        <Show when={!editing()}>
           <Show when={call.canSpeak()}>
-            <Button variant="secondary" onClick={() => void call.setScreen(!call.screen())}>
+            <Button variant="secondary" onClick={() => {
+              const on = !call.screen();
+              void call.setScreen(on).then((started) => { if (on && started) setCallView("grid"); });
+            }}>
               <Icon name={call.screen() ? "stop_screen_share" : "screen_share"} class="text-[18px]" />
               {call.screen() ? t("call.screenStop") : t("call.screenStart")}
             </Button>
           </Show>
+        </Show>
+        <Show when={callView() === "grid" && !editing()}>
           <Show when={shell.can("can_create_invites")}>
             <Button variant="primary" onClick={() => document.dispatchEvent(new Event("mesa:invite"))}>
               <Icon name="person_add" class="text-[18px]" />

@@ -252,13 +252,13 @@ export function Auth() {
         </Button></Show>
 
 
-        <p class="flex items-center justify-between gap-3 font-code text-label-code-sm text-on-surface-variant">
+        <Show when={registering()}><p class="flex items-center justify-between gap-3 font-code text-label-code-sm text-on-surface-variant">
           <span class="flex items-center gap-1.5">
             <Icon name="verified_user" class="text-[14px] text-secondary" />
             {t("auth.protocol")}
           </span>
           <span>{t("auth.cipher")}</span>
-        </p>
+        </p></Show>
       </form>
       </Show>
       </Show>

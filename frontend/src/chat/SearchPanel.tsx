@@ -2,6 +2,7 @@ import { For, Match, Show, Switch, createEffect, createMemo, createSignal, on, o
 import { Portal } from "solid-js/web";
 import { useQueryClient } from "@tanstack/solid-query";
 import { avatarUrl, useAuthedSrc } from "../api";
+import { absoluteResource } from "../api/instance";
 import { Avatar, Badge, Icon } from "../components/ui";
 import { getLocale, t } from "../i18n";
 import { useSession } from "../session/session";
@@ -161,13 +162,17 @@ export function SearchPanel(props: { open: boolean; seed: string | null; seedNon
                   <For each={hits()}>
                     {(hit, at) => {
                       const sender = () => people().get(hit.message.senderId ?? "");
-                      const face = useAuthedSrc(() => (sender()?.hasAvatar ? avatarUrl(sender()!.accountId) : undefined));
+                      const face = useAuthedSrc(() => hit.message.webhook
+                        ? (hit.message.senderAvatarUrl ? absoluteResource(hit.message.senderAvatarUrl) : undefined)
+                        : (sender()?.hasAvatar ? avatarUrl(sender()!.accountId) : undefined));
+                      const senderName = () => hit.message.webhook ? (hit.message.senderDisplayNameSnapshot || t("txt.row.webhookBadge")) : (sender()?.label ?? t("txt.search.unknownSender"));
                       return (
                         <button type="button" role="option" aria-selected={active() === at()} class="ch-result" classList={{ active: active() === at() }} onMouseEnter={() => setActive(at())} onClick={() => open(hit)}>
-                          <Avatar name={sender()?.label ?? "?"} src={face()} size="sm" />
+                          <Avatar name={senderName()} src={face()} size="sm" />
                           <span class="ch-result-body">
                             <span class="ch-result-head">
-                              <strong>{sender()?.label ?? t("txt.search.unknownSender")}</strong>
+                              <strong>{senderName()}</strong>
+                              <Show when={hit.message.webhook}><Badge tone="neutral" mono icon="webhook">{t("txt.row.webhookBadge")}</Badge></Show>
                               <small>{t("txt.search.in")} <b># {hit.channel.name}</b> · {hit.server.name}</small>
                               <time>{when(hit.message.createdAt)}</time>
                             </span>

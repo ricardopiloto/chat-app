@@ -139,15 +139,15 @@ Regra (`frontend-v2-foundation`, capability `functional-parity`): **todas as fun
 
 | ID | Funcionalidade | API / evento | Fase | Critério | Estado |
 |---|---|---|---|---|---|
-| VOZ-01 | Entrar (câmara/microfone conforme preferência) | `POST /api/channels/{id}/voice/join` | V | Token LiveKit; ocupação actualizada | |
-| VOZ-02 | Testar vídeo (faixa sintética) | `POST …/voice/join` | V | Câmara física intocada | |
-| VOZ-03 | Entrar (ouvir) para quem só pode ouvir | `POST …/voice/join` | V | Única opção; sem mic/câmara | |
+| VOZ-01 | Entrada directa (microfone conforme preferência, câmara desligada) | `POST /api/channels/{id}/voice/join` | V | Token LiveKit; ocupação actualizada | |
+| VOZ-02 | Teste de câmara nas definições | — | V | Preview local sem entrar na chamada | |
+| VOZ-03 | Entrar (ouvir) para quem só pode ouvir | `POST …/voice/join` | V | Entrada directa em escuta; sem mic/câmara | |
 | VOZ-04 | Entrada só áudio quando a câmara falha ou é negada | — | V | Aviso e entra sem vídeo | |
 | VOZ-05 | Sair e libertar câmara/microfone | `POST …/voice/leave` | V | Hardware libertado; saída garantida ao fechar o separador | |
-| VOZ-06 | Mudar de canal de voz sai do anterior | — | V | Pré-entrada no destino | |
+| VOZ-06 | Mudar de canal de voz sai do anterior | — | V | Entrada directa no destino | |
 | VOZ-07 | Heartbeat e estado de media (mic/cam/ecrã) | `PATCH …/voice/media` | V | Roster reflecte | |
 | VOZ-08 | Ocupação por servidor e roster na sidebar | `GET /api/servers/{id}/voice-occupancy`, WS `voice.occupancy` | V | Visível sem abrir o canal | |
-| VOZ-09 | Controlos no painel: microfone, ensurdecer, câmara, partilha (só Grade), terminar | — | V | Só durante a chamada | |
+| VOZ-09 | Controlos no painel: microfone, ensurdecer, câmara, partilha (Composição e Grade), terminar | — | V | Só durante a chamada | |
 | VOZ-10 | Microfone desactivado com explicação para ouvintes | — | V | Mensagem de permissão | |
 | VOZ-11 | Blur de câmara (sem/leve/forte) com erro inline | — | V | Tempo real | |
 | VOZ-12 | Indicadores de fala em palco, grade e roster | — | V | Sincronizados | |
@@ -224,9 +224,9 @@ Funcionalidades novas da v2. Não contam para a paridade nem dependem da v1.
 | ACR-04 | Falhas silenciosas | — | `frontend-v2-sound-effects` | Autoplay recusado, ficheiro em falta (404) e saída guardada inexistente não mostram erro nem afetam o outro efeito | V (sound-effects) |
 | ACR-05 | Duração dos MP3 dentro do alvo | — | `frontend-v2-sound-effects` | `mention.mp3` ≤ 0,7 s e `call-join.mp3` ≤ 1,0 s | V (sound-effects): aparados com ffmpeg para 0,70 s e 1,00 s, com fade-out de 0,2 s |
 | ACR-06 | Permissão "Mencionar @todos" e notificação a todo o canal | `POST /api/channels/{id}/messages` (`mention_everyone`), `notification.created` | `frontend-v2-mention-everyone-and-voice-fixes` | Desligada por omissão, ativável por cargo, o dono tem-na sempre; com permissão notifica todos os membros que veem o canal (sem limite de 20, sem o remetente, só quem vê um canal privado); sem permissão é texto simples e ninguém é notificado; `@todos` destacado e só sugerido a quem pode | V (backend: 8 testes de contrato; frontend: 2 sessões e `verify:mentions`) |
-| ACR-07 | Desligar a câmara liberta a câmara | — | `frontend-v2-mention-everyone-and-voice-fixes` | Zero faixas de vídeo vivas depois de desligar na pré-entrada (com e sem desfoque), na chamada (incluindo ligar e desligar depressa), na página de Áudio & Vídeo e ao sair da chamada | V (navegador de teste com câmara falsa; repetir à mão com câmara real) |
+| ACR-07 | Desligar a câmara liberta a câmara | — | `frontend-v2-mention-everyone-and-voice-fixes` | Zero faixas de vídeo vivas depois de desligar na chamada (incluindo ligar e desligar depressa), na página de Áudio & Vídeo e ao sair da chamada | V (navegador de teste com câmara falsa; repetir à mão com câmara real) |
 | ACR-08 | Membro sem cargo entra e participa nos canais por omissão | `GET /api/channels/{id}` (`my_permission`) | `frontend-v2-mention-everyone-and-voice-fixes` | Um convidado sem cargo vê e escreve em canais de texto públicos, anexa imagens, entra, fala e liga a câmara nos de voz; só um cargo sem a permissão, um canal privado ou o silenciamento o reduzem | V (convidado sem cargo, 2 sessões) |
 | ACR-09 | Memória do último canal aberto | — | `frontend-v2-settings-return-to-last-channel` | Por servidor e global, por conta, em `mesa.lastChannel.v1`; sobrevive a recarregar; abrir configurações ou conta não a altera; esquecida quando o canal é apagado; armazenamento bloqueado não falha | V (settings-return): `verify:last-channel` (16 verificações) e no navegador, incluindo apagar o canal |
-| ACR-10 | Fechar as configurações do servidor volta ao último canal | — | `frontend-v2-settings-return-to-last-channel` | Ícone de fechar e Esc abrem o último canal do servidor (de texto ou a pré-entrada de voz, sem entrar na chamada); canal apagado ou sem memória abre o servidor sem canal, sem erro; entrada direta no endereço e Esc logo após o desbloqueio também voltam ao canal | V (settings-return) |
+| ACR-10 | Fechar as configurações do servidor volta ao último canal | — | `frontend-v2-settings-return-to-last-channel` | Ícone de fechar e Esc abrem o último canal do servidor (de texto ou de voz, iniciando a entrada directa na chamada); canal apagado ou sem memória abre o servidor sem canal, sem erro; entrada direta no endereço e Esc logo após o desbloqueio também voltam ao canal | V (settings-return) |
 | ACR-11 | Voltar da conta ao último canal | — | `frontend-v2-settings-return-to-last-channel` | "Voltar à Mesa" e Esc abrem o último canal aberto, mesmo depois de passar pelas configurações do servidor ou de recarregar; sem memória abre a página inicial; Esc durante a edição do nome só cancela a edição | V (settings-return) |
 | ACR-12 | Botão Voltar do navegador inalterado | — | `frontend-v2-settings-return-to-last-channel` | Regressa ao endereço anterior do histórico (o canal de onde se abriram as configurações) | V (settings-return) |

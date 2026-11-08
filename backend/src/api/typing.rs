@@ -70,10 +70,11 @@ pub async fn accept(state: &AppState, account_id: Uuid, text: &str) {
     if channel.kind != ChannelType::Text {
         return;
     }
-    let muted = db::channel_mute::get_active(&state.pool, channel.id, account_id, chrono::Utc::now())
-        .await
-        .ok()
-        .flatten();
+    let muted =
+        db::channel_mute::get_active(&state.pool, channel.id, account_id, chrono::Utc::now())
+            .await
+            .ok()
+            .flatten();
     if muted.is_some() {
         return;
     }

@@ -2,7 +2,6 @@ use crate::api::auth::session::AuthUser;
 use crate::db;
 use crate::domain::channel::ChannelType;
 use crate::domain::grid::{validate_layout, AssignedBy, GridLayout};
-use crate::domain::permissions;
 use crate::domain::scene::{
     normalize_name, Scene, SceneSummary, SceneView, MAX_SCENES_PER_CHANNEL,
 };
@@ -50,33 +49,16 @@ async fn require_voice_channel(
     Ok(channel)
 }
 
-async fn require_admin(
-    pool: &SqlitePool,
+fn require_scene_creator(
     account_id: Uuid,
-    server_id: Uuid,
+    channel: &crate::domain::channel::Channel,
 ) -> Result<(), ApiError> {
-    let server = db::server::find_by_id(pool, server_id)
-        .await?
-        .ok_or_else(|| ApiError::not_found("server not found"))?;
-    if !permissions::is_channel_admin(server.owner_account_id, account_id) {
-        return Err(ApiError::forbidden("only the owner can manage scenes"));
+    if channel.created_by_account_id != account_id {
+        return Err(ApiError::forbidden(
+            "only the channel creator can manage scenes",
+        ));
     }
     Ok(())
-}
-
-async fn can_activate(
-    pool: &SqlitePool,
-    account_id: Uuid,
-    server_id: Uuid,
-    _channel_id: Uuid,
-) -> Result<bool, ApiError> {
-    let server = db::server::find_by_id(pool, server_id)
-        .await?
-        .ok_or_else(|| ApiError::not_found("server not found"))?;
-    Ok(permissions::is_channel_admin(
-        server.owner_account_id,
-        account_id,
-    ))
 }
 
 async fn view_of(
@@ -188,7 +170,7 @@ pub async fn create_scene(
     Json(body): Json<CreateSceneBody>,
 ) -> Result<impl IntoResponse, ApiError> {
     let channel = require_voice_channel(&state.pool, account.id, channel_id).await?;
-    require_admin(&state.pool, account.id, channel.server_id).await?;
+    require_scene_creator(account.id, &channel)?;
     let name = normalize_name(&body.name).map_err(ApiError::bad_request)?;
     let count = db::scene::count_for_channel(&state.pool, channel_id).await?;
     if count >= MAX_SCENES_PER_CHANNEL {
@@ -239,7 +221,7 @@ pub async fn patch_scene(
     Json(body): Json<PatchSceneBody>,
 ) -> Result<Json<SceneView>, ApiError> {
     let channel = require_voice_channel(&state.pool, account.id, channel_id).await?;
-    require_admin(&state.pool, account.id, channel.server_id).await?;
+    require_scene_creator(account.id, &channel)?;
     let scene = require_scene_in_channel(&state.pool, channel_id, scene_id).await?;
     let active_id = db::channel::active_scene_id(&state.pool, channel_id)
         .await?
@@ -281,7 +263,7 @@ pub async fn delete_scene(
     Path((channel_id, scene_id)): Path<(Uuid, Uuid)>,
 ) -> Result<StatusCode, ApiError> {
     let channel = require_voice_channel(&state.pool, account.id, channel_id).await?;
-    require_admin(&state.pool, account.id, channel.server_id).await?;
+    require_scene_creator(account.id, &channel)?;
     let scene = require_scene_in_channel(&state.pool, channel_id, scene_id).await?;
     let active_id = db::channel::active_scene_id(&state.pool, channel_id)
         .await?
@@ -305,7 +287,7 @@ pub async fn duplicate_scene(
     Json(body): Json<CreateSceneBody>,
 ) -> Result<impl IntoResponse, ApiError> {
     let channel = require_voice_channel(&state.pool, account.id, channel_id).await?;
-    require_admin(&state.pool, account.id, channel.server_id).await?;
+    require_scene_creator(account.id, &channel)?;
     let name = normalize_name(&body.name).map_err(ApiError::bad_request)?;
     let count = db::scene::count_for_channel(&state.pool, channel_id).await?;
     if count >= MAX_SCENES_PER_CHANNEL {
@@ -338,9 +320,7 @@ pub async fn activate_scene(
     Path((channel_id, scene_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<SceneView>, ApiError> {
     let channel = require_voice_channel(&state.pool, account.id, channel_id).await?;
-    if !can_activate(&state.pool, account.id, channel.server_id, channel_id).await? {
-        return Err(ApiError::forbidden("cannot activate scenes"));
-    }
+    require_scene_creator(account.id, &channel)?;
     let scene = require_scene_in_channel(&state.pool, channel_id, scene_id).await?;
     db::channel::set_active_scene(&state.pool, channel_id, scene.id, scene.slot_count).await?;
     let slots = db::scene::list_slots(&state.pool, scene.id, channel_id).await?;

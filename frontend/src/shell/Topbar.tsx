@@ -1,5 +1,6 @@
 import { Show } from "solid-js";
 import { avatarUrl, useAuthedSrc } from "../api";
+import { isNative } from "../api/instance";
 import { Avatar, Badge, Icon, Logo } from "../components/ui";
 import { t } from "../i18n";
 import { useSession } from "../session/session";
@@ -34,14 +35,11 @@ export function Topbar() {
 
       <div class="flex-1" />
 
-      <button type="button" class="hidden min-w-[260px] items-center gap-3 rounded border border-outline-variant bg-surface-container-low px-4 py-2 text-left text-body-sm text-on-surface-variant transition-colors hover:border-outline tablet:flex" aria-label={t("shell.searchEntry")} onClick={() => document.dispatchEvent(new Event("mesa:search"))}>
-        <Icon name="search" class="text-[18px]" />
-        <span class="flex-1">{t("shell.searchPlaceholder")}</span>
-        <kbd class="rounded bg-surface-container-highest px-1.5 py-0.5 font-code text-label-code-sm">Ctrl+K</kbd>
-      </button>
-      <button type="button" class={`${roundButton} tablet:hidden`} aria-label={t("shell.searchEntry")} onClick={() => document.dispatchEvent(new Event("mesa:search"))}>
-        <Icon name="search" />
-      </button>
+      {!isNative() && <button type="button" class="flex min-w-0 items-center gap-2 rounded border border-outline-variant bg-surface-container-low px-2 py-1 text-label-sm text-on-surface-variant hover:border-outline" aria-label={t("shell.searchEntry")} onClick={() => document.dispatchEvent(new Event("mesa:search"))}>
+        <Icon name="search" class="text-[16px]" />
+        <span class="hidden tablet:inline">{t("shell.searchPlaceholder")}</span>
+        <kbd class="hidden font-code text-label-code-sm tablet:inline">Ctrl+K</kbd>
+      </button>}
 
       <div class="hidden tablet:block">
         <ThemeSwitch />

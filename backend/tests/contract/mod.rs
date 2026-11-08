@@ -18,6 +18,7 @@ mod channel_overwrites;
 mod channel_read_state;
 mod channel_rename;
 mod channel_roles;
+mod channel_webhooks;
 mod channels;
 mod channels_delete;
 mod grid;

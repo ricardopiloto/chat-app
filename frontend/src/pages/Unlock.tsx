@@ -1,7 +1,7 @@
 import { Show, createSignal } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import { AuthField, AuthFrame, bindValue } from "../auth/AuthFrame";
-import { Avatar, Badge, Button, Dialog, Icon, MonoLabel } from "../components/ui";
+import { Avatar, Badge, Button, Dialog, Icon } from "../components/ui";
 import { avatarUrl, useAuthedSrc } from "../api";
 import { clearInstance, currentInstance, isNative } from "../api/instance";
 import { IdentityUnlockError } from "../crypto/identity";
@@ -68,29 +68,30 @@ export function Unlock() {
   return (
     <AuthFrame single hideInstancePanel headline={t("unlock.returnTitle")} text={t("unlock.returnIntro")} features={[]}>
       <form class="flex flex-col gap-5" onSubmit={submit} noValidate>
-        <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-outline-variant bg-surface-container p-4">
-          <div class="flex min-w-0 items-center gap-3">
-            <Avatar name={name()} src={avatar()} size="lg" />
-            <div class="min-w-0">
-              <p class="truncate font-display text-headline-sm">{name()}</p>
-              <p class="truncate font-code text-label-code-sm text-on-surface-variant">@{me().handle}</p>
+        <div class="rounded-lg border border-outline-variant bg-surface-container p-4">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex min-w-0 items-center gap-3">
+              <Avatar name={name()} src={avatar()} size="lg" />
+              <div class="min-w-0">
+                <p class="truncate font-display text-headline-sm">{name()}</p>
+                <p class="truncate font-code text-label-code-sm text-on-surface-variant">@{me().handle}</p>
+              </div>
             </div>
+            <Badge tone="primary" mono icon="shield">{t("entry.onDevice")}</Badge>
           </div>
-          <Badge tone="primary" mono icon="shield">{t("entry.onDevice")}</Badge>
+          <Show when={isNative() && currentInstance().baseUrl}>
+            <div class="mt-3 min-w-0 border-t border-outline-variant pt-3">
+              <p class="text-label-code-sm text-on-surface-variant">{t("unlock.accountInstance")}</p>
+              <p class="break-all">{currentInstance().baseUrl}</p>
+            </div>
+          </Show>
         </div>
-        <Show when={isNative() && currentInstance().baseUrl}>
-          <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-outline-variant bg-surface-container p-4">
-            <div class="min-w-0"><p class="text-label-code-sm text-on-surface-variant">{t("unlock.accountInstance")}</p><p class="break-all">{currentInstance().baseUrl}</p></div>
-            <Button variant="secondary" class="entry-control" onClick={() => void switchAccount()}>{t("unlock.otherAccess")}</Button>
+        <Show when={noLocalCopy()}>
+          <div class="notice warn flex items-start gap-3" role="status">
+            <Icon name="warning" class="mt-0.5 text-primary" />
+            <p class="text-body-sm">{t(nothingAnywhere() ? "unlock.noticeBody" : "unlock.noticeMissing")}</p>
           </div>
         </Show>
-        <div class="notice warn flex items-start gap-3" role="status">
-          <Icon name="warning" class="mt-0.5 text-primary" />
-          <div>
-            <MonoLabel class="!text-primary">{t("unlock.noticeTitle")}</MonoLabel>
-            <p class="mt-1 text-body-sm">{t(noLocalCopy() && !nothingAnywhere() ? "unlock.noticeMissing" : "unlock.noticeBody")}</p>
-          </div>
-        </div>
 
         <AuthField
           label={t("unlock.password")}
@@ -117,26 +118,10 @@ export function Unlock() {
           {busy() ? t("auth.waiting") : t("unlock.button")}
         </Button>
 
-        <div class="flex items-center gap-4 font-code text-label-code-sm text-on-surface-variant" aria-hidden="true">
-          <span class="h-px flex-1 bg-outline-variant" />
-          {t("auth.or")}
-          <span class="h-px flex-1 bg-outline-variant" />
-        </div>
-
-        <p class="text-body-sm text-on-surface-variant"><strong>{t("unlock.helpTitle")}</strong> {t("unlock.helpText")}</p>
-        <div class="flex flex-col gap-3 rounded-lg bg-surface-container p-4 tablet:flex-row tablet:items-center tablet:justify-between">
-          <div>
-            <h3 class="flex items-center gap-2 font-display text-headline-sm">
-              <Icon name="history" class="text-primary" />
-              {t("unlock.recoverTitle")}
-            </h3>
-            <p class="mt-1 text-body-sm text-on-surface-variant">{t("unlock.recoverText")}</p>
-            <p class="mt-2 text-body-sm text-on-surface-variant">{t("auth.forgotVaultHelp")}</p>
-          </div>
-          <Button class="entry-control shrink-0 whitespace-nowrap" disabled={busy()} onClick={() => setConfirming(true)}>
-            <Icon name="autorenew" />
+        <div class="text-center">
+          <button type="button" class="inline-flex min-h-6 items-center text-body-sm text-primary underline" disabled={busy()} onClick={() => setConfirming(true)}>
             {t("unlock.recoverButton")}
-          </Button>
+          </button>
         </div>
 
         <p class="text-center text-body-sm text-on-surface-variant">
@@ -167,6 +152,8 @@ export function Unlock() {
       </form>
 
       <Dialog open={confirming()} title={t("unlock.confirmTitle")} onClose={() => setConfirming(false)}>
+        <p>{t("unlock.recoverText")}</p>
+        <p>{t("auth.forgotVaultHelp")}</p>
         <p>{t("auth.recoveryWarning")}</p>
         <div class="flex flex-wrap justify-end gap-3">
           <Button class="entry-control" onClick={() => setConfirming(false)}>{t("shell.cancel")}</Button>

@@ -244,7 +244,8 @@ mod legacy_env_tests {
             ("MESA_ENV", "PARLEY_ENV"),
             ("MESA_RATE_LIMIT_DISABLED", "PARLEY_RATE_LIMIT_DISABLED"),
         ] {
-            let message = error(&[(old, "")]).expect("legacy variable must be rejected even when empty");
+            let message =
+                error(&[(old, "")]).expect("legacy variable must be rejected even when empty");
             assert!(message.contains(old) && message.contains(new));
             assert!(error(&[(old, "1"), (new, "1")]).is_some());
         }
@@ -253,6 +254,13 @@ mod legacy_env_tests {
     #[test]
     fn accepts_clean_and_new_only_environments() {
         assert_eq!(error(&[]), None);
-        assert_eq!(error(&[("PARLEY_PRODUCTION", "1"), ("PARLEY_ENV", "production"), ("PARLEY_RATE_LIMIT_DISABLED", "true")]), None);
+        assert_eq!(
+            error(&[
+                ("PARLEY_PRODUCTION", "1"),
+                ("PARLEY_ENV", "production"),
+                ("PARLEY_RATE_LIMIT_DISABLED", "true")
+            ]),
+            None
+        );
     }
 }

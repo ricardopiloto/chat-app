@@ -240,7 +240,13 @@ function createWindow(): BrowserWindow {
     minHeight: 640,
     backgroundColor: BACKGROUND,
     icon,
-    // Native window decorations are the default; do not set frame: false.
+    ...(process.platform === "win32" ? {
+      titleBarStyle: "hidden" as const,
+      titleBarOverlay: { color: BACKGROUND, symbolColor: "#e3e2e9", height: 32 },
+    } : process.platform === "darwin" ? {
+      titleBarStyle: "hidden" as const,
+      trafficLightPosition: { x: 12, y: 8 },
+    } : process.platform === "linux" ? { frame: false } : {}),
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
@@ -268,6 +274,17 @@ function createWindow(): BrowserWindow {
     void win.loadURL(`${APP_ORIGIN}/index.html`);
   }
   return win;
+}
+
+function registerWindowControlsIpc(mainWindow: BrowserWindow): void {
+  ipcMain.removeHandler("mesa:minimize");
+  ipcMain.removeHandler("mesa:toggle-maximize");
+  ipcMain.removeHandler("mesa:close");
+  ipcMain.handle("mesa:minimize", () => mainWindow.minimize());
+  ipcMain.handle("mesa:toggle-maximize", () => mainWindow.isMaximized() ? mainWindow.unmaximize() : mainWindow.maximize());
+  ipcMain.handle("mesa:close", () => mainWindow.close());
+  mainWindow.on("maximize", () => mainWindow.webContents.send("mesa:window-maximized", true));
+  mainWindow.on("unmaximize", () => mainWindow.webContents.send("mesa:window-maximized", false));
 }
 
 async function runPackagedLegacyCleanup(window: BrowserWindow): Promise<void> {
@@ -543,6 +560,7 @@ app.whenReady().then(async () => {
   registerPopoutIpc();
   registerUpdateIpc();
   const mainWindow = createWindow();
+  registerWindowControlsIpc(mainWindow);
   if (app.isPackaged && !isDev) mainWindow.webContents.once("did-finish-load", () => { void runPackagedLegacyCleanup(mainWindow).catch(error => console.error("legacy cleanup failed", error)); });
   mainWindow.webContents.once("did-finish-load", () => {
     const mode = resolveUpdateMode({ platform: process.platform, isPackaged: app.isPackaged && !isDev, env: process.env, execPath: process.execPath,
@@ -551,7 +569,7 @@ app.whenReady().then(async () => {
     else if (mode === "notify") void checkForUpdate(updateFeed());
   });
   app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    if (BrowserWindow.getAllWindows().length === 0) registerWindowControlsIpc(createWindow());
   });
 });
 

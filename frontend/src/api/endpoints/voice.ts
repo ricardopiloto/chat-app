@@ -1,5 +1,5 @@
 import { http, request } from "../http";
-import type { GridLayout, KeyEnvelope, MediaFlags, SceneList, VoiceJoin, VoiceOccupancy } from "../types";
+import type { GridLayout, KeyEnvelope, MediaFlags, Scene, SceneList, VoiceJoin, VoiceOccupancy } from "../types";
 
 export const voice = {
   join: (channelId: string, flags: Pick<MediaFlags, "mic_on" | "cam_on">) => http.post<VoiceJoin>(`/api/channels/${channelId}/voice/join`, flags),
@@ -22,6 +22,8 @@ export const grid = {
   get: (channelId: string) => http.get<GridLayout>(`/api/channels/${channelId}/grid`),
   save: (channelId: string, layout: GridLayout) => http.put<GridLayout>(`/api/channels/${channelId}/grid`, layout),
   scenes: (channelId: string) => http.get<SceneList>(`/api/channels/${channelId}/scenes`),
+  saveScene: (channelId: string, sceneId: string, layout: GridLayout) =>
+    http.patch<Scene>(`/api/channels/${channelId}/scenes/${sceneId}`, { layout }),
 };
 
 export const keyEnvelopes = {

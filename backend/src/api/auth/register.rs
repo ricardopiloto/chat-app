@@ -111,7 +111,13 @@ pub async fn register(
     if !state.config.rate_limit_disabled && !state.rate_limiter.allow_auth(ip) {
         return Err(ApiError::too_many_requests());
     }
-    let (account, jar, token) = register_inner(&state, jar, body, super::recovery_email::wants_english(&headers)).await?;
+    let (account, jar, token) = register_inner(
+        &state,
+        jar,
+        body,
+        super::recovery_email::wants_english(&headers),
+    )
+    .await?;
     Ok((
         StatusCode::CREATED,
         jar,
@@ -205,6 +211,7 @@ pub async fn register_inner(
             let now = Utc::now();
 
             let mut record = AccountRecord {
+                is_system_account: false,
                 has_recovery_key: false,
                 id: Uuid::new_v4(),
                 handle,

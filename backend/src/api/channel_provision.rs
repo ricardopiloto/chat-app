@@ -60,6 +60,7 @@ pub async fn provision_channel(
         created_by_account_id: created_by,
         e2ee_enabled: true,
         has_channel_key: false,
+        has_active_webhook: false,
         visibility,
         visible_to_new_members: visibility == ChannelVisibility::Public,
         my_permission: None,

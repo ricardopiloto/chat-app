@@ -14,6 +14,10 @@ interface MesaNativeBridge {
   saveSessionToken(token: string): Promise<void>;
   clearSessionToken(): Promise<void>;
   clearInstance(): Promise<void>;
+  minimize(): Promise<void>;
+  toggleMaximize(): Promise<void>;
+  close(): Promise<void>;
+  onWindowMaximizedChange(listener: (maximized: boolean) => void): () => void;
   openCallPopout(request: CallPopoutRequest): Promise<void>;
   closeCallPopout(): Promise<void>;
   takeCallPopout(): Promise<CallPopoutRequest | null>;
@@ -26,4 +30,5 @@ interface MesaNativeBridge {
 interface Window {
   __MESA_NATIVE__?: boolean;
   mesaNative?: MesaNativeBridge;
+  mesaPlatform?: NodeJS.Platform;
 }

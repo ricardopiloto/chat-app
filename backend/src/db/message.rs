@@ -13,6 +13,9 @@ struct Row {
     reply_to_message_id: Option<String>,
     kind: String,
     content_plaintext: Option<String>,
+    sender_display_name_snapshot: Option<String>,
+    sender_avatar_filename_snapshot: Option<String>,
+    sender_avatar_content_type_snapshot: Option<String>,
     mentions_everyone: i64,
 }
 
@@ -44,6 +47,14 @@ fn map_row(row: Row) -> Result<Message, sqlx::Error> {
             .with_timezone(&Utc),
         kind,
         content_plaintext: row.content_plaintext,
+        sender_display_name_snapshot: row.sender_display_name_snapshot,
+        sender_avatar_url: if row.sender_avatar_filename_snapshot.is_some()
+            && row.sender_avatar_content_type_snapshot.is_some()
+        {
+            Some(format!("/api/messages/{}/webhook-avatar", row.id))
+        } else {
+            None
+        },
         attachment_ids: Vec::new(),
         reactions: Vec::new(),
         reply_to_message_id: row
@@ -71,7 +82,7 @@ async fn enrich(pool: &SqlitePool, message: &mut Message) -> Result<(), sqlx::Er
     Ok(())
 }
 
-const SELECT_COLS: &str = "id, channel_id, sender_account_id, content_ciphertext, created_at, reply_to_message_id, kind, content_plaintext, mentions_everyone";
+const SELECT_COLS: &str = "id, channel_id, sender_account_id, content_ciphertext, created_at, reply_to_message_id, kind, content_plaintext, sender_display_name_snapshot, sender_avatar_filename_snapshot, sender_avatar_content_type_snapshot, mentions_everyone";
 
 async fn find_by_id_raw(pool: &SqlitePool, id: Uuid) -> Result<Option<Message>, sqlx::Error> {
     let row = sqlx::query_as::<_, Row>(&format!("SELECT {SELECT_COLS} FROM message WHERE id = ?"))
@@ -222,4 +233,33 @@ pub async fn any_contains_bytes(pool: &SqlitePool, needle: &[u8]) -> Result<bool
             .fetch_one(pool)
             .await?;
     Ok(n > 0)
+}
+
+/// Snapshot the configured identity when a cleartext integration message arrives.
+#[allow(clippy::too_many_arguments)]
+pub async fn create_webhook(
+    pool: &SqlitePool,
+    id: Uuid,
+    channel_id: Uuid,
+    webhook_account_id: Uuid,
+    content: &str,
+    display_name_snapshot: &str,
+    avatar_filename_snapshot: Option<&str>,
+    avatar_content_type_snapshot: Option<&str>,
+    created_at: DateTime<Utc>,
+) -> Result<Message, sqlx::Error> {
+    sqlx::query("INSERT INTO message (id, channel_id, sender_account_id, content_ciphertext, created_at, kind, content_plaintext, sender_display_name_snapshot, sender_avatar_filename_snapshot, sender_avatar_content_type_snapshot) VALUES (?, ?, ?, ?, ?, 'webhook', ?, ?, ?, ?)")
+        .bind(id.to_string()).bind(channel_id.to_string()).bind(webhook_account_id.to_string())
+        .bind(&[] as &[u8]).bind(created_at.to_rfc3339()).bind(content)
+        .bind(display_name_snapshot).bind(avatar_filename_snapshot).bind(avatar_content_type_snapshot)
+        .execute(pool).await?;
+    find_by_id(pool, id).await?.ok_or(sqlx::Error::RowNotFound)
+}
+
+pub async fn webhook_avatar_snapshot(
+    pool: &SqlitePool,
+    id: Uuid,
+) -> Result<Option<(String, String)>, sqlx::Error> {
+    sqlx::query_as("SELECT sender_avatar_filename_snapshot, sender_avatar_content_type_snapshot FROM message WHERE id = ? AND kind = 'webhook' AND sender_avatar_filename_snapshot IS NOT NULL AND sender_avatar_content_type_snapshot IS NOT NULL")
+        .bind(id.to_string()).fetch_optional(pool).await
 }

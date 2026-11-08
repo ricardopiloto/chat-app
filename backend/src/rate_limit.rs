@@ -5,8 +5,11 @@ use std::collections::{HashMap, VecDeque};
 use std::net::{IpAddr, SocketAddr};
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
+use uuid::Uuid;
 
 const AUTH_LIMIT: usize = 10;
+pub const WEBHOOK_POST_WINDOW_SECS: u64 = 60;
+const WEBHOOK_POST_LIMIT: usize = 10;
 const AUTH_WINDOW: Duration = Duration::from_secs(60);
 // Handle availability is queried while typing, so it gets a roomier bucket of its own.
 const HANDLE_CHECK_LIMIT: usize = 60;
@@ -101,6 +104,17 @@ impl RateLimiter {
         }
         q.push_back(now);
         true
+    }
+
+    pub fn allow_webhook_post(&self, webhook_id: Uuid, ip: Option<IpAddr>) -> bool {
+        let who = ip
+            .map(|v| v.to_string())
+            .unwrap_or_else(|| "unknown".into());
+        self.check(
+            &format!("webhook:{webhook_id}:{who}"),
+            WEBHOOK_POST_LIMIT,
+            Duration::from_secs(WEBHOOK_POST_WINDOW_SECS),
+        )
     }
 
     pub fn allow_auth(&self, ip: Option<IpAddr>) -> bool {

@@ -96,7 +96,7 @@ export function GridView(props: { fill?: boolean }) {
               <span class="call-chip live">{t("call.transmitting")}</span>
             </div>
             <div class="call-spotlight-side">
-              <For each={talkers()}>{(p) => <Tile person={p} size="strip" speaking={call.speaking().has(p.id)} />}</For>
+              <For each={talkers()}>{(p) => <Tile person={p} size="strip" speaking={call.speaking().has(p.id)} badge={focused()?.owner?.id === p.id ? <span class="call-chip screen"><Icon name="present_to_all" class="text-[14px]" />{t("call.screenTag")}</span> : undefined} />}</For>
               <For each={screens().filter((s) => s.id !== main().id)}>{(s) => <ScreenTile share={s} />}</For>
             </div>
           </div>

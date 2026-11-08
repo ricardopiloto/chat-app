@@ -125,7 +125,10 @@ pub fn key_channel_reminder(base_url: &str, english: bool) -> Template {
     };
     Template {
         subject: subject.into(),
-        html: format!("<p>{guidance}</p><p><a href=\"{}\">{action}</a></p><p>{safety}</p><p>{preference}</p>", html_escape(&link)),
+        html: format!(
+            "<p>{guidance}</p><p><a href=\"{}\">{action}</a></p><p>{safety}</p><p>{preference}</p>",
+            html_escape(&link)
+        ),
         text: format!("{guidance}\n{action}: {link}\n{safety}\n{preference}"),
     }
 }
@@ -212,8 +215,12 @@ mod tests {
                 key_welcome("https://parley.example/", true, english),
                 key_channel_reminder("https://parley.example/", english),
             ] {
-                assert!(template.text.contains("https://parley.example/account#recovery"));
-                assert!(template.html.contains("https://parley.example/account#recovery"));
+                assert!(template
+                    .text
+                    .contains("https://parley.example/account#recovery"));
+                assert!(template
+                    .html
+                    .contains("https://parley.example/account#recovery"));
                 assert_eq!(template.text.matches("https://").count(), 1);
                 assert_eq!(template.html.matches("https://").count(), 1);
                 assert!(!template.text.contains("email_token="));
@@ -221,7 +228,11 @@ mod tests {
                 assert!(!template.text.contains("identity_pubkey"));
                 assert!(!template.text.contains("channel_key_sealed"));
                 assert!(!template.text.contains("secret-sentinel"));
-                assert!(if english { template.text.contains("never receives or sends") } else { template.text.contains("nunca recebe nem envia") });
+                assert!(if english {
+                    template.text.contains("never receives or sends")
+                } else {
+                    template.text.contains("nunca recebe nem envia")
+                });
             }
         }
     }

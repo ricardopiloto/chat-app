@@ -1,6 +1,7 @@
 import { For, Show, createEffect, createSignal, onCleanup } from "solid-js";
 import { Avatar, Badge, Icon } from "../components/ui";
 import { avatarUrl, useAuthedSrc } from "../api";
+import { absoluteResource } from "../api/instance";
 import { getLocale, t } from "../i18n";
 import { AttachmentThumb } from "./AttachmentThumb";
 import { EmojiPicker } from "./EmojiPicker";
@@ -132,14 +133,18 @@ export function MessageRow(props: MessageRowProps) {
     setPicker(true);
   }
   const author = () => props.people.get(props.message.senderId ?? "");
-  const avatar = useAuthedSrc(() => (author()?.hasAvatar ? avatarUrl(author()!.accountId) : undefined));
+  const avatar = useAuthedSrc(() => props.message.webhook
+    ? (props.message.senderAvatarUrl ? absoluteResource(props.message.senderAvatarUrl) : undefined)
+    : (author()?.hasAvatar ? avatarUrl(author()!.accountId) : undefined));
   // Like the mockups, a member without a display name is shown as @handle.
   const authorName = () => {
+    if (props.message.webhook) return props.message.senderDisplayNameSnapshot || t("txt.row.webhookBadge");
     const found = author();
     if (!found) return t("txt.search.unknownSender");
     return found.label === found.handle ? `@${found.handle}` : found.label;
   };
   const quoteAuthor = () => {
+    if (props.quoted?.webhook) return props.quoted.senderDisplayNameSnapshot || t("txt.row.webhookBadge");
     const found = props.people.get(props.quoted?.senderId ?? props.message.replySenderId ?? "");
     return found ? (found.label === found.handle ? `@${found.handle}` : found.label) : t("txt.search.unknownSender");
   };
@@ -159,7 +164,7 @@ export function MessageRow(props: MessageRowProps) {
     <article ref={(el) => props.watch(el, props.message.id)} class="ch-msg" classList={{ grouped: !props.startsGroup, mine: props.mine, highlighted: props.highlighted }} data-msg={props.message.id}>
       <div class="ch-msg-gutter">
         <Show when={props.startsGroup}>
-          <Avatar name={author()?.label ?? "?"} src={avatar()} size="lg" />
+          <Avatar name={authorName()} src={avatar()} size="lg" />
         </Show>
         <time class="ch-msg-hover-time" datetime={props.message.createdAt}>{clockTime(props.message.createdAt)}</time>
       </div>
@@ -167,8 +172,9 @@ export function MessageRow(props: MessageRowProps) {
         <Show when={props.startsGroup}>
           <header>
             <strong class="ch-msg-author">{authorName()}</strong>
-            <Show when={author() && author()!.label !== author()!.handle}><small class="ch-msg-handle">@{author()!.handle}</small></Show>
-            <Show when={props.roleBadge}>{(label) => <Badge tone="neutral" mono>{label()}</Badge>}</Show>
+            <Show when={!props.message.webhook && author() && author()!.label !== author()!.handle}><small class="ch-msg-handle">@{author()!.handle}</small></Show>
+            <Show when={props.message.webhook}><Badge tone="neutral" mono icon="webhook">{t("txt.row.webhookBadge")}</Badge></Show>
+            <Show when={!props.message.webhook && props.roleBadge}>{(label) => <Badge tone="neutral" mono>{label()}</Badge>}</Show>
             <time datetime={props.message.createdAt}>{clockTime(props.message.createdAt)}</time>
           </header>
         </Show>

@@ -14,6 +14,7 @@ import { nativeEntry, setNativeEntry } from "./auth/nativeEntry";
 import { readInstanceStatus, resetInstanceStatus } from "./auth/instanceStatus";
 const WebPublicHome = lazy(() => import("./pages/WebPublicHome").then((m) => ({ default: m.WebPublicHome })));
 const ElectronHome = lazy(() => import("./pages/ElectronHome").then((m) => ({ default: m.ElectronHome })));
+const TitleBar = lazy(() => import("./shell/TitleBar").then((m) => ({ default: m.TitleBar })));
 import { currentInstance, isNative, loadInstance, subscribeInstance } from "./api/instance";
 import { SessionProvider, useSession } from "./session/session";
 import { applyTheme, themeMode, watchSystemTheme } from "./shell/theme";
@@ -63,8 +64,8 @@ function Gate() {
     lastPhase = phase;
     return entryScreen({ native, baseUrl: native && !instanceLoaded() ? null : baseUrl(), phase, pathname: where.pathname, search: where.search, hash: where.hash, initialSetup: initialSetup(), nativeEntry: nativeEntry() });
   };
-  const loading = <main class="grid min-h-dvh place-items-center bg-background text-on-surface-variant">{t("auth.loading")}</main>;
-  return <Switch>
+  const loading = <main class="grid min-h-[calc(100dvh-var(--mesa-title-bar))] place-items-center bg-background text-on-surface-variant">{t("auth.loading")}</main>;
+  const screen = <Switch>
     <Match when={destination() === "foundation"}><Foundation /></Match>
     <Match when={destination() === "home-desktop"}><Suspense fallback={loading}><ElectronHome baseUrl={baseUrl()} onSaved={() => void session.restore()} /></Suspense></Match>
     <Match when={destination() === "home-web"}><Suspense fallback={loading}><WebPublicHome /></Suspense></Match>
@@ -76,6 +77,7 @@ function Gate() {
     <Match when={destination() === "unlock"}><Unlock /></Match>
     <Match when={destination() === "app"}><AppShell /></Match>
   </Switch>;
+  return native && destination() !== "call-popout" ? <Suspense fallback={screen}><TitleBar destination={destination()}>{screen}</TitleBar></Suspense> : screen;
 }
 
 const root = document.getElementById("root");

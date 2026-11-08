@@ -1,6 +1,6 @@
 import type { MessageTree } from "../messages";
 
-// Text for voice and video: green room, stage, scene editor, call controls, floating player, encryption.
+// Text for voice and video: stage, scene editor, call controls, floating player, encryption.
 export const voiceEn: MessageTree = {
   call: {
     cancel: "Cancel",
@@ -10,6 +10,7 @@ export const voiceEn: MessageTree = {
     live: "Live",
     participants: "{n} in the call",
     connecting: "Joining the call…",
+    joinRetry: "Try again",
     reconnecting: "Reconnecting to the call…",
     audioBlocked: "The browser blocked audio. Tap to turn sound on.",
     controls: "Call controls",
@@ -67,37 +68,17 @@ export const voiceEn: MessageTree = {
       noKey: "This channel uses E2EE and the key is not on this device. Ask whoever manages the channel for the key.",
       unavailable: "The call is not available right now. Try again in a moment.",
       failed: "Could not join the call. Try again.",
+      popoutToken: "Could not get access to the call for this window. Check your connection and try again.",
+      livekitConnect: "Could not connect this window to the call. Check your connection and try again.",
       kicked: "The call ended.",
     },
     green: {
-      back: "Cancel and go back",
-      inCall: "{n} in the call now",
-      empty: "Nobody in the call yet",
-      previewTag: "Local preview (offline)",
       cameraOff: "Camera off",
-      listenOnlyPreview: "You are joining to listen only",
-      micReady: "Microphone ready",
-      micOff: "Microphone off",
       level: "Microphone level",
-      camOn: "Camera on",
-      camOff: "Camera off",
-      micOnBtn: "Microphone on",
-      micOffBtn: "Microphone off",
-      synced: "Defaults synced from your profile",
-      denied: "The browser denied access. Allow camera and microphone in the site settings and try again.",
-      join: "Join the call",
-      joining: "Joining…",
-      testVideo: "Test video (synthetic)",
-      listen: "Join (listen only)",
-      note: "The camera and microphone choice follows your saved settings, so you are not asked again on every join.",
-      devices: "Device calibration",
       micDevice: "Input device",
       outDevice: "Output device",
       camDevice: "Camera",
       testSound: "Test output sound",
-      now: "In the channel now",
-      session: "{n} in session",
-      state: { talking: "Mic on", muted: "Silent", listening: "Listener mode", screen: "Sharing screen" },
     },
     devices: { default: "System default", allow: "Allow access to devices" },
     editor: {

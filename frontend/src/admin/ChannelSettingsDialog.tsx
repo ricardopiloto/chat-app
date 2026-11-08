@@ -3,11 +3,12 @@ import { MutePanel } from "./channel/MutePanel";
 import { InspectPanel } from "./channel/InspectPanel";
 import { DeleteChannelDialog } from "./channel/DeleteChannelDialog";
 import { AccessPanel } from "./channel/AccessPanel";
+import { WebhookPanel } from "./channel/WebhookPanel";
 import { t } from "../i18n";
 import { Badge, Dialog, Icon } from "../components/ui";
 import type { Channel } from "../api";
 
-type Tab = "access" | "inspect" | "mute";
+type Tab = "access" | "inspect" | "mute" | "webhook";
 
 // Everything about who can do what in one channel: the access rules, an inspector that explains
 // the access a member really has, muting, and the way to delete the channel.
@@ -34,6 +35,7 @@ export function ChannelSettingsDialog(props: {
     { id: "access", icon: "shield", label: t("mgmt.channel.tabAccess") },
     { id: "inspect", icon: "manage_search", label: t("mgmt.channel.tabInspect") },
     ...(props.canMute ? [{ id: "mute" as Tab, icon: "volume_off", label: t("mgmt.channel.tabMute") }] : []),
+    ...(props.channel?.type === "text" ? [{ id: "webhook" as Tab, icon: "webhook", label: t("mgmt.channel.tabWebhook") }] : []),
   ];
 
   return (
@@ -73,6 +75,9 @@ export function ChannelSettingsDialog(props: {
                 </Match>
                 <Match when={tab() === "mute"}>
                   <MutePanel channel={channel()} onClose={props.onClose} />
+                </Match>
+                <Match when={tab() === "webhook"}>
+                  <WebhookPanel channel={channel()} onClose={props.onClose} onChanged={props.onChanged} />
                 </Match>
               </Switch>
             </div>

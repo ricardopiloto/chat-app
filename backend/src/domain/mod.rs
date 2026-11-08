@@ -6,6 +6,7 @@ pub mod channel_acl;
 pub mod channel_mute;
 pub mod channel_name;
 pub mod channel_role;
+pub mod channel_webhook;
 pub mod grid;
 pub mod invite;
 pub mod key_envelope;

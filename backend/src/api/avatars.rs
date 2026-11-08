@@ -11,7 +11,7 @@ use axum::Json;
 use std::path::{Path as FsPath, PathBuf};
 use uuid::Uuid;
 
-fn media_type_from_headers(headers: &HeaderMap) -> Result<String, ApiError> {
+pub(crate) fn media_type_from_headers(headers: &HeaderMap) -> Result<String, ApiError> {
     let raw = headers
         .get("x-mesa-media-type")
         .and_then(|v| v.to_str().ok())
@@ -27,7 +27,7 @@ fn media_type_from_headers(headers: &HeaderMap) -> Result<String, ApiError> {
     })
 }
 
-fn validate_body(body: &Bytes) -> Result<(), ApiError> {
+pub(crate) fn validate_body(body: &Bytes) -> Result<(), ApiError> {
     if body.is_empty() {
         return Err(ApiError::bad_request("empty image body"));
     }
@@ -37,7 +37,7 @@ fn validate_body(body: &Bytes) -> Result<(), ApiError> {
     Ok(())
 }
 
-async fn write_file(path: &FsPath, bytes: &[u8]) -> Result<(), ApiError> {
+pub(crate) async fn write_file(path: &FsPath, bytes: &[u8]) -> Result<(), ApiError> {
     if let Some(parent) = path.parent() {
         tokio::fs::create_dir_all(parent)
             .await
@@ -60,7 +60,10 @@ fn server_path(dir: &FsPath, filename: &str) -> PathBuf {
     dir.join("servers").join(filename)
 }
 
-async fn image_response(path: &FsPath, content_type: &str) -> Result<Response, ApiError> {
+pub(crate) async fn image_response(
+    path: &FsPath,
+    content_type: &str,
+) -> Result<Response, ApiError> {
     let bytes = tokio::fs::read(path)
         .await
         .map_err(|_| ApiError::not_found("avatar not found"))?;

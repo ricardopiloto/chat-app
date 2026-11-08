@@ -44,7 +44,10 @@ pub fn router() -> Router<AppState> {
         .route("/auth/identity", put(put_identity))
         .route("/auth/password", put(recovery::change_password))
         .route("/auth/recovery/code/redeem", post(recovery::redeem_code))
-        .route("/auth/recovery/email/request", post(recovery_email::request))
+        .route(
+            "/auth/recovery/email/request",
+            post(recovery_email::request),
+        )
         .route(
             "/auth/recovery/key/challenge",
             post(recovery_key::challenge),
@@ -53,7 +56,10 @@ pub fn router() -> Router<AppState> {
         .route("/auth/recovery/key/redeem", post(recovery_key::redeem))
         .route("/auth/recovery-key", put(recovery_key::put_recovery_key))
         .route("/auth/display-name", patch(patch_display_name))
-        .route("/auth/key-reminders", patch(key_reminders::patch_preference))
+        .route(
+            "/auth/key-reminders",
+            patch(key_reminders::patch_preference),
+        )
 }
 
 async fn logout(

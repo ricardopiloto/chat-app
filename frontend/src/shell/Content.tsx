@@ -41,7 +41,7 @@ export function Content() {
           <SettingsPage server={shell.server()!} />
         </Match>
         <Match when={shell.route().channelId}>
-          {/* Keyed by id (stable across a channels refetch), not by the channel object: GreenRoom
+          {/* Keyed by id (stable across a channels refetch), not by the channel object: VoicePage
               refreshes the channel list on mount, which returns new object references for the same
               channel. Keying by the object re-triggered this very block on every such refresh, in a
               loop that never settled. Reading shell.channel()! directly below (rather than through

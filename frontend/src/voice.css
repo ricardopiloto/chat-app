@@ -85,6 +85,7 @@ button.call-bench-chip{cursor:grab}
 .call-spotlight-main{position:relative;min-height:0}
 .call-spotlight-side{display:flex;flex-direction:column;gap:8px;overflow-y:auto;min-height:0}
 .call-spotlight-side>*{flex:0 0 auto;aspect-ratio:16/10;height:auto}
+.call-spotlight-side .call-chip.screen{top:34px}
 .call-screen .call-tile.is-dimmed{opacity:.78}
 .call-tile.is-main{outline:1px solid color-mix(in srgb,var(--primary) 55%,transparent);outline-offset:-1px}
 .call-spotlight{margin-left:auto;display:inline-flex;gap:4px;align-items:center;border:0;border-radius:var(--radius-pill);padding:4px 10px;background:rgba(255,255,255,.14);color:inherit;font:600 12px var(--font-body);cursor:pointer}
@@ -195,6 +196,19 @@ button.call-bench-chip{cursor:grab}
 .call-pip-controls{display:flex;align-items:center;gap:6px;padding:8px}
 .call-pip-back{margin-left:auto;padding:6px 10px;border-radius:var(--radius-pill);border:0;background:var(--primary-container);color:var(--on-primary-container);font:600 12px var(--font-body);cursor:pointer}
 .call-pip-controls .call-control.hangup{margin-left:0}
+@media (max-width:1600px),(max-height:900px){
+  .call-pip{width:260px;max-height:calc(100vh - 96px)}
+  .call-pip-body{aspect-ratio:16/8;min-height:0}
+  .call-pip-controls{gap:4px;padding:6px}
+  .call-pip-controls .call-control{width:32px;height:32px;flex:0 0 32px}
+  .call-pip-back{padding:6px;white-space:nowrap}
+  .call-pip.corner-bl,.call-pip.corner-br{bottom:72px}
+}
+@media (max-width:1366px),(max-height:768px){
+  .call-pip{width:240px}
+  .call-pip-body{aspect-ratio:16/7}
+  .call-pip-controls .call-control{width:30px;height:30px;flex-basis:30px}
+}
 
 /* Settings > Audio & Video */
 .call-av-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
@@ -211,3 +225,6 @@ button.call-bench-chip{cursor:grab}
 .call-grid.is-fill{grid-auto-rows:unset;grid-template-rows:repeat(var(--rows,1),minmax(0,1fr))}
 .call-popout-status,.call-elsewhere{display:grid;min-height:240px;place-items:center;align-content:center;gap:12px;padding:24px;text-align:center}
 .call-popout-status{min-height:100vh}
+
+.call-join-error{padding:32px;display:flex;flex-direction:column;align-items:flex-start;gap:12px}
+.call-join-actions{display:flex;gap:8px;flex-wrap:wrap}

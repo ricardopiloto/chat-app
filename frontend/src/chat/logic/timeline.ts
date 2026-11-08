@@ -14,6 +14,9 @@ export interface ChatMessage {
   text: string;
   createdAt: string;
   system: boolean;
+  webhook?: boolean;
+  senderDisplayNameSnapshot?: string;
+  senderAvatarUrl?: string;
   attachmentIds: string[];
   reactions: MessageReaction[];
   replyToId: string | undefined;

@@ -6,19 +6,18 @@
 // and a tile attaches a track to its own element (see `TrackVideo`), nothing is moved around the DOM.
 import { createContext, createEffect, createSignal, onCleanup, onMount, useContext, type Accessor, type JSX } from "solid-js";
 import type { Participant as LkParticipant, Room, RemoteTrack, Track, LocalTrackPublication, RemoteTrackPublication } from "livekit-client";
-import { voice as voiceApi, type Channel, type MediaFlags, type RealtimeEnvelope } from "../api";
+import { channels as channelsApi, voice as voiceApi, type Channel, type MediaFlags, type RealtimeEnvelope } from "../api";
 import { b64 } from "../crypto/identity";
 import { loadServerKey } from "../crypto/keyHandoff";
 import { getServerKey } from "../crypto/serverKey";
 import { useSession } from "../session/session";
 import type { Identity } from "../crypto/identity";
 import { devices, prefs, refreshDevices, resolveDevice, type BlurLevel } from "./devices";
-import { createTestPattern, type TestPattern } from "./testPattern";
 import { notify } from "../sound/effects";
 
 export type CallStatus = "idle" | "connecting" | "live" | "reconnecting";
-export type JoinMode = "full" | "listen" | "test";
-export type CallProblem = "denied" | "noKey" | "unavailable" | "failed" | "kicked";
+export type JoinMode = "full" | "listen";
+export type CallProblem = "denied" | "noKey" | "unavailable" | "failed" | "popoutToken" | "livekitConnect" | "kicked";
 
 /** What a tile needs to draw one person. Tracks are LiveKit tracks; `attach(el)` renders them. */
 export interface CallParticipant {
@@ -77,10 +76,10 @@ function createCall() {
 
   let lk: LiveKit | null = null;
   let room: Room | null = null;
-  let pattern: TestPattern | null = null;
   let heartbeat = 0;
   /** Bumped by every join/leave so a slow, superseded join can tell it lost the race. */
   let epoch = 0;
+  let accessGeneration = 0;
   /** This renderer is the view-only popout, not the call that owns the seat. */
   let viewer = false;
   const [popoutFor, setPopoutFor] = createSignal<string | null>(null);
@@ -88,7 +87,8 @@ function createCall() {
   let pendingClose: { channelId: string; generation: number; finish: () => void } | null = null;
   const timedOutCloses: string[] = [];
   let popoutClosing: Promise<void> | null = null;
-  let joining = false;
+  let activeJoin: Promise<boolean> | null = null;
+  let activeLeave: Promise<void> | null = null;
   let lastRequest: JoinRequest | null = null;
   /** Blur level currently running on the live camera track, so choosing it again does nothing. */
   let appliedBlur: BlurLevel = "off";
@@ -159,10 +159,8 @@ function createCall() {
 
   // --- hardware -------------------------------------------------------------------------------
 
-  /** Stops everything this call opened on the machine: camera, microphone, screen, and the test pattern. */
+  /** Stops everything this call opened on the machine: camera, microphone, and screen. */
   function releaseHardware() {
-    pattern?.stop();
-    pattern = null;
     const lp = room?.localParticipant;
     lp?.trackPublications.forEach((pub: LocalTrackPublication) => pub.track?.stop());
   }
@@ -269,8 +267,8 @@ function createCall() {
     });
   }
 
-  async function setScreen(on: boolean) {
-    if (!room || !canSpeak()) return;
+  async function setScreen(on: boolean): Promise<boolean> {
+    if (!room || !canSpeak()) return false;
     try {
       await room.localParticipant.setScreenShareEnabled(on);
     } catch {
@@ -278,6 +276,7 @@ function createCall() {
     }
     refresh();
     report({ screen_on: room.localParticipant.isScreenShareEnabled });
+    return room.localParticipant.isScreenShareEnabled;
   }
 
   function setBlur(level: BlurLevel): Promise<void> {
@@ -291,6 +290,17 @@ function createCall() {
   }
 
   async function leave() {
+    if (activeLeave) return activeLeave;
+    const leaving = leaveOnce();
+    activeLeave = leaving;
+    try {
+      await leaving;
+    } finally {
+      if (activeLeave === leaving) activeLeave = null;
+    }
+  }
+
+  async function leaveOnce() {
     epoch++;
     const left = channel();
     const wasActive = status() !== "idle";
@@ -323,23 +333,26 @@ function createCall() {
       created_by_account_id: "",
       e2ee_enabled: request.e2ee,
       has_channel_key: true,
+          has_active_webhook: false,
       visibility: "public",
       visible_to_new_members: true,
     };
     setChannel(target);
     setStatus("connecting");
     setCanSpeak(false);
-    const identity = session.identity();
-    const carried = request.e2ee ? getServerKey(request.serverId) : undefined;
-    const key = carried ?? (request.e2ee && identity ? ((await mediaKeyFor(target, identity)) ?? null) : null);
-    if (request.e2ee && !key) {
-      viewer = false;
-      setStatus("idle");
-      setChannel(null);
-      setProblem("noKey");
-      return false;
-    }
+    let step: "prepare" | "popoutToken" | "livekitConnect" = "prepare";
     try {
+      console.debug("[call popout] prepare");
+      const identity = session.identity();
+      const carried = request.e2ee ? getServerKey(request.serverId) : undefined;
+      const key = carried ?? (request.e2ee && identity ? ((await mediaKeyFor(target, identity)) ?? null) : null);
+      if (request.e2ee && !key) {
+        viewer = false;
+        setStatus("idle");
+        setChannel(null);
+        setProblem("noKey");
+        return false;
+      }
       lk = await loadLiveKit();
       const options: ConstructorParameters<LiveKit["Room"]>[0] = { adaptiveStream: true, dynacast: true };
       let provider: InstanceType<LiveKit["ExternalE2EEKeyProvider"]> | null = null;
@@ -348,8 +361,12 @@ function createCall() {
         options.e2ee = { keyProvider: provider, worker: new Worker(new URL("livekit-client/e2ee-worker", import.meta.url), { type: "module" }) };
       }
       const next = new lk.Room(options);
+      step = "popoutToken";
+      console.debug("[call popout] request popout token");
       const granted = await voiceApi.popoutToken(request.channelId);
+      console.debug("[call popout] popout token granted");
       if (mine !== epoch) return false;
+      step = "prepare";
       room = next;
       wire(next, lk, mine);
       if (provider) {
@@ -357,20 +374,25 @@ function createCall() {
         await next.setE2EEEnabled(true);
         setE2eeOn(true);
       }
+      step = "livekitConnect";
+      console.debug("[call popout] connect LiveKit");
       await next.connect(granted.url, granted.token);
+      console.debug("[call popout] LiveKit connected");
+      if (mine !== epoch) return false;
       if (mine !== epoch) return false;
       setStartedAt(Date.now());
       setStatus("live");
       setAudioBlocked(!next.canPlaybackAudio);
       refresh();
       return true;
-    } catch {
+    } catch (error) {
+      console.warn("[call popout] failed", { step, errorType: error instanceof Error ? error.name : typeof error });
       if (mine === epoch) {
         teardown();
         viewer = false;
         setStatus("idle");
         setChannel(null);
-        setProblem("failed");
+        setProblem(step === "popoutToken" ? "popoutToken" : step === "livekitConnect" ? "livekitConnect" : "failed");
       }
       return false;
     }
@@ -434,18 +456,24 @@ function createCall() {
     setProblem(why);
   }
 
-  async function join(request: JoinRequest, { silent = false }: { silent?: boolean } = {}): Promise<boolean> {
-    if (joining) return false;
-    joining = true;
+  async function join(request: JoinRequest, { silent = false, valid = () => true }: { silent?: boolean; valid?: () => boolean } = {}): Promise<boolean> {
+    // A superseded join must finish releasing its seat before the next channel reserves one.
+    while (activeJoin) await activeJoin;
+    if (!valid()) return false;
+    const attempt = joinOnce(request, silent, valid);
+    activeJoin = attempt;
     try {
-      return await joinOnce(request, silent);
+      return await attempt;
     } finally {
-      joining = false;
+      if (activeJoin === attempt) activeJoin = null;
     }
   }
 
-  async function joinOnce(request: JoinRequest, silent: boolean): Promise<boolean> {
+  async function joinOnce(request: JoinRequest, silent: boolean, valid: () => boolean): Promise<boolean> {
+    if (activeLeave) await activeLeave;
+    if (!valid()) return false;
     if (status() !== "idle") await leave();
+    if (!valid()) return false;
     const mine = ++epoch;
     lastRequest = request;
     const target = request.channel;
@@ -460,6 +488,7 @@ function createCall() {
     const wantE2ee = target.e2ee_enabled;
     const identity = session.identity();
     const key = wantE2ee && identity ? ((await mediaKeyFor(target, identity)) ?? null) : null;
+    if (mine !== epoch) return false;
     if (wantE2ee && !key) {
       setStatus("idle");
       setChannel(null);
@@ -479,7 +508,7 @@ function createCall() {
       const options: ConstructorParameters<LiveKit["Room"]>[0] = {
         adaptiveStream: true,
         dynacast: true,
-        audioCaptureDefaults: micDevice.id ? { deviceId: micDevice.id } : undefined,
+        audioCaptureDefaults: { noiseSuppression: true, ...(micDevice.id ? { deviceId: micDevice.id } : {}) },
       };
       let provider: InstanceType<LiveKit["ExternalE2EEKeyProvider"]> | null = null;
       if (key) {
@@ -512,13 +541,11 @@ function createCall() {
           setNotice("micFailed");
         }
       }
-      if (request.mode === "test") {
-        pattern = createTestPattern();
-        await next.localParticipant.publishTrack(pattern.track, { source: lk.Track.Source.Camera, name: "test-pattern" });
-      } else if (wantCam) {
+      if (wantCam) {
         await startCamera();
       }
 
+      if (mine !== epoch) return false;
       setStartedAt(Date.now());
       setStatus("live");
       if (!viewer && !silent) notify("callJoin");
@@ -588,6 +615,29 @@ function createCall() {
 
   // --- reacting to the rest of the app --------------------------------------------------------
 
+  async function refreshAccess() {
+    const current = channel();
+    if (!current || viewer) return;
+    const generation = ++accessGeneration;
+    const callEpoch = epoch;
+    const fresh = await channelsApi.get(current.id).catch(() => null);
+    if (generation !== accessGeneration || callEpoch !== epoch || channel()?.id !== current.id) return;
+    if (!fresh) return;
+    const allowed = fresh.my_permission === "speak" && lastRequest?.mode !== "listen";
+    setCanSpeak(allowed);
+    if (!allowed && room) {
+      const local = room.localParticipant;
+      await Promise.allSettled([
+        local.setMicrophoneEnabled(false),
+        local.setCameraEnabled(false),
+        local.setScreenShareEnabled(false),
+      ]);
+      if (generation !== accessGeneration || callEpoch !== epoch) return;
+      refresh();
+      report({ mic_on: false, cam_on: false, screen_on: false });
+    }
+  }
+
   /** `channel.e2ee_changed`: the room cannot switch encryption in place, so rejoin with the new setting. */
   async function onE2eeChanged(channelId: string, enabled: boolean) {
     const current = channel();
@@ -607,9 +657,17 @@ function createCall() {
     if (!current) return;
     if (message.event === "channel.deleted" && message.payload.channel_id === current.id) void lost("kicked");
     if (message.event === "server.deleted" && (message.server_id ?? message.payload.server_id) === current.server_id) void lost("kicked");
+    if (message.event === "member.removed" && message.payload.account_id === session.account()?.id) void lost("kicked");
     if (message.event === "channel.e2ee_changed" && message.payload.channel_id === current.id) {
       void onE2eeChanged(current.id, message.payload.e2ee_enabled === true);
     }
+    const server = message.server_id ?? message.payload.server_id;
+    if (server === current.server_id && (
+      message.event === "role.changed" ||
+      message.event === "member_role.changed" ||
+      message.event === "member.removed" ||
+      (message.event === "channel_acl.changed" && message.payload.channel_id === current.id)
+    )) void refreshAccess();
   }
 
   // Closing the tab must free the seat: a keepalive leave plus a local disconnect.
@@ -675,6 +733,7 @@ function createCall() {
     toggleDeafened: () => setDeafened(!deafened()),
     resumeAudio,
     onRealtime,
+    refreshAccess,
     /** Re-applies the saved output device to every playing remote track. */
     refreshOutput: () => audioHost.querySelectorAll("audio").forEach((el) => applyOutput(el)),
     devices,
@@ -687,11 +746,15 @@ const Context = createContext<CallSession>();
 
 export function CallProvider(props: {
   subscribe: (handler: (m: RealtimeEnvelope) => void) => () => void;
+  resync?: Accessor<number>;
   watch?: { channelId: string; serverId: string; e2ee: boolean };
   children: JSX.Element;
 }) {
   const call = createCall();
   const stop = props.subscribe((message) => call.onRealtime(message));
+  createEffect(() => {
+    if (props.resync?.()) void call.refreshAccess();
+  });
   onMount(() => {
     if (props.watch) void call.watch(props.watch);
   });

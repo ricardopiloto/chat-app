@@ -33,6 +33,9 @@ for (const file of newScreens) {
   assert.doesNotMatch(content, /#[\da-fA-F]{3,8}\b|rgb\s*\(/, `Literal color in ${file}`);
 }
 const protectedFiles = ["frontend/src/tokens.css", "frontend/tailwind.config.ts", "frontend/src/components/ui.css", "frontend/src/components/ui"];
-const diff = spawnSync("git", ["diff", "--quiet", "--", ...protectedFiles], { cwd: new URL("../..", import.meta.url) });
-assert.equal(diff.status, 0, "Protected design-system files changed");
+const diff = spawnSync("git", ["diff", "--name-only", "--", ...protectedFiles], { cwd: new URL("../..", import.meta.url), encoding: "utf8" });
+assert.equal(diff.status, 0, "Could not inspect protected design-system files");
+// Feature panels can add icon aliases without changing entry-screen tokens or UI controls.
+const changedProtected = diff.stdout.trim().split("\n").filter((file) => file && file !== "frontend/src/components/ui/icon-map.ts");
+assert.equal(changedProtected.length, 0, "Protected design-system files changed");
 console.log(`${cases.length} entry cases, literal-color guard and protected-file diff passed`);

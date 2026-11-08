@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+:root { --mesa-title-bar: 0px; }
+
 /* Page defaults. The chrome (top bar, rail, sidebar) is styled in components with Tailwind;
    what remains here is shared by the screens of later phases until they move over. */
 * { box-sizing: border-box; }

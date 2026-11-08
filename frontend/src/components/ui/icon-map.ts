@@ -11,6 +11,7 @@ import {
   BellOff,
   BellRing,
   BookOpen,
+  Bot,
   Camera,
   Check,
   CheckCheck,
@@ -156,6 +157,7 @@ export const iconMap: Record<string, LucideIcon> = {
   backspace: Delete,
   // badge: closest: an identity card; Lucide's Badge is a ribbon
   badge: IdCard,
+  webhook: Bot,
   // blur_on: closest: Lucide has no blur glyph
   blur_on: CircleDashed,
   broken_image: ImageOff,

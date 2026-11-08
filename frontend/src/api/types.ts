@@ -127,6 +127,7 @@ export interface Channel {
   created_by_account_id: Id;
   e2ee_enabled: boolean;
   has_channel_key: boolean;
+  has_active_webhook: boolean;
   visibility: ChannelVisibility;
   visible_to_new_members: boolean;
   my_permission?: string;
@@ -140,6 +141,19 @@ export interface CreateChannelBody {
   custody_ack?: boolean;
   channel_key_sealed?: string;
 }
+
+export interface ChannelWebhook {
+  id: Id;
+  channel_id: Id;
+  account_id: Id;
+  display_name: string;
+  has_avatar: boolean;
+  created_by_account_id: Id;
+  created_at: Timestamp;
+  revoked_at: Timestamp | null;
+}
+
+export interface ChannelWebhookSecret { webhook: ChannelWebhook; token: string }
 
 export interface AclEntry {
   id: Id;
@@ -195,6 +209,8 @@ export interface Message {
   created_at: Timestamp;
   kind?: string;
   content_plaintext?: string;
+  sender_display_name_snapshot?: string;
+  sender_avatar_url?: string;
   attachment_ids: Id[];
   reactions?: ReactionSummary[];
   reply_to_message_id?: Id;

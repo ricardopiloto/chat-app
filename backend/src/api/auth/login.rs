@@ -29,6 +29,12 @@ pub async fn login(
         .ok_or_else(|| {
             ApiError::new(axum::http::StatusCode::UNAUTHORIZED, "invalid credentials")
         })?;
+    if account.is_system_account {
+        return Err(ApiError::new(
+            axum::http::StatusCode::UNAUTHORIZED,
+            "invalid credentials",
+        ));
+    }
     let parsed =
         PasswordHash::new(&account.password_hash).map_err(|e| ApiError::internal(e.to_string()))?;
     Argon2::default()

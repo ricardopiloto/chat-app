@@ -51,7 +51,7 @@ export function createPreview() {
     try {
       await refreshDevices();
       const chosen = resolveDevice("audioinput", prefs.micId()).id;
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: chosen ? { deviceId: { exact: chosen } } : true });
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: { noiseSuppression: true, ...(chosen ? { deviceId: { exact: chosen } } : {}) } });
       if (ticket !== micTicket) return stream.getTracks().forEach((t) => t.stop());
       micStream = stream;
       meter = meterStream(stream);

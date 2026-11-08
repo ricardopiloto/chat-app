@@ -193,3 +193,7 @@ Origem: tarefa 6.4 da change arquivada `2026-11-03-email-registration` (a `email
 
 - **Copy de E2EE ainda menciona "gravação"** (ex.: aviso de custódia de chave: "sem ela não é possível religar a E2EE depois de gravar") apesar de não haver botão de gravar. Quando o item 1 (Gravação/Egress) for reposto, rever esta copy; até lá, o novo design system não deve desenhar um botão de "Gravar" — só o fluxo de ligar/desligar E2EE e religar que já existe.
 - **`GridAdmin.tsx`** é um painel administrativo antigo (atribuir conta a slot numerado via `<select>`), substituído pelo `SceneEditor.tsx` actual e não usado em lado nenhum — candidato a remoção de código morto, não a redesenho.
+
+## 21. Algoritmo de supressão de ruído mais avançado
+
+A versão simples e nativa do navegador está planeada na change OpenSpec `enable-basic-noise-suppression`. Um processamento próprio mais avançado, no estilo Krisp/RNNoise, fica como melhoria futura para cenários em que a supressão do navegador não seja suficiente ou consistente entre plataformas. Sem compromisso de prazo nem escolha de algoritmo nesta fase.

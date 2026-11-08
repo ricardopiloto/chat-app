@@ -242,7 +242,7 @@ export function ChannelPage(props: {
   }
   const replyTarget = (): ReplyTarget | undefined => {
     const m = reply();
-    return m && { messageId: m.id, author: people().get(m.senderId ?? "")?.label ?? t("txt.search.unknownSender"), excerpt: excerptOf(m.text) || t("txt.attachment.name") };
+    return m && { messageId: m.id, author: m.webhook ? (m.senderDisplayNameSnapshot || t("txt.row.webhookBadge")) : (people().get(m.senderId ?? "")?.label ?? t("txt.search.unknownSender")), excerpt: excerptOf(m.text) || t("txt.attachment.name") };
   };
   async function remove(message: ChatMessage) {
     try {
@@ -262,6 +262,7 @@ export function ChannelPage(props: {
         <h1><span class="ch-hash">#</span>{props.channel.name}</h1>
         <span class="ch-head-desc">{description()}</span>
         <Badge tone="secure" mono icon="verified_user">{t("txt.header.e2ee")}</Badge>
+        <Show when={props.channel.has_active_webhook}><Badge tone="neutral" mono icon="warning">{t("txt.header.webhookActive")}</Badge></Show>
         <span class="ch-head-actions">
           <button type="button" onClick={() => document.dispatchEvent(new Event("mesa:search-channel"))} title={t("txt.header.search")} aria-label={t("txt.header.search")}><Icon name="search" /></button>
           <button type="button" onClick={shell.toggleMembers} title={t("txt.header.members")} aria-label={t("txt.header.members")} aria-pressed={shell.membersOpen()}><Icon name="group" /></button>

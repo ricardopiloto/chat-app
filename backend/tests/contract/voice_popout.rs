@@ -39,7 +39,12 @@ async fn popout_token_is_hidden_and_does_not_emit_grid_updated() {
     let cookie = must_cookie(cookie);
     let account_id = body["id"].as_str().unwrap().to_string();
     let (_, server, _) = app
-        .request("POST", "/api/servers", Some(create_server_body("Mesa")), Some(&cookie))
+        .request(
+            "POST",
+            "/api/servers",
+            Some(create_server_body("Mesa")),
+            Some(&cookie),
+        )
         .await;
     let server_id = server["id"].as_str().unwrap();
     let channel_id = voice_channel(&app, &cookie, server_id, "mesa").await;

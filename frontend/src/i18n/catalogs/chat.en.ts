@@ -7,6 +7,7 @@ export const chatEn: MessageTree = {
       descPublic: "Text channel · visible to the whole server",
       descPrivate: "Private text channel",
       e2ee: "E2EE on",
+      webhookActive: "Cleartext integration",
       search: "Search this channel",
       members: "Toggle members panel",
     },
@@ -17,6 +18,7 @@ export const chatEn: MessageTree = {
     },
     day: { today: "Today", yesterday: "Yesterday" },
     row: {
+      webhookBadge: "Integration",
       owner: "Owner",
       you: "you",
       reply: "Reply",

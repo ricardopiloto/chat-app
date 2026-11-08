@@ -41,6 +41,9 @@ export async function toChatMessage(raw: Message, key: Uint8Array): Promise<Chat
     text,
     createdAt: raw.created_at,
     system,
+    webhook: raw.kind === "webhook",
+    senderDisplayNameSnapshot: raw.sender_display_name_snapshot,
+    senderAvatarUrl: raw.sender_avatar_url,
     attachmentIds: raw.attachment_ids ?? [],
     reactions: (raw.reactions ?? []).map((reaction) => ({
       emojiCode: reaction.emoji_code,

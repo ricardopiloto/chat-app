@@ -12,7 +12,7 @@ export type Feature = { icon: string; title: string; text: string };
 // and the task on the right. On narrow screens the brand panel collapses to its header.
 export function AuthFrame(props: { headline: string; text: string; features: Feature[]; single?: boolean; hideInstancePanel?: boolean; cardHeader?: JSX.Element; children: JSX.Element }) {
   if (props.single) return (
-    <div class="flex min-h-dvh flex-col bg-background text-on-surface">
+    <div class="flex min-h-[calc(100dvh-var(--mesa-title-bar))] flex-col bg-background text-on-surface">
       <header class="flex items-center justify-between gap-3 px-4 py-3 tablet:px-8">
         <div class="flex items-center gap-2"><Logo size={32} /><span class="font-display text-headline-sm">{t("shell.brand")}</span></div>
         <div class="flex items-center gap-2"><LanguageSwitch /><ThemeSwitch /></div>
@@ -29,7 +29,7 @@ export function AuthFrame(props: { headline: string; text: string; features: Fea
     </div>
   );
   return (
-    <div class="flex min-h-dvh flex-col bg-background text-on-surface">
+    <div class="flex min-h-[calc(100dvh-var(--mesa-title-bar))] flex-col bg-background text-on-surface">
       <header class="flex items-center justify-between gap-3 px-4 py-3 tablet:px-8">
         <div class="flex items-center gap-3">
           <Logo size={32} />

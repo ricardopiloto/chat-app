@@ -35,7 +35,7 @@ function Frame() {
   });
 
   return (
-    <div class="app-shell flex h-dvh flex-col overflow-hidden bg-background text-on-surface">
+    <div class="app-shell flex h-[calc(100dvh-var(--mesa-title-bar))] flex-col overflow-hidden bg-background text-on-surface">
       <Topbar />
       <Show when={shell.delivery() !== "connected"}>
         <p class="bg-surface-container-high px-4 py-1.5 text-center text-body-sm text-on-surface-variant" role="status">
@@ -74,7 +74,7 @@ export function AppShell() {
   const session = useSession();
   const shell = createShellState({ account: () => session.account()!, identity: () => session.identity()! });
   return (
-    <CallProvider subscribe={shell.subscribe}>
+    <CallProvider subscribe={shell.subscribe} resync={shell.resync}>
       <ShellProvider value={shell}>
         <Frame />
       </ShellProvider>

@@ -36,6 +36,10 @@ pub struct Message {
     pub kind: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub content_plaintext: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sender_display_name_snapshot: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sender_avatar_url: Option<String>,
     #[serde(default)]
     pub attachment_ids: Vec<Uuid>,
     #[serde(default)]

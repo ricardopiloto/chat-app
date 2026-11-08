@@ -764,12 +764,15 @@ async fn websocket_accepts_the_session_token_as_a_subprotocol() {
         }
     };
 
-    let (mut cookie_socket, _) = connect(vec![("cookie".into(), cookie.clone())]).await.unwrap();
+    let (mut cookie_socket, _) = connect(vec![("cookie".into(), cookie.clone())])
+        .await
+        .unwrap();
     assert!(app.state.ws.is_online(account_id));
     cookie_socket.close(None).await.unwrap();
 
-    let (mut bearer_socket, _) =
-        connect(vec![("authorization".into(), bearer(&first_token))]).await.unwrap();
+    let (mut bearer_socket, _) = connect(vec![("authorization".into(), bearer(&first_token))])
+        .await
+        .unwrap();
     assert!(app.state.ws.is_online(account_id));
     bearer_socket.close(None).await.unwrap();
 
@@ -796,10 +799,12 @@ async fn websocket_accepts_the_session_token_as_a_subprotocol() {
     .unwrap();
     assert!(mixed_closed, "cookie did not win over the sub-protocol");
 
-    let (mut protocol_socket, _) =
-        connect(vec![("sec-websocket-protocol".into(), second_token.clone())])
-            .await
-            .unwrap();
+    let (mut protocol_socket, _) = connect(vec![(
+        "sec-websocket-protocol".into(),
+        second_token.clone(),
+    )])
+    .await
+    .unwrap();
     assert!(app.state.ws.is_online(account_id));
     protocol_socket.close(None).await.unwrap();
 
@@ -813,11 +818,12 @@ async fn websocket_accepts_the_session_token_as_a_subprotocol() {
         )
         .await;
     assert_eq!(status, StatusCode::NO_CONTENT);
-    assert!(
-        connect(vec![("sec-websocket-protocol".into(), second_token.clone())])
-            .await
-            .is_err()
-    );
+    assert!(connect(vec![(
+        "sec-websocket-protocol".into(),
+        second_token.clone()
+    )])
+    .await
+    .is_err());
     assert!(
         connect(vec![("authorization".into(), bearer(&second_token))])
             .await

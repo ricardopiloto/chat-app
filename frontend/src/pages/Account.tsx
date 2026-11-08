@@ -36,8 +36,9 @@ export function Account() {
       setShowAdminWelcome(true);
       session.dismissWelcome();
     }
-    if (window.location.hash === "#recovery") {
-      requestAnimationFrame(() => document.getElementById("recovery")?.scrollIntoView());
+    if (window.location.hash === "#recovery" || window.location.hash === "#audio-video") {
+      const target = window.location.hash.slice(1);
+      requestAnimationFrame(() => document.getElementById(target)?.scrollIntoView());
     }
     onCleanup(() => { cancelled = true; });
   });

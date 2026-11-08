@@ -107,6 +107,15 @@ pub async fn create_role(
         member_ids: Vec::new(),
     };
     db::server_role::create(&state.pool, &role).await?;
+    state
+        .ws
+        .send_to_server_members(
+            &state.pool,
+            server_id,
+            "role.changed",
+            &serde_json::json!({ "server_id": server_id, "role_id": role.id }),
+        )
+        .await;
     let role = db::server_role::find_by_id(&state.pool, role.id)
         .await?
         .ok_or_else(|| ApiError::not_found("role not found"))?;
@@ -168,6 +177,15 @@ pub async fn patch_role(
         caps.can_manage_channels = v;
     }
     db::server_role::update_full(&state.pool, role.id, body.name.as_deref(), &caps).await?;
+    state
+        .ws
+        .send_to_server_members(
+            &state.pool,
+            server_id,
+            "role.changed",
+            &serde_json::json!({ "server_id": server_id, "role_id": role_id }),
+        )
+        .await;
     Ok(Json(
         db::server_role::find_by_id(&state.pool, role_id)
             .await?
@@ -199,6 +217,15 @@ pub async fn delete_role(
         return Err(hierarchy_err());
     }
     db::server_role::delete(&state.pool, role_id).await?;
+    state
+        .ws
+        .send_to_server_members(
+            &state.pool,
+            server_id,
+            "role.changed",
+            &serde_json::json!({ "server_id": server_id, "role_id": role_id }),
+        )
+        .await;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -246,6 +273,15 @@ pub async fn put_role_positions(
         updates.push((item.id, item.position));
     }
     db::server_role::set_positions(&state.pool, server_id, &updates).await?;
+    state
+        .ws
+        .send_to_server_members(
+            &state.pool,
+            server_id,
+            "role.changed",
+            &serde_json::json!({ "server_id": server_id }),
+        )
+        .await;
     Ok(Json(
         db::server_role::list_by_server(&state.pool, server_id).await?,
     ))
@@ -296,6 +332,15 @@ pub async fn set_role_members(
         .await?;
     }
     db::server_role::set_members(&state.pool, role_id, &body.member_ids).await?;
+    state
+        .ws
+        .send_to_server_members(
+            &state.pool,
+            server_id,
+            "role.changed",
+            &serde_json::json!({ "server_id": server_id, "role_id": role_id }),
+        )
+        .await;
     Ok(Json(
         db::server_role::find_by_id(&state.pool, role_id)
             .await?
@@ -359,6 +404,7 @@ pub async fn put_member_role(
         }
     }
     db::server_role::set_member_role(&state.pool, server_id, account_id, body.role_id).await?;
+    state.ws.send_to_server_members(&state.pool, server_id, "member_role.changed", &serde_json::json!({ "server_id": server_id, "account_id": account_id, "role_id": body.role_id })).await;
     Ok(Json(serde_json::json!({
         "account_id": account_id,
         "role_id": body.role_id,
@@ -408,5 +454,20 @@ pub async fn delete_member(
         return Err(ApiError::not_found("member not found"));
     }
     let _ = db::channel_mute::delete_for_account_on_server(&state.pool, server_id, member_id).await;
+    state
+        .ws
+        .send_to_server_members(
+            &state.pool,
+            server_id,
+            "member.removed",
+            &serde_json::json!({ "server_id": server_id, "account_id": member_id }),
+        )
+        .await;
+    state.ws.send_to_accounts(
+        &[member_id],
+        "member.removed",
+        server_id,
+        &serde_json::json!({ "server_id": server_id, "account_id": member_id }),
+    );
     Ok(StatusCode::NO_CONTENT)
 }

@@ -14,6 +14,7 @@ pub struct Account {
 
 #[derive(Debug, Clone)]
 pub struct AccountRecord {
+    pub is_system_account: bool,
     pub id: Uuid,
     pub handle: String,
     pub password_hash: String,

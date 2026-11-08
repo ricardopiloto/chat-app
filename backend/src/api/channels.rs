@@ -57,7 +57,9 @@ pub async fn create_channel(
     )
     .await?;
     crate::api::auth::key_reminders::spawn_channel_reminder(
-        state.clone(), account.id, crate::api::auth::recovery_email::wants_english(&headers),
+        state.clone(),
+        account.id,
+        crate::api::auth::recovery_email::wants_english(&headers),
     );
     Ok((StatusCode::CREATED, Json(channel)))
 }
@@ -136,6 +138,15 @@ pub async fn patch_channel(
         };
         db::channel::update_visibility(&state.pool, channel_id, visibility, visible_to_new_members)
             .await?;
+        state
+            .ws
+            .send_to_server_members(
+                &state.pool,
+                channel.server_id,
+                "channel_acl.changed",
+                &serde_json::json!({ "channel_id": channel_id, "server_id": channel.server_id }),
+            )
+            .await;
     }
 
     get_channel(State(state), AuthUser(account), Path(channel_id)).await
@@ -152,15 +163,15 @@ fn valid_level(kind: ChannelType, level: PermLevel) -> bool {
     )
 }
 
-struct ChannelManagerCtx {
-    channel: crate::domain::channel::Channel,
+pub(crate) struct ChannelManagerCtx {
+    pub(crate) channel: crate::domain::channel::Channel,
     server: crate::domain::server::Server,
     is_owner: bool,
     is_creator: bool,
     actor_pos: i64,
 }
 
-async fn require_channel_manager(
+pub(crate) async fn require_channel_manager(
     state: &AppState,
     account_id: Uuid,
     channel_id: Uuid,
@@ -333,6 +344,15 @@ pub async fn put_acl(
         });
     }
     db::channel_acl::replace_all(&state.pool, channel_id, &entries).await?;
+    state
+        .ws
+        .send_to_server_members(
+            &state.pool,
+            channel.server_id,
+            "channel_acl.changed",
+            &serde_json::json!({ "channel_id": channel_id, "server_id": channel.server_id }),
+        )
+        .await;
     get_acl(State(state), AuthUser(account), Path(channel_id)).await
 }
 

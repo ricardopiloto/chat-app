@@ -32,6 +32,7 @@ pub mod servers;
 pub mod typing;
 pub mod unfurl;
 pub mod voice;
+pub mod webhooks;
 pub mod welcome;
 
 pub fn router(state: AppState) -> axum::Router {
@@ -103,6 +104,32 @@ pub fn router(state: AppState) -> axum::Router {
                 )
                 .route("/invites/{code}/revoke", post(invites::revoke_invite))
                 .route("/invites/{code}/accept", post(invites::accept_invite))
+                .route(
+                    "/channels/{channel_id}/webhooks",
+                    post(webhooks::create_or_reactivate_webhook).get(webhooks::get_webhook),
+                )
+                .route(
+                    "/channels/{channel_id}/webhooks/{webhook_id}",
+                    patch(webhooks::patch_webhook).delete(webhooks::delete_webhook),
+                )
+                .route(
+                    "/channels/{channel_id}/webhooks/{webhook_id}/rotate",
+                    post(webhooks::rotate_webhook_token),
+                )
+                .route(
+                    "/channels/{channel_id}/webhooks/{webhook_id}/avatar",
+                    put(webhooks::put_webhook_avatar)
+                        .layer(DefaultBodyLimit::max(MAX_AVATAR_BYTES + 64 * 1024)),
+                )
+                .route(
+                    "/webhooks/{webhook_id}/{token}",
+                    post(webhooks::post_webhook_message)
+                        .layer(DefaultBodyLimit::max(webhooks::WEBHOOK_BODY_LIMIT)),
+                )
+                .route(
+                    "/messages/{message_id}/webhook-avatar",
+                    get(webhooks::get_webhook_message_avatar),
+                )
                 .route(
                     "/channels/{channel_id}/messages",
                     get(messages::list_messages).post(messages::post_message),
