@@ -32,3 +32,11 @@ Veredito: OK
 
 ## Bloqueantes antes de implementar
 - Nenhum.
+
+## Revisão pós-implementação (2026-11-09)
+**Veredito geral:** Aprovado
+
+Confirmei no diff real de `frontend/src/shell/state.tsx` que `membersOpen` e `toggleMembers` foram trocados juntos para `membersChoice() ?? false`, sem tocar no mecanismo de `sessionStorage`/`remembered()` — exactamente a decisão prevista, sem risco de inconsistência entre os dois sítios. Usuário confirmou manualmente que o comportamento em produção está correcto.
+
+## Bloqueantes antes de arquivar
+- Nenhum.

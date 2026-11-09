@@ -28,6 +28,7 @@ export const en: MessageTree = {
     heroIntro: 'Talk, play, and stay awhile. Parley brings your group together in a private, self-hosted space.',
     host: 'Host my space',
     learn: 'Explore Parley',
+    download: 'Download for desktop',
     heroNote: 'On your server · End-to-end conversations',
     principle1: 'On your server',
     principle2: 'End-to-end conversations',

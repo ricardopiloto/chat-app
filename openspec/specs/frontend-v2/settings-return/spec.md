@@ -50,7 +50,7 @@ O sistema SHALL, ao sair das configurações de um servidor, abrir o último can
 
 #### Scenario: Canal de voz
 - **WHEN** o último canal era de voz
-- **THEN** ao voltar, abre a pré-entrada desse canal (ou o palco, se a pessoa continua na chamada), sem entrar na chamada por si
+- **THEN** ao voltar, abre o palco se a pessoa continua nessa chamada; caso contrário, inicia a entrada directa nesse canal
 
 ### Requirement: Voltar da conta
 O sistema SHALL, ao sair da página de Minha conta pelo botão "Voltar à Mesa" ou pela tecla Esc, abrir o último canal que a pessoa tinha aberto em qualquer servidor, no servidor a que pertence. A tecla Esc SHALL continuar a não sair da página enquanto a pessoa edita o nome. Se não houver canal lembrado, ou se ele já não existir ou já não for acessível, o sistema SHALL abrir a página inicial, sem mensagem de erro.

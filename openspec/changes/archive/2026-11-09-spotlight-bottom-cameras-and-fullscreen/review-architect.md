@@ -35,3 +35,19 @@ Veredito: OK
 
 ## Bloqueantes antes de implementar
 - Nenhum.
+
+## Revisão pós-implementação (2026-11-09)
+**Veredito geral:** Aprovado
+
+Li o diff real (`frontend/src/voice.css`, `frontend/src/components/ui/icon-map.ts`, `frontend/src/voice/GridView.tsx`, `voice.en.ts`/`voice.pt-BR.ts`) linha a linha, não apenas o relatório do Codex.
+
+- D1 implementado exactamente como especificado: `.call-spotlight-layout` em linhas (`grid-template-rows:minmax(0,1fr) auto`), `.call-spotlight-side` em `flex-direction:row` com `width:160px` por item, e a regra duplicada do `@media (max-width:767px)` foi removida (não ficou nenhuma regra conflituosa).
+- D2 implementado correctamente: o `ref` está no `<figure>`, não no `<video>`; o chip "Em transmissão" foi movido para dentro do `<figure>` como irmão do chip "Tela" (ambos directamente dentro do `<figure>`, fora do `<figcaption>`), exactamente a estrutura prevista.
+- D3 implementado fielmente: signal local sincronizado por `document.addEventListener("fullscreenchange", ...)` em `onMount`, removido em `onCleanup`, comparando `document.fullscreenElement === figureRef` — nunca assume o estado pela resolução da promessa. O `onCleanup` chama `document.exitFullscreen()` quando `document.fullscreenElement === figureRef`, cobrindo o caso do tile ser desmontado em tela-cheia (desligar o destaque ou a partilha terminar). `ref={figureRef}` com variável simples é o idiom correcto do Solid (compilador atribui o elemento à variável de forma síncrona, antes de qualquer `onMount` rodar) — sem risco de `undefined` quando o listener dispara.
+- D4 implementado correctamente: `Maximize`/`Minimize` importados de `lucide-solid`, mapeados para `fullscreen`/`fullscreen_exit`, distintos de `Maximize2`/`Minimize2` já usados pelo alternador de destaque — sem colisão.
+- `tsc --noEmit`, `eslint`, `verify:i18n-keys` e `build` passaram (confirmado pela saída registada pelo Codex); o único aviso do ESLint é pré-existente em `callSession.tsx`, fora do escopo desta change.
+
+**Achado menor (não bloqueante):** o botão novo `.call-fullscreen` não tem `margin-left:auto` nem está agrupado com `.call-spotlight` (que tem `margin-left:auto` e por isso é empurrado para a extremidade direita da legenda, sozinho); visualmente, o botão de tela-cheia fica colado ao nome/handle, com um vão grande até o botão de destaque, em vez dos dois botões aparecerem agrupados. Não é um bug de lógica — é só uma questão de agrupamento visual que vale a pena ajustar (mover o `margin-left:auto` para o primeiro botão presente, ou envolver os dois num `<div>` com a margem automática) antes da verificação manual (3.2), para não exigir um ajuste depois de já ter sido testado visualmente.
+
+## Bloqueantes antes de arquivar
+- Nenhum. O achado acima é cosmético e pode ser corrigido junto com o fecho da tarefa 3.2.

@@ -1,8 +1,9 @@
 // A voice channel joins once when its keyed screen mounts. Failed joins wait for an explicit retry.
 import { Match, Switch, createSignal, onCleanup, onMount } from "solid-js";
 import type { Channel } from "../api";
-import { Button } from "../components/ui";
+import { Button, Dialog } from "../components/ui";
 import { t } from "../i18n";
+import { needsExplicitConsent, resolveBootChannel } from "../shell/bootRoute";
 import { useShell } from "../shell/state";
 import { Stage } from "./Stage";
 import { useCall } from "./callSession";
@@ -12,7 +13,8 @@ export function VoicePage(props: { channel: Channel }) {
   const call = useCall();
   const shell = useShell();
   const channelId = props.channel.id;
-  const [preparing, setPreparing] = createSignal(true);
+  const [awaitingConsent, setAwaitingConsent] = createSignal(needsExplicitConsent(channelId));
+  const [preparing, setPreparing] = createSignal(!awaitingConsent());
   let disposed = false;
   let pending = false;
   const inThisCall = () => call.live() && call.channelId() === channelId;
@@ -33,7 +35,23 @@ export function VoicePage(props: { channel: Channel }) {
     }
   }
 
+  async function confirmJoin() {
+    resolveBootChannel();
+    setAwaitingConsent(false);
+    setPreparing(true);
+    await Promise.allSettled([shell.refreshChannels(), shell.refreshRoles()]);
+    if (!disposed) await join();
+  }
+
+  function declineJoin() {
+    const firstTextChannel = shell.channels.data?.find((channel) => channel.type === "text");
+    shell.go(firstTextChannel
+      ? `/servers/${shell.serverId()}/channels/${firstTextChannel.id}`
+      : `/servers/${shell.serverId()}`);
+  }
+
   onMount(() => {
+    if (awaitingConsent()) return;
     void (async () => {
       // Resolve current effective permissions before choosing full or listen mode.
       await Promise.allSettled([shell.refreshChannels(), shell.refreshRoles()]);
@@ -43,10 +61,12 @@ export function VoicePage(props: { channel: Channel }) {
   });
   onCleanup(() => {
     disposed = true;
+    if (awaitingConsent()) resolveBootChannel();
     if (connectingHere()) void call.leave();
   });
 
   return (
+    <>
     <Switch>
       <Match when={inThisCall()}>
         <Stage channel={props.channel} />
@@ -66,5 +86,13 @@ export function VoicePage(props: { channel: Channel }) {
         )}
       </Match>
     </Switch>
+    <Dialog open={awaitingConsent() && !inThisCall()} title={t("call.rejoinConsent.title")} onClose={declineJoin}>
+      <p>{t("call.rejoinConsent.body")}</p>
+      <div class="call-join-actions">
+        <Button onClick={declineJoin} data-autofocus>{t("call.rejoinConsent.decline")}</Button>
+        <Button variant="primary" onClick={() => void confirmJoin()}>{t("call.rejoinConsent.join")}</Button>
+      </div>
+    </Dialog>
+    </>
   );
 }

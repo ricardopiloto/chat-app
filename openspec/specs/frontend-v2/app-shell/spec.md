@@ -73,7 +73,7 @@ Abaixo de 768px de largura, o sistema SHALL colapsar o rail de servidores e a si
 - **THEN** o layout volta ao modo desktop (rail+sidebar permanentemente visíveis lado a lado com o conteúdo), sem exigir que o utilizador feche a gaveta manualmente
 
 ### Requirement: Painel de Membros do servidor
-O sistema SHALL apresentar, num painel lateral direito alternável, os membros do servidor activo agrupados por cargo e por presença (online/offline) com contagem de online, avatar, nome e indicador de presença, actualizado pelos eventos `presence.update`, e SHALL ocultá-lo por omissão em viewport estreito.
+O sistema SHALL apresentar, num painel lateral direito alternável, os membros do servidor activo agrupados por cargo e por presença (online/offline) com contagem de online, avatar, nome e indicador de presença, actualizado pelos eventos `presence.update`. O painel SHALL começar colapsado por omissão, incluindo em viewport largo, e SHALL permanecer oculto por omissão em viewport estreito.
 
 #### Scenario: Presença em tempo real
 - **WHEN** um membro fica online ou offline com o painel aberto
@@ -82,6 +82,10 @@ O sistema SHALL apresentar, num painel lateral direito alternável, os membros d
 #### Scenario: Painel alternável
 - **WHEN** o utilizador alterna o painel de Membros no cabeçalho do canal
 - **THEN** o painel abre ou fecha e a preferência é lembrada na sessão
+
+#### Scenario: Estado inicial numa sessão nova
+- **WHEN** o utilizador entra num servidor pela primeira vez numa sessão, sem ter alternado o painel antes
+- **THEN** o painel de Membros começa colapsado, mesmo em viewport largo
 
 ### Requirement: Shell fiel ao mockup
 O shell (topbar, rail, sidebar, painel do utilizador, painel de Membros) SHALL cumprir a checklist de `design.md` D7 para `mesa_shell_da_aplica_o_chat_de_texto` e SHALL ser classificado **Fiel** na comparação lado a lado, em tema escuro. Elementos fora de escopo (bandeja de dados, ferramentas VTT, fixar) SHALL NOT ser implementados.

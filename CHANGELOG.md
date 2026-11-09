@@ -9,6 +9,19 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-11-09
+
+### Added
+
+- Chamada de voz: ao reconectar com a rota já a apontar para um canal de voz (recarregar a página, aba restaurada pelo browser, ou link directo), aparece um modal pedindo confirmação explícita antes de ligar — nunca reconecta automaticamente sem essa confirmação. Recusar leva ao primeiro canal de texto do servidor, ou à vista do servidor se não houver nenhum. Navegar para o canal normalmente, dentro da sessão já aberta (ex. clicar na sidebar), continua a entrar direito, sem o modal.
+- Destaque (spotlight) da Grade: botão de tela cheia real do navegador no tile principal da partilha destacada, com estado sincronizado mesmo quando a saída não passa pelo botão (tecla Esc, gesto do sistema).
+- Botão de download do cliente desktop na página pública, apontando para a página de releases mais recente no GitHub.
+
+### Changed
+
+- Painel de Membros começa colapsado por omissão, mesmo em viewport largo (antes abria automaticamente); a preferência continua lembrada durante a sessão depois da primeira escolha explícita.
+- **BREAKING (fidelidade visual):** com destaque activo na vista de Grade, as câmaras e partilhas secundárias passam da coluna lateral direita para uma faixa inferior, em qualquer largura de janela — diverge deliberadamente do mockup original de fidelidade visual, por pedido directo do utilizador.
+
 ## [1.7.0] - 2026-11-08
 
 ### Added

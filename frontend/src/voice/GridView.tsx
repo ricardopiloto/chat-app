@@ -1,5 +1,5 @@
 // "Grade": everyone in the call, then every screen share, with no manual placement. A share can be
-// promoted to the main stage (spotlight); the cameras then move to a column on the right.
+// promoted to the main stage (spotlight); the cameras then move to a strip below.
 import { For, Show, createEffect, createMemo, createSignal, onCleanup, onMount } from "solid-js";
 import { Icon } from "../components/ui";
 import { t } from "../i18n";
@@ -46,29 +46,57 @@ export function GridView(props: { fill?: boolean }) {
     onCleanup(() => setGridEl(undefined));
   };
 
-  const ScreenTile = (props: { share: ReturnType<typeof screens>[number]; main?: boolean }) => (
-    <figure class="call-tile call-screen" classList={{ "is-main": props.main, "is-dimmed": !!focused() && !props.main }}>
+  const ScreenTile = (props: { share: ReturnType<typeof screens>[number]; main?: boolean }) => {
+    let figureRef: HTMLElement | undefined;
+    const [isFullscreen, setIsFullscreen] = createSignal(false);
+
+    onMount(() => {
+      if (!props.main) return;
+      const syncFullscreen = () => setIsFullscreen(document.fullscreenElement === figureRef);
+      document.addEventListener("fullscreenchange", syncFullscreen);
+      syncFullscreen();
+      onCleanup(() => {
+        document.removeEventListener("fullscreenchange", syncFullscreen);
+        if (document.fullscreenElement === figureRef) void document.exitFullscreen().catch(() => {});
+      });
+    });
+
+    const toggleFullscreen = () => {
+      if (isFullscreen()) void document.exitFullscreen().catch(() => {});
+      else if (figureRef) void figureRef.requestFullscreen().catch(() => {});
+    };
+
+    return <figure ref={figureRef} class="call-tile call-screen" classList={{ "is-main": props.main, "is-dimmed": !!focused() && !props.main }}>
       <TrackVideo track={props.share.track} fit="contain" />
       <span class="call-chip screen">
         <Icon name="present_to_all" class="text-[14px]" />
         {t("call.screenTag")}
       </span>
+      <Show when={props.main}><span class="call-chip live">{t("call.transmitting")}</span></Show>
       <figcaption class="call-tile-caption">
         <span class="call-tile-name">{props.share.owner?.name ?? props.share.id}</span>
         <Show when={props.share.owner?.handle}>{(handle) => <span class="call-tile-handle">@{handle()}</span>}</Show>
-        <button
-          type="button"
-          class="call-spotlight"
-          aria-pressed={spotlight() === props.share.id}
-          title={spotlight() === props.share.id ? t("call.spotlightOff") : t("call.spotlightOn")}
-          onClick={() => setSpotlight(spotlight() === props.share.id ? null : props.share.id)}
-        >
-          <Icon name={spotlight() === props.share.id ? "close_fullscreen" : "open_in_full"} class="text-[18px]" />
-          <span>{spotlight() === props.share.id ? t("call.spotlightOff") : t("call.spotlightOn")}</span>
-        </button>
+        <div class="call-tile-actions">
+          <Show when={props.main}>
+            <button type="button" class="call-fullscreen" aria-label={isFullscreen() ? t("call.fullscreenOff") : t("call.fullscreenOn")} title={isFullscreen() ? t("call.fullscreenOff") : t("call.fullscreenOn")} onClick={toggleFullscreen}>
+              <Icon name={isFullscreen() ? "fullscreen_exit" : "fullscreen"} class="text-[18px]" />
+              <span>{isFullscreen() ? t("call.fullscreenOff") : t("call.fullscreenOn")}</span>
+            </button>
+          </Show>
+          <button
+            type="button"
+            class="call-spotlight"
+            aria-pressed={spotlight() === props.share.id}
+            title={spotlight() === props.share.id ? t("call.spotlightOff") : t("call.spotlightOn")}
+            onClick={() => setSpotlight(spotlight() === props.share.id ? null : props.share.id)}
+          >
+            <Icon name={spotlight() === props.share.id ? "close_fullscreen" : "open_in_full"} class="text-[18px]" />
+            <span>{spotlight() === props.share.id ? t("call.spotlightOff") : t("call.spotlightOn")}</span>
+          </button>
+        </div>
       </figcaption>
-    </figure>
-  );
+    </figure>;
+  };
 
   return (
     <div class="call-grid-view" classList={{ "is-fill": filling() }}>
@@ -93,7 +121,6 @@ export function GridView(props: { fill?: boolean }) {
           <div class="call-spotlight-layout">
             <div class="call-spotlight-main">
               <ScreenTile share={main()} main />
-              <span class="call-chip live">{t("call.transmitting")}</span>
             </div>
             <div class="call-spotlight-side">
               <For each={talkers()}>{(p) => <Tile person={p} size="strip" speaking={call.speaking().has(p.id)} badge={focused()?.owner?.id === p.id ? <span class="call-chip screen"><Icon name="present_to_all" class="text-[14px]" />{t("call.screenTag")}</span> : undefined} />}</For>

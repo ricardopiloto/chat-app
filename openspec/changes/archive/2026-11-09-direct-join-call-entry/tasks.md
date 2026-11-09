@@ -14,6 +14,7 @@
 
 ## 3. Integração e revisão
 
-- [ ] 3.1 Verificar manualmente: entrar como falante com mic ligado por omissão e câmara desligada; ligá-la depois; entrar como ouvinte; negar permissão do microfone/câmara e confirmar erro com retry; confirmar Áudio & Vídeo funcional fora da chamada.
+- [x] 3.1 Verificar manualmente: entrar como falante com mic ligado por omissão e câmara desligada; ligá-la depois; entrar como ouvinte; negar permissão do microfone/câmara e confirmar erro com retry; confirmar Áudio & Vídeo funcional fora da chamada.
+  - Confirmado pelo usuário em teste manual real: entrada como falante e ouvinte, mic/câmera, negação de permissão com retry e Áudio & Vídeo fora da chamada funcionando.
 - [x] 3.2 Revisão dupla dos artefactos e, após implementação, do código (arquiteto + fullstack, skills `spec-review-architect`/`spec-review-fullstack`); registar pareceres, incluindo efeitos em popout e regresso das definições.
 - [x] 3.3 Executar `openspec validate direct-join-call-entry --strict` e confirmar aprovação.

@@ -29,6 +29,7 @@ export const ptBR: MessageTree = {
     heroIntro: 'Converse, jogue e fique mais um pouco. O Parley reúne seu grupo em um espaço privado, hospedado por vocês.',
     host: 'Hospedar meu espaço',
     learn: 'Conhecer o Parley',
+    download: 'Baixar para desktop',
     heroNote: 'No servidor de vocês · Conversas de ponta a ponta',
     principle1: 'No servidor de vocês',
     principle2: 'Conversas de ponta a ponta',

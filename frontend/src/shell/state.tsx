@@ -262,9 +262,9 @@ export function createShellState(props: { account: () => Account; identity: () =
   const [membersChoice, setMembersChoice] = createSignal<boolean | undefined>(remembered());
   const [viewport, setViewport] = createSignal(window.innerWidth);
   const narrow = () => viewport() < WIDE_SCREEN;
-  const membersOpen = () => !narrow() && (membersChoice() ?? true) && route().page === "server" && !!serverId() && route().settings === undefined;
+  const membersOpen = () => !narrow() && (membersChoice() ?? false) && route().page === "server" && !!serverId() && route().settings === undefined;
   const toggleMembers = () => {
-    const next = !(membersChoice() ?? true);
+    const next = !(membersChoice() ?? false);
     setMembersChoice(next);
     try {
       sessionStorage.setItem(MEMBERS_KEY, next ? "1" : "0");

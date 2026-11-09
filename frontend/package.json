@@ -1,7 +1,7 @@
 {
   "name": "chat-frontend-v2",
   "private": true,
-  "version": "1.7.0",
+  "version": "1.8.0",
   "license": "AGPL-3.0-only",
   "type": "module",
   "main": "electron/dist/main.js",
@@ -20,6 +20,7 @@
     "verify:i18n": "node scripts/verify-i18n.mjs",
     "verify:sound": "node scripts/verify-sound.mjs",
     "verify:last-channel": "node scripts/verify-last-channel.mjs",
+    "verify:boot-route": "node scripts/verify-boot-route.mjs",
     "verify:mentions": "node scripts/verify-mentions.mjs",
     "verify:typing": "node scripts/verify-typing.mjs",
     "verify:picker-placement": "node scripts/verify-picker-placement.mjs",

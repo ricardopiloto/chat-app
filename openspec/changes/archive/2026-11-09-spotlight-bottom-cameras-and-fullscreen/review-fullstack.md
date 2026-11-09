@@ -38,3 +38,14 @@ Veredito: OK
 
 ## Limitações técnicas a reportar ao Arquiteto
 - Nenhuma.
+
+## Revisão pós-implementação (2026-11-09)
+**Veredito geral:** Aprovado, com um ajuste cosmético recomendado antes da verificação manual
+
+- Conferido no diff real: o botão de tela-cheia (`.call-fullscreen`) e a sincronização de estado estão em `ScreenTile` (`GridView.tsx`), guardados por `if (!props.main) return;` dentro do `onMount` — tiles normais da grade e partilhas secundárias não ganham listener nem botão, como o Non-Goal exige.
+- `verify:i18n-keys`, `tsc --noEmit`, `eslint src` e `build` passaram conforme a saída registada pelo Codex; nenhum teste automatizado foi criado para a Fullscreen API, como já previsto nesta revisão antes da implementação (API de gesto do utilizador, não exercitável de forma fiel em ambiente headless).
+- Código organizado dentro dos arquivos já previstos, sem refactor fora de escopo.
+- **Achado (cosmético, não bloqueante):** `.call-fullscreen` não está agrupado visualmente com `.call-spotlight` na legenda — ver detalhe no parecer do Arquiteto. Recomendo corrigir antes da tarefa 3.2 para a verificação manual já testar o layout final, mas não é um bloqueante de arquitetura nem de lógica.
+
+## Bloqueantes antes de arquivar
+- Nenhum.

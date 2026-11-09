@@ -40,7 +40,7 @@ A janela de popout SHALL estabelecer a sua própria ligação à sala da chamada
 - **THEN** não há nenhum controlo para ligar/desligar o próprio mic ou câmara nessa janela
 
 ### Requirement: A janela principal não duplica a grade enquanto o popout está aberto
-Enquanto um popout estiver aberto para uma chamada, a janela principal SHALL NOT mostrar o PiP flutuante nem a grade activa dessa chamada. A indicação de que a chamada está noutra janela, com a acção para a trazer de volta, SHALL aparecer somente quando a janela principal estiver na tela do canal de voz dessa chamada; SHALL NOT aparecer em canais de texto, outras áreas ou na pré-entrada de outro canal de voz.
+Enquanto um popout estiver aberto para uma chamada, a janela principal SHALL NOT mostrar o PiP flutuante nem a grade activa dessa chamada. A indicação de que a chamada está noutra janela, com a acção para a trazer de volta, SHALL aparecer somente quando a janela principal estiver na tela do canal de voz dessa chamada; SHALL NOT aparecer em canais de texto, outras áreas ou no estado de ligação de outro canal de voz.
 
 #### Scenario: Janela principal mostra o estado "noutra janela"
 - **WHEN** o popout está aberto e o utilizador vê o canal de voz da chamada activa na janela principal
@@ -59,15 +59,15 @@ Enquanto um popout estiver aberto para uma chamada, a janela principal SHALL NOT
 - **THEN** a janela de popout fecha, e o PiP/grade principal volta a funcionar normalmente sem terminar a chamada
 
 ### Requirement: Entrar em outro canal de voz encerra o popout anterior
-Quando o utilizador confirma a entrada num canal de voz diferente do da chamada activa no popout, o sistema SHALL fechar o popout anterior, encerrar a chamada anterior e só então ligar-se ao novo canal de voz. O novo canal SHALL usar o modo e as escolhas de microfone e câmara feitas na sua pré-entrada, sem deixar a chamada anterior activa em paralelo.
+Quando o utilizador abre outro canal de voz enquanto a chamada activa está no popout, o sistema SHALL fechar o popout e encerrar a chamada anterior antes de entrar directamente no novo canal. A nova chamada SHALL começar com câmara desligada e microfone conforme a preferência, se for permitido falar.
 
 #### Scenario: Troca confirmada de canal de voz
-- **WHEN** o utilizador com popout aberto confirma a entrada em outro canal de voz
-- **THEN** o popout anterior fecha, o utilizador sai da chamada anterior e entra na nova chamada com as escolhas feitas para ela
+- **WHEN** o utilizador com popout aberto abre outro canal de voz
+- **THEN** o popout fecha e a nova chamada inicia sem confirmação manual
 
 #### Scenario: Entrada no novo canal falha
-- **WHEN** o popout e a chamada anteriores já foram encerrados e a entrada no novo canal falha
-- **THEN** a pré-entrada mostra o erro da nova chamada, sem reabrir o popout nem voltar automaticamente à chamada antiga
+- **WHEN** a chamada antiga já terminou e a entrada no novo canal falha
+- **THEN** aparece o erro com acção de tentar novamente, sem reabrir a chamada antiga
 
 ### Requirement: Fechar o popout não termina a chamada
 Fechar a janela de popout (pela acção de trazer de volta, ou pelo botão de fechar nativo da janela) SHALL NOT terminar a chamada nem afectar a ligação da janela principal — só termina a ligação de visualização desse popout.

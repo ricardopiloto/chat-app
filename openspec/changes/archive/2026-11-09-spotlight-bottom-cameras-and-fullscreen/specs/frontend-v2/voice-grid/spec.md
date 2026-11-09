@@ -5,6 +5,16 @@
 ### Requirement: Destaque (spotlight) de uma partilha de ecrã
 O sistema SHALL permitir promover uma partilha de ecrã activa a um palco principal maior, com as restantes câmaras/partilhas reduzidas a uma faixa inferior, através de um alternador de destaque por partilha. O tile principal do destaque SHALL oferecer uma opção de tela-cheia real do navegador, distinta do alternador de destaque, que sai automaticamente quando o utilizador usa a tecla Esc do navegador.
 
+#### Scenario: Dono da partilha destacado
+
+- **WHEN** uma partilha é promovida a spotlight na Grade
+- **THEN** o palco principal mostra uma indicação clara de quem partilha e o tile correspondente, quando presente, tem um destaque visual distinto dos outros
+
+#### Scenario: Spotlight terminado
+
+- **WHEN** o utilizador desactiva o spotlight
+- **THEN** o destaque de participante é removido e a Grade normal regressa
+
 #### Scenario: Promover uma partilha a destaque
 - **WHEN** o utilizador activa o destaque numa partilha de ecrã
 - **THEN** essa partilha passa a ocupar o palco principal e as restantes câmaras/partilhas passam para uma faixa inferior, sem interromper nenhuma transmissão em curso

@@ -35,3 +35,11 @@ Veredito: OK
 
 ## Limitações técnicas a reportar ao Arquiteto
 - Nenhuma.
+
+## Revisão pós-implementação (2026-11-09)
+**Veredito geral:** Aprovado
+
+Li o diff real em `frontend/src/shell/state.tsx`: os dois (e únicos) usos de `membersChoice() ?? true` — em `membersOpen` e em `toggleMembers` — foram trocados para `membersChoice() ?? false`, juntos, exactamente como a tarefa 1.1 exigia; `remembered()`/`MEMBERS_KEY`/`sessionStorage` não foram tocados. `focusMember` não foi alterado e continua chamando `setMembersChoice(true)` directamente. `tsc`, `eslint` e `build` passaram. Usuário confirmou manualmente (tarefa 2.2): painel começa colapsado em sessão nova/viewport largo, alterna correctamente e a escolha persiste ao navegar entre canais na mesma sessão.
+
+## Bloqueantes antes de arquivar
+- Nenhum.

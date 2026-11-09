@@ -7,23 +7,47 @@ Permite entrar e permanecer numa chamada de voz/vídeo de um canal, controlar a 
 ## Requirements
 
 ### Requirement: Pré-entrada com escolha de participação
-O sistema SHALL apresentar, antes de entrar numa chamada, uma pré-visualização (câmara real quando o utilizador a liga, com selector de blur, alternadores de câmara e microfone e medidor de nível do microfone), a lista de quem está no canal e três acções: "Entrar" (com câmara/microfone conforme a preferência guardada do utilizador), "Testar vídeo" (entra usando uma faixa de vídeo sintética/padrão de teste em vez da câmara real), e "Entrar (ouvir)" para utilizadores cuja permissão no canal é apenas ouvir. A decisão de oferecer só "Entrar (ouvir)" SHALL basear-se exclusivamente no nível de acesso que o servidor calculou para o utilizador nesse canal; SHALL NOT depender de o utilizador ter um cargo atribuído.
-
-#### Scenario: Testar vídeo sem expor a câmara real
-- **WHEN** o utilizador escolhe "Testar vídeo"
-- **THEN** entra na chamada com uma faixa de vídeo sintética, sem activar a câmara física
-
-#### Scenario: Utilizador só com permissão de ouvir
-- **WHEN** um utilizador cuja permissão no canal não inclui falar tenta entrar
-- **THEN** a única opção disponível é "Entrar (ouvir)", sem opção de activar microfone ou câmara
+O sistema SHALL entrar automaticamente numa chamada ao abrir um canal de voz acessível através de uma navegação ocorrida durante a sessão já aberta da aplicação (ex.: clicar num canal de voz), sem pré-entrada nem confirmação nesse caso. Quando o canal de voz já é a rota activa no primeiro carregamento da página — recarregar a página, reabrir uma aba restaurada pelo browser, ou abrir um link directo apontando para o canal — o sistema SHALL NOT entrar automaticamente; em vez disso SHALL mostrar um modal que exige uma acção explícita da pessoa (entrar ou recusar) antes de ligar ao canal. Quem pode falar, ao entrar (automaticamente ou após confirmação explícita), SHALL entrar em modo de fala com microfone conforme a preferência guardada (ligado por omissão) e câmara desligada independentemente da preferência de câmara guardada. Quem apenas pode ouvir SHALL entrar em escuta sem publicar microfone nem câmara. O acesso SHALL seguir o nível efectivo calculado pelo servidor, sem depender de cargo atribuído. «Testar vídeo» sintético SHALL NOT aparecer.
 
 #### Scenario: Convidado sem cargo entra a falar
-- **WHEN** alguém entrou no servidor por convite, não tem nenhum cargo e abre um canal de voz público
-- **THEN** a pré-entrada oferece "Entrar", "Testar vídeo" e os alternadores de microfone e câmara, e ele pode ligar microfone e câmara na chamada
+- **WHEN** um convidado sem cargo e com acesso para falar abre um canal de voz sem preferência de microfone guardada, navegando para ele durante a sessão já aberta
+- **THEN** entra directamente com microfone ligado e câmara desligada
+
+#### Scenario: Testar vídeo sem expor a câmara real
+- **WHEN** um falante com preferência anterior de câmara ligada abre um canal de voz, navegando para ele durante a sessão já aberta
+- **THEN** entra com câmara desligada e a opção «Testar vídeo» sintético não é oferecida; pode testar a câmara nas definições
+
+#### Scenario: Utilizador só com permissão de ouvir
+- **WHEN** uma pessoa com permissão apenas de ouvir abre um canal de voz, navegando para ele durante a sessão já aberta
+- **THEN** entra directamente em escuta sem microfone ou câmara
 
 #### Scenario: Cargo sem permissão de falar
-- **WHEN** o cargo do utilizador não inclui "falar", ou o canal lhe dá apenas o nível de ouvir
-- **THEN** só "Entrar (ouvir)" fica disponível, como acima
+- **WHEN** o cargo do utilizador não inclui falar ou o canal apenas permite ouvir, e a pessoa navega para o canal durante a sessão já aberta
+- **THEN** entra directamente em modo de escuta sem publicar microfone ou câmara
+
+#### Scenario: Falha de entrada
+- **WHEN** o join automático, numa navegação dentro da sessão, falha
+- **THEN** aparece o motivo, uma acção de tentar novamente e acesso às definições de dispositivos, sem nova tentativa automática
+
+#### Scenario: Recarregar a página enquanto a rota já aponta para um canal de voz
+- **WHEN** a pessoa estava numa chamada, fecha a aba/aplicação ou recarrega a página, e a URL restaurada no carregamento seguinte já aponta para esse canal de voz
+- **THEN** a pessoa NÃO é reconectada automaticamente à chamada; vê um modal pedindo confirmação explícita, com as opções de entrar ou recusar, antes de qualquer ligação ao canal
+
+#### Scenario: Link directo para um canal de voz
+- **WHEN** a pessoa abre um link que aponta directamente para um canal de voz, sem a aplicação já estar aberta numa outra rota antes
+- **THEN** a pessoa NÃO é conectada automaticamente à chamada; vê o mesmo modal de confirmação, com as opções de entrar ou recusar
+
+#### Scenario: Confirmação explícita entra com as mesmas regras de permissão
+- **WHEN** a pessoa escolhe entrar no modal de confirmação mostrado por carregamento de página ou link directo
+- **THEN** a entrada segue exactamente as mesmas regras de modo (falar/escuta) e dispositivos (microfone conforme preferência, câmara sempre desligada) que a entrada automática por navegação dentro da sessão
+
+#### Scenario: Recusar explicitamente a entrada
+- **WHEN** a pessoa escolhe recusar no modal de confirmação, num servidor que tem pelo menos um canal de texto
+- **THEN** a pessoa não liga à chamada e é levada para o primeiro canal de texto desse servidor
+
+#### Scenario: Recusar num servidor sem canal de texto
+- **WHEN** a pessoa escolhe recusar no modal de confirmação, num servidor sem nenhum canal de texto
+- **THEN** a pessoa não liga à chamada e é levada para a vista do servidor, sem nenhum canal seleccionado
 
 ### Requirement: Controlos de chamada no painel do utilizador
 O sistema SHALL apresentar os controlos de chamada (alternar microfone, alternar surdo/ouvir, alternar câmara, alternar partilha de ecrã quando aplicável, terminar chamada) exclusivamente no painel do utilizador, visíveis apenas enquanto uma chamada está activa — nunca sobrepostos ao palco de vídeo em si.
@@ -76,21 +100,21 @@ O sistema SHALL NOT apresentar nenhum botão, diálogo ou faixa relacionados com
 - **THEN** em nenhum momento é apresentada uma opção de "Gravar" ou equivalente
 
 ### Requirement: Pré-entrada e roster fiéis aos mockups
-A pré-entrada SHALL cumprir a checklist de D7 (cabeçalho, pré-visualização com blur e medidor, calibração de dispositivos, três ações em cartões, "No canal agora"). Telemetria, codec, ruído neural, eco e AGC SHALL NOT ser implementados.
+O sistema SHALL preservar o roster de voz na sidebar e o acesso às definições de dispositivos fora da chamada. A checklist de fidelidade da pré-entrada do mockup SHALL deixar de se aplicar. Telemetria, codec, ruído neural, eco e AGC SHALL NOT ser implementados.
 
 #### Scenario: Comparação de fidelidade
-- **WHEN** a tela é comparada lado a lado com `mesa_pr_entrada_na_chamada_green_room_testar_v_deo` no mesmo estado, em tema escuro
-- **THEN** todos os elementos obrigatórios da checklist de `design.md` D7 estão presentes, nenhum elemento excluído foi implementado, e a classificação é **Fiel**
+- **WHEN** há ocupantes num canal de voz que ainda não foi aberto
+- **THEN** o roster na sidebar mostra quem já está no canal sem tela de pré-entrada
 
 ### Requirement: Paridade funcional da sessão de voz
-O sistema SHALL manter todas as funcionalidades existentes desta área: entrar com câmara e microfone conforme a preferência, Testar vídeo, Entrar (ouvir), entrada só áudio se a câmara falhar, libertação do hardware ao sair, mudança de canal, controlos de chamada, blur em três níveis, indicadores de fala, roster na sidebar, duração, E2EE desligada com faixa e Religar, saída por canal ou servidor apagado, e áudio remoto contínuo ao navegar.
+O sistema SHALL manter as funcionalidades existentes desta área compatíveis com entrada directa: escuta para quem não pode falar, entrada só áudio se a câmara falhar quando ligada, libertação do hardware ao sair, mudança de canal, controlos de chamada, blur em três níveis, indicadores de fala, roster na sidebar, duração, E2EE desligada com faixa e Religar, saída por canal ou servidor apagado, e áudio remoto contínuo ao navegar. A pré-entrada, a entrada com câmara ligada e «Testar vídeo» sintético deixam de ser requisitos de paridade.
 
 #### Scenario: Funcionalidades existentes
-- **WHEN** cada item desta área de `docs/v2/parity-checklist.md` é exercido na v2
-- **THEN** produz o mesmo resultado de produto que na aplicação anterior, contra o mesmo backend
+- **WHEN** os itens ainda aplicáveis de `docs/v2/parity-checklist.md` são exercidos
+- **THEN** produzem os resultados documentados para a entrada directa
 
 ### Requirement: Desligar a câmara liberta a câmara
-O sistema SHALL, quando o utilizador desliga a câmara (alternador da pré-entrada, controlo da chamada ou teste da página de Áudio & Vídeo), parar a captura da câmara física, parar o processamento de vídeo associado (incluindo o desfoque) e deixar de enviar vídeo aos outros participantes. Ao voltar a ligar a câmara, o sistema SHALL retomar o desfoque escolhido sem reiniciar a chamada. Nenhuma faixa de captura de vídeo SHALL ficar ativa depois de a câmara ser desligada.
+O sistema SHALL, quando o utilizador desliga a câmara (controlo da chamada ou teste da página de Áudio & Vídeo), parar a captura da câmara física, parar o processamento de vídeo associado (incluindo o desfoque) e deixar de enviar vídeo aos outros participantes. Ao voltar a ligar a câmara, o sistema SHALL retomar o desfoque escolhido sem reiniciar a chamada. Nenhuma faixa de captura de vídeo SHALL ficar ativa depois de a câmara ser desligada.
 
 #### Scenario: Desligar a câmara na chamada com desfoque
 - **WHEN** o utilizador está numa chamada com Blur forte e carrega em desligar a câmara
@@ -105,7 +129,7 @@ O sistema SHALL, quando o utilizador desliga a câmara (alternador da pré-entra
 - **THEN** o vídeo volta, com o desfoque escolhido aplicado, sem reentrar na chamada
 
 #### Scenario: Pré-entrada e página de Áudio & Vídeo
-- **WHEN** o utilizador desliga a câmara na pré-entrada ou para o teste de câmara nas definições, com desfoque ativo
+- **WHEN** o utilizador para o teste de câmara nas definições, com desfoque ativo
 - **THEN** a câmara física é libertada e a pré-visualização fica vazia
 
 #### Scenario: Sair da chamada

@@ -8,6 +8,7 @@
 
 ## 2. Integração e revisão
 
-- [ ] 2.1 Numa chamada real, inspeccionar de forma best-effort `track.getConstraints()` e, quando reportado, `track.getSettings()` no DevTools: a constraint já deve estar presente antes de alterar o código, como baseline do LiveKit. Repetir no preview, comparando antes e depois da tarefa 1.2, e confirmar áudio utilizável. A eficácia acústica não é verificável automaticamente.
+- [x] 2.1 Numa chamada real, inspeccionar de forma best-effort `track.getConstraints()` e, quando reportado, `track.getSettings()` no DevTools: a constraint já deve estar presente antes de alterar o código, como baseline do LiveKit. Repetir no preview, comparando antes e depois da tarefa 1.2, e confirmar áudio utilizável. A eficácia acústica não é verificável automaticamente.
+  - Confirmado pelo usuário em teste manual real; áudio utilizável antes e depois da constraint.
 - [x] 2.2 Revisão dupla dos artefactos e, após implementação, do código (arquiteto + fullstack, skills `spec-review-architect`/`spec-review-fullstack`); registar pareceres e confirmar eco/AGC fora do escopo.
 - [x] 2.3 Executar `openspec validate enable-basic-noise-suppression --strict` e confirmar aprovação.
