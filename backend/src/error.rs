@@ -4,12 +4,14 @@ use axum::{
     Json,
 };
 use serde::Serialize;
+use serde_json::Value;
 
 #[derive(Debug)]
 pub struct ApiError {
     pub status: StatusCode,
     pub message: String,
     pub code: Option<String>,
+    pub details: Option<Value>,
 }
 
 impl ApiError {
@@ -18,6 +20,7 @@ impl ApiError {
             status,
             message: message.into(),
             code: None,
+            details: None,
         }
     }
 
@@ -46,6 +49,22 @@ impl ApiError {
             status: StatusCode::CONFLICT,
             message: message.into(),
             code: Some(code.into()),
+            details: None,
+        }
+    }
+
+    /// Like `conflict_code`, but attaches extra machine-readable `details` to the error body
+    /// (e.g. the current server-side state, so the client can resync instead of just retrying).
+    pub fn conflict_code_with_details(
+        code: impl Into<String>,
+        message: impl Into<String>,
+        details: Value,
+    ) -> Self {
+        Self {
+            status: StatusCode::CONFLICT,
+            message: message.into(),
+            code: Some(code.into()),
+            details: Some(details),
         }
     }
 
@@ -54,6 +73,7 @@ impl ApiError {
             status: StatusCode::FORBIDDEN,
             message: message.into(),
             code: Some(code.into()),
+            details: None,
         }
     }
 
@@ -62,6 +82,7 @@ impl ApiError {
             status: StatusCode::BAD_REQUEST,
             message: message.into(),
             code: Some(code.into()),
+            details: None,
         }
     }
 
@@ -70,6 +91,7 @@ impl ApiError {
             status: StatusCode::SERVICE_UNAVAILABLE,
             message: message.into(),
             code: Some(code.into()),
+            details: None,
         }
     }
 
@@ -94,6 +116,8 @@ struct ErrorBody {
     code: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     message: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    details: Option<Value>,
 }
 
 impl IntoResponse for ApiError {
@@ -104,12 +128,14 @@ impl IntoResponse for ApiError {
                 error: code,
                 code: self.code,
                 message: Some(self.message),
+                details: self.details,
             }
         } else {
             ErrorBody {
                 error: self.message,
                 code: None,
                 message: None,
+                details: self.details,
             }
         };
         (self.status, Json(body)).into_response()
@@ -119,6 +145,9 @@ impl IntoResponse for ApiError {
 impl From<sqlx::Error> for ApiError {
     fn from(err: sqlx::Error) -> Self {
         if let sqlx::Error::Database(db) = &err {
+            if matches!(db.code().as_deref(), Some("5" | "6" | "SQLITE_BUSY" | "SQLITE_LOCKED")) {
+                return ApiError::conflict_code("database_busy", "database is busy; retry the request");
+            }
             if db.is_unique_violation() {
                 return ApiError::conflict("already exists");
             }

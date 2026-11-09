@@ -4,7 +4,7 @@ use sqlx::{
     sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions},
     SqlitePool,
 };
-use std::str::FromStr;
+use std::{str::FromStr, time::Duration};
 
 pub mod account;
 pub mod attachment;
@@ -34,7 +34,8 @@ pub async fn connect(database_url: &str) -> Result<SqlitePool, sqlx::Error> {
     let options = SqliteConnectOptions::from_str(database_url)?
         .create_if_missing(true)
         .foreign_keys(true)
-        .journal_mode(SqliteJournalMode::Wal);
+        .journal_mode(SqliteJournalMode::Wal)
+        .busy_timeout(Duration::from_secs(5));
     SqlitePoolOptions::new()
         .max_connections(8)
         .connect_with(options)

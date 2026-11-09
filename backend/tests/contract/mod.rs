@@ -15,6 +15,7 @@ mod channel_manage_parity;
 mod channel_mute;
 mod channel_name_rules;
 mod channel_overwrites;
+mod channel_pin;
 mod channel_read_state;
 mod channel_rename;
 mod channel_roles;

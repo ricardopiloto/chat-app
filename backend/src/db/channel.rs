@@ -16,6 +16,7 @@ struct Row {
     visible_to_new_members: i64,
     has_channel_key: i64,
     has_active_webhook: i64,
+    pinned_message_id: Option<String>,
 }
 
 fn map_row(row: Row) -> Result<Channel, sqlx::Error> {
@@ -38,6 +39,12 @@ fn map_row(row: Row) -> Result<Channel, sqlx::Error> {
         visibility: ChannelVisibility::parse(&row.visibility)
             .ok_or_else(|| sqlx::Error::Decode("invalid channel visibility".into()))?,
         visible_to_new_members: row.visible_to_new_members != 0,
+        pinned_message_id: row
+            .pinned_message_id
+            .as_deref()
+            .map(Uuid::parse_str)
+            .transpose()
+            .map_err(|e| sqlx::Error::Decode(Box::new(e)))?,
         my_permission: None,
     })
 }
@@ -45,7 +52,8 @@ fn map_row(row: Row) -> Result<Channel, sqlx::Error> {
 const SELECT_COLS: &str = "c.id, c.server_id, c.name, c.type, c.grid_slot_count,
          c.created_by_account_id, c.e2ee_enabled, c.visibility, c.visible_to_new_members,
          CASE WHEN ck.channel_id IS NOT NULL THEN 1 ELSE 0 END AS has_channel_key,
-         CASE WHEN cw.channel_id IS NOT NULL THEN 1 ELSE 0 END AS has_active_webhook";
+         CASE WHEN cw.channel_id IS NOT NULL THEN 1 ELSE 0 END AS has_active_webhook,
+         c.pinned_message_id";
 
 pub async fn create(pool: &SqlitePool, channel: &Channel) -> Result<(), sqlx::Error> {
     sqlx::query(
@@ -150,11 +158,62 @@ pub async fn count_by_server_and_type(
 }
 
 pub async fn delete(pool: &SqlitePool, id: Uuid) -> Result<(), sqlx::Error> {
+    // `channel.pinned_message_id` and `message.channel_id` reference each other (pin -> message,
+    // message -> channel via CASCADE). Clearing the pin first, in the same transaction, avoids
+    // relying on the order SQLite resolves that cycle's FK actions when the channel's own
+    // messages cascade-delete.
+    let mut tx = pool.begin().await?;
+    sqlx::query("UPDATE channel SET pinned_message_id = NULL WHERE id = ?")
+        .bind(id.to_string())
+        .execute(&mut *tx)
+        .await?;
     sqlx::query("DELETE FROM channel WHERE id = ?")
         .bind(id.to_string())
-        .execute(pool)
+        .execute(&mut *tx)
         .await?;
-    Ok(())
+    tx.commit().await
+}
+
+/// Outcome of a compare-and-swap on `channel.pinned_message_id`.
+pub enum PinCasResult {
+    Applied,
+    /// The precondition did not match; carries the pin actually in place right now.
+    Conflict { current: Option<Uuid> },
+}
+
+fn parse_pinned(raw: Option<String>) -> Result<Option<Uuid>, sqlx::Error> {
+    raw.as_deref()
+        .map(Uuid::parse_str)
+        .transpose()
+        .map_err(|e| sqlx::Error::Decode(Box::new(e)))
+}
+
+/// Atomically set (or clear) the channel's pin, but only if the pin currently in place matches
+/// `expected` — otherwise two managers racing to pin/unpin could silently clobber each other.
+/// `new_value: None` unpins; `expected: None` means "no pin currently set".
+pub async fn try_set_pinned_message(
+    pool: &SqlitePool,
+    channel_id: Uuid,
+    new_value: Option<Uuid>,
+    expected: Option<Uuid>,
+) -> Result<PinCasResult, sqlx::Error> {
+    let mut tx = pool.begin().await?;
+    let (current_raw,): (Option<String>,) =
+        sqlx::query_as("SELECT pinned_message_id FROM channel WHERE id = ?")
+            .bind(channel_id.to_string())
+            .fetch_one(&mut *tx)
+            .await?;
+    let current = parse_pinned(current_raw)?;
+    if current != expected {
+        return Ok(PinCasResult::Conflict { current });
+    }
+    sqlx::query("UPDATE channel SET pinned_message_id = ? WHERE id = ?")
+        .bind(new_value.map(|id| id.to_string()))
+        .bind(channel_id.to_string())
+        .execute(&mut *tx)
+        .await?;
+    tx.commit().await?;
+    Ok(PinCasResult::Applied)
 }
 
 pub async fn set_e2ee_enabled(

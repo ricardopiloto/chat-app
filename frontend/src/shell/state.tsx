@@ -201,6 +201,10 @@ export function createShellState(props: { account: () => Account; identity: () =
             if (about) void cache.invalidateQueries({ queryKey: queryKeys.channels(about) });
             break;
           }
+          case "channel.pin_changed":
+            // The pin lives on the channel object; a fresh fetch is enough for the banner to react.
+            if (about) void cache.invalidateQueries({ queryKey: queryKeys.channels(about) });
+            break;
           case "channel.deleted": {
             const gone = String(message.payload.id ?? message.payload.channel_id ?? "");
             clearNews(gone);

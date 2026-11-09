@@ -18,6 +18,14 @@ export const acl = {
   inspect: (channelId: string, accountId: string) => http.get<AccessReport>(`/api/channels/${channelId}/access/${accountId}`),
 };
 
+export const pins = {
+  /** `expected` is the pin the caller believes is in place right now (`null` for none); a mismatch is a 409. */
+  set: (channelId: string, messageId: string, expected: string | null) =>
+    http.put<{ pinned_message_id: string | null }>(`/api/channels/${channelId}/pin`, { message_id: messageId, expected_pinned_message_id: expected }),
+  clear: (channelId: string, expected: string | null) =>
+    http.delete<{ pinned_message_id: string | null }>(`/api/channels/${channelId}/pin`, { expected_pinned_message_id: expected }),
+};
+
 export const mutes = {
   list: (channelId: string) => http.get<Mute[]>(`/api/channels/${channelId}/mutes`),
   mine: (channelId: string) => http.get<MyMute>(`/api/channels/${channelId}/mutes/me`),

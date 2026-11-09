@@ -63,6 +63,9 @@ pub struct Channel {
     pub has_active_webhook: bool,
     pub visibility: ChannelVisibility,
     pub visible_to_new_members: bool,
+    /// At most one pinned text message per channel; `None` when nothing is pinned.
+    #[serde(default)]
+    pub pinned_message_id: Option<Uuid>,
     /// Effective permission for the requesting account (list/get responses).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub my_permission: Option<String>,

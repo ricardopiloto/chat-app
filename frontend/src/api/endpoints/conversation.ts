@@ -6,6 +6,8 @@ export const messages = {
   list: (channelId: string, before?: string) =>
     http.get<Message[]>(`/api/channels/${channelId}/messages${before ? `?before=${encodeURIComponent(before)}` : ""}`),
   post: (channelId: string, body: PostMessageBody) => http.post<Message>(`/api/channels/${channelId}/messages`, body),
+  /** Directed lookup for one message (e.g. the pinned one), beyond what `list` paged in. 404 when it is outside this member's visible history. */
+  get: (channelId: string, messageId: string) => http.get<Message>(`/api/channels/${channelId}/messages/${messageId}`),
   remove: (channelId: string, messageId: string) => http.delete(`/api/channels/${channelId}/messages/${messageId}`),
   addReaction: (channelId: string, messageId: string, emojiCode: string) =>
     http.post<unknown>(`/api/channels/${channelId}/messages/${messageId}/reactions`, { emoji_code: emojiCode }),

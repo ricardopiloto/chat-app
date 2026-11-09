@@ -460,3 +460,137 @@ pub async fn delete_channel(
         .await;
     Ok(StatusCode::NO_CONTENT)
 }
+
+#[derive(Debug, Deserialize)]
+pub struct PutPinBody {
+    pub message_id: Uuid,
+    /// The pin the client believes is in place right now (`null` if it believes there is none).
+    /// Mismatches mean someone else changed the pin first — the server answers 409 instead of
+    /// silently overwriting that change.
+    #[serde(default)]
+    pub expected_pinned_message_id: Option<Uuid>,
+}
+
+#[derive(Debug, Deserialize, Default)]
+pub struct DeletePinBody {
+    #[serde(default)]
+    pub expected_pinned_message_id: Option<Uuid>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct PinStateResponse {
+    pub pinned_message_id: Option<Uuid>,
+}
+
+/// Broadcast only to accounts that can currently view the channel — never the raw message
+/// content, just the id (or `null`), same as the rest of the pin contract.
+#[derive(Debug, Serialize)]
+pub(crate) struct PinChangedPayload {
+    pub channel_id: Uuid,
+    pub pinned_message_id: Option<Uuid>,
+}
+
+/// A message is pinnable when it is a regular user message (text, optionally with attachments)
+/// that belongs to this very channel. Webhook and system messages are not pinnable in this
+/// change, and the server is authoritative regardless of what the client's menu allowed.
+fn pin_eligibility_error(
+    message: &crate::domain::message::Message,
+    channel_id: Uuid,
+) -> Option<ApiError> {
+    if message.channel_id != channel_id {
+        return Some(ApiError::bad_request(
+            "message does not belong to this channel",
+        ));
+    }
+    if message.kind != "user" {
+        return Some(ApiError::new(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "only regular text messages can be pinned",
+        ));
+    }
+    None
+}
+
+fn pin_conflict(current: Option<Uuid>) -> ApiError {
+    ApiError::conflict_code_with_details(
+        "pin_conflict",
+        "the pinned message changed before this request was applied",
+        serde_json::json!({ "pinned_message_id": current }),
+    )
+}
+
+pub async fn put_pin(
+    State(state): State<AppState>,
+    AuthUser(account): AuthUser,
+    Path(channel_id): Path<Uuid>,
+    Json(body): Json<PutPinBody>,
+) -> Result<Json<PinStateResponse>, ApiError> {
+    let ctx = require_channel_manager(&state, account.id, channel_id).await?;
+    let channel = ctx.channel;
+    if channel.kind != ChannelType::Text {
+        return Err(ApiError::bad_request("pin applies to text channels"));
+    }
+    let message = db::message::find_by_id(&state.pool, body.message_id)
+        .await?
+        .ok_or_else(|| ApiError::not_found("message not found"))?;
+    if let Some(err) = pin_eligibility_error(&message, channel_id) {
+        return Err(err);
+    }
+
+    match db::channel::try_set_pinned_message(
+        &state.pool,
+        channel_id,
+        Some(body.message_id),
+        body.expected_pinned_message_id,
+    )
+    .await?
+    {
+        db::channel::PinCasResult::Applied => {}
+        db::channel::PinCasResult::Conflict { current } => return Err(pin_conflict(current)),
+    }
+
+    let payload = PinChangedPayload {
+        channel_id,
+        pinned_message_id: Some(body.message_id),
+    };
+    crate::api::messages::send_to_channel_viewers(&state, &channel, "channel.pin_changed", &payload)
+        .await;
+    Ok(Json(PinStateResponse {
+        pinned_message_id: Some(body.message_id),
+    }))
+}
+
+pub async fn delete_pin(
+    State(state): State<AppState>,
+    AuthUser(account): AuthUser,
+    Path(channel_id): Path<Uuid>,
+    Json(body): Json<DeletePinBody>,
+) -> Result<Json<PinStateResponse>, ApiError> {
+    let ctx = require_channel_manager(&state, account.id, channel_id).await?;
+    let channel = ctx.channel;
+    if channel.kind != ChannelType::Text {
+        return Err(ApiError::bad_request("pin applies to text channels"));
+    }
+
+    match db::channel::try_set_pinned_message(
+        &state.pool,
+        channel_id,
+        None,
+        body.expected_pinned_message_id,
+    )
+    .await?
+    {
+        db::channel::PinCasResult::Applied => {}
+        db::channel::PinCasResult::Conflict { current } => return Err(pin_conflict(current)),
+    }
+
+    let payload = PinChangedPayload {
+        channel_id,
+        pinned_message_id: None,
+    };
+    crate::api::messages::send_to_channel_viewers(&state, &channel, "channel.pin_changed", &payload)
+        .await;
+    Ok(Json(PinStateResponse {
+        pinned_message_id: None,
+    }))
+}

@@ -54,12 +54,17 @@ export interface MessageRowProps {
   canReply: boolean;
   canReact: boolean;
   canDelete: boolean;
+  /** Pin/unpin is offered only to channel managers, and never on webhook or system lines. */
+  canPin: boolean;
+  pinned: boolean;
   meId: string;
   quoted: ChatMessage | undefined;
   highlighted: boolean;
   serverKey: Uint8Array | undefined;
   onReply: () => void;
   onReact: (emojiCode: string) => void;
+  onPin: () => void;
+  onUnpin: () => void;
   onDelete: () => Promise<void>;
   onOpenImage: (index: number) => void;
   onFocusMember: (accountId: string) => void;
@@ -218,10 +223,15 @@ export function MessageRow(props: MessageRowProps) {
           </div>
         </Show>
       </div>
-      <Show when={props.canReply || props.canReact || props.canDelete}>
+      <Show when={props.canReply || props.canReact || props.canDelete || props.canPin}>
         <div class="ch-msg-actions" role="toolbar">
           <Show when={props.canReply}>
             <button type="button" onClick={props.onReply} title={t("txt.row.reply")} aria-label={t("txt.row.reply")}><Icon name="reply" /></button>
+          </Show>
+          <Show when={props.canPin}>
+            <button type="button" onClick={props.pinned ? props.onUnpin : props.onPin} title={t(props.pinned ? "txt.row.unpin" : "txt.row.pin")} aria-label={t(props.pinned ? "txt.row.unpin" : "txt.row.pin")} aria-pressed={props.pinned}>
+              <Icon name={props.pinned ? "keep_off" : "push_pin"} />
+            </button>
           </Show>
           <Show when={props.canReact}>
             <div class="ch-react-anchor" ref={anchor}>

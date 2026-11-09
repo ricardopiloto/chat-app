@@ -1,7 +1,7 @@
 import { For, Match, Show, Switch, createEffect, createMemo, createResource, createSignal, on, onCleanup, onMount } from "solid-js";
-import { channels as channelsApi, mutes as mutesApi, type Account, type Channel, type RealtimeEnvelope, type Server, type ServerRole } from "../api";
+import { ApiError, channels as channelsApi, mutes as mutesApi, pins as pinsApi, type Account, type Channel, type RealtimeEnvelope, type Server, type ServerRole } from "../api";
 import type { Identity } from "../crypto/identity";
-import { Badge, Button, Icon, Toast } from "../components/ui";
+import { Badge, Button, Dialog, Icon, Toast } from "../components/ui";
 import { errorText } from "../lib/errors";
 import { getLocale, t } from "../i18n";
 import { useShell } from "../shell/state";
@@ -10,6 +10,7 @@ import { TypingIndicator } from "./TypingIndicator";
 import { Lightbox } from "./Lightbox";
 import { MessageRow, SystemLine, clockTime, excerptOf } from "./MessageRow";
 import { canDeleteMessage, canReplyTo, canWrite } from "./logic/permissions";
+import { canManageChannel } from "../lib/capabilities";
 import { toPerson, type ChatPerson } from "./logic/people";
 import { applyTyping, expireTypers, namedTypers, type Typer } from "./logic/typing";
 import { buildTimeline, type ChatMessage } from "./logic/timeline";
@@ -97,6 +98,81 @@ export function ChannelPage(props: {
     const timer = window.setTimeout(() => void recheckMute(), Math.max(1000, until.getTime() - Date.now() + 500));
     onCleanup(() => window.clearTimeout(timer));
   });
+
+  // --- pinned message: banner for every viewer, pin/unpin for managers
+  const canManage = () => canManageChannel(props.me.id, props.server, props.channel, props.roles);
+  const pinnedId = createMemo(() => props.channel.pinned_message_id ?? undefined);
+  const localPin = createMemo(() => {
+    const id = pinnedId();
+    return id ? thread.messages().find((m) => m.id === id) : undefined;
+  });
+  // Set only when the directed fetch for this id failed (denied by history, or any other error):
+  // D4 treats that as "unavailable", never as a generic error.
+  const [unavailablePinId, setUnavailablePinId] = createSignal<string>();
+  const pinUnavailable = () => pinnedId() !== undefined && pinnedId() === unavailablePinId();
+  const pinLoading = () => pinnedId() !== undefined && !localPin() && !pinUnavailable();
+  createEffect(
+    on([pinnedId, () => thread.status()], async ([id, state]) => {
+      if (!id || localPin() || state !== "ready") return;
+      if (await thread.ensureMessage(id)) {
+        if (unavailablePinId() === id) setUnavailablePinId(undefined);
+      } else {
+        setUnavailablePinId(id);
+      }
+    }),
+  );
+  const pinAuthor = () => {
+    const m = localPin();
+    if (!m) return "";
+    if (m.webhook) return m.senderDisplayNameSnapshot || t("txt.row.webhookBadge");
+    const found = people().get(m.senderId ?? "");
+    if (!found) return t("txt.search.unknownSender");
+    return found.label === found.handle ? `@${found.handle}` : found.label;
+  };
+  const [replaceTarget, setReplaceTarget] = createSignal<ChatMessage>();
+  async function applyPin(messageId: string, expected: string | null) {
+    try {
+      await pinsApi.set(props.channel.id, messageId, expected);
+      void shell.refreshChannels();
+    } catch (failure) {
+      if (failure instanceof ApiError && failure.status === 409) {
+        void shell.refreshChannels();
+        setNotice(t("txt.pin.conflict"));
+      } else {
+        setNotice(errorText(failure, "txt.pin.actionFailed"));
+      }
+      window.setTimeout(() => setNotice(""), 3000);
+    }
+  }
+  function startPin(message: ChatMessage) {
+    const current = pinnedId();
+    if (current && current !== message.id) {
+      setReplaceTarget(message);
+      return;
+    }
+    void applyPin(message.id, current ?? null);
+  }
+  function confirmReplace() {
+    const target = replaceTarget();
+    setReplaceTarget(undefined);
+    if (target) void applyPin(target.id, pinnedId() ?? null);
+  }
+  async function unpin() {
+    const current = pinnedId();
+    if (!current) return;
+    try {
+      await pinsApi.clear(props.channel.id, current);
+      void shell.refreshChannels();
+    } catch (failure) {
+      if (failure instanceof ApiError && failure.status === 409) {
+        void shell.refreshChannels();
+        setNotice(t("txt.pin.conflict"));
+      } else {
+        setNotice(errorText(failure, "txt.pin.actionFailed"));
+      }
+      window.setTimeout(() => setNotice(""), 3000);
+    }
+  }
 
   // --- list, scrolling, "jump to present"
   let scroller: HTMLDivElement | undefined;
@@ -220,19 +296,36 @@ export function ChannelPage(props: {
     onCleanup(() => window.clearTimeout(timer));
   });
 
-  // Deep link (?msg=): load back until the message is there, scroll to it and mark it for a moment.
+  // Jump to a message, loading back page by page until it shows up. Beyond MAX_JUMP_PAGES (an old
+  // pin, say) it falls back to the directed fetch (thread.ensureMessage) instead of paging blindly.
+  // Never declares success silently: a target that truly cannot be reached surfaces a toast.
+  let highlightTimer: number | undefined;
+  onCleanup(() => window.clearTimeout(highlightTimer));
+  async function focusMessage(target: string, options: { reply?: boolean; errorKey?: "txt.pin.openFailed" } = {}) {
+    if (thread.status() !== "ready") return;
+    for (let pages = 0; !byId().has(target) && thread.hasOlder() && pages < MAX_JUMP_PAGES; pages++) await thread.loadOlder();
+    if (!byId().has(target) && !(await thread.ensureMessage(target))) {
+      setNotice(t(options.errorKey ?? "txt.message.openFailed"));
+      window.setTimeout(() => setNotice(""), 3000);
+      return;
+    }
+    settle(() => {
+      const el = scroller?.querySelector(`[data-msg="${CSS.escape(target)}"]`);
+      if (!el) return;
+      el.scrollIntoView({ block: "center" });
+      setHighlighted(target);
+      const found = byId().get(target);
+      if (options.reply && found && canReplyTo(found)) startReply(found);
+    });
+    window.clearTimeout(highlightTimer);
+    highlightTimer = window.setTimeout(() => setHighlighted(undefined), HIGHLIGHT_MS);
+  }
+
+  // Deep link (?msg=): the search panel and notifications open a message this way.
   createEffect(
-    on([() => thread.status(), () => props.focusMessageId], async ([state, target]) => {
+    on([() => thread.status(), () => props.focusMessageId], ([state, target]) => {
       if (state !== "ready" || !target) return;
-      for (let pages = 0; !byId().has(target) && thread.hasOlder() && pages < MAX_JUMP_PAGES; pages++) await thread.loadOlder();
-      settle(() => {
-        scroller?.querySelector(`[data-msg="${CSS.escape(target)}"]`)?.scrollIntoView({ block: "center" });
-        setHighlighted(target);
-        const found = byId().get(target);
-        if (props.replyOnFocus && found && canReplyTo(found)) startReply(found);
-      });
-      const timer = window.setTimeout(() => setHighlighted(undefined), HIGHLIGHT_MS);
-      onCleanup(() => window.clearTimeout(timer));
+      void focusMessage(target, { reply: props.replyOnFocus });
     }),
   );
 
@@ -268,6 +361,26 @@ export function ChannelPage(props: {
           <button type="button" onClick={shell.toggleMembers} title={t("txt.header.members")} aria-label={t("txt.header.members")} aria-pressed={shell.membersOpen()}><Icon name="group" /></button>
         </span>
       </header>
+
+      <Show when={pinnedId()}>
+        {(id) => (
+          <div class="ch-pin" classList={{ unavailable: pinUnavailable() }}>
+            <Icon name="push_pin" />
+            <Switch>
+              <Match when={pinUnavailable()}><span class="ch-pin-text">{t("txt.pin.unavailable")}</span></Match>
+              <Match when={pinLoading()}><span class="ch-pin-text">{t("txt.pin.loading")}</span></Match>
+              <Match when={true}>
+                <button type="button" class="ch-pin-open" onClick={() => void focusMessage(id(), { errorKey: "txt.pin.openFailed" })}>
+                  <Show when={!localPin()?.unreadable} fallback={<span class="ch-pin-text">{t("txt.pin.unreadable")}</span>}>
+                    <strong>{pinAuthor()}</strong>
+                    <span class="ch-pin-excerpt">{excerptOf(localPin()!.text) || t("txt.attachment.name")}</span>
+                  </Show>
+                </button>
+              </Match>
+            </Switch>
+          </div>
+        )}
+      </Show>
 
       <div class="ch-stage">
         <div class="ch-scroll" ref={scroller} onScroll={onScroll} onWheel={gesture} onTouchStart={gesture} onTouchMove={gesture} onPointerDown={gesture} onPointerUp={() => { gesture(); onScroll(); }} onKeyDown={gesture}>
@@ -329,12 +442,16 @@ export function ChannelPage(props: {
                                   canReply={canReplyTo(m()) && canWrite(props.channel) && !mutedUntil()}
                                   canReact={canWrite(props.channel) && !mutedUntil()}
                                   canDelete={canDeleteMessage(m(), props.me.id, props.channel, props.server, props.roles)}
+                                  canPin={canManage() && !m().system && !m().webhook}
+                                  pinned={pinnedId() === m().id}
                                   meId={props.me.id}
                                   quoted={m().replyToId ? byId().get(m().replyToId!) : undefined}
                                   highlighted={highlighted() === m().id}
                                   serverKey={thread.serverKey()}
                                   onReply={() => startReply(m())}
                                   onReact={(code) => void thread.react(m().id, code)}
+                                  onPin={() => startPin(m())}
+                                  onUnpin={() => void unpin()}
                                   onDelete={() => remove(m())}
                                   onOpenImage={(index) => setViewer({ ids: m().attachmentIds, start: index })}
                                   onFocusMember={shell.focusMember}
@@ -388,6 +505,15 @@ export function ChannelPage(props: {
       <Show when={viewer() && thread.serverKey()}>
         <Lightbox ids={viewer()!.ids} start={viewer()!.start} serverKey={thread.serverKey()!} onClose={() => setViewer(undefined)} />
       </Show>
+      <Dialog open={replaceTarget() !== undefined} title={t("txt.pin.replaceTitle")} icon="push_pin" onClose={() => setReplaceTarget(undefined)}>
+        <div class="ch-pin-confirm">
+          <p>{t("txt.pin.replaceBody")}</p>
+          <footer class="ch-pin-confirm-actions">
+            <Button onClick={() => setReplaceTarget(undefined)} data-autofocus>{t("txt.pin.cancel")}</Button>
+            <Button variant="primary" onClick={confirmReplace}>{t("txt.pin.confirmReplace")}</Button>
+          </footer>
+        </div>
+      </Dialog>
       <Toast show={notice() !== ""} message={notice()} />
     </section>
   );

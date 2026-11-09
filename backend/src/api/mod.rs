@@ -146,7 +146,7 @@ pub fn router(state: AppState) -> axum::Router {
                 )
                 .route(
                     "/channels/{channel_id}/messages/{message_id}",
-                    delete(messages::delete_message),
+                    get(messages::get_message).delete(messages::delete_message),
                 )
                 .route(
                     "/channels/{channel_id}/messages/{message_id}/reactions",
@@ -184,6 +184,10 @@ pub fn router(state: AppState) -> axum::Router {
                 .route(
                     "/channels/{channel_id}/acl",
                     get(channels::get_acl).put(channels::put_acl),
+                )
+                .route(
+                    "/channels/{channel_id}/pin",
+                    put(channels::put_pin).delete(channels::delete_pin),
                 )
                 .route(
                     "/channels/{channel_id}/access/{account_id}",

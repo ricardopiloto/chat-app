@@ -63,6 +63,7 @@ pub async fn provision_channel(
         has_active_webhook: false,
         visibility,
         visible_to_new_members: visibility == ChannelVisibility::Public,
+        pinned_message_id: None,
         my_permission: None,
     };
     db::channel::create(pool, &channel).await?;

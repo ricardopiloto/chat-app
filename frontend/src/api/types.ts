@@ -130,6 +130,8 @@ export interface Channel {
   has_active_webhook: boolean;
   visibility: ChannelVisibility;
   visible_to_new_members: boolean;
+  /** At most one pinned text message per channel; `null`/absent when nothing is pinned. */
+  pinned_message_id?: Id | null;
   my_permission?: string;
 }
 

@@ -115,7 +115,7 @@ export const http = {
   post: <T>(path: string, json?: unknown) => request<T>(path, { method: "POST", json }),
   put: <T>(path: string, json?: unknown) => request<T>(path, { method: "PUT", json }),
   patch: <T>(path: string, json?: unknown) => request<T>(path, { method: "PATCH", json }),
-  delete: <T = void>(path: string) => request<T>(path, { method: "DELETE" }),
+  delete: <T = void>(path: string, json?: unknown) => request<T>(path, { method: "DELETE", json }),
 };
 
 /** Header that carries the original image type for avatar and attachment uploads/downloads. */

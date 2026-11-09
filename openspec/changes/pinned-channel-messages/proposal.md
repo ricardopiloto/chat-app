@@ -9,6 +9,7 @@ Mensagens importantes perdem-se no histórico do canal. Uma mensagem pinada dá 
 - Gestores do canal podem pinar ou despinar uma mensagem de texto; existe no máximo um pin por canal.
 - A substituição de um pin exige aviso e confirmação antes de remover o anterior.
 - Todos os membros com acesso ao canal veem um informativo persistente e podem clicar nele para ir à mensagem original com destaque temporário.
+- Membros cujo histórico visível não inclui a mensagem pinada (convite sem histórico compartilhado) veem o informativo como indisponível, sem vazar conteúdo.
 - O estado do pin é persistido e propagado em tempo real; a exclusão da mensagem pinada remove o informativo.
 
 ## Capabilities
@@ -24,4 +25,4 @@ Nenhuma.
 
 ## Impact
 
-Migração SQLite, modelos e consultas de canal/mensagem, rotas REST, autorização, evento WebSocket, estado e interface do canal, menu de mensagem, traduções e testes backend/frontend. Não há nova dependência nem edição de conteúdo de mensagem.
+Migração SQLite, modelos e consultas de canal/mensagem, rotas REST (incluindo leitura direcionada de mensagem), autorização com `history_visible_since`, registro em `docs/v2/contracts/backend-change-policy.md`, evento WebSocket, estado e interface do canal, menu de mensagem, traduções e testes backend/frontend. Não há nova dependência nem edição de conteúdo de mensagem.

@@ -1,6 +1,6 @@
 // The messages of one open text channel: loading, decrypting, paging back, merging what arrives
 // over the socket, and sending. The view only reads signals and calls these methods.
-import { createEffect, createSignal, on, onCleanup, untrack } from "solid-js";
+import { createEffect, createMemo, createSignal, on, onCleanup, untrack } from "solid-js";
 import { ApiError, messages as messagesApi, type Message, type RealtimeEnvelope } from "../api";
 import type { Identity } from "../crypto/identity";
 import { ensureServerKey } from "../crypto/keyHandoff";
@@ -68,6 +68,12 @@ export function createThread(options: {
   resync: () => number;
 }) {
   const [list, setList] = createSignal<ChatMessage[]>([]);
+  const [directed, setDirected] = createSignal<ChatMessage[]>([]);
+  const messages = createMemo(() => {
+    const loaded = list();
+    const loadedIds = new Set(loaded.map((message) => message.id));
+    return mergeMessages(loaded, directed().filter((message) => !loadedIds.has(message.id)));
+  });
   const [status, setStatus] = createSignal<ThreadStatus>("loading");
   const [hasOlder, setHasOlder] = createSignal(false);
   const [loadingOlder, setLoadingOlder] = createSignal(false);
@@ -86,6 +92,8 @@ export function createThread(options: {
     const channelId = options.channelId();
     setStatus("loading");
     publish([]);
+    setDirected([]);
+    key = undefined;
     setHasOlder(false);
     try {
       key = await ensureServerKey(options.serverId(), options.identity(), options.accountId());
@@ -109,6 +117,22 @@ export function createThread(options: {
       if (channelId === options.channelId()) publish(mergeMessages(untrack(list), page));
     } catch {
       /* the next event or resync tries again */
+    }
+  }
+
+  /** Directed fetch stays separate from the contiguous page window used by loadOlder. */
+  async function ensureMessage(messageId: string): Promise<boolean> {
+    if (!key) return false;
+    const channelId = options.channelId();
+    try {
+      const raw = await messagesApi.get(channelId, messageId);
+      if (channelId !== options.channelId()) return false;
+      const message = await toChatMessage(raw, key);
+      if (channelId !== options.channelId()) return false;
+      setDirected((current) => mergeMessage(current, message));
+      return true;
+    } catch {
+      return false;
     }
   }
 
@@ -146,6 +170,7 @@ export function createThread(options: {
   async function remove(messageId: string): Promise<void> {
     await messagesApi.remove(options.channelId(), messageId);
     publish(untrack(list).filter((m) => m.id !== messageId));
+    setDirected((current) => current.filter((m) => m.id !== messageId));
   }
 
   /** Toggles this account's reaction and paints it before the server answers. */
@@ -169,6 +194,7 @@ export function createThread(options: {
       publish(mergeMessage(untrack(list), await toChatMessage(event.payload as unknown as Message, key)));
     } else if (event.event === "message.deleted" && event.payload.channel_id === channelId) {
       publish(untrack(list).filter((m) => m.id !== event.payload.id));
+      setDirected((current) => current.filter((m) => m.id !== event.payload.id));
     } else if ((event.event === "reaction.added" || event.event === "reaction.removed") && event.payload.channel_id === channelId) {
       const messageId = event.payload.message_id;
       const accountId = event.payload.account_id;
@@ -185,7 +211,7 @@ export function createThread(options: {
   createEffect(on(options.resync, () => void refresh(), { defer: true }));
   createEffect(() => onCleanup(options.subscribe((event) => void onEvent(event))));
 
-  return { messages: list, status, hasOlder, loadingOlder, loadOlder, send, remove, react, refresh, retry: open, serverKey: () => key };
+  return { messages, status, hasOlder, loadingOlder, loadOlder, ensureMessage, send, remove, react, refresh, retry: open, serverKey: () => key };
 }
 
 /** Adds or drops one account on one emoji. Repeating the same change does not change the count. */

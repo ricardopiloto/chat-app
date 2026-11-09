@@ -92,6 +92,33 @@ pub async fn list_messages(
     ))
 }
 
+/// Directed lookup for a single message — used to resolve the pinned message (for the banner's
+/// excerpt, D5) and to jump straight to a pin older than the normal page-back limit, without
+/// paginating blindly. Applies the same `history_visible_since` window as `list_messages`: a
+/// message outside what this member can see comes back as a plain 404, exactly like a channel
+/// the member cannot view, so the pin banner can treat it as "unavailable" rather than leaking
+/// its existence.
+pub async fn get_message(
+    State(state): State<AppState>,
+    AuthUser(account): AuthUser,
+    Path((channel_id, message_id)): Path<(Uuid, Uuid)>,
+) -> Result<Json<Message>, ApiError> {
+    let (_, membership) = membership_for_channel(&state.pool, account.id, channel_id).await?;
+    let since = history_visible_since(&state.pool, &membership).await?;
+    let message = db::message::find_by_id(&state.pool, message_id)
+        .await?
+        .ok_or_else(|| ApiError::not_found("message not found"))?;
+    if message.channel_id != channel_id {
+        return Err(ApiError::not_found("message not found"));
+    }
+    if let Some(since) = since {
+        if message.created_at < since {
+            return Err(ApiError::not_found("message not found"));
+        }
+    }
+    Ok(Json(message))
+}
+
 async fn sender_may_mention_everyone(
     state: &AppState,
     account_id: Uuid,
@@ -376,6 +403,11 @@ pub async fn delete_message(
         return Err(ApiError::forbidden("not allowed to delete this message"));
     }
 
+    // Read before the delete: once the row is gone, there is no way to tell whether it was the
+    // pinned message. The FK (`ON DELETE SET NULL`) clears `channel.pinned_message_id` for us,
+    // but only this flag tells us whether to also announce the pin going away.
+    let was_pinned = channel.pinned_message_id == Some(message_id);
+
     db::attachment::delete_files_for_message(
         &state.pool,
         &state.config.attachments_dir,
@@ -396,6 +428,14 @@ pub async fn delete_message(
         channel_id,
     };
     send_to_channel_viewers(&state, &channel, "message.deleted", &payload).await;
+
+    if was_pinned {
+        let pin_payload = crate::api::channels::PinChangedPayload {
+            channel_id,
+            pinned_message_id: None,
+        };
+        send_to_channel_viewers(&state, &channel, "channel.pin_changed", &pin_payload).await;
+    }
 
     Ok(StatusCode::NO_CONTENT)
 }

@@ -18,6 +18,7 @@ export const REALTIME_EVENTS = [
   "presence",
   "voice.occupancy",
   "channel.e2ee_changed",
+  "channel.pin_changed",
   "channel.deleted",
   "channel_role.changed",
   "server.deleted",
