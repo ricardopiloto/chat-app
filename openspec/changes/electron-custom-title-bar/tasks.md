@@ -16,7 +16,7 @@
 
 ## 3. Verificação manual (três plataformas; Linux primeiro)
 
-- [ ] 3.1 **Linux** (ambiente de desenvolvimento actual): abrir a app empacotada ou em `npm run electron:dev`; confirmar arrastar a janela pela faixa, redimensionar pelos limites, maximizar/restaurar pelo botão próprio e por duplo-clique na faixa, fechar pelo botão próprio, e qualquer gesto de encaixe do gestor de janelas em uso. Registar aqui o resultado real (passou / o que falhou) antes de prosseguir — é o requisito mais arriscado desta change (ver `design.md`, Risks).
+- [x] 3.1 **Linux** (ambiente de desenvolvimento actual): abrir a app empacotada ou em `npm run electron:dev`; confirmar arrastar a janela pela faixa, redimensionar pelos limites, maximizar/restaurar pelo botão próprio e por duplo-clique na faixa, fechar pelo botão próprio, e qualquer gesto de encaixe do gestor de janelas em uso. Registar aqui o resultado real (passou / o que falhou) antes de prosseguir — é o requisito mais arriscado desta change (ver `design.md`, Risks).
 - [ ] 3.2 **Windows**: confirmar que `titleBarOverlay` mostra os botões nativos de minimizar/maximizar/fechar na faixa, que o snap/Aero nativo (arrastar para a margem do ecrã) continua a funcionar, e que o ícone de maximizar muda para restaurar correctamente.
 - [ ] 3.3 **macOS**: confirmar que os "semáforos" nativos aparecem na posição esperada dentro da faixa (`trafficLightPosition`) e que continuam a minimizar/maximizar/fechar como seria nativo.
 - [ ] 3.4 Confirmar, nas três plataformas, que os ecrãs `auth`, `unlock`, `home-desktop`, `loading` e `app` mostram a faixa (não só o `app`), e que `call-popout` e os diálogos (partilha de ecrã) continuam com decoração nativa, sem a faixa.
