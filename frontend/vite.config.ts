@@ -4,6 +4,7 @@ import { createLogger, defineConfig, type Logger } from "vite";
 import basicSsl from "@vitejs/plugin-basic-ssl";
 import solid from "vite-plugin-solid";
 import { syncAudio } from "./scripts/sync-audio.mjs";
+import { syncDice } from "./scripts/sync-dice.mjs";
 
 const BACKEND_HTTP = process.env.PARLEY_BACKEND ?? "http://127.0.0.1:8080";
 const BACKEND_WS = process.env.PARLEY_BACKEND_WS ?? "ws://127.0.0.1:8080";
@@ -34,10 +35,14 @@ function soundEffects() {
   return { name: "sync-sound-effects", buildStart: () => void syncAudio() };
 }
 
+function diceAssets() {
+  return { name: "sync-dice-assets", buildStart: () => void syncDice() };
+}
+
 const proxyTo = (target: string, ws = false) => ({ target, changeOrigin: true, ws });
 
 export default defineConfig({
-  plugins: [soundEffects(), solid(), basicSsl()],
+  plugins: [soundEffects(), diceAssets(), solid(), basicSsl()],
   clearScreen: false,
   customLogger: loggerWithoutWsCloseNoise(),
   define: { __APP_VERSION__: JSON.stringify(manifest.version) },

@@ -51,10 +51,9 @@ export function Content() {
               ChannelPage and Composer). A plain memo read never throws that way. */}
           <Show when={shell.channel()?.id} keyed fallback={<p class="p-6 text-on-surface-variant">{t("shell.loadingChannel")}</p>}>
             {(_id) => (
-              <Show
-                when={shell.channel()!.type === "text"}
-                fallback={<VoicePage channel={shell.channel()!} />}
-              >
+              <Switch>
+                <Match when={shell.channel()!.type === "voice_video"}><VoicePage channel={shell.channel()!} /></Match>
+                <Match when={shell.channel()!.type === "text"}>
                 <ChannelPage
                   me={me()}
                   channel={shell.channel()!}
@@ -65,7 +64,20 @@ export function Content() {
                   focusMessageId={new URLSearchParams(where.search).get("msg")}
                   replyOnFocus={new URLSearchParams(where.search).get("reply") === "1"}
                 />
-              </Show>
+                </Match>
+                <Match when={shell.channel()!.type === "dice"}>
+                <ChannelPage
+                  me={me()}
+                  channel={shell.channel()!}
+                  identity={identity()}
+                  server={shell.server()}
+                  roles={shell.roles.data ?? []}
+                  subscribe={shell.subscribe}
+                  focusMessageId={new URLSearchParams(where.search).get("msg")}
+                  replyOnFocus={new URLSearchParams(where.search).get("reply") === "1"}
+                />
+                </Match>
+              </Switch>
             )}
           </Show>
         </Match>

@@ -12,6 +12,7 @@ import { handleHandoffEvent, loadAllServerKeys } from "../crypto/keyHandoff";
 import type { Identity } from "../crypto/identity";
 import { isOwner, memberHasCapability } from "../lib/capabilities";
 import { addNotice, clearNews, hasNews as anythingNew, loadNotices, noteNews, resetNotices } from "../chat/notices";
+import { announceMentionOs, announceNewsOs } from "../chat/osNotify";
 import { mergeVoiceOccupancy, voiceOccupancyUpdates, type VoiceState } from "./voice-state";
 import { noteE2eeChange } from "../voice/e2eeState";
 import { accountTarget, channelTarget, lastChannel } from "./lastChannel";
@@ -160,12 +161,14 @@ export function createShellState(props: { account: () => Account; identity: () =
               setUnreadServers((now) => (now.includes(about) ? now : [...now, about]));
               if (channelId && messageId && message.payload.sender_account_id !== meId()) {
                 noteNews(about, channelId, messageId, String(message.payload.created_at ?? new Date().toISOString()));
+                announceNewsOs(cache, about, channelId);
               }
             }
             break;
           }
           case "notification.created": {
             addNotice(message.payload);
+            if (about) announceMentionOs(cache, about, message.payload);
             break;
           }
           case "presence":

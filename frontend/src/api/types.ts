@@ -114,7 +114,7 @@ export interface Presence {
 }
 
 // --- channels and access ---------------------------------------------------------------------
-export type ChannelKind = "text" | "voice_video";
+export type ChannelKind = "text" | "voice_video" | "dice";
 export type ChannelVisibility = "public" | "private";
 export type PermissionLevel = "read" | "write" | "listen" | "speak";
 
@@ -130,6 +130,7 @@ export interface Channel {
   has_active_webhook: boolean;
   visibility: ChannelVisibility;
   visible_to_new_members: boolean;
+  dice_animations_enabled: boolean;
   /** At most one pinned text message per channel; `null`/absent when nothing is pinned. */
   pinned_message_id?: Id | null;
   my_permission?: string;

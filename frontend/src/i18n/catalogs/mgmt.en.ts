@@ -38,6 +38,7 @@ export const mgmtEn: MessageTree = {
       kind: "Channel type",
       text: "Text channel",
       voice: "Voice & streaming",
+      dice: "Dice",
       name: "Channel name",
       nameHint: "Formatted automatically in lower case, separated by hyphens.",
       namePlaceholder: "team-stage",
@@ -200,6 +201,8 @@ export const mgmtEn: MessageTree = {
       save: "Save changes",
       saving: "Saving…",
       deleteChannel: "Delete channel",
+      diceLevel: { read: "Read", write: "Roll" },
+      diceAnimations: "Show 3D dice animations",
       level: { read: "Read", write: "Write", listen: "Listen", speak: "Speak" },
       inspect: {
         member: "Inspected member",

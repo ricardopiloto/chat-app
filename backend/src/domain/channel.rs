@@ -6,6 +6,7 @@ use uuid::Uuid;
 pub enum ChannelType {
     Text,
     VoiceVideo,
+    Dice,
 }
 
 impl ChannelType {
@@ -13,6 +14,7 @@ impl ChannelType {
         match self {
             Self::Text => "text",
             Self::VoiceVideo => "voice_video",
+            Self::Dice => "dice",
         }
     }
 
@@ -20,6 +22,7 @@ impl ChannelType {
         match value {
             "text" => Some(Self::Text),
             "voice_video" => Some(Self::VoiceVideo),
+            "dice" => Some(Self::Dice),
             _ => None,
         }
     }
@@ -63,6 +66,7 @@ pub struct Channel {
     pub has_active_webhook: bool,
     pub visibility: ChannelVisibility,
     pub visible_to_new_members: bool,
+    pub dice_animations_enabled: bool,
     /// At most one pinned text message per channel; `None` when nothing is pinned.
     #[serde(default)]
     pub pinned_message_id: Option<Uuid>,

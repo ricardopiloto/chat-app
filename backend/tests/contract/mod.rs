@@ -2,6 +2,7 @@
 mod common;
 
 mod attachments;
+mod auth_dice_toolbar;
 mod auth_email_registration;
 mod auth_email_reset;
 mod auth_key_reminders;
@@ -22,6 +23,7 @@ mod channel_roles;
 mod channel_webhooks;
 mod channels;
 mod channels_delete;
+mod dice;
 mod grid;
 mod grid_admin;
 mod hierarchy;

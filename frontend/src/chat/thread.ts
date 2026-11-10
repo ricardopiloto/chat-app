@@ -5,7 +5,7 @@ import { ApiError, messages as messagesApi, type Message, type RealtimeEnvelope 
 import type { Identity } from "../crypto/identity";
 import { ensureServerKey } from "../crypto/keyHandoff";
 import { decryptMessage, encryptMessage } from "../crypto/serverKey";
-import { mergeMessage, mergeMessages, type ChatMessage } from "./logic/timeline";
+import { mergeMessage, mergeMessages, type ChatMessage, type DiceRoll } from "./logic/timeline";
 import { rememberLoaded } from "./loaded";
 
 export type ThreadStatus = "loading" | "ready" | "noKey" | "error";
@@ -26,6 +26,31 @@ export async function toChatMessage(raw: Message, key: Uint8Array): Promise<Chat
   const system = raw.kind === "system";
   let text = raw.content_plaintext ?? "";
   let unreadable = false;
+  let diceRoll: DiceRoll | undefined;
+  if (raw.kind === "dice_roll") {
+    try {
+      const parsed = JSON.parse(text) as DiceRoll & { label?: string | null; natural?: DiceRoll["natural"] | null };
+      const rollsOk = Array.isArray(parsed.rolls)
+        && Number.isInteger(parsed.count)
+        && Number.isInteger(parsed.sides)
+        && parsed.rolls.length === parsed.count
+        && parsed.rolls.every((value) => Number.isInteger(value) && value >= 1 && value <= parsed.sides);
+      if (rollsOk) {
+        diceRoll = {
+          notation: parsed.notation,
+          count: parsed.count,
+          sides: parsed.sides,
+          rolls: parsed.rolls,
+          faces: Array.isArray(parsed.faces) ? parsed.faces : undefined,
+          modifier: Number.isFinite(parsed.modifier) ? parsed.modifier : 0,
+          total: Number.isFinite(parsed.total) ? parsed.total : parsed.rolls.reduce((sum, value) => sum + value, 0) + (parsed.modifier || 0),
+          label: parsed.label ?? undefined,
+          natural: parsed.natural ?? undefined,
+        };
+        text = `🎲 ${diceRoll.notation} → ${diceRoll.total}${diceRoll.label ? ` (${diceRoll.label})` : ""}`;
+      }
+    } catch { /* keep raw text if a malformed legacy row is encountered */ }
+  }
   if (!system && raw.content_ciphertext) {
     try {
       text = await decryptMessage(key, raw.content_ciphertext);
@@ -39,6 +64,7 @@ export async function toChatMessage(raw: Message, key: Uint8Array): Promise<Chat
     channelId: raw.channel_id,
     senderId: raw.sender_account_id,
     text,
+    diceRoll,
     createdAt: raw.created_at,
     system,
     webhook: raw.kind === "webhook",
@@ -66,6 +92,7 @@ export function createThread(options: {
   subscribe: (handler: (event: RealtimeEnvelope) => void) => () => void;
   /** Changes whenever the realtime connection came back after an interruption. */
   resync: () => number;
+  onLiveDice?: (message: ChatMessage) => void;
 }) {
   const [list, setList] = createSignal<ChatMessage[]>([]);
   const [directed, setDirected] = createSignal<ChatMessage[]>([]);
@@ -191,7 +218,11 @@ export function createThread(options: {
   const onEvent = async (event: RealtimeEnvelope) => {
     const channelId = options.channelId();
     if (event.event === "message.new" && event.payload.channel_id === channelId && key) {
-      publish(mergeMessage(untrack(list), await toChatMessage(event.payload as unknown as Message, key)));
+      const raw = event.payload as unknown as Message;
+      const message = await toChatMessage(raw, key);
+      if (channelId !== options.channelId()) return;
+      publish(mergeMessage(untrack(list), message));
+      if (raw.kind === "dice_roll" && message.diceRoll) options.onLiveDice?.(message);
     } else if (event.event === "message.deleted" && event.payload.channel_id === channelId) {
       publish(untrack(list).filter((m) => m.id !== event.payload.id));
       setDirected((current) => current.filter((m) => m.id !== event.payload.id));

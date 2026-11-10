@@ -6,6 +6,10 @@ import { errorText } from "../lib/errors";
 import { getLocale, t } from "../i18n";
 import { useShell } from "../shell/state";
 import { Composer, type ReplyTarget } from "./Composer";
+import { DiceChannelFooter } from "./DiceChannelFooter";
+import { DiceOverlay } from "./DiceOverlay";
+import { canShowDice, preloadDiceBox, safeClear } from "./diceBoxHost";
+import type { DiceRoll } from "./logic/timeline";
 import { TypingIndicator } from "./TypingIndicator";
 import { Lightbox } from "./Lightbox";
 import { MessageRow, SystemLine, clockTime, excerptOf } from "./MessageRow";
@@ -40,6 +44,10 @@ export function ChannelPage(props: {
   replyOnFocus: boolean;
 }) {
   const shell = useShell();
+  const [diceQueue, setDiceQueue] = createSignal<DiceRoll[]>([]);
+  const diceEligible = () => props.channel.type === "dice" || (props.channel.type === "text" && props.channel.dice_animations_enabled === true);
+  createEffect(() => { if (diceEligible() && canShowDice()) void preloadDiceBox().catch(() => {}); });
+  onCleanup(() => { setDiceQueue([]); safeClear(); });
   const thread = createThread({
     channelId: () => props.channel.id,
     serverId: () => props.channel.server_id,
@@ -47,6 +55,9 @@ export function ChannelPage(props: {
     accountId: () => props.me.id,
     subscribe: props.subscribe,
     resync: shell.resync,
+    onLiveDice: (message) => {
+      if (diceEligible() && message.diceRoll && canShowDice()) setDiceQueue((queue) => [...queue, message.diceRoll!]);
+    },
   });
 
   // --- people: everyone in the server for names and avatars, channel mentionables for "@" suggestions
@@ -347,14 +358,14 @@ export function ChannelPage(props: {
     }
   }
 
-  const description = () => t(props.channel.visibility === "private" ? "txt.header.descPrivate" : "txt.header.descPublic");
+  const description = () => props.channel.type === "dice" ? t("txt.header.dice") : t(props.channel.visibility === "private" ? "txt.header.descPrivate" : "txt.header.descPublic");
 
   return (
     <section class="ch-page">
       <header class="ch-head">
         <h1><span class="ch-hash">#</span>{props.channel.name}</h1>
         <span class="ch-head-desc">{description()}</span>
-        <Badge tone="secure" mono icon="verified_user">{t("txt.header.e2ee")}</Badge>
+        <Show when={props.channel.type === "text"}><Badge tone="secure" mono icon="verified_user">{t("txt.header.e2ee")}</Badge></Show>
         <Show when={props.channel.has_active_webhook}><Badge tone="neutral" mono icon="warning">{t("txt.header.webhookActive")}</Badge></Show>
         <span class="ch-head-actions">
           <button type="button" onClick={() => document.dispatchEvent(new Event("mesa:search-channel"))} title={t("txt.header.search")} aria-label={t("txt.header.search")}><Icon name="search" /></button>
@@ -388,19 +399,19 @@ export function ChannelPage(props: {
             <Show when={!thread.hasOlder() && thread.status() === "ready"}>
               <div class="ch-intro">
                 <div class="ch-welcome">
-                  <span class="ch-welcome-icon">#</span>
+                  <span class="ch-welcome-icon">{props.channel.type === "dice" ? <Icon name="casino" /> : "#"}</span>
                   <div>
                     <h2>{t("txt.welcome.title", { name: props.channel.name })}</h2>
-                    <p>{t("txt.welcome.text", { server: props.server?.name ?? "" })}</p>
+                    <p>{props.channel.type === "dice" ? t("txt.welcome.diceText", { server: props.server?.name ?? "" }) : t("txt.welcome.text", { server: props.server?.name ?? "" })}</p>
                   </div>
                 </div>
-                <aside class="ch-banner">
+                <Show when={props.channel.type === "text"}><aside class="ch-banner">
                   <Icon name="shield_lock" />
                   <div>
                     <strong>{t("txt.banner.title")}</strong>
                     <p>{t("txt.banner.text")}</p>
                   </div>
-                </aside>
+                </aside></Show>
               </div>
             </Show>
             <Show when={thread.hasOlder()}>
@@ -483,6 +494,7 @@ export function ChannelPage(props: {
         <Switch>
           <Match when={!canWrite(props.channel)}><p class="ch-locked"><Icon name="visibility" />{t("txt.readOnly")}</p></Match>
           <Match when={mutedUntil()}>{(until) => <p class="ch-locked"><Icon name="volume_off" />{t("txt.muted", { time: clockTime(until().toISOString()) })}</p>}</Match>
+          <Match when={props.channel.type === "dice"}><DiceChannelFooter channelId={props.channel.id} onSent={() => settle(() => toBottom(true))} /></Match>
           <Match when={true}>
             <Composer
               channelId={props.channel.id}
@@ -502,6 +514,7 @@ export function ChannelPage(props: {
         </Switch>
       </footer>
 
+      <DiceOverlay roll={diceQueue()[0]} onDone={() => setDiceQueue((queue) => queue.slice(1))} />
       <Show when={viewer() && thread.serverKey()}>
         <Lightbox ids={viewer()!.ids} start={viewer()!.start} serverKey={thread.serverKey()!} onClose={() => setViewer(undefined)} />
       </Show>

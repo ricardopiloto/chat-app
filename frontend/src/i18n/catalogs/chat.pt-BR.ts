@@ -4,6 +4,7 @@ import type { MessageTree } from "../messages";
 export const chatPtBR: MessageTree = {
   txt: {
     header: {
+      dice: "Canal de dados · visível a todo o servidor",
       descPublic: "Canal de texto · visível a todo o servidor",
       descPrivate: "Canal de texto privado",
       e2ee: "E2EE ativa",
@@ -11,7 +12,7 @@ export const chatPtBR: MessageTree = {
       search: "Pesquisar neste canal",
       members: "Alternar painel de membros",
     },
-    welcome: { title: "Boas-vindas a #{name}!", text: "Início do canal seguro de {server}." },
+    welcome: { diceText: "Início das rolagens de dados de {server}.", title: "Boas-vindas a #{name}!", text: "Início do canal seguro de {server}." },
     banner: {
       title: "Instância segura cifrada de ponta a ponta",
       text: "As mensagens de texto e os arquivos são cifrados neste dispositivo antes do envio. Só quem tem a chave do servidor consegue decifrá-los.",
@@ -168,6 +169,14 @@ export const chatPtBR: MessageTree = {
       close: "Fechar notificações",
       unknownChannel: "um canal",
       someone: "Alguém",
+      osApp: "Parley",
+      osMention: "{name} mencionou você em #{channel}",
+      osReply: "{name} respondeu a você em #{channel}",
+      osMentionGeneric: "Nova menção",
+      osReplyGeneric: "Nova resposta",
+      osNews: "{server} · #{channel}",
+      osNewsChannel: "Novidade em #{channel}",
+      osNewsGeneric: "Actividade noutro canal",
     },
   },
 };

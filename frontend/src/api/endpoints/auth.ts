@@ -35,6 +35,9 @@ export const auth = {
     }),
   setDisplayName: (displayName: string | null) => http.patch<Account>("/api/auth/display-name", { display_name: displayName }),
   setKeyReminders: (enabled: boolean) => http.patch<Account>("/api/auth/key-reminders", { enabled }),
+  getDiceToolbar: () => http.get<{ visible_sides: number[] }>("/api/auth/dice-toolbar"),
+  putDiceToolbar: (visible_sides: number[]) =>
+    http.put<{ visible_sides: number[] }>("/api/auth/dice-toolbar", { visible_sides }),
   uploadAvatar: (image: Blob | Uint8Array, mediaType: string) =>
     request<Account>("/api/auth/avatar", { method: "PUT", bytes: image, headers: { [MEDIA_TYPE_HEADER]: mediaType } }),
   removeAvatar: () => http.delete("/api/auth/avatar"),

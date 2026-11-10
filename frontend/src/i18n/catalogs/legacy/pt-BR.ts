@@ -35,6 +35,7 @@ export const ptBR: MessageTree = {
       nameEmpty: "O nome do canal não pode ficar vazio.",
       nameHyphens: "O nome do canal não pode ser só hífens.",
       addText: "Criar canal de texto",
+      addDice: "Adicionar canal de dados",
       addVoice: "Criar canal de voz",
       rename: "Renomear canal",
       settings: "Definições do canal",

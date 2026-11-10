@@ -1,4 +1,4 @@
-import { app, BrowserWindow, desktopCapturer, dialog, ipcMain, net, protocol, session, shell } from "electron";
+import { app, BrowserWindow, desktopCapturer, dialog, ipcMain, Menu, nativeImage, net, Notification, protocol, session, shell, Tray } from "electron";
 import { access, appendFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { accessSync, constants, createWriteStream, existsSync } from "node:fs";
 import { dirname, join, normalize, sep } from "node:path";
@@ -19,6 +19,98 @@ const APP_ORIGIN = "mesa://app";
 const BACKGROUND = "#10131c";
 const INSTANCE_FILE = "mesa-instance.json";
 const LATEST_RELEASE = "https://github.com/ricardopiloto/chat-app/releases/latest";
+
+/** Main BrowserWindow kept for tray / activate / OS notifications. */
+let mainWindow: BrowserWindow | null = null;
+let tray: Tray | null = null;
+let isQuitting = false;
+
+function electronIconsDir(): string {
+  return join(dirname(fileURLToPath(import.meta.url)), "../icons");
+}
+
+function appIconPath(): string {
+  return join(electronIconsDir(), "icon.png");
+}
+
+function trayIconPath(): string {
+  const dir = electronIconsDir();
+  if (process.platform === "darwin") return join(dir, "16x16.png");
+  if (process.platform === "win32") return join(dir, "32x32.png");
+  return join(dir, "24x24.png");
+}
+
+function trayLabels(): { open: string; quit: string; tooltip: string } {
+  const locale = app.getLocale().toLowerCase();
+  if (locale.startsWith("en")) return { open: "Open", quit: "Quit", tooltip: "Parley" };
+  return { open: "Abrir", quit: "Fechar", tooltip: "Parley" };
+}
+
+function showMainWindow(): void {
+  const win = mainWindow && !mainWindow.isDestroyed() ? mainWindow : null;
+  if (!win) return;
+  if (win.isMinimized()) win.restore();
+  win.show();
+  win.focus();
+  if (typeof win.setSkipTaskbar === "function") win.setSkipTaskbar(false);
+}
+
+function quitFromTray(): void {
+  isQuitting = true;
+  app.quit();
+}
+
+function createTray(): void {
+  if (tray) return;
+  const image = nativeImage.createFromPath(trayIconPath());
+  const icon = image.isEmpty() ? nativeImage.createFromPath(appIconPath()) : image;
+  tray = new Tray(icon.isEmpty() ? nativeImage.createEmpty() : icon);
+  const labels = trayLabels();
+  tray.setToolTip(labels.tooltip);
+  tray.setContextMenu(
+    Menu.buildFromTemplate([
+      { label: labels.open, click: () => showMainWindow() },
+      { label: labels.quit, click: () => quitFromTray() },
+    ]),
+  );
+  // Windows/Linux: click opens. macOS uses the menu bar menu as the primary affordance.
+  if (process.platform !== "darwin") {
+    tray.on("click", () => showMainWindow());
+  }
+}
+
+function attachMainWindowLifecycle(win: BrowserWindow): void {
+  win.on("close", (event) => {
+    if (isQuitting) return;
+    event.preventDefault();
+    win.hide();
+  });
+}
+
+function registerNotifyOsIpc(): void {
+  ipcMain.removeHandler("mesa:notify-os");
+  ipcMain.handle("mesa:notify-os", (_event, payload: unknown) => {
+    const win = mainWindow && !mainWindow.isDestroyed() ? mainWindow : null;
+    if (!win || win.isFocused()) return;
+    if (!Notification.isSupported()) return;
+    if (!payload || typeof payload !== "object") return;
+    const raw = payload as Record<string, unknown>;
+    const title = typeof raw.title === "string" ? raw.title : "";
+    const body = typeof raw.body === "string" ? raw.body : "";
+    if (!title && !body) return;
+    try {
+      const note = new Notification({
+        title: title || "Parley",
+        body,
+        icon: appIconPath(),
+      });
+      note.on("click", () => showMainWindow());
+      note.show();
+    } catch (error) {
+      console.warn("OS notification failed", error);
+    }
+  });
+}
 
 interface InstanceState {
   baseUrl: string | null;
@@ -232,7 +324,7 @@ function openOutside(url: string): void {
 }
 
 function createWindow(): BrowserWindow {
-  const icon = join(dirname(fileURLToPath(import.meta.url)), "../icons/icon.png");
+  const icon = appIconPath();
   const win = new BrowserWindow({
     width: 1280,
     height: 800,
@@ -472,7 +564,7 @@ function registerPopoutIpc(): void {
       tellOpener("mesa:call-popout-opened", request.channelId);
       return;
     }
-    const icon = join(dirname(fileURLToPath(import.meta.url)), "../icons/icon.png");
+    const icon = appIconPath();
     const window = new BrowserWindow({
       width: 960,
       height: 640,
@@ -559,9 +651,12 @@ app.whenReady().then(async () => {
   registerInstanceIpc();
   registerPopoutIpc();
   registerUpdateIpc();
-  const mainWindow = createWindow();
+  registerNotifyOsIpc();
+  mainWindow = createWindow();
+  attachMainWindowLifecycle(mainWindow);
   registerWindowControlsIpc(mainWindow);
-  if (app.isPackaged && !isDev) mainWindow.webContents.once("did-finish-load", () => { void runPackagedLegacyCleanup(mainWindow).catch(error => console.error("legacy cleanup failed", error)); });
+  createTray();
+  if (app.isPackaged && !isDev) mainWindow.webContents.once("did-finish-load", () => { void runPackagedLegacyCleanup(mainWindow!).catch(error => console.error("legacy cleanup failed", error)); });
   mainWindow.webContents.once("did-finish-load", () => {
     const mode = resolveUpdateMode({ platform: process.platform, isPackaged: app.isPackaged && !isDev, env: process.env, execPath: process.execPath,
       fileExists: existsSync, isWritable: path => { try { accessSync(path, constants.W_OK); return true; } catch { return false; } } });
@@ -569,10 +664,23 @@ app.whenReady().then(async () => {
     else if (mode === "notify") void checkForUpdate(updateFeed());
   });
   app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) registerWindowControlsIpc(createWindow());
+    if (!mainWindow || mainWindow.isDestroyed()) {
+      mainWindow = createWindow();
+      attachMainWindowLifecycle(mainWindow);
+      registerWindowControlsIpc(mainWindow);
+    } else {
+      showMainWindow();
+    }
   });
 });
 
+app.on("before-quit", () => {
+  isQuitting = true;
+});
+
 app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit();
+  // Hide-on-close keeps the main window alive in the tray; only quit when Fechar was chosen
+  // (or before-quit already set the flag). Do not quit merely because the window was hidden.
+  if (isQuitting) return;
+  if (process.platform !== "darwin" && !tray) app.quit();
 });

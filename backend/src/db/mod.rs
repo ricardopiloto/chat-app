@@ -14,6 +14,7 @@ pub mod channel_key;
 pub mod channel_mute;
 pub mod channel_role;
 pub mod channel_webhook;
+pub mod dice_toolbar;
 pub mod e2ee_audit;
 pub mod grid;
 pub mod invite;
@@ -43,7 +44,17 @@ pub async fn connect(database_url: &str) -> Result<SqlitePool, sqlx::Error> {
 }
 
 pub async fn migrate(pool: &SqlitePool) -> Result<(), sqlx::migrate::MigrateError> {
-    sqlx::migrate!("./migrations").run(pool).await
+    let mut connection = pool.acquire().await?;
+    // SQLite cannot change foreign_keys inside SQLx's migration transaction. Keep
+    // the setting local to this connection so rebuilding channel preserves children.
+    sqlx::query("PRAGMA foreign_keys = OFF")
+        .execute(&mut *connection)
+        .await?;
+    let result = sqlx::migrate!("./migrations").run(&mut *connection).await;
+    sqlx::query("PRAGMA foreign_keys = ON")
+        .execute(&mut *connection)
+        .await?;
+    result
 }
 
 pub async fn bootstrap(

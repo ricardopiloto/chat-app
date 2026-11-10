@@ -5,7 +5,7 @@ export const channels = {
   listForServer: (serverId: string) => http.get<Channel[]>(`/api/servers/${serverId}/channels`),
   get: (channelId: string) => http.get<Channel>(`/api/channels/${channelId}`),
   create: (serverId: string, body: CreateChannelBody) => http.post<Channel>(`/api/servers/${serverId}/channels`, body),
-  update: (channelId: string, changes: { name?: string; visibility?: Channel["visibility"]; visible_to_new_members?: boolean }) =>
+  update: (channelId: string, changes: { name?: string; visibility?: Channel["visibility"]; visible_to_new_members?: boolean; dice_animations_enabled?: boolean }) =>
     http.patch<Channel>(`/api/channels/${channelId}`, changes),
   remove: (channelId: string) => http.delete(`/api/channels/${channelId}`),
   mentionables: (channelId: string) => http.get<Mentionable[]>(`/api/channels/${channelId}/mentionables`),

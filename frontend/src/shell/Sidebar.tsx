@@ -13,6 +13,7 @@ import { UserPanel } from "./UserPanel";
 const SECTIONS: { kind: ChannelKind; title: string; add: string; glyph: string }[] = [
   { kind: "text", title: "shell.text", add: "admin.channel.addText", glyph: "tag" },
   { kind: "voice_video", title: "shell.voice", add: "admin.channel.addVoice", glyph: "volume_up" },
+  { kind: "dice", title: "shell.vttTools", add: "admin.channel.addDice", glyph: "casino" },
 ];
 
 const iconButton = "grid h-7 w-7 place-items-center rounded-md text-on-surface-variant transition-colors hover:bg-surface-container-highest hover:text-on-surface";

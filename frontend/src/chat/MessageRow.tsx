@@ -191,7 +191,15 @@ export function MessageRow(props: MessageRowProps) {
           </p>
         </Show>
         <Show when={!props.message.unreadable} fallback={<p class="ch-unreadable"><Icon name="lock" />{t("txt.row.unreadable")}</p>}>
-          <Show when={props.message.text}>
+          <Show when={props.message.diceRoll}>
+            {(roll) => <div class="ch-dice-card" aria-label={props.message.text}>
+              <div><Icon name="casino" /> <strong>{roll().notation}</strong> <strong>{roll().total}</strong></div>
+              <Show when={roll().rolls.length > 1 || roll().modifier !== 0}><p>{roll().rolls.join(" + ")}{roll().modifier ? ` ${roll().modifier > 0 ? "+" : "−"} ${Math.abs(roll().modifier)}` : ""}</p></Show>
+              <Show when={roll().label}><small>{roll().label}</small></Show>
+              <Show when={roll().natural}><strong class="text-primary">{t(roll().natural === "critical" ? "txt.dice.critical" : "txt.dice.criticalFailure")}</strong></Show>
+            </div>}
+          </Show>
+          <Show when={!props.message.diceRoll && props.message.text}>
             <p class="ch-msg-text">
               <For each={splitMentions(props.message.text, props.mentionable, props.message.mentionsEveryone)}>
                 {(part) =>
@@ -213,7 +221,7 @@ export function MessageRow(props: MessageRowProps) {
               </For>
             </div>
           </Show>
-          <Show when={props.message.text}><LinkCards text={props.message.text} /></Show>
+          <Show when={!props.message.diceRoll && props.message.text}><LinkCards text={props.message.text} /></Show>
         </Show>
         <Show when={props.message.reactions.length > 0}>
           <div class="ch-reacts">

@@ -7,7 +7,21 @@ export interface MessageReaction {
   accountIds: string[];
 }
 
+export interface DiceRoll {
+  notation: string;
+  count: number;
+  sides: number;
+  rolls: number[];
+  /** For sides===100: flat [tens, units, …] library faces from the server. */
+  faces?: number[];
+  modifier: number;
+  total: number;
+  label?: string;
+  natural?: "critical" | "critical_failure";
+}
+
 export interface ChatMessage {
+  diceRoll?: DiceRoll;
   id: string;
   channelId: string;
   senderId: string | undefined;

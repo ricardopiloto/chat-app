@@ -147,6 +147,21 @@ pub async fn create_system(
         .ok_or_else(|| sqlx::Error::RowNotFound)
 }
 
+pub async fn create_dice_roll(
+    pool: &SqlitePool,
+    id: Uuid,
+    channel_id: Uuid,
+    sender_account_id: Uuid,
+    payload_json: &str,
+    created_at: DateTime<Utc>,
+) -> Result<Message, sqlx::Error> {
+    sqlx::query("INSERT INTO message (id, channel_id, sender_account_id, content_ciphertext, created_at, kind, content_plaintext) VALUES (?, ?, ?, ?, ?, 'dice_roll', ?)")
+        .bind(id.to_string()).bind(channel_id.to_string()).bind(sender_account_id.to_string())
+        .bind(&[] as &[u8]).bind(created_at.to_rfc3339()).bind(payload_json)
+        .execute(pool).await?;
+    find_by_id(pool, id).await?.ok_or(sqlx::Error::RowNotFound)
+}
+
 pub async fn find_by_id(pool: &SqlitePool, id: Uuid) -> Result<Option<Message>, sqlx::Error> {
     let mut message = match find_by_id_raw(pool, id).await? {
         Some(m) => m,

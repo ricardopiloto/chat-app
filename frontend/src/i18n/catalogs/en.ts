@@ -239,6 +239,21 @@ export const en: MessageTree = {
     appearanceLabel: "Preferences",
     appearanceTitle: "Language and theme",
   },
+  txt: {
+    dice: {
+      roll: "Roll dice",
+      notation: "Notation",
+      modifier: "Modifier",
+      label: "Optional label",
+      critical: "Critical",
+      criticalFailure: "Critical failure",
+      toolbar: "Dice toolbar",
+      toolbarConfig: "Choose visible dice",
+      toolbarDie: "{count}d{sides}",
+      toolbarInc: "Increase count",
+      toolbarDec: "Decrease count",
+    },
+  },
   shell: {
     titleBar: {
       minimize: "Minimize window",
@@ -261,6 +276,7 @@ export const en: MessageTree = {
     invite: "Invite people",
     text: "Text channels",
     voice: "Voice and broadcast",
+    vttTools: "VTT tools",
     privateChannel: "Private channel",
     noChannels: "This server has no channels yet",
     noChannelsHint: "This server's channels will appear here once they are created.",

@@ -240,6 +240,21 @@ export const ptBR: MessageTree = {
     appearanceLabel: "Preferências",
     appearanceTitle: "Idioma e tema",
   },
+  txt: {
+    dice: {
+      roll: "Lançar dados",
+      notation: "Notação",
+      modifier: "Modificador",
+      label: "Rótulo opcional",
+      critical: "Crítico",
+      criticalFailure: "Falha crítica",
+      toolbar: "Barra de dados",
+      toolbarConfig: "Escolher dados visíveis",
+      toolbarDie: "{count}d{sides}",
+      toolbarInc: "Aumentar quantidade",
+      toolbarDec: "Diminuir quantidade",
+    },
+  },
   shell: {
     titleBar: {
       minimize: "Minimizar janela",
@@ -262,6 +277,7 @@ export const ptBR: MessageTree = {
     invite: "Convidar pessoas",
     text: "Canais de texto",
     voice: "Voz e transmissão",
+    vttTools: "Ferramentas VTT",
     privateChannel: "Canal privado",
     noChannels: "Este servidor ainda não tem canais",
     noChannelsHint: "Os canais deste servidor aparecerão aqui quando forem criados.",

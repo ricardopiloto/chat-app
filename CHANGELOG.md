@@ -9,6 +9,18 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-11-10
+
+### Added
+
+- Dice channel (`ChannelType::Dice`) under VTT tools, `NdM+K` rolls with server-side RNG, `dice_roll` cards, 3D overlay (`@3d-dice/dice-box-threejs`), and a `dice_animations_enabled` toggle on Text channels (`chat-dice-rolling`).
+- Dice toolbar in the Dice channel footer: per-account face checklist (`GET`/`PUT /api/auth/dice-toolbar`), left-click selects/increments, right-click decrements (`dice-channel-toolbar`).
+- Desktop client (Electron): system tray icon with **Open** / **Quit**, and native OS notifications for mentions/replies and channel news when the main window is unfocused (`electron-system-tray-notifications`).
+
+### Changed
+
+- **BREAKING (desktop):** closing the main window (X / `mesa:close`) hides the app to the tray instead of quitting; permanent exit is only via **Quit** on the tray (`electron-system-tray-notifications`).
+
 ## [1.8.0] - 2026-11-09
 
 ### Added

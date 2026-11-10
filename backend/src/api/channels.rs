@@ -100,6 +100,7 @@ pub struct PatchChannelBody {
     pub name: Option<String>,
     pub visibility: Option<ChannelVisibility>,
     pub visible_to_new_members: Option<bool>,
+    pub dice_animations_enabled: Option<bool>,
 }
 
 pub async fn patch_channel(
@@ -108,7 +109,13 @@ pub async fn patch_channel(
     Path(channel_id): Path<Uuid>,
     Json(body): Json<PatchChannelBody>,
 ) -> Result<Json<crate::domain::channel::Channel>, ApiError> {
-    let _managed = require_channel_manager(&state, account.id, channel_id).await?;
+    let managed = require_channel_manager(&state, account.id, channel_id).await?;
+    if body.dice_animations_enabled.is_some() && managed.channel.kind != ChannelType::Text {
+        return Err(ApiError::bad_request_code(
+            "dice_animations_text_only",
+            "dice animations can only be configured on text channels",
+        ));
+    }
 
     if let Some(raw_name) = body.name {
         let name = channel_name::validate_channel_name(&raw_name).map_err(ApiError::bad_request)?;
@@ -149,17 +156,28 @@ pub async fn patch_channel(
             .await;
     }
 
+    if let Some(enabled) = body.dice_animations_enabled {
+        if managed.channel.dice_animations_enabled != enabled {
+            db::channel::update_dice_animations(&state.pool, channel_id, enabled).await?;
+            state.ws.send_to_server_members(
+                &state.pool, managed.channel.server_id, "channel_acl.changed",
+                &serde_json::json!({ "channel_id": channel_id, "server_id": managed.channel.server_id }),
+            ).await;
+        }
+    }
     get_channel(State(state), AuthUser(account), Path(channel_id)).await
 }
 
 fn valid_level(kind: ChannelType, level: PermLevel) -> bool {
     matches!(
         (kind, level),
-        (ChannelType::Text, PermLevel::Read | PermLevel::Write)
-            | (
-                ChannelType::VoiceVideo,
-                PermLevel::Listen | PermLevel::Speak
-            )
+        (
+            ChannelType::Text | ChannelType::Dice,
+            PermLevel::Read | PermLevel::Write
+        ) | (
+            ChannelType::VoiceVideo,
+            PermLevel::Listen | PermLevel::Speak
+        )
     )
 }
 
@@ -434,6 +452,7 @@ pub async fn delete_channel(
         let kind_label = match channel.kind {
             ChannelType::Text => "text",
             ChannelType::VoiceVideo => "voice",
+            ChannelType::Dice => "dice",
         };
         return Err(ApiError::conflict_code(
             "last_channel_of_type",
@@ -553,8 +572,13 @@ pub async fn put_pin(
         channel_id,
         pinned_message_id: Some(body.message_id),
     };
-    crate::api::messages::send_to_channel_viewers(&state, &channel, "channel.pin_changed", &payload)
-        .await;
+    crate::api::messages::send_to_channel_viewers(
+        &state,
+        &channel,
+        "channel.pin_changed",
+        &payload,
+    )
+    .await;
     Ok(Json(PinStateResponse {
         pinned_message_id: Some(body.message_id),
     }))
@@ -588,8 +612,13 @@ pub async fn delete_pin(
         channel_id,
         pinned_message_id: None,
     };
-    crate::api::messages::send_to_channel_viewers(&state, &channel, "channel.pin_changed", &payload)
-        .await;
+    crate::api::messages::send_to_channel_viewers(
+        &state,
+        &channel,
+        "channel.pin_changed",
+        &payload,
+    )
+    .await;
     Ok(Json(PinStateResponse {
         pinned_message_id: None,
     }))

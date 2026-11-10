@@ -14,6 +14,7 @@ struct Row {
     e2ee_enabled: i64,
     visibility: String,
     visible_to_new_members: i64,
+    dice_animations_enabled: i64,
     has_channel_key: i64,
     has_active_webhook: i64,
     pinned_message_id: Option<String>,
@@ -39,6 +40,7 @@ fn map_row(row: Row) -> Result<Channel, sqlx::Error> {
         visibility: ChannelVisibility::parse(&row.visibility)
             .ok_or_else(|| sqlx::Error::Decode("invalid channel visibility".into()))?,
         visible_to_new_members: row.visible_to_new_members != 0,
+        dice_animations_enabled: row.dice_animations_enabled != 0,
         pinned_message_id: row
             .pinned_message_id
             .as_deref()
@@ -50,7 +52,7 @@ fn map_row(row: Row) -> Result<Channel, sqlx::Error> {
 }
 
 const SELECT_COLS: &str = "c.id, c.server_id, c.name, c.type, c.grid_slot_count,
-         c.created_by_account_id, c.e2ee_enabled, c.visibility, c.visible_to_new_members,
+         c.created_by_account_id, c.e2ee_enabled, c.visibility, c.visible_to_new_members, c.dice_animations_enabled,
          CASE WHEN ck.channel_id IS NOT NULL THEN 1 ELSE 0 END AS has_channel_key,
          CASE WHEN cw.channel_id IS NOT NULL THEN 1 ELSE 0 END AS has_active_webhook,
          c.pinned_message_id";
@@ -58,8 +60,8 @@ const SELECT_COLS: &str = "c.id, c.server_id, c.name, c.type, c.grid_slot_count,
 pub async fn create(pool: &SqlitePool, channel: &Channel) -> Result<(), sqlx::Error> {
     sqlx::query(
         "INSERT INTO channel (id, server_id, name, type, grid_slot_count, created_at,
-                              created_by_account_id, e2ee_enabled, visibility, visible_to_new_members)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                              created_by_account_id, e2ee_enabled, visibility, visible_to_new_members, dice_animations_enabled)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(channel.id.to_string())
     .bind(channel.server_id.to_string())
@@ -71,6 +73,7 @@ pub async fn create(pool: &SqlitePool, channel: &Channel) -> Result<(), sqlx::Er
     .bind(if channel.e2ee_enabled { 1 } else { 0 })
     .bind(channel.visibility.as_str())
     .bind(if channel.visible_to_new_members { 1 } else { 0 })
+    .bind(if channel.dice_animations_enabled { 1 } else { 0 })
     .execute(pool)
     .await?;
     Ok(())
@@ -85,6 +88,19 @@ pub async fn update_visibility(
     sqlx::query("UPDATE channel SET visibility = ?, visible_to_new_members = ? WHERE id = ?")
         .bind(visibility.as_str())
         .bind(if visible_to_new_members { 1 } else { 0 })
+        .bind(channel_id.to_string())
+        .execute(pool)
+        .await?;
+    Ok(())
+}
+
+pub async fn update_dice_animations(
+    pool: &SqlitePool,
+    channel_id: Uuid,
+    enabled: bool,
+) -> Result<(), sqlx::Error> {
+    sqlx::query("UPDATE channel SET dice_animations_enabled = ? WHERE id = ?")
+        .bind(if enabled { 1 } else { 0 })
         .bind(channel_id.to_string())
         .execute(pool)
         .await?;
@@ -178,7 +194,9 @@ pub async fn delete(pool: &SqlitePool, id: Uuid) -> Result<(), sqlx::Error> {
 pub enum PinCasResult {
     Applied,
     /// The precondition did not match; carries the pin actually in place right now.
-    Conflict { current: Option<Uuid> },
+    Conflict {
+        current: Option<Uuid>,
+    },
 }
 
 fn parse_pinned(raw: Option<String>) -> Result<Option<Uuid>, sqlx::Error> {

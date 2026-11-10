@@ -63,6 +63,13 @@
 .ch-msg-author { font: 600 15px var(--font-body); }
 .ch-msg-handle { color: var(--on-surface-variant); font: 400 12px var(--font-code); }
 .ch-msg-main header time { color: var(--on-surface-variant); font: 400 12px var(--font-code); }
+.ch-dice-card { margin: 8px 0; padding: 16px; border: 1px solid var(--outline-variant); border-radius: var(--radius-md); background: var(--surface-container-high); font: 400 15px/1.6 var(--font-body); }
+.ch-dice-card > div { display: flex; align-items: center; gap: 8px; }
+.ch-dice-card > div .ui-icon, .ch-dice-card > div svg { color: var(--primary); }
+.ch-dice-card > div strong:last-child { margin-left: auto; font: 700 20px var(--font-display); }
+.ch-dice-card p { margin: 4px 0 0; color: var(--on-surface-variant); font: 400 13px var(--font-code); }
+.ch-dice-card small { display: block; color: var(--on-surface-variant); font-size: 12px; }
+.ch-dice-card > strong { color: var(--primary); }
 .ch-msg-text { margin: 0; font-size: 15px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
 .ch-msg-text a { color: var(--primary); text-decoration: underline; text-underline-offset: 2px; }
 .ch-mention { padding: 0 5px; border: 0; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--primary) 18%, transparent); color: var(--primary); font: inherit; font-weight: 600; cursor: pointer; }
@@ -134,6 +141,139 @@
 .ch-field-btn:hover:not(:disabled) { background: var(--surface-container-high); color: var(--on-surface); }
 .ch-send { display: grid; place-items: center; width: 42px; height: 42px; flex-shrink: 0; border: 0; border-radius: 50%; background: var(--primary-container); color: var(--on-primary-container); cursor: pointer; }
 .ch-send:disabled { opacity: .45; cursor: default; }
+
+/* Dice channel footer: toolbar + composer share one row; stacks on narrow viewports. */
+.ch-dice-footer {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px;
+  max-width: 1000px; margin: 0 auto; padding: 6px 8px;
+  border: 1px solid var(--outline-variant); border-radius: var(--radius-xl);
+  background: var(--surface-container);
+}
+.ch-dice-footer:focus-within {
+  border-color: color-mix(in srgb, var(--primary) 60%, var(--outline-variant));
+}
+.ch-dice-toolbar {
+  display: flex; align-items: center; gap: 4px;
+  flex: 1 1 14rem; min-width: 0;
+}
+.ch-dice-toolbar-strip {
+  display: flex; flex-wrap: nowrap; align-items: center; gap: 4px;
+  min-width: 0; flex: 1 1 auto; overflow-x: auto; overscroll-behavior-x: contain;
+  padding-bottom: 1px; scrollbar-width: thin;
+}
+.ch-dice-tool { display: flex; flex-direction: column; align-items: stretch; gap: 2px; flex-shrink: 0; }
+.ch-dice-tool-face {
+  display: flex; align-items: center; justify-content: space-between; gap: 4px;
+  min-width: 3.25rem; min-height: 34px; padding: 4px 6px; border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-md); background: var(--surface-container-high); color: var(--on-surface);
+  font: 500 12px/1.2 var(--font-code); cursor: pointer;
+}
+.ch-dice-tool.is-active .ch-dice-tool-face {
+  border-color: color-mix(in srgb, var(--primary) 55%, var(--outline-variant));
+  background: color-mix(in srgb, var(--primary-container) 35%, var(--surface-container-high));
+}
+.ch-dice-tool-count {
+  display: inline-grid; place-items: center; min-width: 1.1rem; padding: 0 3px;
+  border-radius: var(--radius-sm); background: var(--surface-container-highest);
+  font: 700 11px var(--font-code);
+}
+.ch-dice-tool-steppers { display: none; gap: 2px; }
+.ch-dice-tool-step {
+  flex: 1; min-height: 26px; border: 1px solid var(--outline-variant); border-radius: var(--radius-sm);
+  background: var(--surface-container-high); color: var(--on-surface); font: 600 13px var(--font-body); cursor: pointer;
+}
+@media (pointer: coarse) {
+  .ch-dice-tool-steppers { display: flex; }
+}
+.ch-dice-toolbar-config { position: relative; flex-shrink: 0; }
+.ch-dice-toolbar-gear {
+  display: grid; place-items: center; width: 34px; height: 34px; border: 0; border-radius: 50%;
+  background: none; color: var(--on-surface-variant); cursor: pointer;
+}
+.ch-dice-toolbar-gear:hover,
+.ch-dice-toolbar-gear[aria-expanded="true"] {
+  background: var(--surface-container-high); color: var(--on-surface);
+}
+.ch-dice-toolbar-checklist {
+  display: grid; grid-template-columns: repeat(2, minmax(4.5rem, 1fr)); gap: 6px 10px;
+  box-sizing: border-box; padding: 10px; border: 1px solid var(--outline); border-radius: var(--radius-md);
+  background: var(--surface-container-high); box-shadow: var(--shadow-floating);
+}
+.ch-dice-toolbar-check {
+  display: inline-flex; align-items: center; gap: 6px; color: var(--on-surface);
+  font: 400 13px var(--font-code); cursor: pointer; user-select: none;
+}
+.ch-composer-dice {
+  flex: 1 1 16rem; min-width: 0; max-width: none; margin: 0;
+  border: 0; border-radius: 0; background: transparent;
+}
+.ch-composer-dice:focus-within { border-color: transparent; }
+.ch-composer-dice .ch-dice-field {
+  gap: 4px; padding: 0 0 0 8px;
+  border-left: 1px solid var(--outline-variant);
+}
+.ch-composer-dice .ch-dice-glyph { width: 28px; height: 28px; }
+.ch-composer-dice .ch-send { width: 34px; height: 34px; }
+.ch-composer-dice .ch-dice-field input { min-height: 34px; padding: 6px 4px; }
+.ch-dice-footer > .ch-problem,
+.ch-dice-toolbar > .ch-problem,
+.ch-composer-dice > .ch-problem {
+  flex: 1 0 100%; width: 100%; padding: 0 4px;
+}
+
+@media (max-width: 720px) {
+  .ch-dice-footer { align-items: stretch; }
+  .ch-dice-toolbar,
+  .ch-composer-dice { flex: 1 1 100%; }
+  .ch-composer-dice .ch-dice-field {
+    padding: 8px 0 0; border-left: 0;
+    border-top: 1px solid var(--outline-variant);
+  }
+  .ch-composer-dice .ch-dice-glyph { display: none; }
+  .ch-composer-dice .ch-dice-notation { flex-basis: 4.5rem; max-width: 5.5rem; }
+  .ch-composer-dice .ch-dice-modifier { flex-basis: 3.25rem; width: 3.25rem; }
+}
+
+@media (max-width: 420px) {
+  .ch-dice-tool-face { min-width: 2.85rem; padding: 4px 5px; font-size: 11px; }
+  .ch-composer-dice .ch-dice-label { display: none; }
+}
+
+/* Dice composer / popover: same tokens as chat fields, emoji picker inputs, and mg-field. */
+.ch-dice-field { align-items: center; padding-bottom: 10px; }
+.ch-dice-glyph { display: grid; place-items: center; width: 40px; height: 40px; color: var(--primary); flex-shrink: 0; }
+.ch-dice-field input {
+  box-sizing: border-box; min-width: 0; min-height: 40px; padding: 9px 4px; border: 0; background: none;
+  color: var(--on-surface); outline: none;
+}
+.ch-dice-field input::placeholder { color: var(--on-surface-variant); }
+.ch-dice-field .ch-dice-notation {
+  flex: 0 1 7.5rem; max-width: 9rem; margin-right: 4px; padding-right: 10px;
+  border-right: 1px solid var(--outline-variant); font: 500 15px/1.5 var(--font-code);
+}
+.ch-composer-dice .ch-dice-notation { flex-basis: 5.5rem; max-width: 6.5rem; }
+.ch-dice-field .ch-dice-modifier {
+  flex: 0 0 4.5rem; width: 4.5rem; text-align: center; font: 500 15px/1.5 var(--font-code);
+  border-right: 1px solid var(--outline-variant); margin-right: 4px; padding-right: 8px;
+}
+.ch-composer-dice .ch-dice-modifier { flex-basis: 3.75rem; width: 3.75rem; }
+.ch-dice-field .ch-dice-label { flex: 1; font: 400 15px/1.5 var(--font-body); }
+.ch-dice-popover {
+  position: absolute; left: 0; bottom: calc(100% + 4px); z-index: 30;
+  display: flex; width: min(20rem, calc(100vw - 2rem)); flex-direction: column; gap: 0.75rem;
+  margin: 0; padding: 0.85rem; border: 1px solid var(--outline); border-radius: var(--radius-lg);
+  background: var(--surface-container-high);
+  box-shadow: var(--shadow-floating), 0 0 0 1px color-mix(in srgb, var(--primary) 18%, transparent);
+}
+.ch-dice-popover .mg-field input {
+  box-sizing: border-box; width: 100%; min-height: 44px; padding: 8px 12px;
+  border: 1px solid var(--outline-variant); border-radius: var(--radius-md);
+  background: var(--surface-container-lowest); color: var(--on-surface); font: 400 15px var(--font-body);
+  outline: none;
+}
+.ch-dice-popover .mg-field input::placeholder { color: var(--on-surface-variant); }
+.ch-dice-popover .mg-field input:focus { border-color: var(--primary-container); }
+.ch-dice-popover .mg-field input.ch-dice-notation { font: 500 15px var(--font-code); }
 .ch-help { display: flex; justify-content: space-between; gap: 12px; margin: 0; padding: 4px 18px 10px; color: var(--on-surface-variant); font: 400 11.5px var(--font-code); }
 .ch-help span { display: inline-flex; align-items: center; gap: 6px; }
 .ch-help .ui-icon { color: var(--secondary); font-size: 14px; }

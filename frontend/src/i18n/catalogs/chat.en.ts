@@ -4,6 +4,7 @@ import type { MessageTree } from "../messages";
 export const chatEn: MessageTree = {
   txt: {
     header: {
+      dice: "Dice channel · visible to the whole server",
       descPublic: "Text channel · visible to the whole server",
       descPrivate: "Private text channel",
       e2ee: "E2EE on",
@@ -11,7 +12,7 @@ export const chatEn: MessageTree = {
       search: "Search this channel",
       members: "Toggle members panel",
     },
-    welcome: { title: "Welcome to #{name}!", text: "The start of {server}'s secure channel." },
+    welcome: { diceText: "The start of {server}'s dice rolls.", title: "Welcome to #{name}!", text: "The start of {server}'s secure channel." },
     banner: {
       title: "Secure instance, end-to-end encrypted",
       text: "Text messages and files are encrypted on this device before they are sent. Only people who hold the server key can decrypt them.",
@@ -168,6 +169,14 @@ export const chatEn: MessageTree = {
       close: "Close notifications",
       unknownChannel: "a channel",
       someone: "Someone",
+      osApp: "Parley",
+      osMention: "{name} mentioned you in #{channel}",
+      osReply: "{name} replied to you in #{channel}",
+      osMentionGeneric: "New mention",
+      osReplyGeneric: "New reply",
+      osNews: "{server} · #{channel}",
+      osNewsChannel: "News in #{channel}",
+      osNewsGeneric: "Activity in another channel",
     },
   },
 };

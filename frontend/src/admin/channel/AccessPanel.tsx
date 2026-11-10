@@ -1,4 +1,4 @@
-import { For, Show, createEffect, createMemo, createResource, createSignal } from "solid-js";
+import { For, Show, createEffect, createMemo, createResource, createSignal, on } from "solid-js";
 import { useShell } from "../../shell/state";
 import { errorText } from "../../lib/errors";
 import { t } from "../../i18n";
@@ -28,15 +28,21 @@ export function AccessPanel(props: {
 }) {
   const shell = useShell();
   const text = () => props.channel.type === "text";
-  const levels = (): Level[] => (text() ? ["read", "write"] : ["listen", "speak"]);
+  const levels = (): Level[] => (props.channel.type === "voice_video" ? ["listen", "speak"] : ["read", "write"]);
 
   const [visibility, setVisibility] = createSignal(props.channel.visibility);
   const [listed, setListed] = createSignal(props.channel.visible_to_new_members);
+  const [diceAnimations, setDiceAnimations] = createSignal(props.channel.dice_animations_enabled);
+  createEffect(on(() => props.channel.id, () => {
+    setVisibility(props.channel.visibility);
+    setListed(props.channel.visible_to_new_members);
+    setDiceAnimations(props.channel.dice_animations_enabled);
+  }));
   const [rules, setRules] = createSignal<Rule[]>([]);
   const [subjectType, setSubjectType] = createSignal<Subject>("role");
   const [subjectId, setSubjectId] = createSignal("");
   const [effect, setEffect] = createSignal<Effect>("allow");
-  const [level, setLevel] = createSignal<Level>(text() ? "write" : "speak");
+  const [level, setLevel] = createSignal<Level>(props.channel.type === "voice_video" ? "speak" : "write");
   const [error, setError] = createSignal("");
   const [saving, setSaving] = createSignal(false);
 
@@ -87,7 +93,7 @@ export function AccessPanel(props: {
     setSaving(true);
     setError("");
     try {
-      const updated = await channels.update(props.channel.id, { visibility: visibility(), visible_to_new_members: visibility() === "public" && listed() });
+      const updated = await channels.update(props.channel.id, { visibility: visibility(), visible_to_new_members: visibility() === "public" && listed(), ...(text() ? { dice_animations_enabled: diceAnimations() } : {}) });
       await acl.replace(props.channel.id, rules());
       props.onSaved(updated);
     } catch (failure) {
@@ -119,6 +125,10 @@ export function AccessPanel(props: {
             <input type="checkbox" checked={listed()} disabled={visibility() === "private"} onChange={(event) => setListed(event.currentTarget.checked)} />
             <span>{t("mgmt.channel.listed")}</span>
           </label>
+          <Show when={text()}><label class="choice mg-listed-row">
+            <input type="checkbox" checked={diceAnimations()} onChange={(event) => setDiceAnimations(event.currentTarget.checked)} />
+            <span>{t("mgmt.channel.diceAnimations")}</span>
+          </label></Show>
         </section>
 
         <section class="mg-card compact">
@@ -155,7 +165,7 @@ export function AccessPanel(props: {
             <label class="mg-field">
               <span class="mg-label">{t("mgmt.channel.stepLevel")}</span>
               <select value={level()} onChange={(event) => setLevel(event.currentTarget.value as Level)}>
-                <For each={levelChoices()}>{(item) => <option value={item} selected={item === level()}>{t(`mgmt.channel.level.${item}`)}</option>}</For>
+                <For each={levelChoices()}>{(item) => <option value={item} selected={item === level()}>{props.channel.type === "dice" ? t(`mgmt.channel.diceLevel.${item}`) : t(`mgmt.channel.level.${item}`)}</option>}</For>
               </select>
             </label>
             <Button variant="primary" class="mg-rule-add" disabled={subjectType() !== "everyone" && !subjectId()} onClick={add}>

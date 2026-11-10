@@ -20,6 +20,7 @@ pub mod avatars;
 pub mod channel_provision;
 pub mod channel_roles;
 pub mod channels;
+pub mod dice;
 pub mod grid;
 pub mod invites;
 pub mod key_envelopes;
@@ -134,6 +135,7 @@ pub fn router(state: AppState) -> axum::Router {
                     "/channels/{channel_id}/messages",
                     get(messages::list_messages).post(messages::post_message),
                 )
+                .route("/channels/{channel_id}/dice", post(dice::roll))
                 .route("/channels/{channel_id}/mutes/me", get(mute::get_my_mute))
                 .route("/channels/{channel_id}/mutes", get(mute::list_mutes))
                 .route(

@@ -336,6 +336,7 @@ function createCall() {
           has_active_webhook: false,
       visibility: "public",
       visible_to_new_members: true,
+      dice_animations_enabled: false,
     };
     setChannel(target);
     setStatus("connecting");

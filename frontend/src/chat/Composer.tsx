@@ -1,12 +1,13 @@
 import { For, Show, createEffect, createSignal, on, onCleanup, onMount } from "solid-js";
-import { Avatar, Icon } from "../components/ui";
-import { avatarUrl, useAuthedSrc } from "../api";
+import { Avatar, Button, Icon } from "../components/ui";
+import { avatarUrl, dice, useAuthedSrc } from "../api";
 import { errorText } from "../lib/errors";
 import { t } from "../i18n";
 import { MAX_ATTACHMENTS_PER_MESSAGE } from "../api/limits";
 import { checkAttachment, uploadAttachment } from "./attachments";
 import { EmojiPicker } from "./EmojiPicker";
 import { applyCompletion, detectCompletion, type Completion } from "./logic/autocomplete";
+import { clampDiceModifier, composeDiceNotation } from "./logic/diceNotation";
 import { expandShortcodes, searchEmoji } from "./logic/emoji";
 import { EVERYONE_HANDLE, mentionedAccountIds, mentionsEveryone } from "./logic/mentions";
 import { matchPeople, type ChatPerson } from "./logic/people";
@@ -57,11 +58,16 @@ export function Composer(props: {
   const [completion, setCompletion] = createSignal<Completion>();
   const [active, setActive] = createSignal(0);
   const [pickerOpen, setPickerOpen] = createSignal(false);
+  const [diceOpen, setDiceOpen] = createSignal(false);
+  const [diceNotation, setDiceNotation] = createSignal("1d20");
+  const [diceModifier, setDiceModifier] = createSignal(0);
+  const [diceLabel, setDiceLabel] = createSignal("");
   const [busy, setBusy] = createSignal(false);
   const [problem, setProblem] = createSignal("");
   let field: HTMLTextAreaElement | undefined;
   let fileInput: HTMLInputElement | undefined;
   let pickerBox: HTMLDivElement | undefined;
+  let diceBox: HTMLDivElement | undefined;
   let announce: AnnounceState = idleAnnounce();
 
   const note = (event: AnnounceEvent) => {
@@ -242,11 +248,19 @@ export function Composer(props: {
     }
   };
 
-  // The picker closes on a press anywhere outside it, and on Escape.
+  // Pickers close on a press anywhere outside them, and on Escape — same pattern for emoji and dice.
   createEffect(() => {
-    if (!pickerOpen()) return;
-    const outside = (event: PointerEvent) => !pickerBox?.contains(event.target as Node) && setPickerOpen(false);
-    const escape = (event: KeyboardEvent) => event.key === "Escape" && setPickerOpen(false);
+    if (!pickerOpen() && !diceOpen()) return;
+    const outside = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (pickerOpen() && !pickerBox?.contains(target)) setPickerOpen(false);
+      if (diceOpen() && !diceBox?.contains(target)) setDiceOpen(false);
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setPickerOpen(false);
+      setDiceOpen(false);
+    };
     document.addEventListener("pointerdown", outside);
     document.addEventListener("keydown", escape);
     onCleanup(() => {
@@ -258,6 +272,17 @@ export function Composer(props: {
     void props.focusSignal;
     field?.focus();
   });
+
+  async function rollDice() {
+    const composed = composeDiceNotation(diceNotation(), diceModifier());
+    if (busy() || !composed) return;
+    setBusy(true); setProblem("");
+    // Close before the request so the 3D overlay is never covered by the popover.
+    setDiceOpen(false);
+    try { await dice.roll(props.channelId, composed, diceLabel().trim() || undefined); props.onSent(); }
+    catch (error) { setProblem(errorText(error)); }
+    finally { setBusy(false); }
+  }
 
   return (
     <div class="ch-composer">
@@ -307,6 +332,60 @@ export function Composer(props: {
         </ul>
       </Show>
       <div class="ch-field">
+        <div class="ch-picker-anchor" ref={diceBox}>
+          <button
+            type="button"
+            class="ch-field-btn"
+            onClick={() => { setPickerOpen(false); setDiceOpen((open) => !open); }}
+            title={t("txt.dice.roll")}
+            aria-label={t("txt.dice.roll")}
+            aria-expanded={diceOpen()}
+          >
+            <Icon name="casino" />
+          </button>
+          <Show when={diceOpen()}>
+            <form class="ch-dice-popover" role="dialog" aria-label={t("txt.dice.roll")} onSubmit={(event) => { event.preventDefault(); void rollDice(); }}>
+              <label class="mg-field">
+                <span class="mg-label">{t("txt.dice.notation")}</span>
+                <input
+                  class="ch-dice-notation"
+                  value={diceNotation()}
+                  onInput={(event) => setDiceNotation(event.currentTarget.value)}
+                  aria-label={t("txt.dice.notation")}
+                  placeholder="1d20"
+                  autocomplete="off"
+                  spellcheck={false}
+                  data-autofocus
+                />
+              </label>
+              <label class="mg-field">
+                <span class="mg-label">{t("txt.dice.modifier")}</span>
+                <input
+                  type="number"
+                  min={-100}
+                  max={100}
+                  step={1}
+                  value={diceModifier()}
+                  onInput={(event) => setDiceModifier(clampDiceModifier(event.currentTarget.valueAsNumber))}
+                  aria-label={t("txt.dice.modifier")}
+                  placeholder="+0"
+                />
+              </label>
+              <label class="mg-field">
+                <span class="mg-label">{t("txt.dice.label")}</span>
+                <input
+                  value={diceLabel()}
+                  onInput={(event) => setDiceLabel(event.currentTarget.value)}
+                  aria-label={t("txt.dice.label")}
+                  placeholder={t("txt.dice.label")}
+                />
+              </label>
+              <Button variant="primary" type="submit" disabled={busy() || !composeDiceNotation(diceNotation(), diceModifier())}>
+                {t("txt.dice.roll")}
+              </Button>
+            </form>
+          </Show>
+        </div>
         <Show when={props.canAttach}>
           <button type="button" class="ch-field-btn" onClick={() => fileInput?.click()} title={t("txt.composer.attach")} aria-label={t("txt.composer.attach")} disabled={busy()}><Icon name="attach_file" /></button>
           <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden onChange={(e) => { addFiles([...(e.currentTarget.files ?? [])]); e.currentTarget.value = ""; }} />
@@ -332,7 +411,7 @@ export function Composer(props: {
           data-autofocus
         />
         <div class="ch-picker-anchor" ref={pickerBox}>
-          <button type="button" class="ch-field-btn" onClick={() => setPickerOpen((open) => !open)} title={t("txt.composer.emoji")} aria-label={t("txt.composer.emoji")} aria-expanded={pickerOpen()}><Icon name="mood" /></button>
+          <button type="button" class="ch-field-btn" onClick={() => { setDiceOpen(false); setPickerOpen((open) => !open); }} title={t("txt.composer.emoji")} aria-label={t("txt.composer.emoji")} aria-expanded={pickerOpen()}><Icon name="mood" /></button>
           <Show when={pickerOpen()}>
             <EmojiPicker onPick={(glyph) => { setPickerOpen(false); insertAtCaret(glyph); }} />
           </Show>

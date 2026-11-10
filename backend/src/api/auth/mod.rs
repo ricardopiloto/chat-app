@@ -16,6 +16,7 @@ use serde::Deserialize;
 use sqlx::SqliteConnection;
 use uuid::Uuid;
 
+pub mod dice_toolbar;
 pub mod email;
 pub mod key_reminders;
 pub mod login;
@@ -59,6 +60,10 @@ pub fn router() -> Router<AppState> {
         .route(
             "/auth/key-reminders",
             patch(key_reminders::patch_preference),
+        )
+        .route(
+            "/auth/dice-toolbar",
+            get(dice_toolbar::get_preference).put(dice_toolbar::put_preference),
         )
 }
 

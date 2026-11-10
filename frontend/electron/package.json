@@ -1,6 +1,6 @@
 {
   "name": "parley-chat-app",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "private": true,
   "type": "module",
   "description": "Chat e vídeo self-hosted, com composição de câmaras e criptografia ponta a ponta.",

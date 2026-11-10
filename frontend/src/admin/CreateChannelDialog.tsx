@@ -20,7 +20,7 @@ export function CreateChannelDialog(props: {
   const [busy, setBusy] = createSignal(false);
   const [error, setError] = createSignal("");
   const [acknowledged, setAcknowledged] = createSignal(false);
-  const [key, setKey] = createSignal(generateChannelKey());
+  const [key, setKey] = createSignal<Uint8Array | undefined>(undefined);
   const [name, setName] = createSignal("");
   const [kind, setKind] = createSignal<ChannelKind>("text");
   const [listed, setListed] = createSignal(true);
@@ -31,7 +31,7 @@ export function CreateChannelDialog(props: {
     if (!props.open) return;
     batch(() => {
       setKind(props.initialType);
-      setKey(generateChannelKey());
+      setKey(props.initialType === "voice_video" ? generateChannelKey() : undefined);
       for (const clear of [() => setName(""), () => setError(""), () => setAcknowledged(false), () => setBusy(false)]) clear();
       setListed(true);
       setVisibility("public");
@@ -45,6 +45,7 @@ export function CreateChannelDialog(props: {
     return t(result.reason === "empty" ? "mgmt.createChannel.nameEmpty" : "mgmt.createChannel.nameHyphens");
   };
   const voice = () => kind() === "voice_video";
+  createEffect(() => { if (voice() && !key()) setKey(generateChannelKey()); });
   const ready = () => check().ok && (!voice() || acknowledged()) && !busy();
 
   async function submit(event: Event) {
@@ -58,9 +59,9 @@ export function CreateChannelDialog(props: {
         name: result.name,
         type: kind(),
         visibility: visibility(),
-        ...(voice() ? { custody_ack: true, channel_key_sealed: sealChannelKeyForSelf(key(), props.identity) } : {}),
+        ...(voice() ? { custody_ack: true, channel_key_sealed: sealChannelKeyForSelf(key()!, props.identity) } : {}),
       });
-      if (voice()) rememberChannelKey(created.id, key());
+      if (voice()) rememberChannelKey(created.id, key()!);
       // The listing flag is not part of the create call; it is set right after when it differs from the default.
       if (visibility() === "public" && listed() !== created.visible_to_new_members) {
         created = await channels.update(created.id, { visible_to_new_members: listed() });
@@ -87,6 +88,7 @@ export function CreateChannelDialog(props: {
             options={[
               { value: "text", icon: "tag", label: t("mgmt.createChannel.text") },
               { value: "voice_video", icon: "headset_mic", label: t("mgmt.createChannel.voice") },
+              { value: "dice", icon: "casino", label: t("mgmt.createChannel.dice") },
             ]}
           />
         </div>
@@ -94,7 +96,7 @@ export function CreateChannelDialog(props: {
         <label class="mg-block mg-channel-name">
           <span class="mg-label">{t("mgmt.createChannel.name")}</span>
           <span class="mg-input-row" classList={{ invalid: !!nameProblem() }}>
-            <span class="mg-input-icon"><Icon name={voice() ? "mic" : "tag"} /></span>
+            <span class="mg-input-icon"><Icon name={voice() ? "mic" : kind() === "dice" ? "casino" : "tag"} /></span>
             <input
               value={name()}
               maxLength={CHANNEL_NAME_MAX}
@@ -131,7 +133,7 @@ export function CreateChannelDialog(props: {
             icon="shield_lock"
             title={t("mgmt.createChannel.custodyTitle")}
             text={t("mgmt.createChannel.custodyText")}
-            value={channelKeyDisplay(key())}
+            value={channelKeyDisplay(key()!)}
             copyLabel={t("mgmt.copy")}
             acknowledged={acknowledged()}
             onAcknowledge={setAcknowledged}

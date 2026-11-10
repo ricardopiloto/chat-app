@@ -32,6 +32,7 @@ contextBridge.exposeInMainWorld("mesaNative", {
   minimize: (): Promise<void> => ipcRenderer.invoke("mesa:minimize"),
   toggleMaximize: (): Promise<void> => ipcRenderer.invoke("mesa:toggle-maximize"),
   close: (): Promise<void> => ipcRenderer.invoke("mesa:close"),
+  notifyOs: (payload: { title: string; body: string }): Promise<void> => ipcRenderer.invoke("mesa:notify-os", payload),
   onWindowMaximizedChange: (listener: (maximized: boolean) => void): (() => void) => {
     const wrapped = (_event: Electron.IpcRendererEvent, maximized: boolean) => listener(maximized);
     ipcRenderer.on("mesa:window-maximized", wrapped);

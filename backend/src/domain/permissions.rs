@@ -69,14 +69,14 @@ pub fn can_manage_role_target(
 
 fn maximum_level(channel: &Channel) -> PermLevel {
     match channel.kind {
-        ChannelType::Text => PermLevel::Write,
+        ChannelType::Text | ChannelType::Dice => PermLevel::Write,
         ChannelType::VoiceVideo => PermLevel::Speak,
     }
 }
 
 fn view_level(channel: &Channel) -> PermLevel {
     match channel.kind {
-        ChannelType::Text => PermLevel::Read,
+        ChannelType::Text | ChannelType::Dice => PermLevel::Read,
         ChannelType::VoiceVideo => PermLevel::Listen,
     }
 }
@@ -84,11 +84,13 @@ fn view_level(channel: &Channel) -> PermLevel {
 fn level_compatible(channel: &Channel, level: PermLevel) -> bool {
     matches!(
         (channel.kind, level),
-        (ChannelType::Text, PermLevel::Read | PermLevel::Write)
-            | (
-                ChannelType::VoiceVideo,
-                PermLevel::Listen | PermLevel::Speak
-            )
+        (
+            ChannelType::Text | ChannelType::Dice,
+            PermLevel::Read | PermLevel::Write
+        ) | (
+            ChannelType::VoiceVideo,
+            PermLevel::Listen | PermLevel::Speak
+        )
     )
 }
 
@@ -287,7 +289,7 @@ pub fn resolve_channel_access_for_member(
     // Cap intersection for send/speak (Deny already applied; Allow cannot bypass missing caps).
     if view && level.is_none() {
         level = Some(match channel.kind {
-            ChannelType::Text => {
+            ChannelType::Text | ChannelType::Dice => {
                 if caps.can_send_messages {
                     PermLevel::Write
                 } else {
@@ -310,7 +312,7 @@ pub fn resolve_channel_access_for_member(
 
     if view {
         match channel.kind {
-            ChannelType::Text => {
+            ChannelType::Text | ChannelType::Dice => {
                 if matches!(level, Some(PermLevel::Write)) && !caps.can_send_messages {
                     level = Some(PermLevel::Read);
                     decision.factors.push(AccessFactor {

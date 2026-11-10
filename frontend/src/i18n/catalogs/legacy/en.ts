@@ -35,6 +35,7 @@ export const en: MessageTree = {
       nameEmpty: "The channel name cannot be empty.",
       nameHyphens: "The channel name cannot be only hyphens.",
       addText: "Create text channel",
+      addDice: "Create dice channel",
       addVoice: "Create voice channel",
       rename: "Rename channel",
       settings: "Channel settings",

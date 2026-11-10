@@ -38,6 +38,7 @@ export const mgmtPtBR: MessageTree = {
       kind: "Tipo de canal",
       text: "Canal de texto",
       voice: "Voz e transmissão",
+      dice: "Dados",
       name: "Nome do canal",
       nameHint: "Formatação automática em caixa-baixa separada por hífens.",
       namePlaceholder: "palco-da-equipe",
@@ -200,6 +201,8 @@ export const mgmtPtBR: MessageTree = {
       save: "Guardar alterações",
       saving: "Guardando…",
       deleteChannel: "Apagar canal",
+      diceLevel: { read: "Ler", write: "Rolar" },
+      diceAnimations: "Mostrar animações 3D dos dados",
       level: { read: "Ler", write: "Escrever", listen: "Ouvir", speak: "Falar" },
       inspect: {
         member: "Membro inspecionado",

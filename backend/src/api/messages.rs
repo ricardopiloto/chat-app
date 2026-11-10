@@ -144,6 +144,12 @@ pub async fn post_message(
     Json(body): Json<PostMessageBody>,
 ) -> Result<impl IntoResponse, ApiError> {
     let (channel, _, _) = require_write_text(&state.pool, account.id, channel_id).await?;
+    if channel.kind == ChannelType::Dice {
+        return Err(ApiError::bad_request_code(
+            "dice_channel_text_not_allowed",
+            "dice channels accept rolls only",
+        ));
+    }
     if let Some(mute) =
         db::channel_mute::get_active(&state.pool, channel_id, account.id, Utc::now()).await?
     {
@@ -353,8 +359,8 @@ pub async fn mark_channel_read(
     Json(body): Json<MarkReadBody>,
 ) -> Result<StatusCode, ApiError> {
     let (channel, _) = membership_for_channel(&state.pool, account.id, channel_id).await?;
-    if channel.kind != ChannelType::Text {
-        return Err(ApiError::bad_request("read state applies to text channels"));
+    if channel.kind != ChannelType::Text && channel.kind != ChannelType::Dice {
+        return Err(ApiError::bad_request("read state applies to message channels"));
     }
     let ts = body.last_read_at.unwrap_or_else(Utc::now);
     db::read_state::upsert_last_read(&state.pool, account.id, channel_id, ts).await?;

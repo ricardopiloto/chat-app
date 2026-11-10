@@ -28,7 +28,7 @@ pub async fn provision_channel(
             }
             Some(n)
         }
-        ChannelType::Text => None,
+        ChannelType::Text | ChannelType::Dice => None,
     };
 
     let sealed_bytes = if kind == ChannelType::VoiceVideo {
@@ -58,11 +58,12 @@ pub async fn provision_channel(
         kind,
         grid_slot_count,
         created_by_account_id: created_by,
-        e2ee_enabled: true,
+        e2ee_enabled: kind != ChannelType::Dice,
         has_channel_key: false,
         has_active_webhook: false,
         visibility,
         visible_to_new_members: visibility == ChannelVisibility::Public,
+        dice_animations_enabled: false,
         pinned_message_id: None,
         my_permission: None,
     };
@@ -76,7 +77,7 @@ pub async fn provision_channel(
                 subject_type: AclSubjectType::Account,
                 subject_id: created_by,
                 level: match kind {
-                    ChannelType::Text => PermLevel::Write,
+                    ChannelType::Text | ChannelType::Dice => PermLevel::Write,
                     ChannelType::VoiceVideo => PermLevel::Speak,
                 },
                 effect: crate::domain::channel_acl::AclEffect::Allow,
