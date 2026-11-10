@@ -16,6 +16,7 @@ interface MesaNativeBridge {
   clearInstance(): Promise<void>;
   minimize(): Promise<void>;
   toggleMaximize(): Promise<void>;
+  isMaximized(): Promise<boolean>;
   close(): Promise<void>;
   notifyOs(payload: { title: string; body: string }): Promise<void>;
   onWindowMaximizedChange(listener: (maximized: boolean) => void): () => void;

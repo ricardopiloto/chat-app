@@ -2,12 +2,25 @@
 @tailwind components;
 @tailwind utilities;
 
-:root { --mesa-title-bar: 0px; }
+:root {
+  --mesa-title-bar: 0px;
+  /* Visible against dark OS chrome; darkened slightly so the edge reads as a line, not a highlight. */
+  --mesa-window-edge: color-mix(in srgb, var(--outline) 55%, black 45%);
+}
 
 /* Page defaults. The chrome (top bar, rail, sidebar) is styled in components with Tailwind;
    what remains here is shared by the screens of later phases until they move over. */
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--background); color: var(--on-surface); font-family: var(--font-body); font-size: 14px; line-height: 20px; }
+
+/* Electron main window edge (TitleBar wrapper). Web never mounts that wrapper. */
+.mesa-window-frame {
+  border: 1px solid var(--mesa-window-edge);
+}
+.mesa-window-frame--maximized,
+html.mesa-window-maximized .mesa-window-frame {
+  border-width: 0;
+}
 button, input, select { font: inherit; }
 button { cursor: pointer; }
 /* Base layer so a text-[Npx] utility on the same svg still wins, and 1em follows that size. */

@@ -9,6 +9,10 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+### Added
+
+- Desktop client (Electron): 1px window edge on the custom title-bar chrome so the restored frameless window stays visible on dark OS themes; border clears while maximized (`electron-window-border`).
+
 ## [1.9.1] - 2026-11-10
 
 ### Fixed

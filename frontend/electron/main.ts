@@ -387,9 +387,11 @@ function createWindow(): BrowserWindow {
 function registerWindowControlsIpc(mainWindow: BrowserWindow): void {
   ipcMain.removeHandler("mesa:minimize");
   ipcMain.removeHandler("mesa:toggle-maximize");
+  ipcMain.removeHandler("mesa:is-maximized");
   ipcMain.removeHandler("mesa:close");
   ipcMain.handle("mesa:minimize", () => mainWindow.minimize());
   ipcMain.handle("mesa:toggle-maximize", () => mainWindow.isMaximized() ? mainWindow.unmaximize() : mainWindow.maximize());
+  ipcMain.handle("mesa:is-maximized", () => mainWindow.isMaximized());
   ipcMain.handle("mesa:close", () => mainWindow.close());
   mainWindow.on("maximize", () => mainWindow.webContents.send("mesa:window-maximized", true));
   mainWindow.on("unmaximize", () => mainWindow.webContents.send("mesa:window-maximized", false));
