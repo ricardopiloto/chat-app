@@ -15,7 +15,7 @@ Parley gives friends, families, teams, communities, and creators a private insta
 
 | | |
 |---|---|
-| **Status** | **1.9.0** — Rust backend, v2 frontend, and Electron desktop client ([changelog](CHANGELOG.md)) |
+| **Status** | **1.9.1** — Rust backend, v2 frontend, and Electron desktop client ([changelog](CHANGELOG.md)) |
 | **Download** | [Desktop releases for Windows, macOS, and Linux](https://github.com/ricardopiloto/chat-app/releases) |
 | **Stack** | Rust (Axum + SQLite), SolidJS (Vite + Tailwind), Electron, LiveKit |
 | **Frontend** | [`frontend/`](frontend/) is the current v2 client. The v1 0.8.1 release remains in Git history for rollback. |

@@ -26,7 +26,13 @@ let tray: Tray | null = null;
 let isQuitting = false;
 
 function electronIconsDir(): string {
-  return join(dirname(fileURLToPath(import.meta.url)), "../icons");
+  // Packaged: electron/dist/main.js → ../icons (and asarUnpack → app.asar.unpacked/…).
+  // Dev: same relative layout under frontend/electron/.
+  const besideMain = join(dirname(fileURLToPath(import.meta.url)), "../icons");
+  if (existsSync(join(besideMain, "icon.png"))) return besideMain;
+  const unpacked = besideMain.replace(`${sep}app.asar${sep}`, `${sep}app.asar.unpacked${sep}`);
+  if (unpacked !== besideMain && existsSync(join(unpacked, "icon.png"))) return unpacked;
+  return besideMain;
 }
 
 function appIconPath(): string {
@@ -37,7 +43,19 @@ function trayIconPath(): string {
   const dir = electronIconsDir();
   if (process.platform === "darwin") return join(dir, "16x16.png");
   if (process.platform === "win32") return join(dir, "32x32.png");
-  return join(dir, "24x24.png");
+  // StatusNotifier / AppIndicator: 22–32px PNGs are the most reliable on Linux trays.
+  return join(dir, "32x32.png");
+}
+
+function loadTrayImage(): Electron.NativeImage {
+  const candidates = [trayIconPath(), appIconPath(), join(electronIconsDir(), "24x24.png"), join(electronIconsDir(), "48x48.png")];
+  for (const path of candidates) {
+    if (!existsSync(path)) continue;
+    const image = nativeImage.createFromPath(path);
+    if (!image.isEmpty()) return process.platform === "linux" ? image.resize({ width: 32, height: 32 }) : image;
+  }
+  console.warn("tray icon missing; tray may be invisible", { dir: electronIconsDir() });
+  return nativeImage.createEmpty();
 }
 
 function trayLabels(): { open: string; quit: string; tooltip: string } {
@@ -62,9 +80,7 @@ function quitFromTray(): void {
 
 function createTray(): void {
   if (tray) return;
-  const image = nativeImage.createFromPath(trayIconPath());
-  const icon = image.isEmpty() ? nativeImage.createFromPath(appIconPath()) : image;
-  tray = new Tray(icon.isEmpty() ? nativeImage.createEmpty() : icon);
+  tray = new Tray(loadTrayImage());
   const labels = trayLabels();
   tray.setToolTip(labels.tooltip);
   tray.setContextMenu(

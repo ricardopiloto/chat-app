@@ -9,6 +9,12 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [1.9.1] - 2026-11-10
+
+### Fixed
+
+- Desktop Linux AppImage: system tray icon was invisible because tray PNGs were not packaged; icons are now included (and unpacked from asar) with a path fallback for `app.asar.unpacked`.
+
 ## [1.9.0] - 2026-11-10
 
 ### Added
