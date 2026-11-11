@@ -44,6 +44,8 @@ backend/data/attachments/
 # User and server avatars (plaintext images)
 data/avatars/
 backend/data/avatars/
+data/camera-backgrounds/
+backend/data/camera-backgrounds/
 
 .agents
 .claude

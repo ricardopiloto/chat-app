@@ -108,7 +108,7 @@ export function createPreview() {
         nextUrl = effect.kind === "background" ? URL.createObjectURL(await backgroundBlob(effect.backgroundId)) : null;
         const options: import("@livekit/track-processors").SwitchBackgroundProcessorOptions = effect.kind === "background"
           ? { mode: "virtual-background", imagePath: nextUrl! }
-          : { mode: "background-blur", blurRadius: BLUR_RADIUS[effect.level] };
+          : { mode: "background-blur", blurRadius: BLUR_RADIUS[effect.level as Exclude<BlurLevel, "off">] };
         if (ticket !== renderTicket) { if (nextUrl) URL.revokeObjectURL(nextUrl); return; }
         await backgroundProcessor.switchTo(options);
         if (backgroundUrl) URL.revokeObjectURL(backgroundUrl);
@@ -144,7 +144,7 @@ export function createPreview() {
       const nextUrl = effect.kind === "background" ? URL.createObjectURL(await backgroundBlob(effect.backgroundId)) : null;
       const options: import("@livekit/track-processors").SwitchBackgroundProcessorOptions = effect.kind === "background"
         ? { mode: "virtual-background", imagePath: nextUrl! }
-        : { mode: "background-blur", blurRadius: BLUR_RADIUS[effect.level] };
+        : { mode: "background-blur", blurRadius: BLUR_RADIUS[effect.level as Exclude<BlurLevel, "off">] };
       const processor = processors.BackgroundProcessor(options);
       try { await blurred.setProcessor(processor); }
       catch (error) { if (nextUrl) URL.revokeObjectURL(nextUrl); throw error; }

@@ -9,9 +9,17 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [1.10.0] - 2026-11-11
+
 ### Added
 
 - Desktop client (Electron): 1px window edge on the custom title-bar chrome so the restored frameless window stays visible on dark OS themes; border clears while maximized (`electron-window-border`).
+- Dice channel: an appearance editor in the toolbar lets each account choose and save dice colour, material, texture, and sound per channel; rolls include the saved `appearance` snapshot. (The live 3D overlay does not yet apply that appearance to animated rolls.) (`dice-appearance-preferences`).
+- Custom camera backgrounds: upload, select, and remove personal backgrounds in Audio & Video settings alongside the existing blur levels. (`custom-camera-backgrounds`).
+
+### Changed
+
+- Call controls: 40×40px buttons now show hover, pressed, and keyboard focus states, respect `prefers-reduced-motion`, and place a visual divider between the camera and blur settings buttons in the user panel and floating mini-player (`call-controls-visual-feedback`).
 
 ## [1.9.1] - 2026-11-10
 

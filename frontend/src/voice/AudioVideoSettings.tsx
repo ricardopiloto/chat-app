@@ -137,16 +137,16 @@ export function AudioVideoSettings() {
                 <MonoLabel>{t("call.blur.label")}</MonoLabel>
                 <Segmented label={t("call.blur.label")} value={(prefs.effect().kind === "blur" ? prefs.blur() : "") as BlurLevel} options={blurOptions()} onChange={(level) => { prefs.setBlur(level); preview.rerenderBlur(); }} />
                 <Show when={preview.blurError()}><p class="call-inline-error" role="alert">{t("call.blur.unsupported")}</p></Show>
-                <div class="call-background-gallery">
-                  <For each={backgroundList()}>{(item, index) => <div class="call-background-item">
-                    <button type="button" aria-label={`${t("call.background.choose")} ${index() + 1}`} aria-pressed={activeBackground(item.id)} onClick={() => { prefs.setEffect({ kind: "background", backgroundId: item.id }); preview.rerenderBlur(); }}>
-                      <img src={thumbnailUrls()[item.id]} alt="" />
+                <div class="flex flex-wrap gap-2">
+                  <For each={backgroundList()}>{(item, index) => <div class="flex w-24 flex-col gap-1">
+                    <button type="button" class="overflow-hidden rounded-md border-2 border-outline-variant p-0 focus-visible:outline-2 focus-visible:outline-primary" classList={{ "border-primary": activeBackground(item.id) }} aria-label={`${t("call.background.choose")} ${index() + 1}`} aria-pressed={activeBackground(item.id)} onClick={() => { prefs.setEffect({ kind: "background", backgroundId: item.id }); preview.rerenderBlur(); }}>
+                      <img src={thumbnailUrls()[item.id]} alt="" class="h-16 w-full object-cover" />
                     </button>
-                    <button type="button" aria-label={`${t("call.background.remove")} ${index() + 1}`} onClick={() => void removeBackground(item.id).then(() => { preview.rerenderBlur(); void refreshBackgrounds(); }).catch((error) => setBackgroundError(error instanceof Error ? error.message : t("call.background.failed")))}>{t("call.background.remove")}</button>
+                    <Button aria-label={`${t("call.background.remove")} ${index() + 1}`} onClick={() => void removeBackground(item.id).then(() => { preview.rerenderBlur(); void refreshBackgrounds(); }).catch((error) => setBackgroundError(error instanceof Error ? error.message : t("call.background.failed")))}><Icon name="delete" />{t("call.background.remove")}</Button>
                   </div>}</For>
                 </div>
-                <label class="call-background-upload">{t("call.background.add")}
-                  <input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploading() || backgroundList().length >= 10} onChange={(event) => { void upload(event.currentTarget.files?.[0]); event.currentTarget.value = ""; }} />
+                <label class="ui-button primary cursor-pointer self-start" classList={{ "opacity-50": uploading() || backgroundList().length >= 10 }}><Icon name="upload" />{t("call.background.add")}
+                  <input type="file" class="sr-only" accept="image/jpeg,image/png,image/webp" disabled={uploading() || backgroundList().length >= 10} onChange={(event) => { void upload(event.currentTarget.files?.[0]); event.currentTarget.value = ""; }} />
                 </label>
                 <Show when={uploading()}><p role="status">{t("call.background.uploading")}</p></Show>
                 <Show when={backgroundError()}><p class="call-inline-error" role="alert">{backgroundError()}</p></Show>

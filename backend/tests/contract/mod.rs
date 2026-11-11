@@ -12,6 +12,7 @@ mod auth_recovery_key;
 mod auth_register;
 mod auth_session;
 mod avatars;
+mod camera_backgrounds;
 mod channel_manage_parity;
 mod channel_mute;
 mod channel_name_rules;

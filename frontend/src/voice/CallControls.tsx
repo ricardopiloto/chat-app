@@ -16,7 +16,9 @@ export function CallControls() {
   const call = useCall();
   const [blurOpen, setBlurOpen] = createSignal(false);
   const [thumbnailUrls, setThumbnailUrls] = createSignal<Record<string, string>>({});
+  let loadTicket = 0;
   const closeBackgrounds = () => {
+    loadTicket++;
     Object.values(thumbnailUrls()).forEach((url) => URL.revokeObjectURL(url));
     setThumbnailUrls({});
     setBlurOpen(false);
@@ -24,11 +26,16 @@ export function CallControls() {
   onCleanup(closeBackgrounds);
   const openBackgrounds = async () => {
     if (blurOpen()) { closeBackgrounds(); return; }
+    const ticket = ++loadTicket;
     setBlurOpen(true);
     try {
       await loadBackgrounds();
-      const next: Record<string, string> = {};
-      for (const item of backgroundList()) next[item.id] = URL.createObjectURL(await backgroundBlob(item.id));
+      const entries = await Promise.all(backgroundList().map(async (item) => {
+        try { return [item.id, URL.createObjectURL(await backgroundBlob(item.id))] as const; }
+        catch { return null; }
+      }));
+      const next: Record<string, string> = Object.fromEntries(entries.filter((entry) => entry !== null));
+      if (ticket !== loadTicket) { Object.values(next).forEach((url) => URL.revokeObjectURL(url)); return; }
       setThumbnailUrls(next);
     } catch { /* blur choices remain available */ }
   };
@@ -97,7 +104,9 @@ export function CallControls() {
                 </button>
               ))}
               <For each={backgroundList()}>{(item, index) => <button type="button" role="menuitemradio" aria-label={`${t("call.background.choose")} ${index() + 1}`} aria-checked={activeBackground(item.id)} onClick={() => { void call.setEffect({ kind: "background", backgroundId: item.id }); closeBackgrounds(); }}>
-                <img src={thumbnailUrls()[item.id]} alt="" class="call-background-menu-thumb" />
+                <Show when={thumbnailUrls()[item.id]} fallback={<span class="call-background-menu-thumb bg-surface-container-high" />}>
+                  {(url) => <img src={url()} alt="" class="call-background-menu-thumb" />}
+                </Show>
                 <span>{t("call.background.choose")} {index() + 1}</span>
                 <Show when={activeBackground(item.id)}><Icon name="check" class="text-[16px]" /></Show>
               </button>}</For>

@@ -14,7 +14,7 @@ Ver `proposal.md` — Why. Estado actual:
 **Goals:**
 - Upload, listagem e remoção de imagens de fundo por conta, persistidas no backend e disponíveis em qualquer dispositivo.
 - Escolher, nas definições e no menu de blur da chamada, entre "Sem blur", os níveis de blur existentes, ou um dos fundos personalizados da conta.
-- Reaproveitar ao máximo o caminho já existente de blur (mesmo processador, mesma preferência local, mesma UI de menu).
+- Reaproveitar ao máximo o caminho já existente de blur (mesmo processador, mesma preferência local).
 
 **Non-Goals:**
 - Partilhar/ver o fundo de outro utilizador.
@@ -73,10 +73,15 @@ Mantém-se `supportsBackgroundProcessors()` como guarda de suporte do browser, i
 
 ## Risks / Trade-offs
 
-- [Carregar a imagem pela rede antes de aplicar o efeito pode introduzir atraso perceptível ao trocar de fundo em chamada] → Mitigar: pré-carregar (fetch + cache em memória) as miniaturas/imagens da conta quando a página de definições ou o menu de blur abre, antes de o utilizador escolher.
+- [Carregar a imagem pela rede antes de aplicar o efeito pode introduzir atraso perceptível ao trocar de fundo em chamada] → Mitigar: pré-carregar (fetch + cache em memória) as miniaturas/imagens da conta quando a página de definições abre, antes de o utilizador escolher.
 - [Migração do formato guardado em `localStorage` de `blur` para `effect`] → Mesma técnica já usada para a chave legacy `mesa.cameraBlur`: ler o campo antigo uma vez e migrar.
 - [Imagens grandes custam espaço em disco por conta] → Limite de 5 MiB × 10 fundos por conta (50 MiB no pior caso), igual ordem de grandeza dos anexos de mensagem.
 - [Mudar a API interna do processador (`BackgroundBlur`/`VirtualBackground` → `BackgroundProcessor`) pode mudar o comportamento do blur já em produção] → Cobrir com o mesmo teste manual de blur existente antes/depois da troca; o pacote mantém `BackgroundBlur`/`VirtualBackground` como atalhos descontinuados caso seja preciso reverter rapidamente.
+
+## Known Issues
+
+- O menu de blur da chamada (`CallControls.tsx`) já tem código que tenta listar os fundos personalizados (`<For each={backgroundList()}>`), mas isso não funciona corretamente na prática — confirmado em teste manual. É um bug pendente de investigação e correcção, não um corte de escopo; ver tasks.md 4.2.
+- A galeria/upload de fundos personalizados em `AudioVideoSettings.tsx` não segue o design-system da aplicação: usa botões crus e um `<label><input type="file"></label>` com CSS próprio em `voice.css` (incluindo cores hardcoded), em vez de reaproveitar `Button`/`Icon` e o padrão `ui-button` + input `sr-only` já usado no upload de avatar (`pages/Account.tsx`). Pendente de correcção; ver tasks.md 4.1.
 
 ## Migration Plan
 

@@ -63,7 +63,7 @@ export const prefs = {
   micOn: () => saved().micOn ?? true,
   camOn: () => saved().camOn ?? false,
   effect: (): CameraEffect => saved().effect ?? { kind: "blur", level: "off" },
-  blur: (): BlurLevel => saved().effect?.kind === "blur" ? saved().effect!.level : "off",
+  blur: (): BlurLevel => { const effect = saved().effect; return effect?.kind === "blur" ? effect.level : "off"; },
   setMic: (id: string | undefined) => patch({ micId: id }),
   setCam: (id: string | undefined) => patch({ camId: id }),
   setOut: (id: string | undefined) => patch({ outId: id }),
