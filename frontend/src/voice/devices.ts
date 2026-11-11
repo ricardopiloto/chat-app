@@ -5,6 +5,7 @@ import { createSignal } from "solid-js";
 import { readJson, writeJson } from "../lib/localPrefs";
 
 export type BlurLevel = "off" | "light" | "strong";
+export type CameraEffect = { kind: "blur"; level: BlurLevel } | { kind: "background"; backgroundId: string };
 export type DeviceKind = "audioinput" | "audiooutput" | "videoinput";
 
 export interface DeviceInfo {
@@ -20,6 +21,7 @@ interface Saved {
   micOn?: boolean;
   camOn?: boolean;
   blur?: BlurLevel;
+  effect?: CameraEffect;
 }
 
 const STORE = "mesa.callPrefs.v2";
@@ -29,7 +31,9 @@ const isBlur = (v: unknown): v is BlurLevel => v === "off" || v === "light" || v
 
 function load(): Saved {
   const saved = readJson<Saved>(STORE, {});
-  if (!isBlur(saved.blur)) {
+  if (saved.effect?.kind === "blur" && !isBlur(saved.effect.level)) saved.effect = undefined;
+  if (saved.effect?.kind === "background" && !saved.effect.backgroundId) saved.effect = undefined;
+  if (!saved.effect && !isBlur(saved.blur)) {
     // The blur choice predates this store; honour it once so nobody has to pick it again.
     try {
       const old = localStorage.getItem(BLUR_LEGACY_KEY);
@@ -38,6 +42,9 @@ function load(): Saved {
       /* storage unavailable: default applies */
     }
   }
+  if (!saved.effect) saved.effect = { kind: "blur", level: saved.blur ?? "off" };
+  delete saved.blur;
+  writeJson(STORE, saved);
   return saved;
 }
 
@@ -55,13 +62,15 @@ export const prefs = {
   outId: () => saved().outId,
   micOn: () => saved().micOn ?? true,
   camOn: () => saved().camOn ?? false,
-  blur: (): BlurLevel => saved().blur ?? "off",
+  effect: (): CameraEffect => saved().effect ?? { kind: "blur", level: "off" },
+  blur: (): BlurLevel => saved().effect?.kind === "blur" ? saved().effect!.level : "off",
   setMic: (id: string | undefined) => patch({ micId: id }),
   setCam: (id: string | undefined) => patch({ camId: id }),
   setOut: (id: string | undefined) => patch({ outId: id }),
   setMicOn: (on: boolean) => patch({ micOn: on }),
   setCamOn: (on: boolean) => patch({ camOn: on }),
-  setBlur: (level: BlurLevel) => patch({ blur: level }),
+  setEffect: (effect: CameraEffect) => patch({ effect }),
+  setBlur: (level: BlurLevel) => patch({ effect: { kind: "blur", level } }),
 };
 
 // --- enumeration ----------------------------------------------------------------------------

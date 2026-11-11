@@ -44,6 +44,7 @@ impl TestApp {
         config.default_invite_ttl_secs = 300;
         config.attachments_dir = dir.path().join("attachments");
         config.avatars_dir = dir.path().join("avatars");
+        config.camera_backgrounds_dir = dir.path().join("camera-backgrounds");
         config.email_log_file = Some(dir.path().join("email.log"));
         config.email_api_key = Default::default();
         customize(&mut config);

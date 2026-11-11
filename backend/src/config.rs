@@ -60,6 +60,7 @@ pub struct Config {
     pub attachments_dir: PathBuf,
     /// Plaintext user/server avatar images.
     pub avatars_dir: PathBuf,
+    pub camera_backgrounds_dir: PathBuf,
     /// `PARLEY_PRODUCTION=1|true` or `PARLEY_ENV=production`.
     pub production: bool,
     /// When true, login/register skip the in-process IP limiter (TestApp default).
@@ -134,6 +135,9 @@ impl Config {
             avatars_dir: env::var("AVATARS_DIR")
                 .map(PathBuf::from)
                 .unwrap_or_else(|_| PathBuf::from("./data/avatars")),
+            camera_backgrounds_dir: env::var("CAMERA_BACKGROUNDS_DIR")
+                .map(PathBuf::from)
+                .unwrap_or_else(|_| PathBuf::from("./data/camera-backgrounds")),
             production: production_from_env(),
             rate_limit_disabled: env_flag("PARLEY_RATE_LIMIT_DISABLED"),
             registo_modo: env::var("REGISTO_MODO").unwrap_or_else(|_| "fechado".into()),

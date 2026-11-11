@@ -28,11 +28,15 @@ pub(crate) fn media_type_from_headers(headers: &HeaderMap) -> Result<String, Api
 }
 
 pub(crate) fn validate_body(body: &Bytes) -> Result<(), ApiError> {
+    validate_body_with_limit(body, MAX_AVATAR_BYTES, "image exceeds 1 MiB limit")
+}
+
+pub(crate) fn validate_body_with_limit(body: &Bytes, limit: usize, message: &str) -> Result<(), ApiError> {
     if body.is_empty() {
         return Err(ApiError::bad_request("empty image body"));
     }
-    if body.len() > MAX_AVATAR_BYTES {
-        return Err(ApiError::bad_request("image exceeds 1 MiB limit"));
+    if body.len() > limit {
+        return Err(ApiError::bad_request(message));
     }
     Ok(())
 }

@@ -17,6 +17,7 @@ pub mod attachments;
 pub mod auth;
 pub mod authz;
 pub mod avatars;
+pub mod camera_backgrounds;
 pub mod channel_provision;
 pub mod channel_roles;
 pub mod channels;

@@ -43,6 +43,7 @@ pub async fn build_state(
     config.validate().map_err(std::io::Error::other)?;
     tokio::fs::create_dir_all(&config.attachments_dir).await?;
     tokio::fs::create_dir_all(&config.avatars_dir).await?;
+    tokio::fs::create_dir_all(&config.camera_backgrounds_dir).await?;
     tokio::fs::create_dir_all(config.avatars_dir.join("servers")).await?;
     let pool = db::bootstrap(&config).await?;
     let email_sender: Arc<dyn email_sender::EmailSender> = if config.email_api_key.is_empty() {

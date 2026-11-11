@@ -1,15 +1,41 @@
 // Settings > Audio & Video: pick and test the devices a call will use. Choices persist on this device
 // (see devices.ts) and are what the green room and every later call start from. The blur choice is the
 // same store the call's own blur menu writes, so changing it here or there changes it everywhere.
-import { For, Show, onMount } from "solid-js";
+import { For, Show, createSignal, onCleanup, onMount } from "solid-js";
 import { Button, Card, Icon, MonoLabel, Segmented, Switch } from "../components/ui";
 import { t } from "../i18n";
 import { devices, playTestTone, prefs, refreshDevices, requestAccess, resolveDevice, type BlurLevel } from "./devices";
 import { soundPrefs, preview as previewEffect } from "../sound/effects";
 import { createPreview } from "./preview";
+import { cameraBackgrounds } from "../api/endpoints/cameraBackgrounds";
+import { backgroundList, loadBackgrounds, removeBackground, backgroundBlob } from "./cameraBackgrounds";
 
 export function AudioVideoSettings() {
   const preview = createPreview();
+  const [uploading, setUploading] = createSignal(false);
+  const [backgroundError, setBackgroundError] = createSignal("");
+  const [thumbnailUrls, setThumbnailUrls] = createSignal<Record<string, string>>({});
+  onCleanup(() => Object.values(thumbnailUrls()).forEach((url) => URL.revokeObjectURL(url)));
+  const activeBackground = (id: string) => { const effect = prefs.effect(); return effect.kind === "background" && effect.backgroundId === id; };
+  const refreshBackgrounds = async () => {
+    await loadBackgrounds();
+    const next: Record<string, string> = {};
+    for (const item of backgroundList()) next[item.id] = URL.createObjectURL(await backgroundBlob(item.id));
+    const old = thumbnailUrls();
+    setThumbnailUrls(next);
+    Object.values(old).forEach((url) => URL.revokeObjectURL(url));
+  };
+  const upload = async (file: File | undefined) => {
+    if (!file) return;
+    setBackgroundError("");
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024) {
+      setBackgroundError(t("call.background.invalid")); return;
+    }
+    setUploading(true);
+    try { await cameraBackgrounds.upload(file); await refreshBackgrounds(); }
+    catch (error) { setBackgroundError(error instanceof Error ? error.message : t("call.background.failed")); }
+    finally { setUploading(false); }
+  };
   const labelled = () => devices.mics().some((d) => d.label.length > 0 && !/^Mic \d+$/.test(d.label)) || devices.cams().some((d) => d.label.length > 0 && !/^Cam \d+$/.test(d.label));
   const denied = () => preview.micProblem() === "denied" || preview.camProblem() === "denied" || devices.permission().audio === "denied" || devices.permission().video === "denied";
   const micMissing = () => resolveDevice("audioinput", prefs.micId()).missing;
@@ -18,6 +44,7 @@ export function AudioVideoSettings() {
   const level = () => Math.round(preview.level() * 100);
 
   onMount(async () => {
+    void refreshBackgrounds().catch(() => setBackgroundError(t("call.background.failed")));
     await refreshDevices();
     // Only open the hardware by itself when access was already granted; never trigger a prompt on page load.
     if (labelled()) {
@@ -108,8 +135,21 @@ export function AudioVideoSettings() {
               <Show when={camMissing()}><p class="call-inline-error" role="status">{t("call.settings.missing")}</p></Show>
               <div class="flex flex-col gap-2">
                 <MonoLabel>{t("call.blur.label")}</MonoLabel>
-                <Segmented label={t("call.blur.label")} value={prefs.blur()} options={blurOptions()} onChange={(level) => { prefs.setBlur(level); preview.rerenderBlur(); }} />
+                <Segmented label={t("call.blur.label")} value={(prefs.effect().kind === "blur" ? prefs.blur() : "") as BlurLevel} options={blurOptions()} onChange={(level) => { prefs.setBlur(level); preview.rerenderBlur(); }} />
                 <Show when={preview.blurError()}><p class="call-inline-error" role="alert">{t("call.blur.unsupported")}</p></Show>
+                <div class="call-background-gallery">
+                  <For each={backgroundList()}>{(item, index) => <div class="call-background-item">
+                    <button type="button" aria-label={`${t("call.background.choose")} ${index() + 1}`} aria-pressed={activeBackground(item.id)} onClick={() => { prefs.setEffect({ kind: "background", backgroundId: item.id }); preview.rerenderBlur(); }}>
+                      <img src={thumbnailUrls()[item.id]} alt="" />
+                    </button>
+                    <button type="button" aria-label={`${t("call.background.remove")} ${index() + 1}`} onClick={() => void removeBackground(item.id).then(() => { preview.rerenderBlur(); void refreshBackgrounds(); }).catch((error) => setBackgroundError(error instanceof Error ? error.message : t("call.background.failed")))}>{t("call.background.remove")}</button>
+                  </div>}</For>
+                </div>
+                <label class="call-background-upload">{t("call.background.add")}
+                  <input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploading() || backgroundList().length >= 10} onChange={(event) => { void upload(event.currentTarget.files?.[0]); event.currentTarget.value = ""; }} />
+                </label>
+                <Show when={uploading()}><p role="status">{t("call.background.uploading")}</p></Show>
+                <Show when={backgroundError()}><p class="call-inline-error" role="alert">{backgroundError()}</p></Show>
               </div>
               <Button onClick={() => preview.toggleCam()}>
                 <Icon name={preview.camOn() ? "videocam_off" : "videocam"} class="text-[18px]" />

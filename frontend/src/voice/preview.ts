@@ -5,6 +5,7 @@
 import { createSignal, onCleanup } from "solid-js";
 import type { LocalVideoTrack } from "livekit-client";
 import { meterStream, prefs, resolveDevice, refreshDevices, requestAccess, type BlurLevel, type LevelMeter } from "./devices";
+import { backgroundBlob } from "./cameraBackgrounds";
 
 const BLUR_RADIUS: Record<Exclude<BlurLevel, "off">, number> = { light: 8, strong: 22 };
 
@@ -24,6 +25,9 @@ export function createPreview() {
   let meterFrame = 0;
   let video: HTMLVideoElement | null = null;
   let processed: { stop: () => void } | null = null;
+  let previewTrack: LocalVideoTrack | null = null;
+  let backgroundProcessor: import("@livekit/track-processors").BackgroundProcessorWrapper | null = null;
+  let backgroundUrl: string | null = null;
   /** Bumped by every render and by stopping the camera, so a render that lost the race releases what it made. */
   let renderTicket = 0;
   /** Bumped on every change so a slow getUserMedia that lost the race closes its own stream. */
@@ -70,6 +74,10 @@ export function createPreview() {
   function clearVideo() {
     processed?.stop();
     processed = null;
+    previewTrack = null;
+    backgroundProcessor = null;
+    if (backgroundUrl) URL.revokeObjectURL(backgroundUrl);
+    backgroundUrl = null;
     if (video) video.srcObject = null;
   }
 
@@ -85,14 +93,37 @@ export function createPreview() {
   /** Puts the camera stream on the video element, through the blur processor when one is chosen. */
   async function render() {
     const ticket = ++renderTicket;
-    clearVideo();
     if (!video || !camStream) return;
-    const level = prefs.blur();
+    const effect = prefs.effect();
     setBlurError(false);
-    if (level === "off") {
+    if (effect.kind === "blur" && effect.level === "off") {
+      if (previewTrack) await previewTrack.stopProcessor().catch(() => undefined);
+      clearVideo();
       video.srcObject = camStream;
       return;
     }
+    if (previewTrack && backgroundProcessor) {
+      let nextUrl: string | null = null;
+      try {
+        nextUrl = effect.kind === "background" ? URL.createObjectURL(await backgroundBlob(effect.backgroundId)) : null;
+        const options: import("@livekit/track-processors").SwitchBackgroundProcessorOptions = effect.kind === "background"
+          ? { mode: "virtual-background", imagePath: nextUrl! }
+          : { mode: "background-blur", blurRadius: BLUR_RADIUS[effect.level] };
+        if (ticket !== renderTicket) { if (nextUrl) URL.revokeObjectURL(nextUrl); return; }
+        await backgroundProcessor.switchTo(options);
+        if (backgroundUrl) URL.revokeObjectURL(backgroundUrl);
+        backgroundUrl = nextUrl;
+        return;
+      } catch {
+        if (nextUrl) URL.revokeObjectURL(nextUrl);
+        prefs.setBlur("off");
+        setBlurError(true);
+        clearVideo();
+        if (video && camStream) video.srcObject = camStream;
+        return;
+      }
+    }
+    clearVideo();
     // The blurred preview works on a copy of the camera track. A live copy keeps the camera open on
     // its own, so the copy is kept here and stopped explicitly whenever the preview is dropped.
     let copy: MediaStreamTrack | null = null;
@@ -110,13 +141,23 @@ export function createPreview() {
       if (!source) throw new Error("no video track");
       copy = source.clone();
       blurred = new LocalVideoTrack(copy);
-      await blurred.setProcessor(processors.BackgroundBlur(BLUR_RADIUS[level]));
-      if (ticket !== renderTicket || !video || !camStream) return release();
+      const nextUrl = effect.kind === "background" ? URL.createObjectURL(await backgroundBlob(effect.backgroundId)) : null;
+      const options: import("@livekit/track-processors").SwitchBackgroundProcessorOptions = effect.kind === "background"
+        ? { mode: "virtual-background", imagePath: nextUrl! }
+        : { mode: "background-blur", blurRadius: BLUR_RADIUS[effect.level] };
+      const processor = processors.BackgroundProcessor(options);
+      try { await blurred.setProcessor(processor); }
+      catch (error) { if (nextUrl) URL.revokeObjectURL(nextUrl); throw error; }
+      if (ticket !== renderTicket || !video || !camStream) { if (nextUrl) URL.revokeObjectURL(nextUrl); return release(); }
       blurred.attach(video);
       processed = { stop: release };
+      previewTrack = blurred;
+      backgroundProcessor = processor;
+      backgroundUrl = nextUrl;
     } catch {
       release();
       if (ticket !== renderTicket) return;
+      prefs.setBlur("off");
       setBlurError(true);
       if (video && camStream) video.srcObject = camStream;
     }

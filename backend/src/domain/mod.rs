@@ -1,6 +1,7 @@
 pub mod account;
 pub mod attachment;
 pub mod avatar;
+pub mod camera_background;
 pub mod channel;
 pub mod channel_acl;
 pub mod channel_mute;

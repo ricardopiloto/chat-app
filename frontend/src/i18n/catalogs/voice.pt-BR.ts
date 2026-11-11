@@ -62,8 +62,9 @@ export const voicePtBR: MessageTree = {
       off: "Nítido",
       light: "Suave",
       strong: "Desfocado",
-      unsupported: "Este navegador não suporta desfoque de fundo. A câmera continua sem efeito.",
+      unsupported: "Este navegador não conseguiu aplicar o efeito de fundo. A câmera continua sem efeito.",
     },
+    background: { add: "Adicionar fundo", choose: "Fundo", remove: "Remover", uploading: "Enviando fundo…", invalid: "Escolha uma imagem JPEG, PNG ou WebP de até 5 MiB.", failed: "Não foi possível carregar os fundos da câmera." },
     notice: {
       micFailed: "Não foi possível usar o microfone. Verifique a permissão do navegador.",
       cameraFailed: "Não foi possível usar a câmera. Você continua na chamada só com áudio.",

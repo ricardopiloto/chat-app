@@ -12,7 +12,8 @@ import { loadServerKey } from "../crypto/keyHandoff";
 import { getServerKey } from "../crypto/serverKey";
 import { useSession } from "../session/session";
 import type { Identity } from "../crypto/identity";
-import { devices, prefs, refreshDevices, resolveDevice, type BlurLevel } from "./devices";
+import { devices, prefs, refreshDevices, resolveDevice, type BlurLevel, type CameraEffect } from "./devices";
+import { backgroundBlob } from "./cameraBackgrounds";
 import { notify } from "../sound/effects";
 
 export type CallStatus = "idle" | "connecting" | "live" | "reconnecting";
@@ -91,7 +92,9 @@ function createCall() {
   let activeLeave: Promise<void> | null = null;
   let lastRequest: JoinRequest | null = null;
   /** Blur level currently running on the live camera track, so choosing it again does nothing. */
-  let appliedBlur: BlurLevel = "off";
+  let appliedEffect: CameraEffect = { kind: "blur", level: "off" };
+  let backgroundProcessor: import("@livekit/track-processors").BackgroundProcessorWrapper | null = null;
+  let backgroundUrl: string | null = null;
   const audioHost = document.createElement("div");
   audioHost.setAttribute("aria-hidden", "true");
   audioHost.style.display = "none";
@@ -170,6 +173,10 @@ function createCall() {
     heartbeat = 0;
     const closing = room;
     releaseHardware();
+    backgroundProcessor = null;
+    if (backgroundUrl) URL.revokeObjectURL(backgroundUrl);
+    backgroundUrl = null;
+    appliedEffect = { kind: "blur", level: "off" };
     room = null;
     let disconnected: Promise<void> = Promise.resolve();
     if (closing) {
@@ -197,24 +204,49 @@ function createCall() {
 
   // --- blur -----------------------------------------------------------------------------------
 
-  async function applyBlur(level: BlurLevel) {
-    if (!room || !lk || level === appliedBlur) return;
+  async function applyEffect(effect: CameraEffect) {
+    if (!room || !lk || JSON.stringify(effect) === JSON.stringify(appliedEffect)) return;
     const pub = room.localParticipant.getTrackPublication(lk.Track.Source.Camera);
     const video = pub?.videoTrack;
     if (!video) return;
     try {
       setBlurError(false);
-      if (level === "off") {
+      if (effect.kind === "blur" && effect.level === "off") {
         await video.stopProcessor();
-        appliedBlur = "off";
+        backgroundProcessor = null;
+        if (backgroundUrl) URL.revokeObjectURL(backgroundUrl);
+        backgroundUrl = null;
+        appliedEffect = effect;
         return;
       }
       const processors = await import("@livekit/track-processors");
       if (!processors.supportsBackgroundProcessors()) throw new Error("unsupported");
-      await video.setProcessor(processors.BackgroundBlur(BLUR_RADIUS[level]));
-      appliedBlur = level;
+      const nextUrl = effect.kind === "background" ? URL.createObjectURL(await backgroundBlob(effect.backgroundId)) : null;
+      const options: import("@livekit/track-processors").SwitchBackgroundProcessorOptions = effect.kind === "background"
+        ? { mode: "virtual-background", imagePath: nextUrl! }
+        : { mode: "background-blur", blurRadius: BLUR_RADIUS[effect.level as Exclude<BlurLevel, "off">] };
+      try {
+        if (backgroundProcessor) await backgroundProcessor.switchTo(options);
+        else {
+          const processor = processors.BackgroundProcessor(options);
+          await video.setProcessor(processor);
+          backgroundProcessor = processor;
+        }
+      } catch (error) {
+        if (nextUrl) URL.revokeObjectURL(nextUrl);
+        throw error;
+      }
+      if (backgroundUrl) URL.revokeObjectURL(backgroundUrl);
+      backgroundUrl = nextUrl;
+      appliedEffect = effect;
     } catch {
       setBlurError(true);
+      prefs.setBlur("off");
+      await video.stopProcessor().catch(() => undefined);
+      backgroundProcessor = null;
+      if (backgroundUrl) URL.revokeObjectURL(backgroundUrl);
+      backgroundUrl = null;
+      appliedEffect = { kind: "blur", level: "off" };
     }
   }
 
@@ -236,8 +268,9 @@ function createCall() {
     const chosen = resolveDevice("videoinput", prefs.camId());
     try {
       await room.localParticipant.setCameraEnabled(true, chosen.id ? { deviceId: chosen.id } : undefined);
-      appliedBlur = "off"; // a freshly opened camera track has no effect yet
-      await applyBlur(prefs.blur());
+      appliedEffect = { kind: "blur", level: "off" }; // a freshly opened camera track has no effect yet
+      backgroundProcessor = null;
+      await applyEffect(prefs.effect());
       return true;
     } catch {
       setNotice("cameraFailed");
@@ -259,7 +292,7 @@ function createCall() {
       if (!room || !canSpeak()) return;
       if (on) await startCamera();
       else {
-        await applyBlur("off"); // the blur pipeline goes down with the camera
+        await applyEffect({ kind: "blur", level: "off" });
         await room.localParticipant.setCameraEnabled(false);
       }
       refresh();
@@ -281,7 +314,12 @@ function createCall() {
 
   function setBlur(level: BlurLevel): Promise<void> {
     prefs.setBlur(level);
-    return inCameraQueue(() => applyBlur(level));
+    return inCameraQueue(() => applyEffect({ kind: "blur", level }));
+  }
+
+  function setEffect(effect: CameraEffect): Promise<void> {
+    prefs.setEffect(effect);
+    return inCameraQueue(() => applyEffect(effect));
   }
 
   async function resumeAudio() {
@@ -731,6 +769,7 @@ function createCall() {
     setCam,
     setScreen,
     setBlur,
+    setEffect,
     toggleDeafened: () => setDeafened(!deafened()),
     resumeAudio,
     onRealtime,

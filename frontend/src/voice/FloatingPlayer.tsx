@@ -110,7 +110,7 @@ export function FloatingPlayer() {
         </button>
         <button type="button" class="call-pip-back" onClick={goBack}>{t("call.pip.back")}</button>
         <button type="button" class="call-control hangup" title={t("call.hangup")} aria-label={t("call.hangup")} onClick={() => void call.leave()}>
-          <Icon name="call_end" />
+          <Icon name="call_hangup" class="call-hangup-icon" />
         </button>
       </footer>
     </aside>

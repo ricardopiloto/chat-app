@@ -16,6 +16,7 @@ fn sample() -> Config {
         default_invite_ttl_secs: 604_800,
         attachments_dir: PathBuf::from("./data/attachments"),
         avatars_dir: PathBuf::from("./data/avatars"),
+        camera_backgrounds_dir: PathBuf::from("./data/camera-backgrounds"),
         production: true,
         rate_limit_disabled: false,
         registo_modo: "fechado".into(),

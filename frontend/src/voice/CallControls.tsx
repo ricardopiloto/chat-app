@@ -1,19 +1,38 @@
 // The call's controls, pinned in the user panel and only while a call is on: microphone, deafen,
 // camera (with its blur menu), screen share and hang up. They never overlay
 // the video.
-import { Show, createSignal } from "solid-js";
+import { For, Show, createSignal, onCleanup } from "solid-js";
 import { Icon } from "../components/ui";
 import { t } from "../i18n";
 import { isNative } from "../api/instance";
 import { useCall } from "./callSession";
 import { prefs, type BlurLevel } from "./devices";
 import { setCallView } from "./view";
+import { backgroundBlob, backgroundList, loadBackgrounds } from "./cameraBackgrounds";
 
 const LEVELS: BlurLevel[] = ["off", "light", "strong"];
 
 export function CallControls() {
   const call = useCall();
   const [blurOpen, setBlurOpen] = createSignal(false);
+  const [thumbnailUrls, setThumbnailUrls] = createSignal<Record<string, string>>({});
+  const closeBackgrounds = () => {
+    Object.values(thumbnailUrls()).forEach((url) => URL.revokeObjectURL(url));
+    setThumbnailUrls({});
+    setBlurOpen(false);
+  };
+  onCleanup(closeBackgrounds);
+  const openBackgrounds = async () => {
+    if (blurOpen()) { closeBackgrounds(); return; }
+    setBlurOpen(true);
+    try {
+      await loadBackgrounds();
+      const next: Record<string, string> = {};
+      for (const item of backgroundList()) next[item.id] = URL.createObjectURL(await backgroundBlob(item.id));
+      setThumbnailUrls(next);
+    } catch { /* blur choices remain available */ }
+  };
+  const activeBackground = (id: string) => { const effect = prefs.effect(); return effect.kind === "background" && effect.backgroundId === id; };
   const listenOnly = () => !call.canSpeak();
   const toggle = "call-control";
 
@@ -57,7 +76,7 @@ export function CallControls() {
             <Icon name={call.cam() ? "videocam" : "videocam_off"} />
           </button>
           <Show when={call.cam()}>
-            <button type="button" class={`${toggle} small`} aria-haspopup="menu" aria-expanded={blurOpen()} title={t("call.blur.label")} aria-label={t("call.blur.label")} onClick={() => setBlurOpen(!blurOpen())}>
+            <button type="button" class={`${toggle} small`} aria-haspopup="menu" aria-expanded={blurOpen()} title={t("call.blur.label")} aria-label={t("call.blur.label")} onClick={() => void openBackgrounds()}>
               <Icon name="blur_on" />
             </button>
           </Show>
@@ -67,16 +86,21 @@ export function CallControls() {
                 <button
                   type="button"
                   role="menuitemradio"
-                  aria-checked={prefs.blur() === level}
+                  aria-checked={prefs.effect().kind === "blur" && prefs.blur() === level}
                   onClick={() => {
                     void call.setBlur(level);
-                    setBlurOpen(false);
+                    closeBackgrounds();
                   }}
                 >
                   {t(`call.blur.${level}`)}
-                  <Show when={prefs.blur() === level}><Icon name="check" class="text-[16px]" /></Show>
+                  <Show when={prefs.effect().kind === "blur" && prefs.blur() === level}><Icon name="check" class="text-[16px]" /></Show>
                 </button>
               ))}
+              <For each={backgroundList()}>{(item, index) => <button type="button" role="menuitemradio" aria-label={`${t("call.background.choose")} ${index() + 1}`} aria-checked={activeBackground(item.id)} onClick={() => { void call.setEffect({ kind: "background", backgroundId: item.id }); closeBackgrounds(); }}>
+                <img src={thumbnailUrls()[item.id]} alt="" class="call-background-menu-thumb" />
+                <span>{t("call.background.choose")} {index() + 1}</span>
+                <Show when={activeBackground(item.id)}><Icon name="check" class="text-[16px]" /></Show>
+              </button>}</For>
               <Show when={call.blurError()}>
                 <p class="call-inline-error" role="alert">{t("call.blur.unsupported")}</p>
               </Show>
@@ -96,7 +120,7 @@ export function CallControls() {
               void call.setScreen(on).then((started) => { if (on && started) setCallView("grid"); });
             }}
           >
-            <Icon name={call.screen() ? "stop_screen_share" : "screen_share"} />
+            <Icon name="call_screen_share" />
           </button>
         </Show>
         <Show when={isNative() && !call.popoutFor()}>
@@ -111,7 +135,7 @@ export function CallControls() {
           </button>
         </Show>
         <button type="button" class={`${toggle} hangup`} title={t("call.hangup")} aria-label={t("call.hangup")} onClick={() => void call.leave()}>
-          <Icon name="call_end" />
+          <Icon name="call_hangup" class="call-hangup-icon" />
         </button>
       </div>
     </Show>

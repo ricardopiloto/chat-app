@@ -62,8 +62,9 @@ export const voiceEn: MessageTree = {
       off: "Sharp",
       light: "Soft",
       strong: "Blurred",
-      unsupported: "This browser does not support background blur. The camera stays without an effect.",
+      unsupported: "This browser could not apply the camera background effect. The camera stays without an effect.",
     },
+    background: { add: "Add background", choose: "Background", remove: "Remove", uploading: "Uploading background…", invalid: "Choose a JPEG, PNG or WebP image up to 5 MiB.", failed: "Could not load camera backgrounds." },
     notice: {
       micFailed: "The microphone could not be used. Check the browser permission.",
       cameraFailed: "The camera could not be used. You stay in the call with audio only.",

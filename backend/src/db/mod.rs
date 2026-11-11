@@ -8,6 +8,7 @@ use std::{str::FromStr, time::Duration};
 
 pub mod account;
 pub mod attachment;
+pub mod camera_background;
 pub mod channel;
 pub mod channel_acl;
 pub mod channel_key;

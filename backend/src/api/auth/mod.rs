@@ -1,7 +1,9 @@
 use crate::api::auth::session::{current_session_id, AuthUser, OptionalAuth, SESSION_COOKIE};
 use crate::api::avatars;
+use crate::api::camera_backgrounds;
 use crate::db;
 use crate::domain::avatar::MAX_AVATAR_BYTES;
+use crate::domain::camera_background::MAX_CAMERA_BACKGROUND_BYTES;
 use crate::error::ApiError;
 use crate::AppState;
 use axum::extract::{DefaultBodyLimit, State};
@@ -41,6 +43,8 @@ pub fn router() -> Router<AppState> {
                 .delete(avatars::delete_own_avatar)
                 .layer(DefaultBodyLimit::max(MAX_AVATAR_BYTES + 64 * 1024)),
         )
+        .route("/auth/camera-backgrounds", get(camera_backgrounds::list).post(camera_backgrounds::upload).layer(DefaultBodyLimit::max(MAX_CAMERA_BACKGROUND_BYTES)))
+        .route("/auth/camera-backgrounds/{id}", get(camera_backgrounds::get).delete(camera_backgrounds::delete))
         .route("/auth/identity-vault", put(put_identity_vault))
         .route("/auth/identity", put(put_identity))
         .route("/auth/password", put(recovery::change_password))

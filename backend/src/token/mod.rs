@@ -57,6 +57,7 @@ mod tests {
             default_invite_ttl_secs: 600,
             attachments_dir: PathBuf::from("/tmp"),
             avatars_dir: PathBuf::from("/tmp"),
+            camera_backgrounds_dir: PathBuf::from("/tmp"),
             production: false,
             rate_limit_disabled: true,
             registo_modo: "fechado".into(),
