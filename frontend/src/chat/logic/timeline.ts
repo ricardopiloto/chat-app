@@ -1,6 +1,8 @@
 // Turns a chronological list of messages into the rows the list renders: day separators, system
 // lines and user messages, with consecutive messages of one sender grouped together.
 
+import type { DiceAppearance } from "../diceAppearance";
+
 export interface MessageReaction {
   emojiCode: string;
   count: number;
@@ -8,6 +10,7 @@ export interface MessageReaction {
 }
 
 export interface DiceRoll {
+  appearance?: DiceAppearance;
   notation: string;
   count: number;
   sides: number;

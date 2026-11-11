@@ -199,6 +199,12 @@
   box-sizing: border-box; padding: 10px; border: 1px solid var(--outline); border-radius: var(--radius-md);
   background: var(--surface-container-high); box-shadow: var(--shadow-floating);
 }
+.ch-dice-appearance {
+  grid-column: 1 / -1; display: flex; flex-direction: column; gap: 8px; min-width: 0;
+  margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--outline-variant);
+}
+.ch-dice-appearance-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.ch-dice-appearance .segmented { max-width: 100%; overflow-x: auto; }
 .ch-dice-toolbar-check {
   display: inline-flex; align-items: center; gap: 6px; color: var(--on-surface);
   font: 400 13px var(--font-code); cursor: pointer; user-select: none;

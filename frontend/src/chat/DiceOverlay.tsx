@@ -2,7 +2,7 @@ import { For, Show, createEffect, createSignal, on, onCleanup } from "solid-js";
 import { t } from "../i18n";
 import { facesForDiceRoll } from "./logic/percentile";
 import type { DiceRoll } from "./logic/timeline";
-import { canShowDice, ensureDiceBox, safeClear } from "./diceBoxHost";
+import { applyDiceAppearance, canShowDice, ensureDiceBox, safeClear } from "./diceBoxHost";
 
 const NATIVE_SIDES = new Set([2, 4, 6, 8, 10, 12, 20]);
 export const supportsDiceShape = (sides: number) => NATIVE_SIDES.has(sides) || sides === 100;
@@ -42,6 +42,8 @@ export function DiceOverlay(props: { roll: DiceRoll | undefined; onDone: () => v
     try {
       if (notation) {
         const { box, host } = await ensureDiceBox();
+        if (cancelled) return;
+        await applyDiceAppearance(box, roll.appearance);
         if (cancelled) return;
         host.style.visibility = "visible";
         setGeneric([]);

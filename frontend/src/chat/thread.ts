@@ -7,6 +7,7 @@ import { ensureServerKey } from "../crypto/keyHandoff";
 import { decryptMessage, encryptMessage } from "../crypto/serverKey";
 import { mergeMessage, mergeMessages, type ChatMessage, type DiceRoll } from "./logic/timeline";
 import { rememberLoaded } from "./loaded";
+import { parseDiceAppearance } from "./diceAppearance";
 
 export type ThreadStatus = "loading" | "ready" | "noKey" | "error";
 
@@ -37,6 +38,7 @@ export async function toChatMessage(raw: Message, key: Uint8Array): Promise<Chat
         && parsed.rolls.every((value) => Number.isInteger(value) && value >= 1 && value <= parsed.sides);
       if (rollsOk) {
         diceRoll = {
+          appearance: parseDiceAppearance(parsed.appearance),
           notation: parsed.notation,
           count: parsed.count,
           sides: parsed.sides,

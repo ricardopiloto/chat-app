@@ -7,7 +7,7 @@ export function DiceChannelFooter(props: { channelId: string; onSent?: () => voi
   const [notation, setNotation] = createSignal("1d20");
   return (
     <div class="ch-dice-footer">
-      <DiceToolbar onNotationChange={setNotation} />
+      <DiceToolbar channelId={props.channelId} onNotationChange={setNotation} />
       <DiceComposer
         channelId={props.channelId}
         onSent={props.onSent}

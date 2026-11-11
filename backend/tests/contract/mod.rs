@@ -24,6 +24,7 @@ mod channel_webhooks;
 mod channels;
 mod channels_delete;
 mod dice;
+mod dice_appearance;
 mod grid;
 mod grid_admin;
 mod hierarchy;

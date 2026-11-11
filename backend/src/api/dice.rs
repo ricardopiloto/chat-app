@@ -33,6 +33,7 @@ struct RollPayload<'a> {
     total: i32,
     label: Option<&'a str>,
     natural: Option<&'static str>,
+    appearance: crate::api::dice_appearance::DiceAppearance,
 }
 
 fn parse_notation(raw: &str) -> Result<(u32, u32, i32), ApiError> {
@@ -149,6 +150,7 @@ pub async fn roll(
         }
     );
     let payload = RollPayload {
+        appearance: crate::api::dice_appearance::load(&state.pool, account.id, channel_id).await?,
         notation,
         count,
         sides,

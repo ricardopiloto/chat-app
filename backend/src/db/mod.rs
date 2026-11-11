@@ -15,6 +15,7 @@ pub mod channel_mute;
 pub mod channel_role;
 pub mod channel_webhook;
 pub mod dice_toolbar;
+pub mod dice_appearance;
 pub mod e2ee_audit;
 pub mod grid;
 pub mod invite;

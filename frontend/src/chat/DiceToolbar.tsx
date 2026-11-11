@@ -3,6 +3,7 @@ import { auth } from "../api";
 import { Icon } from "../components/ui";
 import { t } from "../i18n";
 import { errorText } from "../lib/errors";
+import { DiceAppearanceEditor } from "./DiceAppearanceEditor";
 
 export const DICE_TOOLBAR_SIDES = [4, 6, 8, 10, 12, 20, 100] as const;
 const MAX_COUNT = 20;
@@ -12,6 +13,7 @@ function emptyCounts(): Record<number, number> {
 }
 
 export function DiceToolbar(props: {
+  channelId: string;
   onNotationChange: (notation: string) => void;
 }) {
   const [visible, setVisible] = createSignal<number[]>([...DICE_TOOLBAR_SIDES]);
@@ -43,7 +45,7 @@ export function DiceToolbar(props: {
   function placeMenu() {
     if (!gearRef) return;
     const rect = gearRef.getBoundingClientRect();
-    const menuWidth = Math.min(188, window.innerWidth - 16);
+    const menuWidth = Math.min(280, window.innerWidth - 16);
     const left = Math.max(8, Math.min(rect.right - menuWidth, window.innerWidth - menuWidth - 8));
     const spaceAbove = rect.top;
     const spaceBelow = window.innerHeight - rect.bottom;
@@ -184,7 +186,7 @@ export function DiceToolbar(props: {
           <div
             ref={(el) => { menuRef = el; }}
             class="ch-dice-toolbar-checklist"
-            style={menuStyle()}
+            style={{ ...menuStyle(), "max-height": "min(70vh, 540px)", "overflow-y": "auto" }}
             role="group"
             aria-label={t("txt.dice.toolbarConfig")}
           >
@@ -201,6 +203,7 @@ export function DiceToolbar(props: {
                 </label>
               )}
             </For>
+            <DiceAppearanceEditor channelId={props.channelId} />
           </div>
         </Show>
       </div>
