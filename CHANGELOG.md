@@ -9,6 +9,13 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [1.10.1] - 2026-11-11
+
+### Fixed
+
+- Desktop client (Electron): call popout now uses the same custom title bar as the main window, with window controls acting on the window that invoked them.
+- Call grid: participant captions now fade in on tile hover or keyboard focus; speaking, muted, local-user, and screen-share status chips remain visible.
+
 ## [1.10.0] - 2026-11-11
 
 ### Added

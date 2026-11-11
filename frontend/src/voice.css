@@ -37,6 +37,9 @@
 .call-tile-avatar{display:grid;place-items:center;width:clamp(48px,28%,120px);aspect-ratio:1;border-radius:50%;background:color-mix(in srgb,var(--on-stage) 14%,transparent);font:600 clamp(20px,4vw,44px)/1 var(--font-display);overflow:hidden}
 .call-tile-avatar img{width:100%;height:100%;object-fit:cover}
 .call-tile-caption{position:absolute;left:8px;right:8px;bottom:8px;z-index:1;display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:var(--radius);background:rgba(11,14,23,.66);backdrop-filter:blur(6px);font:500 13px/18px var(--font-body)}
+.call-tile-caption{opacity:0;visibility:hidden;pointer-events:none}
+.call-tile:hover .call-tile-caption,.call-tile:focus-within .call-tile-caption{opacity:1;visibility:visible;pointer-events:auto}
+@media (prefers-reduced-motion:no-preference){.call-tile-caption{transition:opacity .15s ease,visibility .15s ease}}
 .call-tile-name{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .call-tile-handle{font:400 11px/16px var(--font-code);opacity:.8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .call-tile-state{margin-left:auto;display:flex;gap:4px}
@@ -240,11 +243,11 @@ button.call-bench-chip{cursor:grab}
 .call-av-help p{margin:2px 0 8px;font:400 13px/20px var(--font-body);color:var(--on-surface-variant)}
 @media (max-width:900px){.call-av-grid,.call-av-camera{grid-template-columns:1fr}}
 
-.call-popout{min-height:100vh;background:var(--background);padding:12px}
-.call-popout:has(> .call-grid-view.is-fill){height:100vh;display:flex;flex-direction:column}
+.call-popout{min-height:calc(100dvh - var(--mesa-title-bar));background:var(--background);padding:12px}
+.call-popout:has(> .call-grid-view.is-fill){height:calc(100dvh - var(--mesa-title-bar));display:flex;flex-direction:column}
 .call-grid.is-fill{grid-auto-rows:unset;grid-template-rows:repeat(var(--rows,1),minmax(0,1fr))}
 .call-popout-status,.call-elsewhere{display:grid;min-height:240px;place-items:center;align-content:center;gap:12px;padding:24px;text-align:center}
-.call-popout-status{min-height:100vh}
+.call-popout-status{min-height:calc(100dvh - var(--mesa-title-bar))}
 
 .call-join-error{padding:32px;display:flex;flex-direction:column;align-items:flex-start;gap:12px}
 .call-join-actions{display:flex;gap:8px;flex-wrap:wrap}

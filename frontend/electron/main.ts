@@ -339,6 +339,16 @@ function openOutside(url: string): void {
   void shell.openExternal(url);
 }
 
+function nativeChromeOptions(): Electron.BrowserWindowConstructorOptions {
+  return process.platform === "win32" ? {
+    titleBarStyle: "hidden",
+    titleBarOverlay: { color: BACKGROUND, symbolColor: "#e3e2e9", height: 32 },
+  } : process.platform === "darwin" ? {
+    titleBarStyle: "hidden",
+    trafficLightPosition: { x: 12, y: 8 },
+  } : process.platform === "linux" ? { frame: false } : {};
+}
+
 function createWindow(): BrowserWindow {
   const icon = appIconPath();
   const win = new BrowserWindow({
@@ -348,13 +358,7 @@ function createWindow(): BrowserWindow {
     minHeight: 640,
     backgroundColor: BACKGROUND,
     icon,
-    ...(process.platform === "win32" ? {
-      titleBarStyle: "hidden" as const,
-      titleBarOverlay: { color: BACKGROUND, symbolColor: "#e3e2e9", height: 32 },
-    } : process.platform === "darwin" ? {
-      titleBarStyle: "hidden" as const,
-      trafficLightPosition: { x: 12, y: 8 },
-    } : process.platform === "linux" ? { frame: false } : {}),
+    ...nativeChromeOptions(),
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
@@ -384,17 +388,28 @@ function createWindow(): BrowserWindow {
   return win;
 }
 
+function attachWindowMaximizedEvents(window: BrowserWindow): void {
+  window.on("maximize", () => window.webContents.send("mesa:window-maximized", true));
+  window.on("unmaximize", () => window.webContents.send("mesa:window-maximized", false));
+}
+
 function registerWindowControlsIpc(mainWindow: BrowserWindow): void {
   ipcMain.removeHandler("mesa:minimize");
   ipcMain.removeHandler("mesa:toggle-maximize");
   ipcMain.removeHandler("mesa:is-maximized");
   ipcMain.removeHandler("mesa:close");
-  ipcMain.handle("mesa:minimize", () => mainWindow.minimize());
-  ipcMain.handle("mesa:toggle-maximize", () => mainWindow.isMaximized() ? mainWindow.unmaximize() : mainWindow.maximize());
-  ipcMain.handle("mesa:is-maximized", () => mainWindow.isMaximized());
-  ipcMain.handle("mesa:close", () => mainWindow.close());
-  mainWindow.on("maximize", () => mainWindow.webContents.send("mesa:window-maximized", true));
-  mainWindow.on("unmaximize", () => mainWindow.webContents.send("mesa:window-maximized", false));
+  const senderWindow = (event: Electron.IpcMainInvokeEvent) => {
+    const window = BrowserWindow.fromWebContents(event.sender);
+    return window && !window.isDestroyed() ? window : null;
+  };
+  ipcMain.handle("mesa:minimize", (event) => senderWindow(event)?.minimize());
+  ipcMain.handle("mesa:toggle-maximize", (event) => {
+    const window = senderWindow(event);
+    if (window) window.isMaximized() ? window.unmaximize() : window.maximize();
+  });
+  ipcMain.handle("mesa:is-maximized", (event) => senderWindow(event)?.isMaximized() ?? false);
+  ipcMain.handle("mesa:close", (event) => senderWindow(event)?.close());
+  attachWindowMaximizedEvents(mainWindow);
 }
 
 async function runPackagedLegacyCleanup(window: BrowserWindow): Promise<void> {
@@ -590,6 +605,7 @@ function registerPopoutIpc(): void {
       minHeight: 180,
       backgroundColor: BACKGROUND,
       icon,
+      ...nativeChromeOptions(),
       webPreferences: {
         contextIsolation: true,
         nodeIntegration: false,
@@ -598,6 +614,7 @@ function registerPopoutIpc(): void {
       },
     });
     popout = window;
+    attachWindowMaximizedEvents(window);
     window.on("closed", () => {
       const channelId = popoutHandoff?.channelId ?? request.channelId;
       popout = null;

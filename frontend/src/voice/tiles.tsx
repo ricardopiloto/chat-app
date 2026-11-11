@@ -62,6 +62,7 @@ export function Tile(props: {
       class={`call-tile tone-${seatTone(props.person.id)} size-${size()}`}
       classList={{ "is-speaking": props.speaking, "is-local": props.person.isLocal, "is-clickable": !!props.onClick }}
       onClick={props.onClick}
+      tabIndex={size() === "grid" ? 0 : undefined}
       data-person={props.person.id}
     >
       <Show

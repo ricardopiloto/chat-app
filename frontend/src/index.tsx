@@ -77,7 +77,7 @@ function Gate() {
     <Match when={destination() === "unlock"}><Unlock /></Match>
     <Match when={destination() === "app"}><AppShell /></Match>
   </Switch>;
-  return native && destination() !== "call-popout" ? <Suspense fallback={screen}><TitleBar destination={destination()}>{screen}</TitleBar></Suspense> : screen;
+  return native ? <Suspense fallback={screen}><TitleBar destination={destination()}>{screen}</TitleBar></Suspense> : screen;
 }
 
 const root = document.getElementById("root");
