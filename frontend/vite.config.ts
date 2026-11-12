@@ -5,6 +5,7 @@ import basicSsl from "@vitejs/plugin-basic-ssl";
 import solid from "vite-plugin-solid";
 import { syncAudio } from "./scripts/sync-audio.mjs";
 import { syncDice } from "./scripts/sync-dice.mjs";
+import { OFFICIAL_ORIGIN } from "./src/shell/links";
 
 const BACKEND_HTTP = process.env.PARLEY_BACKEND ?? "http://127.0.0.1:8080";
 const BACKEND_WS = process.env.PARLEY_BACKEND_WS ?? "ws://127.0.0.1:8080";
@@ -39,10 +40,24 @@ function diceAssets() {
   return { name: "sync-dice-assets", buildStart: () => void syncDice() };
 }
 
+function marketingSeo() {
+  return {
+    name: "marketing-seo",
+    transformIndexHtml(html: string, context: { path: string }) {
+      return context.path.endsWith("home.html") ? html.replaceAll("__PARLEY_OFFICIAL_ORIGIN__", OFFICIAL_ORIGIN) : html;
+    },
+    generateBundle(this: { emitFile: (asset: { type: "asset"; fileName: string; source: string }) => void }) {
+      this.emitFile({ type: "asset", fileName: "sitemap.marketing.xml", source: `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${OFFICIAL_ORIGIN}/</loc></url></urlset>\n` });
+      this.emitFile({ type: "asset", fileName: "robots.marketing.txt", source: `User-agent: *\nAllow: /\nSitemap: ${OFFICIAL_ORIGIN}/sitemap.xml\n` });
+    },
+  };
+}
+
 const proxyTo = (target: string, ws = false) => ({ target, changeOrigin: true, ws });
 
 export default defineConfig({
-  plugins: [soundEffects(), diceAssets(), solid(), basicSsl()],
+  build: { rollupOptions: { input: { main: "index.html", home: "home.html" } } },
+  plugins: [soundEffects(), diceAssets(), marketingSeo(), solid(), basicSsl()],
   clearScreen: false,
   customLogger: loggerWithoutWsCloseNoise(),
   define: { __APP_VERSION__: JSON.stringify(manifest.version) },

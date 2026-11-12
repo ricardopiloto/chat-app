@@ -16,10 +16,11 @@ writeFileSync(entry, `import { merge } from ${JSON.stringify(resolve(root, "src/
 import { en } from ${cat("en")}; import { ptBR } from ${cat("pt-BR")};
 import { en as lEn } from ${cat("legacy/en")}; import { ptBR as lPt } from ${cat("legacy/pt-BR")};
 import { chatEn } from ${cat("chat.en")}; import { chatPtBR } from ${cat("chat.pt-BR")};
+import { marketingEn } from ${cat("marketing.en")}; import { marketingPtBR } from ${cat("marketing.pt-BR")};
 import { mgmtEn } from ${cat("mgmt.en")}; import { mgmtPtBR } from ${cat("mgmt.pt-BR")};
 import { settingsEn } from ${cat("settings.en")}; import { settingsPtBR } from ${cat("settings.pt-BR")};
 import { voiceEn } from ${cat("voice.en")}; import { voicePtBR } from ${cat("voice.pt-BR")};
-export const messages = { "pt-BR": merge(lPt, ptBR, mgmtPtBR, settingsPtBR, chatPtBR, voicePtBR), en: merge(lEn, en, mgmtEn, settingsEn, chatEn, voiceEn) };`);
+export const messages = { "pt-BR": merge(lPt, ptBR, mgmtPtBR, settingsPtBR, chatPtBR, voicePtBR, marketingPtBR), en: merge(lEn, en, mgmtEn, settingsEn, chatEn, voiceEn, marketingEn) };`);
 await build({ entryPoints: [entry], bundle: true, platform: "node", format: "esm", outfile: join(dir, "m.mjs"), logLevel: "error", nodePaths: [join(root, "node_modules")] });
 const { messages } = await import(pathToFileURL(join(dir, "m.mjs")).href);
 

@@ -1,0 +1,5 @@
+.marketing-home { overflow-x: clip; }
+.marketing-cards, .marketing-shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: 1rem; }
+.marketing-home img { max-width: 100%; }
+.marketing-home :is(a, button, summary):focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+@media (prefers-reduced-motion: no-preference) { html:has(.marketing-home) { scroll-behavior: smooth; } }

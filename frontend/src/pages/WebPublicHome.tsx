@@ -3,11 +3,10 @@ import { Button, Badge, Logo } from "../components/ui";
 import { LanguageSwitch } from "../shell/LanguageSwitch";
 import { ThemeSwitch } from "../shell/ThemeSwitch";
 import { t } from "../i18n";
+import { HOST_GUIDE, DOWNLOAD_URL } from "../shell/links";
 import mascot from "../assets/parley-mascot.webp"; // From docs/v2/parley_logo/mascote/parley-mascote-acenando-transparente.png (transparent background).
 import appPreview from "../assets/app-preview.webp"; // Placeholder from propostas/parley-home/preview.png; replace with the real app screenshot.
 
-const HOST_GUIDE = "https://github.com/ricardopiloto/chat-app/blob/main/docs/deploy-producao.md";
-const DOWNLOAD_URL = "https://github.com/ricardopiloto/chat-app/releases/latest";
 function anchor(id: string) { document.getElementById(id)?.focus(); }
 export function WebPublicHome() {
   onMount(() => {

@@ -65,7 +65,7 @@ Textos novos sob o namespace `marketing.*`, em catálogos dedicados `marketing.p
 
 - [Metadados estáticos só em pt-BR no primeiro HTML] → `hreflang` e URL canônica aponta para a versão padrão; a versão em inglês é escolhida no cliente. Aceitável para o público atual.
 - [Corpo renderizado no cliente reduz o valor de SEO] → o `<head>` completo, o `<noscript>` e o JSON-LD cobrem o essencial; revisitar com SSG se a indexação for ruim.
-- [Duas entradas HTML podem divergir] → `home.html` derivado do mesmo modelo, com teste que compara os dois (mesmo script, mesma raiz `#root`, só `head` e `data-home` diferentes).
+- [Duas entradas HTML podem divergir] → `home.html` derivado do mesmo modelo, com teste que compara os dois (mesmo script, mesma raiz `#root`, só `head`, `data-home` e o `<noscript>` do body, exigido pela D4 só em `home.html`, diferentes).
 - [A home da instância oficial depende de configuração de Nginx fora do repositório] → bloco documentado em `docs/deploy-producao.md` e passo de verificação (`curl -s / | grep data-home`).
 - [Informação desatualizada na home (recursos, plataformas)] → afirmações revisadas contra specs e `docs/` na tarefa de conteúdo, e revisitadas ao entregar as changes de hospedagem.
 

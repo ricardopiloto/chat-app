@@ -1,7 +1,7 @@
-# Publicar o Parley em produção — chat.1nodado.com.br
+# Publicar o Parley em produção — parley.1nodado.com.br
 
 Guia passo-a-passo para subir a instância num servidor (VPS ou máquina própria) exposto na
-internet através do domínio **chat.1nodado.com.br**, com HTTPS, LiveKit e systemd.
+internet através do domínio **parley.1nodado.com.br**, com HTTPS, LiveKit e systemd.
 
 Complementa [docs/operar-instancia.md](operar-instancia.md) (que cobre o arranque rápido em
 LAN/dev). Este documento assume Linux com `systemd` e `dnf`/`apt` (comandos Fedora indicados;
@@ -10,7 +10,7 @@ adapte para Debian/Ubuntu onde assinalado).
 ## Arquitetura de produção
 
 ```
-                         chat.1nodado.com.br (443/tcp, 80/tcp)
+                         parley.1nodado.com.br (443/tcp, 80/tcp)
                                     │
                                ┌────▼────┐
 Internet ─────────────────────▶  Nginx   │  TLS (Let's Encrypt)
@@ -29,13 +29,13 @@ Internet ─────────────────────▶  Ngi
 Pontos importantes que moldam esta arquitectura (ver código, não são opção livre):
 
 - O backend **não** serve ficheiros estáticos nem tem `CORS` — o frontend tem de estar na
-  **mesma origem** (`https://chat.1nodado.com.br`) que a API, ou o browser bloqueia os pedidos e
+  **mesma origem** (`https://parley.1nodado.com.br`) que a API, ou o browser bloqueia os pedidos e
   o cookie de sessão (`SameSite=Strict`) não é enviado. É por isso que o Nginx serve o frontend
   **e** faz proxy da API sob o mesmo domínio.
 - `POST /api/channels/{id}/voice/join` devolve sempre `LIVEKIT_WS_URL` tal como configurado no
   backend (o `Host` do pedido é ignorado por desenho — [specs/024-security-hardening](../specs/024-security-hardening/)).
   Por isso o valor de `LIVEKIT_WS_URL` **tem de** ser o endereço público real que o browser vai
-  usar: `wss://chat.1nodado.com.br/rtc`, proxiado pelo Nginx para o LiveKit local.
+  usar: `wss://parley.1nodado.com.br/rtc`, proxiado pelo Nginx para o LiveKit local.
 - O limitador de pedidos (`backend/src/rate_limit.rs`) conta pelo **IP do peer TCP** e ignora
   `X-Forwarded-For` de propósito (evita spoofing sem uma lista de proxies confiáveis). Atrás do
   Nginx local, todos os pedidos chegam como `127.0.0.1`, logo o limite de 10/60s passa a ser
@@ -50,22 +50,22 @@ Pontos importantes que moldam esta arquitectura (ver código, não são opção 
 
 - Servidor Linux com IP público fixo, 1+ vCPU, ≥2 GB RAM (compilar Rust em release com <2 GB
   costuma falhar por falta de memória — ver passo 5.1 se precisar de swap), acesso `sudo`.
-- Domínio **chat.1nodado.com.br** com o DNS sob seu controlo.
+- Domínio **parley.1nodado.com.br** com o DNS sob seu controlo.
 - Portas livres no servidor: 80, 443, 7881/tcp, 3478/udp, 50000–50100/udp (ver tabela na secção 8).
 
 ## 1. DNS
 
-Crie um registo **A** (e **AAAA** se tiver IPv6) apontando `chat.1nodado.com.br` para o IP
+Crie um registo **A** (e **AAAA** se tiver IPv6) apontando `parley.1nodado.com.br` para o IP
 público do servidor:
 
 ```
-chat.1nodado.com.br.   A       203.0.113.10
+parley.1nodado.com.br.   A       203.0.113.10
 ```
 
 Confirme a propagação antes de pedir o certificado TLS:
 
 ```bash
-dig +short chat.1nodado.com.br
+dig +short parley.1nodado.com.br
 ```
 
 ## 2. Preparar o servidor
@@ -191,7 +191,7 @@ COOKIE_SECURE=true
 
 LIVEKIT_API_KEY=<LIVEKIT_KEY gerado no passo 4>
 LIVEKIT_API_SECRET=<LIVEKIT_SECRET gerado no passo 4>
-LIVEKIT_WS_URL=wss://chat.1nodado.com.br/rtc
+LIVEKIT_WS_URL=wss://parley.1nodado.com.br/rtc
 
 SESSION_TTL_SECS=604800
 DEFAULT_INVITE_TTL_SECS=300
@@ -203,7 +203,7 @@ REGISTO_MODO=fechado
 # REGISTO_MODO=aberto
 # EMAIL_API_KEY=<chave Resend>
 # EMAIL_FROM="Parley <noreply@seu-dominio.example>"
-# PUBLIC_BASE_URL=https://chat.1nodado.com.br
+# PUBLIC_BASE_URL=https://parley.1nodado.com.br
 # TRUSTED_PROXY=true
 # TURNSTILE_SECRET=<segredo opcional>
 # TURNSTILE_SITE_KEY=<chave pública opcional>
@@ -275,7 +275,7 @@ para o desafio HTTP-01):
 ```bash
 sudo dnf install -y certbot python3-certbot-nginx
 sudo systemctl enable --now nginx
-sudo certbot --nginx -d chat.1nodado.com.br
+sudo certbot --nginx -d parley.1nodado.com.br
 ```
 
 O certbot cria um bloco de servidor básico. Substitua-o (ou edite) por
@@ -293,16 +293,25 @@ No servidor HTTPS:
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
-    server_name chat.1nodado.com.br;
+    server_name parley.1nodado.com.br;
 
-    ssl_certificate     /etc/letsencrypt/live/chat.1nodado.com.br/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/chat.1nodado.com.br/privkey.pem;
+    ssl_certificate     /etc/letsencrypt/live/parley.1nodado.com.br/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/parley.1nodado.com.br/privkey.pem;
 
     client_max_body_size 6m;   # cobre o limite de anexos (5 MiB) + avatares
 
     # Frontend estático
     root /opt/mesa/frontend/dist;
     index index.html;
+    location = / {
+        try_files /home.html =404;
+    }
+    location = /robots.txt {
+        try_files /robots.marketing.txt =404;
+    }
+    location = /sitemap.xml {
+        try_files /sitemap.marketing.xml =404;
+    }
     location / {
         try_files $uri /index.html;
     }
@@ -346,7 +355,7 @@ server {
 server {
     listen 80;
     listen [::]:80;
-    server_name chat.1nodado.com.br;
+    server_name parley.1nodado.com.br;
     location /.well-known/acme-challenge/ { root /var/www/certbot; }
     location / { return 301 https://$host$request_uri; }
 }
@@ -355,6 +364,20 @@ server {
 ```bash
 sudo nginx -t && sudo systemctl reload nginx
 ```
+
+Antes de recarregar, teste esse bloco contra o `frontend/dist` gerado. Confirme que `/` entrega
+`data-home="marketing"`, que `/login` recebe o documento padrão e que `/robots.txt` anuncia
+`/sitemap.xml`:
+
+```bash
+curl -sS https://parley.1nodado.com.br/ | grep 'data-home="marketing"'
+curl -sS https://parley.1nodado.com.br/login | grep '<html'
+curl -sS https://parley.1nodado.com.br/robots.txt
+```
+
+Para voltar à página pública padrão, remova os três blocos `location =` acima, execute
+`sudo nginx -t && sudo systemctl reload nginx` e confirme que `/` volta a entregar
+`index.html`. O restante das rotas continua no `location /` existente.
 
 Confirme a renovação automática (o certbot já instala um temporizador):
 
@@ -386,11 +409,11 @@ que fala com elas em loopback.
 ## 11. Validar
 
 ```bash
-curl -sS https://chat.1nodado.com.br/health        # {"ok":true}
+curl -sS https://parley.1nodado.com.br/health        # {"ok":true}
 ```
 
-Abra `https://chat.1nodado.com.br` no browser: deve carregar o ecrã de autenticação sem avisos
-de certificado. Crie a primeira conta — torna-se automaticamente o operador inicial da
+Abra `https://parley.1nodado.com.br` no browser: a home de marketing deve carregar sem avisos
+de certificado. Entre por `/login` e crie a primeira conta — torna-se automaticamente o operador inicial da
 instância (o registo aberto fecha depois disso; a segunda pessoa em diante precisa de convite,
 ver [docs/operar-instancia.md § Primeiro uso](operar-instancia.md#4-primeiro-uso)).
 
@@ -453,7 +476,15 @@ instância pequena a paragem é de segundos.
 
 ## 15. Histórico do corte para o frontend v2
 
+
 O corte da v1 para a v2 já foi concluído. O cliente atual está em `frontend/` e o Nginx
 serve `/opt/mesa/frontend/dist`. Para reverter uma versão do cliente, use um artefato ou
 checkout anterior aprovado, faça o build em diretório separado e aponte o `root` do Nginx
 para esse diretório após `nginx -t`. Não altere a base de dados sem um plano de migração.
+
+## Revisões futuras da home de marketing
+
+- Rever a seção «Dois jeitos de começar» quando `desktop-local-host` e
+  `parley-server-standalone` forem entregues; ela descreve apenas as opções disponíveis hoje.
+- `PUBLIC_HOME=marketing` ainda não existe nos artefatos de `parley-server-standalone`.
+  Criar ou renomear essa opção quando aquela change for revisada.

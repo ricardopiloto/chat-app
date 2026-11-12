@@ -5,7 +5,7 @@ import { resolve, relative, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(fileURLToPath(new URL("../..", import.meta.url)));
-const inputs = ["frontend/src", "backend/src", "frontend/index.html", "README.md", "scripts", "infra"];
+const inputs = ["frontend/src", "backend/src", "frontend/index.html", "frontend/home.html", "README.md", "scripts", "infra"];
 const historical = [/^docs\/archive\//, /^openspec\/changes\/archive\//, /^docs\/v2\//];
 const omitted = new Set(["infra/.env"]);
 const contractTokens = [
