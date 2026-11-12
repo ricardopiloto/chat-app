@@ -32,6 +32,7 @@ O destino continua sendo `"home-web"`. Em `index.tsx`, a `Match` desse destino e
 
 ### D3. Build multi-página com bundle compartilhado
 `vite.config.ts` ganha `build.rollupOptions.input = { main: "index.html", home: "home.html" }`. Os dois HTMLs referenciam `/src/index.tsx`, então o Vite gera um único conjunto de chunks reaproveitado pelos dois. `MarketingHome` é carregado com `lazy`, para não pesar no `index.html` das outras instâncias.
+*Ressalva (revisão 2026-11-12):* o `lazy` evita o JSX/CSS de `MarketingHome` no bundle das outras instâncias, mas não o texto — `frontend/src/i18n/index.ts` importa todos os catálogos de forma estática e eager, então o conteúdo de `marketing.*` (ver D10) entra no bundle de toda instância independente da rota renderizada. Aceito como trade-off dado o volume pequeno de texto frente ao bundle total; revisitar se `i18n` passar a ter carregamento por rota.
 
 ### D4. SEO sem renderização no servidor
 O `home.html` contém no `<head>`, escritos à mão e revisados: `<title>`, `description`, `link rel=canonical`, `link rel=alternate hreflang` (`pt-BR`, `en`, `x-default`), `og:*` (incluindo `og:image` com dimensões e `og:image:alt`), `twitter:card=summary_large_image` e `application/ld+json` (`SoftwareApplication`, `AGPL-3.0`, categoria, sistemas operacionais). Não há `noindex`. O corpo continua sendo renderizado no cliente; o Google executa JavaScript e os serviços de pré-visualização leem só o `<head>`. Um `<noscript>` com título e frase de apresentação cobre quem não executa JavaScript.
@@ -42,6 +43,7 @@ O `home.html` contém no `<head>`, escritos à mão e revisados: `<title>`, `des
 
 ### D6. Download sem API do GitHub
 Detecção de sistema por `navigator.userAgentData?.platform` com retorno a `navigator.platform`/`userAgent`, só para destacar um cartão. Todos os botões levam a `https://github.com/ricardopiloto/chat-app/releases/latest` (nova aba, `noopener noreferrer`). Sem chamada de rede para obter a versão. Aviso de instaladores não assinados, texto vindo de `docs/desktop-release.md`. O endereço da release fica definido num único lugar, junto com `HOST_GUIDE`.
+*Ressalva (revisão 2026-11-12):* hoje `HOST_GUIDE` e `DOWNLOAD_URL` são constantes locais dentro de `WebPublicHome.tsx`, não um módulo compartilhado. Esta change extrai as duas, mais o domínio canônico (D8), para um módulo único (por exemplo `frontend/src/shell/links.ts`), importado tanto por `WebPublicHome` quanto por `MarketingHome`, para as duas páginas nunca divergirem numa troca futura de URL.
 *Alternativa descartada:* consultar a API para o link direto. Vai contra o fim do limite de 60/h que motivou `desktop-self-update` e acrescentaria uma dependência de rede na home.
 
 ### D7. Estilos e componentes
@@ -49,12 +51,15 @@ Reaproveitar `components/ui` (`Button`, `Badge`, `Logo`), `LanguageSwitch`, `The
 
 ### D8. `sitemap.xml` e `robots.txt` selecionados pelo servidor
 O build gera `sitemap.marketing.xml` e `robots.marketing.txt`; o servidor da instância oficial os entrega em `/sitemap.xml` e `/robots.txt` (como faz com `home.html`). As outras instâncias não os expõem. O domínio canônico vem de uma constante única no build (`https://parley.1nodado.com.br`).
+*Confirmação (revisão 2026-11-12):* `parley.1nodado.com.br` é de fato o domínio real da instância oficial (confirmado com o usuário), igual ao que `README.md` já afirma. `docs/deploy-producao.md` está desatualizado — ainda inteiramente escrito em torno de `chat.1nodado.com.br` (título, diagrama, `server_name`, certbot, `LIVEKIT_WS_URL`, instruções de DNS) — e deve ser corrigido para `parley.1nodado.com.br` como parte da tarefa 5.1, antes de considerar esse documento como fonte de verdade para o bloco Nginx desta change.
 
 ### D9. Operação na instância oficial
 Nginx: `location = / { try_files /home.html =404; }` mais `location = /robots.txt` e `location = /sitemap.xml` apontando para os arquivos de marketing, sem tocar nas demais rotas (que caem no `index.html` como hoje). Rollback: remover o bloco. Na change `parley-server-standalone`, o equivalente é `PUBLIC_HOME=marketing` no `STATIC_DIR`; esta change não depende dela.
+*Ressalva (revisão 2026-11-12):* `PUBLIC_HOME` ainda não existe em nenhum artefato de `openspec/changes/parley-server-standalone` (que hoje só define `SERVE_FRONTEND`/`STATIC_DIR`, sem noção de modo marketing). Tratar como nome proposto a confirmar quando aquela change for revisada, não como algo já definido — ver tarefa 5.2.
 
 ### D10. Conteúdo e i18n
-Textos novos sob o namespace `marketing.*` em `pt-BR.ts` e `en.ts`, conferidos por `verify:i18n-keys`. Os metadados do `home.html` têm versão em pt-BR (padrão) e en; o cliente atualiza `document.title` e `lang` conforme o idioma escolhido. A seção «Dois jeitos de começar» usa só as opções existentes hoje; é revisada quando `desktop-local-host` e `parley-server-standalone` forem entregues.
+Textos novos sob o namespace `marketing.*`, em catálogos dedicados `marketing.pt-BR.ts`/`marketing.en.ts` (não nos catálogos centrais `pt-BR.ts`/`en.ts`), seguindo a mesma convenção já usada para áreas de conteúdo grandes (`mgmt.*`, `voice.*`). Conferidos por `verify:i18n-keys`. Os metadados do `home.html` têm versão em pt-BR (padrão) e en; o cliente atualiza `document.title` e `lang` conforme o idioma escolhido. A seção «Dois jeitos de começar» usa só as opções existentes hoje; é revisada quando `desktop-local-host` e `parley-server-standalone` forem entregues.
+*Ressalva (revisão 2026-11-12):* a home de marketing tem 9 seções com bastante texto, volume comparável a `mgmt.*`/`voice.*`, não ao namespace `public.*` atual (~40 chaves); daí a preferência por catálogo dedicado em vez de inflar `pt-BR.ts`/`en.ts`. Essa escolha exige editar manualmente `frontend/src/i18n/index.ts` (import e `merge()` dos dois novos catálogos) e `scripts/verify-i18n-keys.mjs` (mesma lista fixa de catálogos, replicada num arquivo de entrada temporário) — ver tarefa 2.1.
 
 ## Risks / Trade-offs
 
