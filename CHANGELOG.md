@@ -9,6 +9,8 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [1.11.0] - 2026-11-13
+
 ### Added
 
 - Marketing home for the official Parley instance, with Portuguese and English content, desktop release links, SEO metadata, and build generated sitemap and robots files. Other instances retain their existing public home.
