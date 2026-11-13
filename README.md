@@ -9,6 +9,10 @@
 > **Official Parley instance:** [parley.1nodado.com.br](https://parley.1nodado.com.br/)
 > Access through your browser or use this address to setup the desktop app. If you do this, you'll be using the official server.
 
+The official instance serves a marketing home at `/`; `/login` opens the app. Other instances
+keep the existing compact public home. See the [production guide](docs/deploy-producao.md)
+for the Nginx routes and rollback.
+
 **Self-hosted chat and video**, in the spirit of Discord, with **native camera composition** and **end-to-end encryption (E2EE) by default**.
 
 Parley gives friends, families, teams, communities, and creators a private instance of their own. Instances do not federate, and the server cannot read conversation content under normal operation.

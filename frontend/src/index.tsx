@@ -10,8 +10,10 @@ import { Invite } from "./pages/Invite";
 import { CallPopoutWindow } from "./voice/CallPopoutWindow";
 import { Unlock } from "./pages/Unlock";
 import { entryScreen } from "./auth/entryScreen";
+import { homeMode } from "./auth/homeMode";
 import { nativeEntry, setNativeEntry } from "./auth/nativeEntry";
 import { readInstanceStatus, resetInstanceStatus } from "./auth/instanceStatus";
+const MarketingHome = lazy(() => import("./pages/MarketingHome").then((m) => ({ default: m.MarketingHome })));
 const WebPublicHome = lazy(() => import("./pages/WebPublicHome").then((m) => ({ default: m.WebPublicHome })));
 const ElectronHome = lazy(() => import("./pages/ElectronHome").then((m) => ({ default: m.ElectronHome })));
 const TitleBar = lazy(() => import("./shell/TitleBar").then((m) => ({ default: m.TitleBar })));
@@ -30,6 +32,7 @@ import "./voice.css";
 import "./mgmt.css";
 import "./chat.css";
 
+const marketingHome = homeMode(document.documentElement.dataset.home) === "marketing";
 applyTheme(themeMode());
 
 // The screen follows the session: no account → sign in, account without an unlocked identity →
@@ -68,7 +71,7 @@ function Gate() {
   const screen = <Switch>
     <Match when={destination() === "foundation"}><Foundation /></Match>
     <Match when={destination() === "home-desktop"}><Suspense fallback={loading}><ElectronHome baseUrl={baseUrl()} onSaved={() => void session.restore()} /></Suspense></Match>
-    <Match when={destination() === "home-web"}><Suspense fallback={loading}><WebPublicHome /></Suspense></Match>
+    <Match when={destination() === "home-web"}><Suspense fallback={loading}>{marketingHome ? <MarketingHome /> : <WebPublicHome />}</Suspense></Match>
     <Match when={destination() === "loading"}>{loading}</Match>
     <Match when={destination() === "invite"}><Invite /></Match>
     <Match when={destination() === "recover"}><Recover /></Match>

@@ -26,7 +26,7 @@ const cases = [
 ];
 for (const [overrides, expected] of cases) assert.equal(entryScreen({ ...base, ...overrides }), expected, JSON.stringify(overrides));
 
-const newScreens = ["src/auth/entryScreen.ts", "src/auth/nativeEntry.ts", "src/entry.css", "src/pages/WebPublicHome.tsx", "src/pages/ElectronHome.tsx"];
+const newScreens = ["src/auth/entryScreen.ts", "src/auth/nativeEntry.ts", "src/entry.css", "src/pages/WebPublicHome.tsx", "src/pages/MarketingHome.tsx", "src/marketing.css", "src/pages/ElectronHome.tsx"];
 for (const file of newScreens) {
   let content;
   try { content = readFileSync(new URL(`../${file}`, import.meta.url), "utf8"); } catch { continue; }
