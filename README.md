@@ -19,7 +19,7 @@ Parley gives friends, families, teams, communities, and creators a private insta
 
 | | |
 |---|---|
-| **Status** | **1.11.1** — Rust backend, v2 frontend, and Electron desktop client ([changelog](CHANGELOG.md)) |
+| **Status** | **1.12.0** — Rust backend, v2 frontend, and Electron desktop client ([changelog](CHANGELOG.md)) |
 | **Download** | [Desktop releases for Windows, macOS, and Linux](https://github.com/ricardopiloto/chat-app/releases) |
 | **Stack** | Rust (Axum + SQLite), SolidJS (Vite + Tailwind), Electron, LiveKit |
 | **Frontend** | [`frontend/`](frontend/) is the current v2 client. The v1 0.8.1 release remains in Git history for rollback. |
@@ -193,14 +193,14 @@ For ongoing work, run `openspec list` or browse [`openspec/changes/`](openspec/c
 
 ## Install and update
 
-From the first release containing the updater, packaged desktop apps check once on launch, without a periodic check or the GitHub REST API. Windows NSIS and Linux AppImages in writable directories download published updates in the background; the toast offers a restart, or the update installs when the app closes. A connected call requires confirmation before restarting. macOS, Windows MSI, Linux deb/rpm, and AppImages in non-writable directories show a release link and require manual updating. Version 1.5.0 users must install the first updater release manually once. Download from the [GitHub releases page](https://github.com/ricardopiloto/chat-app/releases), or rerun the repository's install script.
+From the first release containing the updater, packaged desktop apps check once on launch, without a periodic check or the GitHub REST API. Windows NSIS and Linux AppImages in writable directories download published updates in the background; the toast offers a restart, or the update installs when the app closes. A connected call requires confirmation before restarting. macOS, AppImages in non-writable directories, and legacy `.deb` / `.rpm` / MSI installs show a release link and require manual updating (migrate to AppImage or NSIS for automatic updates). Version 1.5.0 users must install the first updater release manually once. Download from the [GitHub releases page](https://github.com/ricardopiloto/chat-app/releases), or rerun the repository's install script.
 | Platform | Installation |
 |---|---|
 | Linux/macOS script | Run `scripts/install-mesa.sh` from a repository checkout. It requires `curl` and `python3`; Linux installs an AppImage with a menu entry, and macOS copies the app from the DMG to `/Applications`. Rerun it to update. |
 | Windows script | Run `scripts/install-mesa.ps1` in PowerShell from a repository checkout. `-Silent` uses NSIS silent mode. Rerun it to update. |
-| Linux direct | Download an AppImage, `.deb`, or `.rpm`. Replace the previous AppImage or install the newer package to update. |
-| Windows direct | Download and run the NSIS `.exe` or `.msi`; update with the newer installer of the same type. |
-| macOS direct | Open the `.dmg` and copy the `.app` to `/Applications`; replace it to update. |
+| Linux direct | Download the AppImage; make it executable (or use the install script). Replace the previous AppImage to update, or rely on self-update when the directory is writable. |
+| Windows direct | Download and run the NSIS `.exe`; later releases self-update when installed that way. |
+| macOS direct | Open the `.dmg` and copy the `.app` to `/Applications`; replace it to update (manual; no auto-update without signing). |
 
 The scripts verify installer SHA-256 hashes against `SHA256SUMS` from the same release. Older releases without that manifest require a direct download and installation.
 
@@ -210,9 +210,9 @@ When moving from Mesa to Parley, install Parley and remove the old Mesa installa
 
 | Platform | Release files | Notes |
 |---|---|---|
-| Linux | `parley-chat-app-<version>-x86_64.AppImage`, `-amd64.deb`, `-x86_64.rpm` | Deb and RPM install the binary as `parley-chat-app` to avoid conflict with KDE Parley. Make the AppImage executable before running it. Many distributions require FUSE 2; use `--appimage-extract-and-run` if unavailable. |
-| Windows | `Parley-<version>.exe` (NSIS) or `.msi` | MSI also supports enterprise or silent deployment. |
-| macOS | `Parley-<version>.dmg` | Drag the contained app to Applications. |
+| Linux | `parley-chat-app-<version>-x86_64.AppImage` | Executable and desktop entry use `parley-chat-app` to avoid conflict with KDE Parley. Make the AppImage executable before running it. Many distributions require FUSE 2; use `--appimage-extract-and-run` if unavailable. |
+| Windows | `Parley-<version>.exe` (NSIS) | Self-updates when installed via NSIS. |
+| macOS | `Parley-<version>.dmg` | Drag the contained app to Applications; updates are manual. |
 
 Windows and macOS installers are currently unsigned and not notarized. SmartScreen or Gatekeeper may ask users to confirm they trust the download. The project has no Authenticode certificate or Apple Developer account, and the release workflow does not sign packages. See the [desktop release guide](docs/desktop-release.md); GitHub releases start as drafts.
 

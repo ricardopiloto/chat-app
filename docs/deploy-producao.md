@@ -167,6 +167,23 @@ sudo mkswap /swapfile && sudo swapon /swapfile
 
 ## 6. Compilar o frontend
 
+Before building, configure the legal pages for this instance. These values are embedded in
+the frontend build, so changing the backend service environment later will not update them.
+Use the real controller's details only in the local build environment, never in the repository.
+The values below are deliberately fake examples:
+
+```bash
+export VITE_LEGAL_DOCUMENT_VARIANT=official  # use template for an independent self-hosted instance; template is the default
+export VITE_LEGAL_OPERATOR_NAME='Jane Doe'   # fake example; set the actual operator locally
+export VITE_LEGAL_OPERATOR_CONTACT='legal@example.com'  # fake example
+export VITE_LEGAL_OPERATOR_JURISDICTION='Example State, Example Country'  # fake example
+```
+
+Check `/terms` and `/privacy` in both languages after deployment. If an identity variable
+is missing, the page displays an obvious NOT CONFIGURED message. Set final values and review
+the text before enabling `REGISTO_MODO=aberto`. The exact-root Nginx rule serves
+`home.html`; its existing catch-all serves both legal paths through `index.html`.
+
 ```bash
 cd /opt/mesa/frontend
 npm install

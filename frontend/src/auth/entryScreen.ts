@@ -1,6 +1,6 @@
 export type EntryPhase = "loading" | "anonymous" | "locked" | "ready";
 export type NativeEntry = "home" | "login" | "register";
-export type EntryDestination = "home-web" | "home-desktop" | "auth" | "recover" | "invite" | "foundation" | "call-popout" | "loading" | "unlock" | "app";
+export type EntryDestination = "home-web" | "home-desktop" | "auth" | "recover" | "invite" | "foundation" | "terms" | "privacy" | "call-popout" | "loading" | "unlock" | "app";
 
 export function entryScreen(input: {
   native: boolean;
@@ -14,6 +14,8 @@ export function entryScreen(input: {
 }): EntryDestination {
   const { native, baseUrl, phase, pathname, search, hash, initialSetup, nativeEntry } = input;
   if (pathname === "/__foundation") return "foundation";
+  if (pathname === "/terms") return "terms";
+  if (pathname === "/privacy") return "privacy";
   if (native && !baseUrl) return "home-desktop";
   if (phase === "loading") return "loading";
   if (pathname.startsWith("/invite/") && !search.includes("signin") && (phase === "anonymous" || phase === "ready")) return "invite";

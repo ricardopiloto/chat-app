@@ -9,6 +9,16 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [1.12.0] - 2026-11-13
+
+### Added
+
+- Public terms and privacy pages in English and Brazilian Portuguese, with official and self-hosted text variants, build-time operator identity, and links from registration and public homes (`terms-and-privacy-documents`).
+
+### Changed
+
+- **BREAKING (desktop):** releases no longer publish Linux `.deb`/`.rpm` or Windows MSI. Official installers are AppImage, NSIS `.exe`, and macOS DMG only (`desktop-self-update-only-installers`). Migrate legacy package installs to AppImage or NSIS for automatic updates.
+
 ## [1.11.1] - 2026-11-13
 
 ### Fixed

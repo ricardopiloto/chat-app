@@ -88,6 +88,22 @@ Não abra o cadastro antes de definir os textos finais de termos e privacidade. 
 
 ## 3. Cliente web
 
+Before building a public instance, set its legal identity in the frontend build environment.
+The default legal text is the independently operated self-hosted template; set the variant to
+`official` only for the official service. These are deliberately fake example values:
+
+```bash
+export VITE_LEGAL_DOCUMENT_VARIANT=template
+export VITE_LEGAL_OPERATOR_NAME='Jane Doe'
+export VITE_LEGAL_OPERATOR_CONTACT='legal@example.com'
+export VITE_LEGAL_OPERATOR_JURISDICTION='Example State, Example Country'
+```
+
+The pages at `/terms` and `/privacy` show a conspicuous NOT CONFIGURED message if either
+identity value is absent. Configure the actual operator details locally, rebuild the frontend,
+review both languages and the final legal text, and seek legal review if your scale warrants it
+before setting `REGISTO_MODO=aberto`. Rebuilding is required after changing these variables.
+
 ```bash
 cd frontend
 npm install

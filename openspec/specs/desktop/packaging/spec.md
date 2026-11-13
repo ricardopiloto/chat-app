@@ -5,28 +5,52 @@ Compila e empacota o shell desktop da Mesa (`desktop/shell`, Electron desde `des
 
 ## Requirements
 
-### Requirement: Linux produz AppImage, deb e rpm
+### Requirement: Linux produz AppImage
 
-O sistema SHALL produzir, a partir de um runner Linux, um `.AppImage`, um pacote `.deb` e um pacote `.rpm`, todos a partir do mesmo crate `frontend/src-tauri`, na mesma execução de CI.
+O sistema SHALL produzir, a partir de um runner Linux, um `.AppImage` a partir do shell desktop Electron. O sistema SHALL NOT produzir `.deb` nem `.rpm` como artefactos oficiais de release.
 
-#### Scenario: Três formatos Linux na mesma execução
+#### Scenario: AppImage Linux na execução
 
 - **WHEN** o workflow de empacotamento corre no runner Linux
-- **THEN** os três artefactos (`.AppImage`, `.deb`, `.rpm`) são produzidos e ficam disponíveis como resultado dessa execução
+- **THEN** é produzido um `.AppImage` e ficam disponíveis o feed Linux associado (`latest-linux.yml` e metadados de blockmap embutidos conforme o empacotador)
 
-### Requirement: Windows e macOS produzem instaladores nativos
+#### Scenario: Sem deb nem rpm oficiais
 
-O sistema SHALL produzir, a partir de um runner Windows, um instalador `.msi` e um `.exe` (NSIS); e, a partir de um runner macOS, um `.dmg` (com a aplicação `.app` embrulhada dentro, para arrastar para Applications — não publicado como ficheiro à parte).
+- **WHEN** o workflow de empacotamento corre no runner Linux
+- **THEN** não são anexados à release oficial pacotes `.deb` nem `.rpm`
 
-#### Scenario: Instaladores Windows
+### Requirement: Windows produz NSIS e macOS produz DMG
+
+O sistema SHALL produzir, a partir de um runner Windows, um instalador `.exe` (NSIS); e, a partir de um runner macOS, um `.dmg` (com a aplicação `.app` embrulhada dentro). O sistema SHALL NOT produzir `.msi` como artefacto oficial de release.
+
+#### Scenario: Instalador Windows NSIS
 
 - **WHEN** o workflow corre no runner Windows
-- **THEN** são produzidos um `.msi` e um `.exe`
+- **THEN** é produzido um `.exe` NSIS (e o feed `latest.yml` / blockmaps associados)
+
+#### Scenario: Sem MSI oficial
+
+- **WHEN** o workflow corre no runner Windows
+- **THEN** não é anexado à release oficial um `.msi`
 
 #### Scenario: Instalador macOS
 
 - **WHEN** o workflow corre no runner macOS
 - **THEN** é produzido um `.dmg` contendo a aplicação
+
+### Requirement: Release tagged anexa exactamente três instaladores
+
+Quando o workflow é accionado por uma tag `v*`, o sistema SHALL anexar exactamente três instaladores oficiais (AppImage, NSIS `.exe`, DMG) mais o manifesto `SHA256SUMS` desses três ficheiros, e SHALL falhar a publicação se a contagem de instaladores for diferente de três.
+
+#### Scenario: Contagem correcta
+
+- **WHEN** uma tag `v*` completa os jobs das três plataformas com sucesso
+- **THEN** a release draft inclui três instaladores e um `SHA256SUMS` que cobre esses três ficheiros
+
+#### Scenario: Contagem incorrecta
+
+- **WHEN** o job de release encontra um número de instaladores diferente de três
+- **THEN** o job falha sem publicar checksums incorrectos
 
 ### Requirement: A compilação não é accionada em cada push
 
