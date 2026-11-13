@@ -75,7 +75,7 @@ Uma flag de execução (ex.: `--server` / `--headless`) determina o modo:
 
 > **Nota de reconciliação (desktop-electron-shell):** o parágrafo acima e a visão de «um único binário Rust» em §1 descrevem uma meta de longo prazo que não está implementada. O cliente desktop actual é um shell Electron (`frontend/electron/`, Node), não um binário Rust/Tauri. Só o backend (`backend/`) continua a ser Rust. O mesmo espírito já estava registado em `native-client-auth` para a troca «binário único → cliente só»: esta nota actualiza o motor desse cliente.
 
-The current Electron desktop shell checks for published updates once after launch. NSIS and writable AppImage installations use `electron-updater`; macOS, MSI, deb, rpm, and non-writable AppImages show a manual release notice. The feed is published with the desktop GitHub release.
+The current Electron desktop shell checks for published updates once after launch. Official installers are AppImage, Windows NSIS, and macOS DMG. NSIS and writable AppImage installations use `electron-updater`; macOS, non-writable AppImages, and legacy MSI/deb/rpm installs show a manual release notice. The feed is published with the desktop GitHub release.
 
 ### 2.3 Autenticação e sessão
 

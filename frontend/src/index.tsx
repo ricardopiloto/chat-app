@@ -6,6 +6,7 @@ import { AppShell } from "./shell/AppShell";
 import { Auth } from "./pages/Auth";
 import { Recover } from "./pages/Recover";
 import { Foundation } from "./pages/Foundation";
+import { LegalDocument } from "./pages/LegalDocument";
 import { Invite } from "./pages/Invite";
 import { CallPopoutWindow } from "./voice/CallPopoutWindow";
 import { Unlock } from "./pages/Unlock";
@@ -70,6 +71,8 @@ function Gate() {
   const loading = <main class="grid min-h-[calc(100dvh-var(--mesa-title-bar))] place-items-center bg-background text-on-surface-variant">{t("auth.loading")}</main>;
   const screen = <Switch>
     <Match when={destination() === "foundation"}><Foundation /></Match>
+    <Match when={destination() === "terms"}><LegalDocument kind="terms" /></Match>
+    <Match when={destination() === "privacy"}><LegalDocument kind="privacy" /></Match>
     <Match when={destination() === "home-desktop"}><Suspense fallback={loading}><ElectronHome baseUrl={baseUrl()} onSaved={() => void session.restore()} /></Suspense></Match>
     <Match when={destination() === "home-web"}><Suspense fallback={loading}>{marketingHome ? <MarketingHome /> : <WebPublicHome />}</Suspense></Match>
     <Match when={destination() === "loading"}>{loading}</Match>

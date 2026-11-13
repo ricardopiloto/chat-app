@@ -262,6 +262,10 @@ export function Auth() {
       </form>
       </Show>
       </Show>
+      <div class="flex flex-wrap justify-center gap-5 text-body-sm text-on-surface-variant">
+        <A href="/terms">{t("legal.terms")}</A>
+        <A href="/privacy">{t("legal.privacy")}</A>
+      </div>
       </div>
     </AuthFrame>
   );

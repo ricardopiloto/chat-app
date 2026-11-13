@@ -34,11 +34,6 @@ jobs:
             exit 1
           fi
 
-      - name: Install Linux packaging tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y rpm
-
       - name: Install frontend dependencies
         working-directory: frontend
         run: npm ci
@@ -52,17 +47,15 @@ jobs:
           mv -f electron/dist/preload.js electron/dist/preload.cjs
           cp electron/screen-picker.html electron/dist/screen-picker.html
 
-      - name: Package Linux installers
+      - name: Package Linux AppImage
         working-directory: frontend/electron
-        run: npx --prefix .. electron-builder --projectDir .. --config "${GITHUB_WORKSPACE}/frontend/electron-builder.yml" --linux AppImage deb rpm --publish never
+        run: npx --prefix .. electron-builder --projectDir .. --config "${GITHUB_WORKSPACE}/frontend/electron-builder.yml" --linux AppImage --publish never
 
       - uses: actions/upload-artifact@v4
         with:
           name: parley-linux
           path: |
             frontend/release/*.AppImage
-            frontend/release/*.deb
-            frontend/release/*.rpm
             frontend/release/latest-linux.yml
             frontend/release/*.blockmap
           if-no-files-found: error
@@ -109,17 +102,16 @@ jobs:
           mv -f electron/dist/preload.js electron/dist/preload.cjs
           cp electron/screen-picker.html electron/dist/screen-picker.html
 
-      - name: Package Windows installers
+      - name: Package Windows NSIS installer
         working-directory: frontend/electron
         shell: bash
-        run: npx --prefix .. electron-builder --projectDir .. --config "${GITHUB_WORKSPACE}/frontend/electron-builder.yml" --win nsis msi --publish never
+        run: npx --prefix .. electron-builder --projectDir .. --config "${GITHUB_WORKSPACE}/frontend/electron-builder.yml" --win nsis --publish never
 
       - uses: actions/upload-artifact@v4
         with:
           name: parley-windows
           path: |
             frontend/release/*.exe
-            frontend/release/*.msi
             frontend/release/latest.yml
             frontend/release/*.blockmap
           if-no-files-found: error
@@ -192,9 +184,11 @@ jobs:
       - name: Publish installer checksums
         working-directory: artifacts
         run: |
-          mapfile -d '' installers < <(find . -maxdepth 1 -type f \( -name '*.AppImage' -o -name '*.deb' -o -name '*.rpm' -o -name '*.exe' -o -name '*.msi' -o -name '*.dmg' \) -print0 | sort -z)
-          if [ "${#installers[@]}" -ne 6 ]; then
-            echo "Esperados seis instaladores; encontrados ${#installers[@]}."
+          # One installer per platform in the current layout (AppImage, NSIS exe, DMG).
+          # Revisit this count if multi-arch artifacts are added per platform.
+          mapfile -d '' installers < <(find . -maxdepth 1 -type f \( -name '*.AppImage' -o -name '*.exe' -o -name '*.dmg' \) -print0 | sort -z)
+          if [ "${#installers[@]}" -ne 3 ]; then
+            echo "Esperados três instaladores (AppImage, NSIS .exe, DMG); encontrados ${#installers[@]}."
             exit 1
           fi
           sha256sum "${installers[@]}" | sed 's#  \./#  #' > SHA256SUMS

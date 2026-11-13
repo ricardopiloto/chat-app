@@ -66,7 +66,10 @@ export function EmailRequest(props: { siteKey: string | null; error?: string; on
           <input name="website" tabindex="-1" aria-hidden="true" autocomplete="off" class="absolute -left-[10000px] h-px w-px opacity-0" {...bindValue(website, setWebsite)} />
           <label class="flex min-w-0 items-start gap-3 text-body-sm">
             <input type="checkbox" class="mt-1" checked={terms()} onChange={(event) => setTerms(event.currentTarget.checked)} />
-            <span class="min-w-0 break-words">{t("emailRegistration.terms")}</span>
+            <span class="min-w-0 break-words">
+              {t("emailRegistration.termsPrefix")} <a href="/terms" class="text-primary underline" onClick={(event) => event.stopPropagation()}>{t("emailRegistration.termsLink")}</a>
+              {t("emailRegistration.termsMiddle")} <a href="/privacy" class="text-primary underline" onClick={(event) => event.stopPropagation()}>{t("emailRegistration.privacyLink")}</a>{t("emailRegistration.termsSuffix")}
+            </span>
           </label>
           <Show when={props.siteKey}><div ref={captchaElement} class="min-w-0 overflow-hidden" /></Show>
           <Show when={problem() || props.error}><p class="notice error break-words" role="alert">{problem() || props.error}</p></Show>

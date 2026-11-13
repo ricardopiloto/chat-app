@@ -25,8 +25,6 @@ publish:
 linux:
   target:
     - AppImage
-    - deb
-    - rpm
   icon: electron/icons/
   category: Network
   synopsis: Chat e vídeo self-hosted com cifra de ponta a ponta.
@@ -38,14 +36,9 @@ linux:
   maintainer: Parley
   syncDesktopName: true
   artifactName: "parley-chat-app-${version}-${arch}.${ext}"
-deb:
-  packageName: parley-chat-app
-rpm:
-  packageName: parley-chat-app
 win:
   target:
     - nsis
-    - msi
   icon: electron/icons/icon.ico
   artifactName: "Parley-${version}.${ext}"
 mac:
