@@ -9,6 +9,12 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [1.11.1] - 2026-11-13
+
+### Fixed
+
+- Marketing home: TypeScript build failed on `key[0]` possibly undefined when building nav link labels; use `charAt(0)` instead.
+
 ## [1.11.0] - 2026-11-13
 
 ### Added
