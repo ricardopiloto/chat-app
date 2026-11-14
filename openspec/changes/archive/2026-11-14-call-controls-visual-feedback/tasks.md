@@ -14,5 +14,5 @@
 
 ## 3. Verificação no painel e no PiP
 
-- [ ] 3.1 Conferir no painel do utilizador (`CallControls.tsx`) e no mini-player flutuante (`FloatingPlayer.tsx`) que os novos estados aparecem nos dois, sem quebrar os tamanhos já reduzidos do PiP (`32px`/`30px` nas media queries existentes). Verify manual, claro e escuro, largura normal e estreita.
-- [ ] 3.2 Smoke manual: abrir o menu de blur, passar o cursor e pressionar cada opção dentro de `.call-menu`, confirmar que o hover existente (`background:var(--surface-container-high)`) continua a funcionar sem conflito com as novas regras de `.call-control`. Verify manual.
+- [x] 3.1 Conferir no painel do utilizador (`CallControls.tsx`) e no mini-player flutuante (`FloatingPlayer.tsx`) que os novos estados aparecem nos dois, sem quebrar os tamanhos já reduzidos do PiP (`32px`/`30px` nas media queries existentes). Verify manual, claro e escuro, largura normal e estreita.
+- [x] 3.2 Smoke manual: abrir o menu de blur, passar o cursor e pressionar cada opção dentro de `.call-menu`, confirmar que o hover existente (`background:var(--surface-container-high)`) continua a funcionar sem conflito com as novas regras de `.call-control`. Verify manual.

@@ -17,12 +17,22 @@ O sistema SHALL usar a marca oficial da Mesa (a mesma fonte de `openspec/specs/f
 
 ### Requirement: A janela usa decoração nativa, sem chrome personalizado
 
-O sistema SHALL apresentar a aplicação numa janela com a barra de título padrão do sistema operativo (minimizar/maximizar/fechar nativos), e SHALL NOT substituir essa decoração por um chrome desenhado pela aplicação. O conteúdo dentro da janela SHALL ser exactamente o `frontend/dist` já servido no build web, sem elemento visual acrescentado pelo shell.
+O sistema SHALL apresentar a janela principal da aplicação com uma barra de título desenhada pela própria aplicação (área de arraste e controlos próprios de minimizar/maximizar/fechar), em vez da barra de título padrão do sistema operativo. As restantes janelas abertas pelo shell (o diálogo de partilha de ecrã e o popout de chamada) SHALL continuar a usar a decoração nativa do sistema operativo, sem chrome personalizado. O conteúdo da janela principal abaixo da sua barra de título personalizada SHALL continuar a ser o `frontend/dist` já servido no build web; a divergência introduzida por esta mudança fica limitada à própria barra de título, não ao resto do conteúdo.
+
+#### Scenario: Janela principal com chrome personalizado
+
+- **WHEN** a aplicação é aberta em qualquer uma das três plataformas
+- **THEN** a janela principal mostra uma barra de título desenhada pela aplicação, com área de arraste e controlos de minimizar/maximizar/fechar próprios, em vez da barra de título nativa do sistema operativo
 
 #### Scenario: Janela com decoração do SO
 
-- **WHEN** a aplicação é aberta em qualquer das três plataformas
-- **THEN** a janela mostra a barra de título nativa desse sistema operativo, e o conteúdo abaixo dela é idêntico ao que o build web mostra na mesma resolução
+- **WHEN** o diálogo de partilha de ecrã ou a janela de popout de chamada são abertos
+- **THEN** cada um mostra a barra de título nativa desse sistema operativo, sem chrome personalizado, exactamente como antes desta change
+
+#### Scenario: Redimensionar, maximizar e encaixar continuam a funcionar sem decoração nativa
+
+- **WHEN** o utilizador arrasta os limites da janela principal, faz duplo-clique na barra de título personalizada, ou usa os gestos de encaixe de janela do sistema operativo (por exemplo, arrastar para a margem do ecrã no Windows)
+- **THEN** a janela principal redimensiona, maximiza/restaura e encaixa como uma janela nativa equivalente faria, apesar de já não ter a decoração nativa do sistema operativo
 
 ### Requirement: A rede do shell permite ligar a qualquer instância configurada pelo utilizador
 
@@ -77,3 +87,74 @@ Quando a janela principal estiver maximizada, o sistema SHALL ocultar essa borda
 
 - **WHEN** o utilizador maximiza a janela principal no desktop
 - **THEN** a borda deixa de ser desenhada até a janela voltar ao estado restaurado
+
+### Requirement: System tray com Abrir e Fechar
+
+No cliente desktop (Electron), o sistema SHALL mostrar um ícone na bandeja do sistema operativo (system tray / menu bar) com a marca oficial da Mesa, e SHALL expor um menu com exactamente duas acções de produto: **Abrir** (mostrar a janela principal e dar-lhe foco) e **Fechar** (terminar a aplicação). O build web SHALL NOT mostrar tray.
+
+#### Scenario: Abrir dá foco
+
+- **WHEN** a janela principal está escondida ou sem foco e o utilizador escolhe Abrir na tray (ou activa o ícone da tray de forma equivalente na plataforma)
+- **THEN** a janela principal fica visível e recebe o foco do sistema operativo
+
+#### Scenario: Fechar na tray encerra a app
+
+- **WHEN** o utilizador escolhe Fechar na tray
+- **THEN** o processo da aplicação termina (não fica só escondido)
+
+### Requirement: Fechar a janela esconde para a tray
+
+No cliente desktop, o sistema SHALL interpretar o fecho da janela principal (botão X da decoração, ou o controlo de fechar da app, incluindo `mesa:close` quando existir) como **esconder** a janela e manter o processo vivo com o ícone na tray. O sistema SHALL NOT terminar a aplicação nesse gesto. A saída definitiva SHALL ser só via Fechar na tray (ou mecanismo explícito equivalente de quit).
+
+#### Scenario: X esconde, processo continua
+
+- **WHEN** o utilizador fecha a janela principal pelo controlo de fechar
+- **THEN** a janela deixa de ser visível, o ícone da tray permanece, e a sessão/realtime pode continuar
+
+#### Scenario: Reabrir depois de esconder
+
+- **WHEN** a janela foi escondida para a tray e o utilizador escolhe Abrir
+- **THEN** a mesma sessão de aplicação reaparece com foco, sem exigir novo login só por causa do esconder
+
+### Requirement: Desktop main-window close behavior is a remembered choice
+
+On the desktop client, closing the main window through X or the app close control SHALL use a per-install choice of hide to tray or quit. With no saved choice, the system SHALL ask on the first close attempt, apply an explicit selection to that attempt, and save it. Later close attempts SHALL follow the saved choice silently. Dismissing the prompt without choosing SHALL hide to tray for that attempt and SHALL NOT save a choice, so the next close asks again. Hiding SHALL keep the app and active call running; quitting SHALL use normal application shutdown.
+
+#### Scenario: First close selects hide
+
+- **WHEN** no choice is saved and the person selects hide to tray
+- **THEN** the window hides, the app stays running, and later closes hide without a prompt
+
+#### Scenario: First close selects quit
+
+- **WHEN** no choice is saved and the person selects quit
+- **THEN** the app quits normally and later closes after relaunch quit without a prompt
+
+#### Scenario: Prompt dismissed
+
+- **WHEN** no choice is saved and the person dismisses the prompt without choosing
+- **THEN** the window hides to tray, no choice is saved, and the next close presents the prompt again
+
+#### Scenario: Saved quit choice
+
+- **WHEN** quit is saved and the person closes the main window
+- **THEN** the app quits normally without showing the choice prompt
+
+### Requirement: Desktop Settings can change the close choice
+
+The desktop Settings screen SHALL show the current close behavior and SHALL allow a person to change it between hide to tray and quit at any time. An explicit saved change SHALL take effect on the next close without restart. The browser build SHALL NOT show this setting. Once a choice is saved, the first-close prompt SHALL NOT reappear; subsequent changes SHALL be made through Settings.
+
+#### Scenario: Change from tray to quit
+
+- **WHEN** a person changes the Settings choice from hide to tray to quit
+- **THEN** the next close quits normally, without prompt or restart
+
+#### Scenario: Change from quit to tray
+
+- **WHEN** a person changes the Settings choice from quit to hide to tray
+- **THEN** the next close hides to tray, without prompt or restart
+
+#### Scenario: Browser Settings
+
+- **WHEN** a person opens Settings in a browser
+- **THEN** no close-behavior control is shown

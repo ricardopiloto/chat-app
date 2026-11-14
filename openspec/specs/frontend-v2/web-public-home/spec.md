@@ -69,3 +69,12 @@ A página SHALL ter uma hierarquia de títulos coerente (um único título princ
 #### Scenario: Idioma e tema
 - **WHEN** a pessoa troca idioma ou tema
 - **THEN** todo o texto muda de idioma, a escolha é lembrada como no restante do app e o contraste continua legível
+
+### Requirement: Public home links to terms and privacy
+
+The compact public home (`WebPublicHome`) SHALL link to `/terms` and `/privacy`, for example in the footer, in addition to the privacy-by-design section. The links SHALL work without a session.
+
+#### Scenario: Footer has legal documents
+
+- **WHEN** a visitor views the compact public home
+- **THEN** they find links to the terms of use and privacy policy

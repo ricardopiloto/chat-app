@@ -55,7 +55,7 @@ export function MembersPanel() {
 
   return (
     <aside class="flex min-h-0 w-64 shrink-0 flex-col border-l border-outline-variant bg-surface-container-low" aria-label={t("shell.members")}>
-      <header class="flex items-center gap-3 border-b border-outline-variant px-4 py-3">
+      <header class="flex h-16 shrink-0 items-center gap-3 border-b border-outline-variant px-4">
         <h2 class="font-display text-headline-sm">{t("shell.members")}</h2>
         <span class="rounded-full bg-surface-container-high px-2 py-0.5 font-code text-label-code-sm text-secondary">{t("shell.onlineCount", { count: groups().liveCount })}</span>
       </header>

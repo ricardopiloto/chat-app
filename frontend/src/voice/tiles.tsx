@@ -1,11 +1,34 @@
 // What a person looks like in a call: a video element fed by a track, or an avatar when there is none,
 // plus the name and state chips. Every view (stage, grid, strip, floating player) draws people with
 // these, so a person looks the same everywhere.
-import { Show, createEffect, onCleanup, type JSX } from "solid-js";
+import { Show, createEffect, createSignal, onCleanup, type JSX } from "solid-js";
 import type { Track } from "livekit-client";
 import { useAuthedSrc } from "../api";
 import { Icon } from "../components/ui";
 import { t } from "../i18n";
+import { useCall, type CallConnectionQuality } from "./callSession";
+import { participantVolumes, VOLUME_DEFAULT, VOLUME_MAX, VOLUME_MIN } from "./participantVolume";
+
+const QUALITY_ICON: Record<CallConnectionQuality, string> = {
+  excellent: "signal_cellular_4_bar",
+  good: "signal_cellular_3_bar",
+  poor: "signal_cellular_1_bar",
+  lost: "signal_cellular_0_bar",
+  unknown: "signal_cellular_nodata",
+};
+
+export function ConnectionQualityGlyph(props: { level: CallConnectionQuality }) {
+  return (
+    <span
+      class={`call-chip quality ${props.level}`}
+      role="status"
+      title={t("call.quality.hint")}
+      aria-label={`${t("call.quality.label")}: ${t(`call.quality.${props.level}`)}`}
+    >
+      <Icon name={QUALITY_ICON[props.level]} class="text-[14px]" />
+    </span>
+  );
+}
 
 const TONES = ["ember", "plum", "slate", "wine", "umber"] as const;
 export type SeatTone = (typeof TONES)[number];
@@ -54,9 +77,17 @@ export function Tile(props: {
   actions?: JSX.Element;
   onClick?: () => void;
 }) {
+  const call = useCall();
   const size = () => props.size ?? "grid";
   const initial = () => props.person.name.slice(0, 1).toUpperCase();
   const avatar = useAuthedSrc(() => props.person.avatar);
+  /** Primary local tile only — not strip/mini, not remotes, not the popout viewer connection. */
+  const quality = () => {
+    if (!props.person.isLocal) return null;
+    if (size() !== "stage" && size() !== "grid") return null;
+    return call.connectionQuality();
+  };
+  const showVolume = () => !props.person.isLocal && !!props.person.handle && size() !== "mini";
   return (
     <figure
       class={`call-tile tone-${seatTone(props.person.id)} size-${size()}`}
@@ -92,6 +123,9 @@ export function Tile(props: {
       <Show when={props.person.isLocal && size() !== "mini"}>
         <span class="call-chip you">{t("call.you")}</span>
       </Show>
+      <Show when={quality()}>
+        {(level) => <ConnectionQualityGlyph level={level()} />}
+      </Show>
       {props.badge}
       <figcaption class="call-tile-caption">
         <span class="call-tile-name">{props.person.name}</span>
@@ -107,8 +141,50 @@ export function Tile(props: {
             <Icon name={props.person.camera ? "videocam" : "videocam_off"} label={props.person.camera ? t("call.camState.on") : t("call.camState.off")} class={`text-[16px] ${props.person.camera ? "" : "muted"}`} />
           </Show>
         </span>
+        <Show when={showVolume()}>
+          <ParticipantVolumeControl identity={props.person.id} handle={props.person.handle!} />
+        </Show>
+        <Show when={props.actions}>
+          <span class="call-tile-actions">{props.actions}</span>
+        </Show>
       </figcaption>
-      {props.actions}
     </figure>
+  );
+}
+
+/** Local-only 0–200% slider for one remote participant; persists by handle. */
+function ParticipantVolumeControl(props: { identity: string; handle: string }) {
+  const call = useCall();
+  const [value, setValue] = createSignal(VOLUME_DEFAULT);
+
+  createEffect(() => {
+    participantVolumes();
+    const next = call.remoteVolume(props.handle);
+    setValue(next);
+    call.applyStoredRemoteVolume(props.identity, props.handle);
+  });
+
+  return (
+    <label
+      class="call-volume"
+      title={t("call.volume.hint")}
+      onClick={(event) => event.stopPropagation()}
+      onPointerDown={(event) => event.stopPropagation()}
+    >
+      <Icon name="volume_up" class="text-[14px]" />
+      <input
+        type="range"
+        min={VOLUME_MIN}
+        max={VOLUME_MAX}
+        step={1}
+        value={value()}
+        aria-label={t("call.volume.label")}
+        onInput={(event) => {
+          const next = call.setRemoteVolume(props.identity, props.handle, Number(event.currentTarget.value));
+          setValue(next);
+        }}
+      />
+      <span class="call-volume-value">{value()}%</span>
+    </label>
   );
 }

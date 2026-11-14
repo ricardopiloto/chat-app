@@ -8,12 +8,14 @@ import { Content } from "./Content";
 import { Hosts } from "./Hosts";
 import { MembersPanel } from "./MembersPanel";
 import { ServerRail } from "./ServerRail";
+import { UserPanel } from "./UserPanel";
 import { SettingsSidebar } from "../admin/settings/SettingsSidebar";
 import { useSoundEffects } from "../sound/triggers";
 import { Sidebar } from "./Sidebar";
 import { createShellState, ShellProvider, useShell } from "./state";
 import { Topbar } from "./Topbar";
 import { UpdateToast } from "./UpdateToast";
+import { ClosePromptDialog } from "./ClosePromptDialog";
 
 // Layout: top bar over [navigation | main | members]. Navigation (rail + sidebar) sits beside the
 // content from 768px up; below that it is a drawer over the content with a backdrop that closes it.
@@ -21,6 +23,8 @@ function Frame() {
   const shell = useShell();
   const session = useSession();
   const welcomeToast = createToast(6000);
+  let navigation: HTMLDivElement | undefined;
+  const updateCardHeight = (height: number) => navigation?.style.setProperty("--user-card-height", `${height}px`);
   useSoundEffects();
 
   onMount(() => {
@@ -47,7 +51,8 @@ function Frame() {
           <button type="button" class="fixed inset-0 z-20 tablet:hidden" style={{ "background-color": "color-mix(in srgb, var(--background) 70%, transparent)" }} aria-label={t("shell.closeNavigation")} onClick={() => shell.setDrawerOpen(false)} />
         </Show>
         <div
-          class="z-30 flex h-full shrink-0 transition-transform duration-200 mobile:fixed mobile:bottom-0 mobile:left-0 mobile:top-14"
+          ref={navigation}
+          class="relative z-30 flex h-full shrink-0 transition-transform duration-200 mobile:fixed mobile:bottom-0 mobile:left-0 mobile:top-14"
           classList={{ "mobile:-translate-x-full": !shell.drawerOpen(), "mobile:shadow-floating": shell.drawerOpen() }}
           inert={shell.narrow() && !shell.drawerOpen()}
         >
@@ -57,6 +62,9 @@ function Frame() {
               <SettingsSidebar />
             </Show>
           </Show>
+          <div class="absolute bottom-0 left-0 right-0">
+            <UserPanel onHeightChange={updateCardHeight} />
+          </div>
         </div>
         <Content />
         <Show when={shell.membersOpen()}>
@@ -66,6 +74,7 @@ function Frame() {
       <Hosts />
       <Toast show={!!welcomeToast.message()} message={welcomeToast.message()} />
       <UpdateToast />
+      <ClosePromptDialog />
     </div>
   );
 }

@@ -177,6 +177,10 @@ export function AudioVideoSettings() {
               <Icon name="volume_up" class="text-[18px]" />
               {t("call.settings.soundJoin")}
             </Button>
+            <Button onClick={() => previewEffect("callLeave")}>
+              <Icon name="volume_up" class="text-[18px]" />
+              {t("call.settings.soundLeave")}
+            </Button>
           </div>
         </section>
       </Card>

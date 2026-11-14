@@ -9,6 +9,25 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [1.13.0] - 2026-11-14
+
+### Added
+
+- Per-participant local call volume (0–200%, persisted by account handle), with Web Audio boost above 100% (`per-participant-volume-boost`).
+- Desktop close-button preference (hide to tray vs quit), with a first-close native prompt and a Settings control on the install (`close-button-behavior-preference`).
+- Desktop call popout: hover/focus-revealed mic, camera, deafen, and Hang Up controls that relay to the owning main window (viewer room stays receive-only) (`add-popout-call-controls`).
+- Local LiveKit connection-quality chip on the primary call tile (Excellent / Good / Poor / Lost / Unknown), with accessible label and honest tooltip — not ping or jitter (`add-connection-quality-indicator`).
+
+### Changed
+
+- LiveKit active-speaker cadence: `audio.update_interval: 200` ms and `smooth_intervals: 2` in `infra/livekit.yaml` so speaking indicators follow speech sooner without a frontend polling path (`tune-speaking-indicator-latency`).
+
+### Fixed
+
+- Mobile web: switching apps no longer hangs up an active call; returning to the same document reconnects or recovers media when possible, while abandoned seats still expire via occupancy heartbeat (`keep-mobile-call-connected-in-background`).
+- Call join sound now plays after a remote LiveKit participant appears in the call grid (including listen-only avatars), not on HTTP occupancy reservation; popout viewers stay silent and reconnects do not duplicate (`sync-join-sound-with-participant-arrival`).
+- Desktop/web call session: leave and join no longer wait forever on a stalled LiveKit disconnect; pagehide clears idle call UI immediately; Electron main window disables background throttling and enforces a single app instance so a tray relaunch restores the existing window instead of starting a second call session (`fix-stale-background-call-blocks-rejoin`).
+
 ## [1.12.0] - 2026-11-13
 
 ### Added

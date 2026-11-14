@@ -1,8 +1,7 @@
-// Plays the two sound effects from the real-time events the shell already receives.
+// Plays sound effects from shell realtime events and call-session arrival notifications.
 import { createEffect, onCleanup } from "solid-js";
 import { useCall } from "../voice/callSession";
 import { useShell } from "../shell/state";
-import { arrivals } from "./arrivals";
 import { notify, preloadEffects } from "./effects";
 
 export function useSoundEffects(): void {
@@ -22,13 +21,6 @@ export function useSoundEffects(): void {
     onCleanup(stop);
   });
 
-  // Someone else joined the call I am in. Without a previous list nobody counts as arrived.
-  createEffect(() => {
-    const stop = shell.subscribeOccupancy(({ channelId, before, after }) => {
-      if (call.deafened() || !call.live() || call.channelId() !== channelId) return;
-      const prior = before ? new Set(before) : undefined;
-      if (arrivals(prior, after, shell.meId()).length > 0) notify("callJoin");
-    });
-    onCleanup(stop);
-  });
+  // Remote call-join sounds are emitted from callSession on LiveKit ParticipantConnected
+  // (after the participant tile refresh), not from HTTP occupancy.
 }

@@ -173,7 +173,7 @@ Layouts de cena (**Mestre em destaque**, **Painel**, **Faixa N-up**) aceitam **2
 
 ## Efeitos sonoros do frontend v2
 
-O frontend v2 toca dois sons curtos (nova menção e alguém a entrar na chamada). Os ficheiros `mention.mp3` e `call-join.mp3` ficam em `assets/audio/` e são copiados para `frontend/public/audio/` quando o Vite arranca (dev) ou faz o build; sem eles a funcionalidade fica silenciosa, sem erro. Cada pessoa liga ou desliga os efeitos em **Áudio & Vídeo**.
+O frontend v2 toca três sons curtos (nova menção, alguém a entrar na chamada e alguém a sair da chamada ativa da pessoa, ou a própria pessoa a sair voluntariamente). Os ficheiros `mention.mp3`, `call-join.mp3` e `call-leave.mp3` ficam em `assets/audio/` e são copiados para `frontend/public/audio/` quando o Vite arranca (dev) ou faz o build; sem eles a funcionalidade fica silenciosa, sem erro. Cada pessoa liga ou desliga os efeitos em **Áudio & Vídeo**.
 
 ## Lembretes da chave de recuperação
 

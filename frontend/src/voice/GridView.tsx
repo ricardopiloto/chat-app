@@ -20,6 +20,7 @@ export function GridView(props: { fill?: boolean }) {
   const talkers = () => people().filter((p) => !p.listener);
   const listeners = () => people().filter((p) => p.listener);
   const tileCount = createMemo(() => talkers().length + screens().length);
+  const fillsContainer = () => !!props.fill;
   // The popout passes fill even during a spotlight. The class and the measured layout apply only to the plain grid.
   const filling = () => !!props.fill && !focused();
   const layout = createMemo(() => computeGridSize(tileCount(), box().width, box().height));
@@ -99,7 +100,7 @@ export function GridView(props: { fill?: boolean }) {
   };
 
   return (
-    <div class="call-grid-view" classList={{ "is-fill": filling() }}>
+    <div class="call-grid-view" classList={{ "is-fill": fillsContainer() }}>
       <Show
         when={focused()}
         fallback={

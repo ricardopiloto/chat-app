@@ -3,7 +3,10 @@ use serde::Serialize;
 use uuid::Uuid;
 
 /// Occupant stale after this many seconds without heartbeat / media PATCH.
-pub const OCCUPANT_STALE_SECS: i64 = 45;
+/// Allows a mobile app switch to outlast suspended background timers; a later explicit join
+/// upserts the same account without a duplicate. Crashed seats may remain for up to ~140s
+/// including the 20s sweep interval.
+pub const OCCUPANT_STALE_SECS: i64 = 120;
 
 #[derive(Debug, Clone)]
 pub struct VoiceOccupant {

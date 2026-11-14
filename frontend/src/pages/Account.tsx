@@ -291,6 +291,10 @@ export function Account() {
 
         <AudioVideoSettings />
 
+        <Show when={typeof window !== "undefined" && window.__MESA_NATIVE__}>
+          <DesktopCloseBehaviorSettings />
+        </Show>
+
         <section id="appearance">
           <Card icon="translate" label={t("account.appearanceLabel")} title={t("account.appearanceTitle")}>
             <div class="flex flex-col gap-2">
@@ -314,5 +318,62 @@ export function Account() {
         </section>
       </div>
     </div>
+  );
+}
+
+/** Desktop-only: remembered close-button behavior (tray vs quit). Absent in the browser build. */
+function DesktopCloseBehaviorSettings() {
+  type Choice = "tray" | "quit";
+  const [value, setValue] = createSignal<Choice | null>(null);
+  const [busy, setBusy] = createSignal(false);
+  const [error, setError] = createSignal<string>();
+
+  onMount(() => {
+    void window.mesaNative?.getCloseBehavior().then(
+      (behavior) => setValue(behavior),
+      () => setValue(null),
+    );
+  });
+
+  const save = (next: Choice) => {
+    const previous = value();
+    setBusy(true);
+    setError(undefined);
+    void window.mesaNative
+      ?.setCloseBehavior(next)
+      .then((saved) => setValue(saved))
+      .catch(() => {
+        setValue(previous);
+        setError(t("account.closeBehaviorError"));
+      })
+      .finally(() => setBusy(false));
+  };
+
+  return (
+    <section id="close-behavior">
+      <Card icon="desktop_windows" label={t("account.closeBehaviorLabel")} title={t("account.closeBehaviorTitle")}>
+        <p class="text-body-sm text-on-surface-variant">{t("account.closeBehaviorHint")}</p>
+        <Show when={value() === null}>
+          <p class="text-body-sm text-on-surface-variant">{t("account.closeBehaviorUnset")}</p>
+        </Show>
+        <Segmented
+          label={t("account.closeBehaviorTitle")}
+          value={(value() ?? "") as Choice | ""}
+          options={[
+            { value: "tray" as Choice, label: t("account.closeBehaviorTray") },
+            { value: "quit" as Choice, label: t("account.closeBehaviorQuit") },
+          ]}
+          onChange={(next) => {
+            if (next === "tray" || next === "quit") save(next);
+          }}
+        />
+        <Show when={error()}>
+          {(message) => <p class="text-body-sm text-error" role="alert">{message()}</p>}
+        </Show>
+        <Show when={busy()}>
+          <p class="text-body-sm text-on-surface-variant" aria-live="polite">{t("shell.saving")}</p>
+        </Show>
+      </Card>
+    </section>
   );
 }

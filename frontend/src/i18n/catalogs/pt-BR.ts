@@ -250,6 +250,13 @@ export const ptBR: MessageTree = {
     keyRemindersHint: "Receber e-mails de lembrete ao criar canais enquanto não houver uma chave de recuperação.",
     appearanceLabel: "Preferências",
     appearanceTitle: "Idioma e tema",
+    closeBehaviorLabel: "Ambiente de trabalho",
+    closeBehaviorTitle: "Botão de fechar",
+    closeBehaviorHint: "Escolha se o botão de fechar esconde o Parley na bandeja ou sai da aplicação. Chamadas activas continuam enquanto estiver escondido.",
+    closeBehaviorUnset: "Ainda sem escolha — será perguntado na primeira vez que fechar.",
+    closeBehaviorTray: "Esconder na bandeja",
+    closeBehaviorQuit: "Sair da aplicação",
+    closeBehaviorError: "Não foi possível guardar a preferência do botão de fechar. Tente de novo.",
   },
   txt: {
     dice: {
@@ -278,6 +285,10 @@ export const ptBR: MessageTree = {
     },
   },
   shell: {
+    closePromptTitle: "Fechar o Parley",
+    closePromptMessage: "O que o botão de fechar deve fazer? A escolha fica guardada neste computador. Pode alterá-la depois nas Definições.",
+    closePromptTray: "Esconder na bandeja",
+    closePromptQuit: "Sair",
     titleBar: {
       minimize: "Minimizar janela",
       maximize: "Maximizar janela",
