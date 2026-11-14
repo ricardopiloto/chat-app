@@ -9,6 +9,12 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [1.13.1] - 2026-11-14
+
+### Changed
+
+- Call connection-quality hover shows the current state (Excellent / Good / Poor / Lost / Unknown) instead of a generic disclaimer.
+
 ## [1.13.0] - 2026-11-14
 
 ### Added

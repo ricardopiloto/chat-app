@@ -23,10 +23,9 @@ export const voicePtBR: MessageTree = {
     you: "Você (local)",
     quality: {
       label: "Qualidade da ligação",
-      hint: "Qualidade estimada da ligação neste dispositivo. Não é uma medição de ping, latência ou jitter.",
       excellent: "Excelente",
       good: "Boa",
-      poor: "Fraca",
+      poor: "Ruim",
       lost: "Perdida",
       unknown: "Desconhecida",
     },

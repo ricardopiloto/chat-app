@@ -22,7 +22,7 @@ export function ConnectionQualityGlyph(props: { level: CallConnectionQuality }) 
     <span
       class={`call-chip quality ${props.level}`}
       role="status"
-      title={t("call.quality.hint")}
+      title={t(`call.quality.${props.level}`)}
       aria-label={`${t("call.quality.label")}: ${t(`call.quality.${props.level}`)}`}
     >
       <Icon name={QUALITY_ICON[props.level]} class="text-[14px]" />
