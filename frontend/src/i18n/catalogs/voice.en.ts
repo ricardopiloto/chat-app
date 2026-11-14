@@ -23,7 +23,6 @@ export const voiceEn: MessageTree = {
     you: "You (local)",
     quality: {
       label: "Connection quality",
-      hint: "Estimated connection quality for this device. Not a ping, latency, or jitter measurement.",
       excellent: "Excellent",
       good: "Good",
       poor: "Poor",
