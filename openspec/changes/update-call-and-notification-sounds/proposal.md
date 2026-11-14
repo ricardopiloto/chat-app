@@ -4,6 +4,8 @@
 
 Os efeitos atuais cobrem menções e entradas em chamadas, mas não avisam quando alguém sai. Já existem três gravações novas em `assets/audio/`; elas precisam ser preparadas e integradas para que os avisos sejam curtos, suaves e coerentes entre si.
 
+Esta change estende à saída remota a abordagem por eventos LiveKit já implementada em `sync-join-sound-with-participant-arrival` para a entrada.
+
 ## What Changes
 
 - Substituir os efeitos de menção e entrada pelos trechos úteis de `mention-v2.mp3` e `call-join-v2.mp3`.

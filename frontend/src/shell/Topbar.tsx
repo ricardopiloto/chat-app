@@ -17,50 +17,52 @@ export function Topbar() {
   const me = () => session.account()!;
   const avatar = useAuthedSrc(() => (me().has_avatar ? avatarUrl(me().id) : undefined));
   return (
-    <header class="flex h-14 shrink-0 items-center gap-3 border-b border-outline-variant bg-surface-container-lowest px-3 tablet:px-4">
-      <button type="button" class={`${roundButton} tablet:hidden`} aria-label={t("shell.openNavigation")} aria-expanded={shell.drawerOpen()} onClick={() => shell.setDrawerOpen(true)}>
-        <Icon name="menu" />
-      </button>
-      <button type="button" class="flex items-center gap-2 rounded-md px-1 py-1" onClick={() => shell.go("/")} aria-label={t("shell.home")}>
-        <Logo size={28} />
-        <span class="font-display text-headline-sm text-primary">{t("shell.brand")}</span>
-      </button>
-      <span class="hidden font-code text-label-code-sm text-on-surface-variant tablet:inline">
-        {t("shell.instance")} · v{__APP_VERSION__}
-      </span>
-      <Badge tone="secure" mono icon="lock">
-        <span class="hidden tablet:inline">{t("shell.e2eeChip")}</span>
-        <span class="tablet:hidden">E2EE</span>
-      </Badge>
+    <header class="grid h-14 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-3 border-outline-variant bg-surface-container-lowest px-3 tablet:px-4">
+      <div class="flex min-w-0 items-center gap-3 justify-self-start">
+        <button type="button" class={`${roundButton} tablet:hidden`} aria-label={t("shell.openNavigation")} aria-expanded={shell.drawerOpen()} onClick={() => shell.setDrawerOpen(true)}>
+          <Icon name="menu" />
+        </button>
+        <button type="button" class="flex items-center gap-2 rounded-md px-1 py-1" onClick={() => shell.go("/")} aria-label={t("shell.home")}>
+          <Logo size={28} />
+          <span class="font-display text-headline-sm text-primary">{t("shell.brand")}</span>
+        </button>
+        <span class="hidden font-code text-label-code-sm text-on-surface-variant tablet:inline">
+          {t("shell.instance")} · v{__APP_VERSION__}
+        </span>
+        <Badge tone="secure" mono icon="lock">
+          <span class="hidden tablet:inline">{t("shell.e2eeChip")}</span>
+          <span class="tablet:hidden">E2EE</span>
+        </Badge>
+      </div>
 
-      <div class="flex-1" />
-
-      {!isNative() && <button type="button" class="flex min-w-0 items-center gap-2 rounded border border-outline-variant bg-surface-container-low px-2 py-1 text-label-sm text-on-surface-variant hover:border-outline" aria-label={t("shell.searchEntry")} onClick={() => document.dispatchEvent(new Event("mesa:search"))}>
+      {!isNative() && <button type="button" class="flex min-w-0 items-center justify-self-center gap-2 rounded border border-outline-variant bg-surface-container-low px-2 py-1 text-label-sm text-on-surface-variant hover:border-outline" aria-label={t("shell.searchEntry")} onClick={() => document.dispatchEvent(new Event("mesa:search"))}>
         <Icon name="search" class="text-[16px]" />
         <span class="hidden tablet:inline">{t("shell.searchPlaceholder")}</span>
         <kbd class="hidden font-code text-label-code-sm tablet:inline">Ctrl+K</kbd>
       </button>}
 
-      <div class="hidden tablet:block">
-        <ThemeSwitch />
-      </div>
+      <div class="col-start-3 flex items-center justify-end gap-3 justify-self-end">
+        <div class="hidden tablet:block">
+          <ThemeSwitch />
+        </div>
 
-      <Show when={shell.serverId() && shell.route().page === "server" && !shell.narrow()}>
-        <button type="button" class={roundButton} classList={{ "!bg-surface-container-high !text-primary": shell.membersOpen() }} title={t("shell.toggleMembers")} aria-label={t("shell.toggleMembers")} aria-pressed={shell.membersOpen()} onClick={shell.toggleMembers}>
-          <Icon name="group" />
-        </button>
-      </Show>
-
-      <button type="button" class={`${roundButton} news-button`} aria-label={t("shell.notificationEntry")} onClick={() => document.dispatchEvent(new Event("mesa:notifications"))}>
-        <Icon name="notifications" />
-        <Show when={shell.hasNews()}>
-          <span class="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full border-2 border-surface-container-lowest bg-primary" aria-label={t("shell.newsIndicator")} />
+        <Show when={shell.serverId() && shell.route().page === "server" && !shell.narrow()}>
+          <button type="button" class={roundButton} classList={{ "!bg-surface-container-high !text-primary": shell.membersOpen() }} title={t("shell.toggleMembers")} aria-label={t("shell.toggleMembers")} aria-pressed={shell.membersOpen()} onClick={shell.toggleMembers}>
+            <Icon name="group" />
+          </button>
         </Show>
-      </button>
 
-      <button type="button" class="rounded-full" title={t("shell.myAccount")} aria-label={t("shell.myAccount")} onClick={() => shell.go("/account")}>
-        <Avatar name={me().display_name || me().handle} src={avatar()} size="sm" />
-      </button>
+        <button type="button" class={`${roundButton} news-button`} aria-label={t("shell.notificationEntry")} onClick={() => document.dispatchEvent(new Event("mesa:notifications"))}>
+          <Icon name="notifications" />
+          <Show when={shell.hasNews()}>
+            <span class="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full border-2 border-surface-container-lowest bg-primary" aria-label={t("shell.newsIndicator")} />
+          </Show>
+        </button>
+
+        <button type="button" class="rounded-full" title={t("shell.myAccount")} aria-label={t("shell.myAccount")} onClick={() => shell.go("/account")}>
+          <Avatar name={me().display_name || me().handle} src={avatar()} size="sm" />
+        </button>
+      </div>
     </header>
   );
 }

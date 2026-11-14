@@ -1,15 +1,15 @@
-// The two sound effects (new mention, someone joined my call). One Audio element per effect, played on
+// The sound effects (new mention, someone joined or left my call). One Audio element per effect, played on
 // the output chosen in Audio & Video. Everything fails silently: a missing file, a refused autoplay or
 // blocked storage must never reach the person or the rest of the app.
 import { createSignal } from "solid-js";
 import { readJson, writeJson } from "../lib/localPrefs";
 import { prefs } from "../voice/devices";
 
-export type Effect = "mention" | "callJoin";
+export type Effect = "mention" | "callJoin" | "callLeave";
 
-const FILES: Record<Effect, string> = { mention: "/audio/mention.mp3", callJoin: "/audio/call-join.mp3" };
+const FILES: Record<Effect, string> = { mention: "/audio/mention.mp3", callJoin: "/audio/call-join.mp3", callLeave: "/audio/call-leave.mp3" };
 /** After one play, the same effect stays quiet for this long, so a burst is heard once. */
-export const QUIET_MS: Record<Effect, number> = { mention: 3000, callJoin: 2000 };
+export const QUIET_MS: Record<Effect, number> = { mention: 3000, callJoin: 2000, callLeave: 2000 };
 
 /** Pure rate limit: the first request passes, later ones inside the quiet window are dropped. */
 export function createQuietWindow(windows: Record<Effect, number>, now: () => number = Date.now) {
@@ -51,11 +51,12 @@ function element(effect: Effect): HTMLAudioElement | null {
   return el;
 }
 
-/** Loads both files ahead of the first notice, so the first sound is not delayed. */
+/** Loads all files ahead of the first notice, so the first sound is not delayed. */
 export function preloadEffects(): void {
   try {
     element("mention");
     element("callJoin");
+    element("callLeave");
   } catch {
     /* no audio support: effects stay off */
   }

@@ -12,6 +12,23 @@ export interface CallPopoutRequest {
   serverKey: string | null;
 }
 
+export type CallPopoutCommand =
+  | { channelId: string; action: "setMic"; value: boolean }
+  | { channelId: string; action: "setCam"; value: boolean }
+  | { channelId: string; action: "toggleDeafened" }
+  | { channelId: string; action: "leave" };
+
+export interface CallPopoutOwnerState {
+  channelId: string;
+  live: boolean;
+  mic: boolean;
+  cam: boolean;
+  deafened: boolean;
+  quality: "excellent" | "good" | "poor" | "lost" | "unknown";
+  canSpeak: boolean;
+  available: boolean;
+}
+
 export interface UpdateState {
   kind: "notify" | "ready";
   version: string;
@@ -33,6 +50,16 @@ contextBridge.exposeInMainWorld("mesaNative", {
   toggleMaximize: (): Promise<void> => ipcRenderer.invoke("mesa:toggle-maximize"),
   isMaximized: (): Promise<boolean> => ipcRenderer.invoke("mesa:is-maximized"),
   close: (): Promise<void> => ipcRenderer.invoke("mesa:close"),
+  getCloseBehavior: (): Promise<"tray" | "quit" | null> => ipcRenderer.invoke("mesa:get-close-behavior"),
+  setCloseBehavior: (behavior: "tray" | "quit"): Promise<"tray" | "quit"> => ipcRenderer.invoke("mesa:set-close-behavior", behavior),
+  onClosePrompt: (listener: (requestId: string) => void): (() => void) => {
+    const wrapped = (_event: Electron.IpcRendererEvent, requestId: string) => listener(requestId);
+    ipcRenderer.on("mesa:close-prompt", wrapped);
+    return () => ipcRenderer.removeListener("mesa:close-prompt", wrapped);
+  },
+  respondToClosePrompt: (requestId: string, choice: "tray" | "quit" | null): void => {
+    ipcRenderer.send("mesa:close-prompt-response", { requestId, choice });
+  },
   notifyOs: (payload: { title: string; body: string }): Promise<void> => ipcRenderer.invoke("mesa:notify-os", payload),
   onWindowMaximizedChange: (listener: (maximized: boolean) => void): (() => void) => {
     const wrapped = (_event: Electron.IpcRendererEvent, maximized: boolean) => listener(maximized);
@@ -42,6 +69,30 @@ contextBridge.exposeInMainWorld("mesaNative", {
   openCallPopout: (request: CallPopoutRequest): Promise<void> => ipcRenderer.invoke("mesa:open-call-popout", request),
   closeCallPopout: (): Promise<void> => ipcRenderer.invoke("mesa:close-call-popout"),
   takeCallPopout: (): Promise<CallPopoutRequest | null> => ipcRenderer.invoke("mesa:take-call-popout"),
+  sendCallPopoutCommand: (command: CallPopoutCommand): void => {
+    ipcRenderer.send("mesa:call-popout-command", command);
+  },
+  requestCallPopoutOwnerState: (channelId: string): void => {
+    ipcRenderer.send("mesa:call-popout-request-state", channelId);
+  },
+  publishCallPopoutOwnerState: (state: CallPopoutOwnerState): void => {
+    ipcRenderer.send("mesa:call-popout-owner-state", state);
+  },
+  onCallPopoutCommand: (listener: (command: CallPopoutCommand) => void): (() => void) => {
+    const wrapped = (_event: Electron.IpcRendererEvent, command: CallPopoutCommand) => listener(command);
+    ipcRenderer.on("mesa:call-popout-command", wrapped);
+    return () => ipcRenderer.removeListener("mesa:call-popout-command", wrapped);
+  },
+  onCallPopoutStateRequest: (listener: (channelId: string) => void): (() => void) => {
+    const wrapped = (_event: Electron.IpcRendererEvent, channelId: string) => listener(channelId);
+    ipcRenderer.on("mesa:call-popout-request-state", wrapped);
+    return () => ipcRenderer.removeListener("mesa:call-popout-request-state", wrapped);
+  },
+  onCallPopoutOwnerState: (listener: (state: CallPopoutOwnerState) => void): (() => void) => {
+    const wrapped = (_event: Electron.IpcRendererEvent, state: CallPopoutOwnerState) => listener(state);
+    ipcRenderer.on("mesa:call-popout-owner-state", wrapped);
+    return () => ipcRenderer.removeListener("mesa:call-popout-owner-state", wrapped);
+  },
   updateState: (): Promise<UpdateState | null> => ipcRenderer.invoke("mesa:available-update"),
   restartForUpdate: (): Promise<void> => ipcRenderer.invoke("mesa:update-restart"),
   onUpdateState: (listener: (update: UpdateState) => void): (() => void) => {

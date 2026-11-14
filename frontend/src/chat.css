@@ -5,7 +5,7 @@
 .ch-muted { color: var(--on-surface-variant); }
 
 /* --- header --- */
-.ch-head { display: flex; align-items: center; gap: 14px; padding: 12px 24px; border-bottom: 1px solid var(--outline-variant); background: var(--background); }
+.ch-head { display: flex; box-sizing: border-box; flex-shrink: 0; align-items: center; gap: 14px; height: 64px; padding: 0 24px; border-bottom: 1px solid var(--outline-variant); background: var(--background); }
 .ch-head h1 { display: flex; align-items: baseline; gap: 4px; margin: 0; font: 600 20px var(--font-display); white-space: nowrap; }
 .ch-hash { color: var(--on-surface-variant); font-weight: 400; }
 .ch-head-desc { min-width: 0; flex: 1; overflow: hidden; color: var(--on-surface-variant); font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
@@ -426,7 +426,7 @@
 @keyframes ch-flash { 0%, 40% { background: color-mix(in srgb, var(--primary) 28%, transparent); } 100% { background: transparent; } }
 
 @media (max-width: 720px) {
-  .ch-head { padding: 10px 14px; }
+  .ch-head { padding-inline: 14px; }
   .ch-head-desc { display: none; }
   .ch-pin { padding: 8px 14px; }
   .ch-pin-open strong { display: none; }

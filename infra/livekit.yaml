@@ -9,6 +9,13 @@ rtc:
 keys:
   instkey: instsecretinstsecretinstsecret12
 
+# Active-speaker notification cadence (LiveKit v1.13.5 AudioConfig).
+# Code defaults: update_interval 400 ms, smooth_intervals 2, active_level 35, min_percentile 40.
+# Sample comments historically listed 500/4; leave thresholds unset so server defaults apply.
+audio:
+  update_interval: 200
+  smooth_intervals: 2
+
 turn:
   enabled: true
   udp_port: 3478

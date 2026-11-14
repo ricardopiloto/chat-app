@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Checks the pure parts of the sound effects: arrival detection, quiet window, saved preference.
+// Checks the pure parts of the sound effects: quiet window, saved preference.
 import { build } from "esbuild";
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -9,26 +9,17 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const dir = mkdtempSync(join(tmpdir(), "verify-sound-"));
 const entry = join(dir, "entry.ts");
-writeFileSync(entry, `export * from ${JSON.stringify(resolve(root, "src/sound/arrivals.ts"))};
-export * from ${JSON.stringify(resolve(root, "src/sound/effects.ts"))};`);
+writeFileSync(entry, `export * from ${JSON.stringify(resolve(root, "src/sound/effects.ts"))};`);
 await build({ entryPoints: [entry], bundle: true, platform: "node", format: "esm", outfile: join(dir, "sound.mjs"), logLevel: "error", nodePaths: [join(root, "node_modules")], conditions: ["browser"] });
 
 let failed = 0;
 const check = (name, cond) => { console.log(`${cond ? "ok  " : "FAIL"}  ${name}`); if (!cond) failed++; };
 
-// --- arrivals
 const mod0 = await (async () => {
   globalThis.localStorage = { getItem: () => null, setItem: () => {} };
   return import(pathToFileURL(join(dir, "sound.mjs")).href);
 })();
-const { arrivals, createQuietWindow, QUIET_MS } = mod0;
-const set = (...ids) => new Set(ids);
-check("one person arrives", arrivals(set("a", "me"), ["a", "me", "b"], "me").join() === "b");
-check("my own entry is not an arrival", arrivals(set("a"), ["a", "me"], "me").length === 0);
-check("several arrivals", arrivals(set("me"), ["me", "b", "c"], "me").join() === "b,c");
-check("leave and join in one event", arrivals(set("me", "a"), ["me", "b"], "me").join() === "b");
-check("no previous list means no arrival", arrivals(undefined, ["me", "a", "b"], "me").length === 0);
-check("reconnection with the same people", arrivals(set("me", "a"), ["me", "a"], "me").length === 0);
+const { createQuietWindow, QUIET_MS } = mod0;
 
 // --- quiet window
 let clock = 1000;
@@ -37,10 +28,13 @@ check("first mention passes", pass("mention") === true);
 clock += 1000;
 check("burst inside the window is dropped", pass("mention") === false);
 check("other effect is independent", pass("callJoin") === true);
+check("call-leave is independent", pass("callLeave") === true);
 clock += 1500;
 check("mention still quiet at 2.5 s", pass("mention") === false);
+check("call-leave still quiet at 1.5 s", pass("callLeave") === false);
 clock += 500;
 check("call-join passes again after 2 s", pass("callJoin") === true);
+check("call-leave passes again after 2 s", pass("callLeave") === true);
 clock += 500;
 check("mention passes after 3 s", pass("mention") === true);
 

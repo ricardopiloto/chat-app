@@ -10,7 +10,7 @@
 ## 2. Frontend: types, API, overlay
 
 - [x] 2.1 Add API client + types for dice appearance; parse `appearance` on `dice_roll` content with fallback to defaults. Verify: `tsc --noEmit`.
-- [ ] 2.2 In `diceBoxHost` / `DiceOverlay`, apply snapshot (`theme_colorset` or `theme_customColorset`, `theme_material`, `theme_texture`, `sounds`) before each live roll. Verify: two different snapshots in sequence change look/sound without breaking predetermined faces.
+- [x] 2.2 In `diceBoxHost` / `DiceOverlay`, apply snapshot (`theme_colorset` or `theme_customColorset`, `theme_material`, `theme_texture`, `sounds`) before each live roll. Verify: two different snapshots in sequence change look/sound without breaking predetermined faces.
 
 ## 3. Frontend: Dice channel UI
 
@@ -19,4 +19,4 @@
 
 ## 4. Integration check
 
-- [ ] 4.1 Smoke: two clients in the same Dados channel — A sets custom skin + sound, rolls; B sees A’s colours and hears sound per snapshot; B’s own preference unchanged. Verify manually once.
+- [x] 4.1 Smoke: two clients in the same Dados channel — A sets custom skin + sound, rolls; B sees A’s colours and hears sound per snapshot; B’s own preference unchanged. Verify manually once.

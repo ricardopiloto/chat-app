@@ -3,7 +3,7 @@
 ## ADDED Requirements
 
 ### Requirement: Efeitos curtos e suaves para os três avisos
-O sistema SHALL usar efeitos distintos e coerentes para menção, entrada e saída de chamada, cada um com duração máxima de 0,7 segundo, início suave e término sem corte brusco. Os efeitos SHALL ser perceptíveis em volume baixo durante uma conversa, sem fala ou música.
+O sistema SHALL usar efeitos distintos e coerentes para menção, entrada e saída de chamada, cada um com duração máxima de 2 segundos, início suave e término sem corte brusco. Os efeitos SHALL ser perceptíveis em volume baixo durante uma conversa, sem fala ou música.
 
 #### Scenario: Reprodução dos três efeitos
 - **WHEN** o utilizador pré-escuta cada aviso nas definições

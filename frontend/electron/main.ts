@@ -18,12 +18,24 @@ const DEV_URL = "https://127.0.0.1:1421";
 const APP_ORIGIN = "mesa://app";
 const BACKGROUND = "#10131c";
 const INSTANCE_FILE = "mesa-instance.json";
+const APP_SETTINGS_FILE = "mesa-app-settings.json";
 const LATEST_RELEASE = "https://github.com/ricardopiloto/chat-app/releases/latest";
+
+type CloseBehavior = "tray" | "quit";
+type AppSettings = { closeBehavior: CloseBehavior | null };
 
 /** Main BrowserWindow kept for tray / activate / OS notifications. */
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let isQuitting = false;
+/** Second launch arrived before createWindow finished; restore once the main window exists. */
+let pendingShowMainWindow = false;
+let appSettings: AppSettings = { closeBehavior: null };
+/** Guards duplicate close events while the first-close choice is pending. */
+let closePromptOpen = false;
+let closeRequestSequence = 0;
+let pendingCloseRequestId: string | null = null;
+let closePromptTimeout: ReturnType<typeof setTimeout> | null = null;
 
 function electronIconsDir(): string {
   // Packaged: electron/dist/main.js → ../icons (and asarUnpack → app.asar.unpacked/…).
@@ -64,6 +76,31 @@ function trayLabels(): { open: string; quit: string; tooltip: string } {
   return { open: "Abrir", quit: "Fechar", tooltip: "Parley" };
 }
 
+function parseCloseBehavior(value: unknown): CloseBehavior | null {
+  return value === "tray" || value === "quit" ? value : null;
+}
+
+function appSettingsPath(): string {
+  return join(app.getPath("userData"), APP_SETTINGS_FILE);
+}
+
+async function readAppSettings(): Promise<AppSettings> {
+  try {
+    const raw = JSON.parse(await readFile(appSettingsPath(), "utf8")) as Partial<AppSettings>;
+    return { closeBehavior: parseCloseBehavior(raw.closeBehavior) };
+  } catch {
+    return { closeBehavior: null };
+  }
+}
+
+/** Persists only after a successful write so a failed save leaves the choice undetermined. */
+async function writeAppSettings(next: AppSettings): Promise<void> {
+  const path = appSettingsPath();
+  await mkdir(dirname(path), { recursive: true });
+  await writeFile(path, JSON.stringify(next), "utf8");
+  appSettings = next;
+}
+
 function showMainWindow(): void {
   const win = mainWindow && !mainWindow.isDestroyed() ? mainWindow : null;
   if (!win) return;
@@ -75,7 +112,14 @@ function showMainWindow(): void {
 
 function quitFromTray(): void {
   isQuitting = true;
-  app.quit();
+  setImmediate(() => app.quit());
+}
+
+function quitFromCloseChoice(): void {
+  isQuitting = true;
+  setImmediate(() => {
+    app.quit();
+  });
 }
 
 function createTray(): void {
@@ -99,7 +143,70 @@ function attachMainWindowLifecycle(win: BrowserWindow): void {
   win.on("close", (event) => {
     if (isQuitting) return;
     event.preventDefault();
-    win.hide();
+    const behavior = appSettings.closeBehavior;
+    if (behavior === "tray") {
+      win.hide();
+      return;
+    }
+    if (behavior === "quit") {
+      quitFromCloseChoice();
+      return;
+    }
+    // Undetermined: ask once; ignore further close events while the choice is pending.
+    if (closePromptOpen) return;
+    closePromptOpen = true;
+    const requestId = String(++closeRequestSequence);
+    pendingCloseRequestId = requestId;
+    closePromptTimeout = setTimeout(() => {
+      if (pendingCloseRequestId !== requestId) return;
+      pendingCloseRequestId = null;
+      closePromptTimeout = null;
+      closePromptOpen = false;
+      if (!win.isDestroyed()) win.hide();
+    }, 8000);
+    win.webContents.send("mesa:close-prompt", requestId);
+  });
+}
+
+function readClosePromptResponse(value: unknown): { requestId: string; choice: CloseBehavior | null } | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const raw = value as Record<string, unknown>;
+  if (typeof raw.requestId !== "string" || raw.requestId.length === 0) return null;
+  if (raw.choice !== "tray" && raw.choice !== "quit" && raw.choice !== null) return null;
+  return { requestId: raw.requestId, choice: raw.choice };
+}
+
+function registerAppSettingsIpc(): void {
+  ipcMain.removeAllListeners("mesa:close-prompt-response");
+  ipcMain.on("mesa:close-prompt-response", (event, payload: unknown) => {
+    const win = mainWindow;
+    if (!win || win.isDestroyed() || BrowserWindow.fromWebContents(event.sender) !== win) return;
+    const response = readClosePromptResponse(payload);
+    if (!response || response.requestId !== pendingCloseRequestId) return;
+    if (closePromptTimeout) clearTimeout(closePromptTimeout);
+    closePromptTimeout = null;
+    pendingCloseRequestId = null;
+    void (async () => {
+      try {
+        if (response.choice) await writeAppSettings({ closeBehavior: response.choice });
+        if (win.isDestroyed()) return;
+        if (response.choice === "quit") quitFromCloseChoice();
+        else win.hide();
+      } catch {
+        if (!win.isDestroyed()) win.hide();
+      } finally {
+        closePromptOpen = false;
+      }
+    })();
+  });
+  ipcMain.removeHandler("mesa:get-close-behavior");
+  ipcMain.removeHandler("mesa:set-close-behavior");
+  ipcMain.handle("mesa:get-close-behavior", () => appSettings.closeBehavior);
+  ipcMain.handle("mesa:set-close-behavior", async (_event, value: unknown) => {
+    const next = parseCloseBehavior(value);
+    if (!next) throw new Error("invalid close behavior");
+    await writeAppSettings({ closeBehavior: next });
+    return appSettings.closeBehavior;
   });
 }
 
@@ -362,6 +469,8 @@ function createWindow(): BrowserWindow {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
+      // Keep LiveKit/heartbeat timers alive while the main window is hidden to tray.
+      backgroundThrottling: false,
       // The document is always this app's own package. Same-origin policy is off
       // only so that package can call the instance the user configured at runtime.
       // External navigations are refused below and opened in the system browser.
@@ -583,6 +692,48 @@ function tellOpener(channel: "mesa:call-popout-opened" | "mesa:call-popout-close
   if (popoutOpener && !popoutOpener.isDestroyed()) popoutOpener.send(channel, channelId);
 }
 
+type PopoutCommandAction = "setMic" | "setCam" | "toggleDeafened" | "leave";
+
+function readPopoutCommand(value: unknown): { channelId: string; action: PopoutCommandAction; value?: boolean } | null {
+  if (!value || typeof value !== "object") return null;
+  const raw = value as Record<string, unknown>;
+  if (typeof raw.channelId !== "string" || raw.channelId.length === 0) return null;
+  if (raw.action !== "setMic" && raw.action !== "setCam" && raw.action !== "toggleDeafened" && raw.action !== "leave") return null;
+  if ((raw.action === "setMic" || raw.action === "setCam") && typeof raw.value !== "boolean") return null;
+  return raw.action === "setMic" || raw.action === "setCam"
+    ? { channelId: raw.channelId, action: raw.action, value: raw.value as boolean }
+    : { channelId: raw.channelId, action: raw.action };
+}
+
+function readPopoutOwnerState(value: unknown): {
+  channelId: string;
+  live: boolean;
+  mic: boolean;
+  cam: boolean;
+  deafened: boolean;
+  quality: "excellent" | "good" | "poor" | "lost" | "unknown";
+  canSpeak: boolean;
+  available: boolean;
+} | null {
+  if (!value || typeof value !== "object") return null;
+  const raw = value as Record<string, unknown>;
+  if (typeof raw.channelId !== "string" || raw.channelId.length === 0) return null;
+  for (const key of ["live", "mic", "cam", "deafened", "canSpeak", "available"] as const) {
+    if (typeof raw[key] !== "boolean") return null;
+  }
+  if (raw.quality !== "excellent" && raw.quality !== "good" && raw.quality !== "poor" && raw.quality !== "lost" && raw.quality !== "unknown") return null;
+  return {
+    channelId: raw.channelId,
+    live: raw.live as boolean,
+    mic: raw.mic as boolean,
+    cam: raw.cam as boolean,
+    deafened: raw.deafened as boolean,
+    quality: raw.quality,
+    canSpeak: raw.canSpeak as boolean,
+    available: raw.available as boolean,
+  };
+}
+
 function registerPopoutIpc(): void {
   ipcMain.handle("mesa:open-call-popout", (event, payload: unknown) => {
     const request = readPopoutRequest(payload);
@@ -643,6 +794,35 @@ function registerPopoutIpc(): void {
   });
 
   ipcMain.handle("mesa:take-call-popout", () => popoutHandoff);
+
+  // Popout → owner: only the live popout window may send commands for its channel.
+  ipcMain.on("mesa:call-popout-command", (event, payload: unknown) => {
+    if (!popout || popout.isDestroyed() || event.sender !== popout.webContents) return;
+    const command = readPopoutCommand(payload);
+    if (!command) return;
+    if (popoutHandoff && command.channelId !== popoutHandoff.channelId) return;
+    if (!popoutOpener || popoutOpener.isDestroyed()) return;
+    popoutOpener.send("mesa:call-popout-command", command);
+  });
+
+  // Popout → owner: ask for a fresh authoritative snapshot.
+  ipcMain.on("mesa:call-popout-request-state", (event, channelId: unknown) => {
+    if (!popout || popout.isDestroyed() || event.sender !== popout.webContents) return;
+    if (typeof channelId !== "string" || channelId.length === 0) return;
+    if (popoutHandoff && channelId !== popoutHandoff.channelId) return;
+    if (!popoutOpener || popoutOpener.isDestroyed()) return;
+    popoutOpener.send("mesa:call-popout-request-state", channelId);
+  });
+
+  // Owner → popout: only the opener that created this popout may publish state.
+  ipcMain.on("mesa:call-popout-owner-state", (event, payload: unknown) => {
+    if (!popoutOpener || popoutOpener.isDestroyed() || event.sender !== popoutOpener) return;
+    const state = readPopoutOwnerState(payload);
+    if (!state) return;
+    if (popoutHandoff && state.channelId !== popoutHandoff.channelId) return;
+    if (!popout || popout.isDestroyed()) return;
+    popout.webContents.send("mesa:call-popout-owner-state", state);
+  });
 }
 
 function registerInstanceIpc(): void {
@@ -672,50 +852,69 @@ if (!isDev) {
   ]);
 }
 
-app.whenReady().then(async () => {
-  if (isDev) {
-    session.defaultSession.setCertificateVerifyProc((request, callback) => {
-      if (request.hostname === "127.0.0.1" || request.hostname === "localhost") callback(0);
-      else callback(-3);
-    });
-  }
-  if (!isDev) registerAppProtocol();
-  instance = await readInstance();
-  applyAuthFilter();
-  installScreenShare();
-  registerInstanceIpc();
-  registerPopoutIpc();
-  registerUpdateIpc();
-  registerNotifyOsIpc();
-  mainWindow = createWindow();
-  attachMainWindowLifecycle(mainWindow);
-  registerWindowControlsIpc(mainWindow);
-  createTray();
-  if (app.isPackaged && !isDev) mainWindow.webContents.once("did-finish-load", () => { void runPackagedLegacyCleanup(mainWindow!).catch(error => console.error("legacy cleanup failed", error)); });
-  mainWindow.webContents.once("did-finish-load", () => {
-    const mode = resolveUpdateMode({ platform: process.platform, isPackaged: app.isPackaged && !isDev, env: process.env, execPath: process.execPath,
-      fileExists: existsSync, isWritable: path => { try { accessSync(path, constants.W_OK); return true; } catch { return false; } } });
-    if (mode === "auto") void checkAutomatically(updateFeed());
-    else if (mode === "notify") void checkForUpdate(updateFeed());
-  });
-  app.on("activate", () => {
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
+if (!gotSingleInstanceLock) {
+  app.quit();
+} else {
+  app.on("second-instance", () => {
     if (!mainWindow || mainWindow.isDestroyed()) {
-      mainWindow = createWindow();
-      attachMainWindowLifecycle(mainWindow);
-      registerWindowControlsIpc(mainWindow);
-    } else {
+      pendingShowMainWindow = true;
+      return;
+    }
+    showMainWindow();
+  });
+
+  app.whenReady().then(async () => {
+    if (isDev) {
+      session.defaultSession.setCertificateVerifyProc((request, callback) => {
+        if (request.hostname === "127.0.0.1" || request.hostname === "localhost") callback(0);
+        else callback(-3);
+      });
+    }
+    if (!isDev) registerAppProtocol();
+    instance = await readInstance();
+    appSettings = await readAppSettings();
+    applyAuthFilter();
+    installScreenShare();
+    registerInstanceIpc();
+    registerAppSettingsIpc();
+    registerPopoutIpc();
+    registerUpdateIpc();
+    registerNotifyOsIpc();
+    mainWindow = createWindow();
+    attachMainWindowLifecycle(mainWindow);
+    registerWindowControlsIpc(mainWindow);
+    createTray();
+    if (pendingShowMainWindow) {
+      pendingShowMainWindow = false;
       showMainWindow();
     }
+    if (app.isPackaged && !isDev) mainWindow.webContents.once("did-finish-load", () => { void runPackagedLegacyCleanup(mainWindow!).catch(error => console.error("legacy cleanup failed", error)); });
+    mainWindow.webContents.once("did-finish-load", () => {
+      const mode = resolveUpdateMode({ platform: process.platform, isPackaged: app.isPackaged && !isDev, env: process.env, execPath: process.execPath,
+        fileExists: existsSync, isWritable: path => { try { accessSync(path, constants.W_OK); return true; } catch { return false; } } });
+      if (mode === "auto") void checkAutomatically(updateFeed());
+      else if (mode === "notify") void checkForUpdate(updateFeed());
+    });
+    app.on("activate", () => {
+      if (!mainWindow || mainWindow.isDestroyed()) {
+        mainWindow = createWindow();
+        attachMainWindowLifecycle(mainWindow);
+        registerWindowControlsIpc(mainWindow);
+      } else {
+        showMainWindow();
+      }
+    });
   });
-});
 
-app.on("before-quit", () => {
-  isQuitting = true;
-});
+  app.on("before-quit", () => {
+    isQuitting = true;
+  });
 
-app.on("window-all-closed", () => {
-  // Hide-on-close keeps the main window alive in the tray; only quit when Fechar was chosen
-  // (or before-quit already set the flag). Do not quit merely because the window was hidden.
-  if (isQuitting) return;
-  if (process.platform !== "darwin" && !tray) app.quit();
-});
+  app.on("window-all-closed", () => {
+    // Hide-on-close keeps the main window alive in the tray; only quit when Fechar was chosen
+    // (or before-quit already set the flag). Do not quit merely because the window was hidden.
+    if (isQuitting) return;
+    if (process.platform !== "darwin" && !tray) app.quit();
+  });
+}

@@ -249,6 +249,13 @@ export const en: MessageTree = {
     keyRemindersHint: "Receive reminder emails when creating channels until you have a recovery key.",
     appearanceLabel: "Preferences",
     appearanceTitle: "Language and theme",
+    closeBehaviorLabel: "Desktop",
+    closeBehaviorTitle: "Close button",
+    closeBehaviorHint: "Choose whether the window close button hides Parley to the tray or quits the app. Active calls keep running while hidden.",
+    closeBehaviorUnset: "Not chosen yet — you will be asked the first time you close.",
+    closeBehaviorTray: "Hide to tray",
+    closeBehaviorQuit: "Quit the app",
+    closeBehaviorError: "Could not save the close-button preference. Try again.",
   },
   txt: {
     dice: {
@@ -277,6 +284,10 @@ export const en: MessageTree = {
     },
   },
   shell: {
+    closePromptTitle: "Close Parley",
+    closePromptMessage: "What should the close button do? Your choice is remembered on this computer. You can change it later in Settings.",
+    closePromptTray: "Hide to tray",
+    closePromptQuit: "Quit",
     titleBar: {
       minimize: "Minimize window",
       maximize: "Maximize window",

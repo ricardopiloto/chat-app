@@ -68,11 +68,18 @@ O sistema SHALL permitir escolher entre Sem blur, Blur leve e Blur forte para a 
 - **THEN** a câmara local passa a mostrar o efeito imediatamente, sem reiniciar a ligação de vídeo
 
 ### Requirement: Indicadores de fala em tempo real
-O sistema SHALL indicar visualmente, em qualquer lugar onde um participante apareça (vista Composição, vista Grade, roster de voz na sidebar), quando esse participante está a falar, actualizado a partir da detecção de nível de áudio do LiveKit.
+
+The system SHALL show a participant's speaking state wherever that participant appears, including composition, grid, popout, and voice roster, using LiveKit's active-speaker detection. The deployment SHALL configure a responsive speaker-update cadence and smoothing so the indicator follows speech onset promptly without excessive flicker. The system SHALL use the same detected state across all views.
 
 #### Scenario: Indicador aparece e desaparece com a fala
-- **WHEN** um participante começa e depois para de falar
-- **THEN** o indicador visual de fala aparece e desaparece de forma consistente em todos os lugares onde esse participante é mostrado simultaneamente
+
+- **WHEN** a participant begins speaking and then falls silent in an active call
+- **THEN** the speaking indicator appears promptly after speech begins and clears after speech ends without rapid flicker between normal syllables
+
+#### Scenario: Consistent views
+
+- **WHEN** the same participant is shown in more than one call view
+- **THEN** those views show the same LiveKit-derived speaking state
 
 ### Requirement: Roster de voz na sidebar
 O sistema SHALL apresentar, para cada canal de voz na sidebar, a lista de ocupantes actuais com avatar, handle, estado de microfone e destaque de fala, mesmo quando esse canal de voz não está aberto como a tela activa.
@@ -154,3 +161,121 @@ Quando uma pessoa entra num canal de voz ou vídeo, ou muda o estado da câmara,
 
 - **WHEN** a resposta de um pedido de ocupação iniciado antes da entrada chega depois do aviso em tempo real
 - **THEN** a pessoa que entrou continua visível nos ecrãs que já estavam abertos
+
+### Requirement: Local call connection quality is visible
+
+During an active call, the system SHALL show the local participant's LiveKit connection quality as Excellent, Good, Poor, Lost, or Unknown using a compact multi-bar signal-strength indicator. Its fill level and color SHALL convey quality from green for Excellent/Good to red for Poor/Lost; Unknown SHALL remain neutral, neither green nor red. The system SHALL expose the textual level through an accessible label for assistive technology and a tooltip, even though the chip has no visible text label. It SHALL update from LiveKit's connection-quality events, SHALL clear stale values on leave or room replacement, and SHALL NOT present these levels as numeric ping, latency, or jitter measurements. Remote participants' quality and a separate popout viewer connection SHALL NOT be presented as the local publishing connection's quality.
+
+#### Scenario: Local quality changes
+
+- **WHEN** LiveKit reports the local participant's quality changing from Good to Poor
+- **THEN** the local quality indicator updates to Poor with an accessible label
+
+#### Scenario: Unknown before measurement
+
+- **WHEN** a call is connecting and no quality sample has been reported
+- **THEN** the indicator shows Unknown or a neutral pending state instead of claiming a good connection
+
+#### Scenario: Leave and replace room
+
+- **WHEN** the user leaves a call or joins a replacement room
+- **THEN** quality from the old room is cleared and cannot overwrite the new room's value
+
+#### Scenario: Remote participant quality event
+
+- **WHEN** LiveKit reports a quality change for a remote participant
+- **THEN** the local user's quality indicator does not change because of that event
+
+#### Scenario: Bars and color encode the level
+
+- **WHEN** the local quality is Excellent or Good
+- **THEN** the indicator renders green bars, fully filled for Excellent and mostly filled for Good
+- **WHEN** the local quality is Poor or Lost
+- **THEN** the indicator renders red bars, mostly empty for Poor and empty or as a no-signal glyph for Lost
+- **WHEN** the local quality is Unknown
+- **THEN** the indicator renders a neutral gray dashed or pending state, neither green nor red
+
+### Requirement: Desktop popout shows the owning session's connection quality
+
+When the desktop popout is open for an active call, the system SHALL show the relayed owning session's local connection quality using the same bar-and-color encoding inside the popout's existing hover/focus-revealed control strip. It SHALL NOT read or substitute the popout's own separate viewer-room connection quality for this purpose. It SHALL NOT add any new always-visible indicator chrome over the popout's grid. The indicator SHALL be absent when the owner is unavailable, using the same readiness and owner-availability gating as the existing mic/cam controls.
+
+#### Scenario: Relayed owner quality appears on hover
+
+- **WHEN** the desktop popout has a live, available owner state with a relayed local quality level and the user hovers over or focuses the control strip
+- **THEN** the popout shows that quality as the same compact bar-and-color glyph in the revealed control strip, without a permanent grid badge
+
+#### Scenario: Viewer-room quality is never substituted
+
+- **WHEN** the popout's separate LiveKit viewer room reports a connection quality different from the owning session's relayed local quality
+- **THEN** the popout indicator reflects only the relayed owning session's quality and never the viewer room's quality
+
+#### Scenario: Owner is unavailable
+
+- **WHEN** the popout has not yet received a live, available owner state, or the owner becomes unavailable after the popout closes and reopens
+- **THEN** the quality indicator is absent, consistent with the existing mic/cam control gating, and no stale quality is shown
+
+### Requirement: Estados visuais dos controlos de chamada
+
+O sistema SHALL dar resposta visual imediata aos controlos de chamada (microfone, surdo, câmara, menu de blur, partilha de ecrã, encerrar chamada) ao passar o cursor, ao pressionar e ao focar pelo teclado, tanto no painel do utilizador como no mini-player flutuante (PiP), usando apenas as cores do tema activo (claro ou escuro). Um controlo desactivado SHALL NOT reagir a hover ou a pressionar. O contorno de foco pelo teclado SHALL ficar visível e separado do botão em ambos os temas, e SHALL NOT aparecer ao clicar com o rato.
+
+#### Scenario: Hover e pressionar num controlo activo
+
+- **WHEN** o utilizador passa o cursor sobre um controlo de chamada activo, ou o pressiona
+- **THEN** o controlo muda de aparência de forma imediata e reversível, sem alterar o seu estado real (ligado/desligado) até o clique ser concluído
+
+#### Scenario: Foco pelo teclado
+
+- **WHEN** o utilizador navega pelos controlos de chamada usando o teclado
+- **THEN** o controlo com foco mostra um contorno visível e separado do botão; o mesmo controlo clicado com o rato não mostra esse contorno
+
+#### Scenario: Controlo indisponível não reage
+
+- **WHEN** o utilizador passa o cursor ou tenta pressionar um controlo desactivado (por exemplo, microfone em modo de só ouvir)
+- **THEN** o controlo não muda de aparência além do seu estado "indisponível" já apresentado
+
+#### Scenario: Movimento reduzido
+
+- **WHEN** o sistema operativo do utilizador pede movimento reduzido
+- **THEN** pressionar um controlo de chamada não aplica deslocamento nem mudança de escala, mantendo apenas a mudança de cor
+
+### Requirement: Rejoining recovers from stale background call work
+
+A user initiated call join SHALL settle even when an earlier join, leave, or LiveKit disconnect never settles. The system SHALL release the old local room and tracks, bound cleanup, and prevent late work from an old session from ending or changing the replacement session. Hiding the desktop window to tray SHALL keep a healthy active call running.
+
+#### Scenario: Stalled disconnect before rejoin
+
+- **WHEN** a prior call's LiveKit disconnect remains pending and the person requests another join
+- **THEN** the request reaches a successful new connection or a visible failure in finite time, without waiting forever for the old disconnect
+
+#### Scenario: Old completion arrives late
+
+- **WHEN** cleanup from an old session finishes after a replacement call has connected
+- **THEN** it does not clear the new call, its state, or its server seat
+
+#### Scenario: Desktop window hides to tray
+
+- **WHEN** a healthy call is active and the desktop main window is hidden and later restored
+- **THEN** the call remains active and can still be explicitly left and rejoined
+
+### Requirement: Page lifecycle teardown clears call state
+
+When page lifecycle teardown ends a call, the local call status and channel SHALL be reset with the room and tracks, without waiting for asynchronous disconnect.
+
+#### Scenario: Pagehide after active call
+
+- **WHEN** the call page receives `pagehide` while its session is active
+- **THEN** the local session is idle with no selected call channel or room, and a later user initiated join can start cleanly
+
+### Requirement: Desktop relaunch reopens the existing call-owning window
+
+The desktop Electron app SHALL allow only one running app instance. A second launch attempt SHALL exit without creating another main window or call session and SHALL cause the running instance to restore and focus its existing main window. The active call SHALL remain unaffected.
+
+#### Scenario: Relaunch while hidden in an active call
+
+- **WHEN** the desktop main window is hidden to tray during an active call and the person launches Parley again
+- **THEN** the running instance shows and focuses its existing main window, no second call-owning renderer starts, and the call remains active
+
+#### Scenario: Relaunch while visible or minimized
+
+- **WHEN** Parley is already running with its main window visible or minimized and the person launches it again
+- **THEN** the existing main window is focused and restored if minimized, without starting a second app instance

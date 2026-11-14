@@ -8,7 +8,6 @@ import { publicDisplayLabel } from "../lib/displayName";
 import { t } from "../i18n";
 import { useCall } from "../voice/callSession";
 import { useShell } from "./state";
-import { UserPanel } from "./UserPanel";
 
 const SECTIONS: { kind: ChannelKind; title: string; add: string; glyph: string }[] = [
   { kind: "text", title: "shell.text", add: "admin.channel.addText", glyph: "tag" },
@@ -150,14 +149,13 @@ function ChannelRow(props: { channel: Channel; glyph: string }) {
   );
 }
 
-// Left column: the server header, the channels in two sections, then the call controls and the
-// signed-in user's panel pinned to the bottom.
+// Left column: the server header and scrollable channel sections.
 export function Sidebar() {
   const shell = useShell();
   return (
-    <aside class="flex min-h-0 w-60 shrink-0 flex-col bg-surface-container-low">
+    <aside class="flex min-h-0 w-60 shrink-0 flex-col bg-surface-container-lowest">
       <Show when={shell.serverId()} fallback={<p class="flex-1 p-4 text-body-sm text-on-surface-variant">{t("shell.chooseServer")}</p>}>
-        <header class="flex items-center gap-1 border-b border-outline-variant px-4 py-3">
+        <header class="flex h-16 shrink-0 items-center gap-1 rounded-tl border-b border-outline-variant bg-surface-container-low px-4">
           <h2 class="min-w-0 flex-1 truncate font-display text-headline-sm">{shell.server()?.name ?? t("shell.server")}</h2>
           <Show when={shell.can("can_create_invites")}>
             <button type="button" class={iconButton} title={t("shell.invite")} aria-label={t("shell.invite")} onClick={() => document.dispatchEvent(new Event("mesa:invite"))}>
@@ -170,7 +168,7 @@ export function Sidebar() {
             </button>
           </Show>
         </header>
-        <div class="flex-1 overflow-y-auto px-2 py-3">
+        <div class="channel-list flex-1 overflow-y-auto rounded-bl bg-surface-container-low px-2 pt-3">
           <For each={SECTIONS}>
             {(section) => (
               <section class="mb-4">
@@ -193,7 +191,6 @@ export function Sidebar() {
           </Show>
         </div>
       </Show>
-      <UserPanel />
     </aside>
   );
 }

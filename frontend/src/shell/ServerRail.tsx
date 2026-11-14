@@ -11,7 +11,7 @@ export function ServerRail() {
   const shell = useShell();
   const base = "relative grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-lg font-display text-headline-sm transition-all duration-150";
   return (
-    <nav class="flex w-[72px] shrink-0 flex-col items-center gap-3 overflow-y-auto bg-surface-container-lowest py-3" aria-label={t("shell.servers")}>
+    <nav class="server-rail flex w-[72px] shrink-0 flex-col items-center gap-3 overflow-y-auto bg-surface-container-lowest pt-1" aria-label={t("shell.servers")}>
       <button type="button" title={t("shell.home")} aria-label={t("shell.home")} onClick={() => shell.go("/")} class={`${base} bg-surface-container text-primary hover:rounded-md`}>
         <Logo size={30} />
       </button>
