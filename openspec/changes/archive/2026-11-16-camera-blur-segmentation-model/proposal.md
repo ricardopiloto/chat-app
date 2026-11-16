@@ -18,8 +18,8 @@ Background blur and virtual background both resolve to the stock MediaPipe segme
 
 ## Impact
 
-- `frontend/src/voice/callSession.tsx` (around line 231, `processors.BackgroundProcessor(options)` call) — add `assetPaths`.
-- `frontend/src/voice/preview.ts` (around line 148, `processors.BackgroundProcessor(options)` call) — add `assetPaths`.
+- `frontend/src/voice/callSession.tsx` (around line 358, `processors.BackgroundProcessor(...)` call) — add `assetPaths` at construction.
+- `frontend/src/voice/preview.ts` (around line 148, `processors.BackgroundProcessor(...)` call) — add `assetPaths` at construction.
 - `frontend/src/voice/devices.ts` — new shared constant for the asset path, imported by both files above, instead of duplicating it a second time (the existing `BLUR_RADIUS` constant is already duplicated between `callSession.tsx` and `preview.ts`; this change should not repeat that pattern for a second constant).
 - `frontend/public/` — new vendored model asset file.
 - No backend/API impact.

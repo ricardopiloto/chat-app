@@ -12,7 +12,7 @@ import { loadServerKey } from "../crypto/keyHandoff";
 import { getServerKey } from "../crypto/serverKey";
 import { useSession } from "../session/session";
 import type { Identity } from "../crypto/identity";
-import { devices, prefs, refreshDevices, resolveDevice, type BlurLevel, type CameraEffect } from "./devices";
+import { devices, prefs, refreshDevices, resolveDevice, SEGMENTATION_MODEL_ASSET_PATH, type BlurLevel, type CameraEffect } from "./devices";
 import { backgroundBlob } from "./cameraBackgrounds";
 import { volumeForHandle, setVolumeForHandle, VOLUME_DEFAULT } from "./participantVolume";
 import { notify } from "../sound/effects";
@@ -355,7 +355,7 @@ function createCall() {
       try {
         if (backgroundProcessor) await backgroundProcessor.switchTo(options);
         else {
-          const processor = processors.BackgroundProcessor(options);
+          const processor = processors.BackgroundProcessor({ ...options, assetPaths: { modelAssetPath: SEGMENTATION_MODEL_ASSET_PATH } });
           await video.setProcessor(processor);
           backgroundProcessor = processor;
         }
