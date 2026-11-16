@@ -1,47 +1,45 @@
 # Review — Arquiteto de Soluções
 
 **Change:** camera-blur-segmentation-model
-**Data:** 2026-11-13
+**Data:** 2026-11-16
 **Veredito geral:** Aprovado com ressalvas
 
 ## 1. Definição da arquitetura técnica
 
 Veredito: OK
 
-- A change não introduz stack, serviço ou dependência nova: fica inteiramente dentro do pacote `@livekit/track-processors` já usado pelo frontend SolidJS (`frontend/package.json`), apenas passando `assetPaths.modelAssetPath` — uma opção já suportada pelo pacote — em vez de deixar o valor por omissão.
-- Escalabilidade não se aplica neste caso: a segmentação roda no cliente, por participante, não no servidor — trocar de modelo não muda a carga do backend/LiveKit de forma alguma.
-- Escopo bem contido: `design.md` declara explicitamente como Non-Goal não tocar no `delegate` (GPU/CPU), nos dois presets de intensidade existentes, nem no runtime WASM (`tasksVisionFileSet`) — reduz a superfície de regressão a um valor de configuração e um arquivo estático novo.
+- A change continua a não introduzir stack, serviço ou dependência nova: fica inteiramente dentro do pacote `@livekit/track-processors` já usado pelo frontend SolidJS, apenas definindo `assetPaths.modelAssetPath` — confirmado agora no próprio `.d.ts` do pacote (`BackgroundProcessorCommonOptions.assetPaths`), não só na documentação externa citada no `design.md`.
+- Escalabilidade não se aplica: segmentação roda no cliente, por participante; não há impacto em carga de backend/LiveKit.
+- Escopo contido: `design.md` continua a excluir corretamente `delegate`, os dois presets de intensidade e o runtime WASM (`tasksVisionFileSet`) do escopo.
 
 ## 2. Integração com a infraestrutura existente
 
 Veredito: OK
 
-- Vendorizar o modelo em `frontend/public/mediapipe/` reaproveita um padrão já estabelecido no próprio repositório (`frontend/public/dice-box-threejs/`) em vez de inventar um mecanismo novo de distribuição de assets — é a escolha correta e o `design.md` (D2) cita a precedência corretamente.
-- A mudança reforça, em vez de contradizer, a filosofia de self-host já declarada no `README.md` ("Instances do not federate, and the server cannot read conversation content under normal operation"): remover uma dependência de rede de saída obrigatória para uma feature de câmera é coerente com esse posicionamento, mesmo não sendo uma garantia de segurança/E2EE em si — é sobre disponibilidade/autonomia da instância.
-- Nenhum processo, porta ou container novo; nenhum impacto em `infra/docker-compose.yml`, backend, banco de dados ou migração.
+- Vendorizar em `frontend/public/mediapipe/` segue o padrão já estabelecido (`frontend/public/dice-box-threejs/`); nenhum processo, porta ou container novo; sem impacto em `infra/docker-compose.yml`, backend ou banco de dados.
 
 ## 3. Qualidade de arquitetura e trade-offs
 
 Veredito: Atenção
 
-- **Segurança**: não há mudança de superfície — sem novo fluxo de dados, autenticação ou E2EE envolvido. N/A para essa sub-dimensão.
-- **Performance**: a troca para `selfie_segmenter_landscape` (144×256) tem **menos pixels de entrada** que o modelo quadrado actual (256×256), então a expectativa de desempenho é igual ou melhor, não pior — o `design.md` não afirma isso explicitamente como uma vantagem de performance, só como motivo de escolha por adequação ao formato; vale registar essa inferência como argumento a favor, não é um risco.
-- **Achado (Atenção)**: o `design.md` já lista corretamente como risco a falta de confirmação por escrito da licença do modelo MediaPipe vendorizado, e a tarefa 1.1 do `tasks.md` cobre isso ("record its license/attribution next to it") — correto não deixar isso como afterthought. Mas a licença exata (Apache 2.0, esperado para modelos MediaPipe, mas não confirmado no texto da proposta) continua um item em aberto até a implementação; não é bloqueante, mas é uma dependência real de uma tarefa de verificação externa (ler os termos de uso publicados pela Google), não só de código.
-- **Manutenibilidade**: a decisão D3 (um único `assetPaths` compartilhado em `devices.ts` em vez de duplicar como `BLUR_RADIUS` já está duplicado) é a escolha certa e evita piorar uma duplicação que já existe.
+- **Segurança**: N/A, sem mudança de superfície.
+- **Performance**: sem alteração de avaliação — `selfie_segmenter_landscape` (144×256) continua a ter menos pixels de entrada que o default atual (256×256), expectativa de desempenho igual ou melhor.
+- **Achado (Atenção, confirmado agora — materializou o risco já antecipado na revisão anterior de 2026-11-13)**: desde a última revisão, o ponto de integração mudou de forma real, não só de número de linha. Reli agora `frontend/src/voice/callSession.tsx` e `frontend/src/voice/preview.ts`: o commit `0915045` ("1.13.0", 2026-11-14 — um dia depois da revisão anterior) tocou `callSession.tsx` e deslocou a chamada `processors.BackgroundProcessor(options)` da linha 231 citada no `proposal.md`/`design.md` para a linha **358** hoje. Mais relevante que o deslocamento em si: o objeto `options` que chega até essa chamada é **o mesmo objeto, já tipado como `SwitchBackgroundProcessorOptions`**, reutilizado tanto para `backgroundProcessor.switchTo(options)` (quando já existe um processor) quanto para `processors.BackgroundProcessor(options)` (quando não existe) — um padrão introduzido pela change `custom-camera-backgrounds` (commit `3cb582d`, 2026-11-11) para alternar entre blur e fundo virtual sem reabrir a câmara. Confirmei no `.d.ts` do pacote (`frontend/node_modules/@livekit/track-processors/dist/src/index.d.ts`) que `assetPaths` **não existe** em `SwitchBackgroundProcessorOptions` — só em `BackgroundProcessorCommonOptions`, o tipo que compõe `BackgroundProcessorOptions` (o aceito pelo construtor). Ou seja, a instrução "passar `assetPaths` para dentro da chamada `processors.BackgroundProcessor(options)`" não pode ser feita adicionando o campo ao `options` já existente (quebraria o tipo de `switchTo`, que não aceita `assetPaths`) — precisa de um objeto separado (`{ ...options, assetPaths: ASSET_PATHS }`) só no ponto de construção. Isto não invalida nenhuma das decisões D1/D2/D3 do `design.md`, mas é uma lacuna real de implementabilidade que nem a proposta nem a tarefa 2.2 do `tasks.md` cobrem hoje.
+- **Manutenibilidade**: D3 (constante única em `devices.ts`) continua correta e, aliás, mais importante agora do que quando foi escrita: `BLUR_RADIUS` está duplicado em ambos os arquivos exatamente como antes (`callSession.tsx:66`, `preview.ts:10`), então repetir esse padrão para `assetPaths` seria piorar uma duplicação que já existe em dois lugares que agora têm uma lógica de switching mais complexa.
 
 ## 4. Documentação e decisões (ADRs)
 
-Veredito: OK
+Veredito: Atenção
 
-- `design.md` segue a convenção `D1`/`D2`/`D3` já estabelecida em changes anteriores deste projeto (ex. `password-recovery`), com alternativas rejeitadas e motivo para cada decisão — nível de detalhe adequado.
-- Sem diagrama — correto não incluir um aqui: não há fluxo de dados novo entre componentes, só um valor de configuração e um arquivo estático a mais; a ausência de diagrama não é uma lacuna.
+- As decisões D1/D2/D3 do `design.md` continuam válidas e bem justificadas (convenção do projeto respeitada).
+- **Achado (Atenção)**: `proposal.md` (Impact) e `design.md` (Context) citam `callSession.tsx:231`/`preview.ts:148` como os pontos de integração. `preview.ts:148` ainda está correto por coincidência, mas `callSession.tsx:231` já não aponta para a chamada relevante (está em 358 hoje). Recomendação: atualizar as duas referências antes de iniciar a implementação, e já deixar registado no `design.md` que o `options` passado para `BackgroundProcessor` é compartilhado com `switchTo` e por isso precisa de um objeto derivado (ver achado da dimensão 3) — hoje essa nuance não está documentada.
 
 ## 5. Ponte entre produto e técnico
 
 Veredito: OK
 
-- A pergunta aberta do usuário ("consigo melhorar o modelo de blur?") foi traduzida numa decisão técnica concreta e verificável (modelo oficial do MediaPipe, citado com a descrição publicada pela própria Google de para que ele serve), em vez de uma resposta vaga de "vamos pesquisar modelos melhores" — é exatamente o tipo de tradução produto→técnico que esta dimensão cobra.
-- **Achado (Atenção, não bloqueante)**: a change em curso `custom-camera-backgrounds` (9/14 tarefas concluídas, ainda não arquivada) também adiciona requisitos à mesma capability `frontend-v2/audio-video-settings` e mexeu recentemente nos mesmos pontos de chamada (`processors.BackgroundProcessor(options)` em `callSession.tsx`/`preview.ts`, para suportar fundos personalizados). Não há colisão de conteúdo entre os dois deltas (tópicos diferentes: upload/seleção de fundo vs. modelo de segmentação), mas como `custom-camera-backgrounds` ainda tem 5 tarefas pendentes, os números de linha exactos citados em `camera-blur-segmentation-model` (`callSession.tsx:231`, `preview.ts:148`) podem deslocar-se antes da implementação desta change. Recomendação: reconfirmar essas linhas no início da implementação, não é motivo para bloquear o planeamento agora.
+- A resposta à pergunta original do usuário continua tecnicamente sólida e verificável.
+- O achado de "Atenção" da revisão anterior (risco de a change paralela `custom-camera-backgrounds` deslocar as linhas citadas) materializou-se exatamente como previsto — e foi além: não foi só `custom-camera-backgrounds` que deslocou as linhas, foi um commit de release posterior (`1.13.0`) que também tocou o mesmo arquivo. Isso reforça a recomendação, já feita antes, de reconfirmar os pontos de integração no início da implementação em vez de confiar nos números de linha do texto da proposta.
 
 ## Bloqueantes antes de implementar
-- nenhum
+- nenhum (os achados de documentação/implementabilidade acima são de "Atenção": devem ser corrigidos antes ou no início da implementação, mas não bloqueiam a validade da arquitetura escolhida)
