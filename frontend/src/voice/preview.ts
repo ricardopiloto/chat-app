@@ -4,7 +4,7 @@
 // is switched off or its screen closes.
 import { createSignal, onCleanup } from "solid-js";
 import type { LocalVideoTrack } from "livekit-client";
-import { meterStream, prefs, resolveDevice, refreshDevices, requestAccess, type BlurLevel, type LevelMeter } from "./devices";
+import { meterStream, prefs, resolveDevice, refreshDevices, requestAccess, SEGMENTATION_MODEL_ASSET_PATH, type BlurLevel, type LevelMeter } from "./devices";
 import { backgroundBlob } from "./cameraBackgrounds";
 
 const BLUR_RADIUS: Record<Exclude<BlurLevel, "off">, number> = { light: 8, strong: 22 };
@@ -145,7 +145,7 @@ export function createPreview() {
       const options: import("@livekit/track-processors").SwitchBackgroundProcessorOptions = effect.kind === "background"
         ? { mode: "virtual-background", imagePath: nextUrl! }
         : { mode: "background-blur", blurRadius: BLUR_RADIUS[effect.level as Exclude<BlurLevel, "off">] };
-      const processor = processors.BackgroundProcessor(options);
+      const processor = processors.BackgroundProcessor({ ...options, assetPaths: { modelAssetPath: SEGMENTATION_MODEL_ASSET_PATH } });
       try { await blurred.setProcessor(processor); }
       catch (error) { if (nextUrl) URL.revokeObjectURL(nextUrl); throw error; }
       if (ticket !== renderTicket || !video || !camStream) { if (nextUrl) URL.revokeObjectURL(nextUrl); return release(); }

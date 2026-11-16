@@ -18,4 +18,4 @@
 
 ## 4. Verificação integrada
 
-- [ ] 4.1 Executar a verificação de som, o build do frontend e uma sessão com dois clientes; confirmar três efeitos curtos, respeito a ensurdecimento, preferência e dispositivo de saída, sem toques duplicados ou alteração dos avisos visuais.
+- [x] 4.1 Executar a verificação de som, o build do frontend e uma sessão com dois clientes; confirmar três efeitos curtos, respeito a ensurdecimento, preferência e dispositivo de saída, sem toques duplicados ou alteração dos avisos visuais. Confirmed by the user: verified manually.

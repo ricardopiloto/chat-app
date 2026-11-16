@@ -9,6 +9,12 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [1.14.0] - 2026-11-16
+
+### Changed
+
+- Camera blur and virtual backgrounds use the landscape MediaPipe selfie segmenter, served by the app from `/mediapipe/selfie_segmenter_landscape.tflite` (`camera-blur-segmentation-model`).
+
 ## [1.13.1] - 2026-11-14
 
 ### Changed

@@ -6,6 +6,7 @@ import { readJson, writeJson } from "../lib/localPrefs";
 
 export type BlurLevel = "off" | "light" | "strong";
 export type CameraEffect = { kind: "blur"; level: BlurLevel } | { kind: "background"; backgroundId: string };
+export const SEGMENTATION_MODEL_ASSET_PATH = "/mediapipe/selfie_segmenter_landscape.tflite";
 export type DeviceKind = "audioinput" | "audiooutput" | "videoinput";
 
 export interface DeviceInfo {
