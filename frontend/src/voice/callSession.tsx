@@ -120,6 +120,8 @@ function createCall() {
   const [mic, setMicState] = createSignal(false);
   const [cam, setCamState] = createSignal(false);
   const [screen, setScreenState] = createSignal(false);
+  const [screenAudio, setScreenAudioState] = createSignal(false);
+  const [screenAudioPreference, setScreenAudioPreference] = createSignal(false);
   const [deafened, setDeafened] = createSignal(false);
   const [canSpeak, setCanSpeak] = createSignal(true);
   const [e2eeOn, setE2eeOn] = createSignal(false);
@@ -194,7 +196,9 @@ function createCall() {
     if (room) {
       setMicState(room.localParticipant.isMicrophoneEnabled);
       setCamState(room.localParticipant.isCameraEnabled);
-      setScreenState(room.localParticipant.isScreenShareEnabled);
+      const local = room.localParticipant;
+      setScreenState(Boolean(local.getTrackPublication(lk!.Track.Source.ScreenShare)?.track));
+      setScreenAudioState(Boolean(local.getTrackPublication(lk!.Track.Source.ScreenShareAudio)?.track));
     }
   };
 
@@ -311,6 +315,7 @@ function createCall() {
     setMicState(false);
     setCamState(false);
     setScreenState(false);
+    setScreenAudioState(false);
     setStartedAt(null);
     setE2eeOn(false);
     setAudioBlocked(false);
@@ -427,10 +432,11 @@ function createCall() {
     });
   }
 
-  async function setScreen(on: boolean): Promise<boolean> {
+  async function setScreen(on: boolean, audio = screenAudioPreference()): Promise<boolean> {
     if (!room || !canSpeak()) return false;
     try {
-      await room.localParticipant.setScreenShareEnabled(on);
+      if (on) setScreenAudioPreference(audio);
+      await room.localParticipant.setScreenShareEnabled(on, on ? { audio } : undefined);
     } catch {
       /* the person dismissed the picker: nothing to report */
     }
@@ -1058,6 +1064,7 @@ function createCall() {
       live: status() === "live" || status() === "reconnecting",
       mic: mic(),
       cam: cam(),
+      screen: screen(),
       deafened: deafened(),
       quality: localQuality(),
       canSpeak: canSpeak(),
@@ -1072,6 +1079,7 @@ function createCall() {
       status();
       mic();
       cam();
+      screen();
       deafened();
       localQuality();
       canSpeak();
@@ -1116,6 +1124,10 @@ function createCall() {
           if (canSpeak()) void setCam(command.value);
           else publishPopoutOwnerState();
           break;
+        case "setScreen":
+          if (canSpeak()) void setScreen(command.value);
+          else publishPopoutOwnerState();
+          break;
         case "toggleDeafened":
           setDeafened(!deafened());
           break;
@@ -1158,6 +1170,9 @@ function createCall() {
     mic,
     cam,
     screen,
+    screenAudio,
+    screenAudioPreference,
+    setScreenAudioPreference,
     deafened,
     canSpeak,
     e2eeOn,

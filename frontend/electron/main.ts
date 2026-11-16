@@ -610,7 +610,10 @@ async function fulfillScreenShare(
     callback({});
     return;
   }
-  callback({ video: { id: chosen.id, name: chosen.name } });
+  callback({
+    video: { id: chosen.id, name: chosen.name },
+    ...(request.audioRequested && process.platform === "win32" ? { audio: "loopback" as const } : {}),
+  });
 }
 
 function pickScreenSource(
@@ -692,15 +695,15 @@ function tellOpener(channel: "mesa:call-popout-opened" | "mesa:call-popout-close
   if (popoutOpener && !popoutOpener.isDestroyed()) popoutOpener.send(channel, channelId);
 }
 
-type PopoutCommandAction = "setMic" | "setCam" | "toggleDeafened" | "leave";
+type PopoutCommandAction = "setMic" | "setCam" | "setScreen" | "toggleDeafened" | "leave";
 
 function readPopoutCommand(value: unknown): { channelId: string; action: PopoutCommandAction; value?: boolean } | null {
   if (!value || typeof value !== "object") return null;
   const raw = value as Record<string, unknown>;
   if (typeof raw.channelId !== "string" || raw.channelId.length === 0) return null;
-  if (raw.action !== "setMic" && raw.action !== "setCam" && raw.action !== "toggleDeafened" && raw.action !== "leave") return null;
-  if ((raw.action === "setMic" || raw.action === "setCam") && typeof raw.value !== "boolean") return null;
-  return raw.action === "setMic" || raw.action === "setCam"
+  if (raw.action !== "setMic" && raw.action !== "setCam" && raw.action !== "setScreen" && raw.action !== "toggleDeafened" && raw.action !== "leave") return null;
+  if ((raw.action === "setMic" || raw.action === "setCam" || raw.action === "setScreen") && typeof raw.value !== "boolean") return null;
+  return raw.action === "setMic" || raw.action === "setCam" || raw.action === "setScreen"
     ? { channelId: raw.channelId, action: raw.action, value: raw.value as boolean }
     : { channelId: raw.channelId, action: raw.action };
 }
@@ -710,6 +713,7 @@ function readPopoutOwnerState(value: unknown): {
   live: boolean;
   mic: boolean;
   cam: boolean;
+  screen: boolean;
   deafened: boolean;
   quality: "excellent" | "good" | "poor" | "lost" | "unknown";
   canSpeak: boolean;
@@ -718,7 +722,7 @@ function readPopoutOwnerState(value: unknown): {
   if (!value || typeof value !== "object") return null;
   const raw = value as Record<string, unknown>;
   if (typeof raw.channelId !== "string" || raw.channelId.length === 0) return null;
-  for (const key of ["live", "mic", "cam", "deafened", "canSpeak", "available"] as const) {
+  for (const key of ["live", "mic", "cam", "screen", "deafened", "canSpeak", "available"] as const) {
     if (typeof raw[key] !== "boolean") return null;
   }
   if (raw.quality !== "excellent" && raw.quality !== "good" && raw.quality !== "poor" && raw.quality !== "lost" && raw.quality !== "unknown") return null;
@@ -727,6 +731,7 @@ function readPopoutOwnerState(value: unknown): {
     live: raw.live as boolean,
     mic: raw.mic as boolean,
     cam: raw.cam as boolean,
+    screen: raw.screen as boolean,
     deafened: raw.deafened as boolean,
     quality: raw.quality,
     canSpeak: raw.canSpeak as boolean,

@@ -15,6 +15,7 @@ const LEVELS: BlurLevel[] = ["off", "light", "strong"];
 export function CallControls() {
   const call = useCall();
   const [blurOpen, setBlurOpen] = createSignal(false);
+  const [screenAudioOpen, setScreenAudioOpen] = createSignal(false);
   const [thumbnailUrls, setThumbnailUrls] = createSignal<Record<string, string>>({});
   let loadTicket = 0;
   const closeBackgrounds = () => {
@@ -24,6 +25,7 @@ export function CallControls() {
     setBlurOpen(false);
   };
   onCleanup(closeBackgrounds);
+  onCleanup(() => setScreenAudioOpen(false));
   const openBackgrounds = async () => {
     if (blurOpen()) { closeBackgrounds(); return; }
     const ticket = ++loadTicket;
@@ -117,6 +119,7 @@ export function CallControls() {
           </Show>
         </span>
         <Show when={!listenOnly()}>
+          <span class="call-control-group">
           <button
             type="button"
             class={toggle}
@@ -131,6 +134,21 @@ export function CallControls() {
           >
             <Icon name="call_screen_share" />
           </button>
+          <button type="button" class={`${toggle} small`} aria-haspopup="menu" aria-expanded={screenAudioOpen()} title={call.screen() ? t(call.screenAudio() ? "call.screenAudioActive" : "call.screenAudioInactive") : t("call.screenAudioChoice")} aria-label={call.screen() ? t(call.screenAudio() ? "call.screenAudioActive" : "call.screenAudioInactive") : t("call.screenAudioChoice")} onClick={() => setScreenAudioOpen(!screenAudioOpen())}>
+            <Icon name="arrow_drop_down" />
+          </button>
+          <Show when={screenAudioOpen()}>
+            <div class="call-menu" role="menu">
+              {([false, true] as const).map((audio) => (
+                <button type="button" role="menuitemradio" aria-checked={call.screenAudioPreference() === audio} onClick={() => { call.setScreenAudioPreference(audio); setScreenAudioOpen(false); }}>
+                  {t(audio ? "call.screenAudioOn" : "call.screenAudioOff")}
+                  <Show when={call.screenAudioPreference() === audio}><Icon name="check" class="text-[16px]" /></Show>
+                </button>
+              ))}
+              <Show when={call.screen()}><p class="call-screen-audio-state" role="status">{t(call.screenAudio() ? "call.screenAudioActive" : "call.screenAudioInactive")}</p></Show>
+            </div>
+          </Show>
+          </span>
         </Show>
         <Show when={isNative() && !call.popoutFor()}>
           <button
