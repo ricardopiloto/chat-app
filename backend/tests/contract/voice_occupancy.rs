@@ -149,6 +149,7 @@ async fn join_creates_occupancy_and_leave_clears_session() {
     assert_eq!(occ[0]["handle"], "alice");
     assert_eq!(occ[0]["mic_on"], true);
     assert_eq!(occ[0]["cam_on"], true);
+    assert_eq!(occ[0]["deafened_on"], false);
     assert_eq!(occ[0]["has_avatar"], false);
     let started = channels[0]["call_started_at"].as_str().unwrap().to_string();
 
@@ -339,6 +340,43 @@ async fn media_patch_and_silent_occupant() {
         )
         .await;
     assert_eq!(status, StatusCode::FORBIDDEN);
+}
+
+#[tokio::test]
+async fn deafened_patch_is_independent_and_resets_on_rejoin() {
+    let app = TestApp::new().await;
+    let (_, _, alice) = app.register("deafen_alice", "password1", None).await;
+    let alice = must_cookie(alice);
+    let (server_id, channel_id) = voice_channel(&app, &alice).await;
+    let occupancy = format!("/api/servers/{server_id}/voice-occupancy");
+    let media = format!("/api/channels/{channel_id}/voice/media");
+    let join = format!("/api/channels/{channel_id}/voice/join");
+
+    let (status, _, _) = app.request("POST", &join, Some(json!({ "mic_on": false, "cam_on": false })), Some(&alice)).await;
+    assert_eq!(status, StatusCode::OK);
+    let (_, snap, _) = app.request("GET", &occupancy, None, Some(&alice)).await;
+    assert_eq!(snap["channels"][0]["occupants"][0]["deafened_on"], false);
+
+    let (status, _, _) = app.request("PATCH", &media, Some(json!({ "deafened_on": true })), Some(&alice)).await;
+    assert_eq!(status, StatusCode::NO_CONTENT);
+    let (_, snap, _) = app.request("GET", &occupancy, None, Some(&alice)).await;
+    assert_eq!(snap["channels"][0]["occupants"][0]["deafened_on"], true);
+    assert_eq!(snap["channels"][0]["occupants"][0]["mic_on"], false);
+
+    let (status, _, _) = app.request("PATCH", &media, Some(json!({ "screen_on": false })), Some(&alice)).await;
+    assert_eq!(status, StatusCode::NO_CONTENT);
+    let (_, snap, _) = app.request("GET", &occupancy, None, Some(&alice)).await;
+    assert_eq!(snap["channels"][0]["occupants"][0]["deafened_on"], true);
+
+    let (status, _, _) = app.request("PATCH", &media, Some(json!({ "deafened_on": false })), Some(&alice)).await;
+    assert_eq!(status, StatusCode::NO_CONTENT);
+    let (_, snap, _) = app.request("GET", &occupancy, None, Some(&alice)).await;
+    assert_eq!(snap["channels"][0]["occupants"][0]["deafened_on"], false);
+
+    app.request("PATCH", &media, Some(json!({ "deafened_on": true })), Some(&alice)).await;
+    app.request("POST", &join, Some(json!({ "mic_on": false, "cam_on": false })), Some(&alice)).await;
+    let (_, snap, _) = app.request("GET", &occupancy, None, Some(&alice)).await;
+    assert_eq!(snap["channels"][0]["occupants"][0]["deafened_on"], false);
 }
 
 #[tokio::test]

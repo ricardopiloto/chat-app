@@ -40,15 +40,16 @@
 .call-tile-avatar{display:grid;place-items:center;width:clamp(48px,28%,120px);aspect-ratio:1;border-radius:50%;background:color-mix(in srgb,var(--on-stage) 14%,transparent);font:600 clamp(20px,4vw,44px)/1 var(--font-display);overflow:hidden}
 .call-tile-avatar img{width:100%;height:100%;object-fit:cover}
 .call-tile-caption{position:absolute;left:8px;right:8px;bottom:8px;z-index:1;display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:var(--radius);background:rgba(11,14,23,.66);backdrop-filter:blur(6px);font:500 13px/18px var(--font-body)}
-.call-tile-caption{opacity:0;visibility:hidden;pointer-events:none}
-.call-tile:hover .call-tile-caption,.call-tile:focus-within .call-tile-caption{opacity:1;visibility:visible;pointer-events:auto}
-@media (prefers-reduced-motion:no-preference){.call-tile-caption{transition:opacity .15s ease,visibility .15s ease}}
+.call-tile-caption{opacity:0;pointer-events:none}
+.call-tile.is-info-visible .call-tile-caption{opacity:1;pointer-events:auto}
+.call-tile>.call-chip{opacity:0;pointer-events:none}
+.call-tile.is-info-visible>.call-chip{opacity:1;pointer-events:auto}
+@media (prefers-reduced-motion:no-preference){.call-tile-caption{transition:opacity .15s ease}}
 .call-tile-name{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .call-tile-handle{font:400 11px/16px var(--font-code);opacity:.8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .call-tile-state{margin-left:auto;display:flex;gap:4px}
 .call-tile-state .muted{color:#ffb4ab}
 .call-chip{position:absolute;z-index:2;top:8px;left:8px;display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:var(--radius-pill);font:700 11px/16px var(--font-code);letter-spacing:.04em;text-transform:uppercase;background:rgba(11,14,23,.72);color:#fff}
-.call-chip.speaking{background:#9a442d;color:#fff}
 .call-chip.you{left:auto;right:8px;background:rgba(224,122,95,.9);color:#2b0e05}
 .call-chip.screen{background:rgba(11,14,23,.78)}
 .call-chip.muted{left:auto;right:8px;top:8px;background:#93000a;color:#ffdad6}
@@ -80,6 +81,7 @@
 
 /* Bench */
 .call-bench{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;border-radius:var(--radius-md);background:var(--surface-container)}
+.call-bench-heading{display:inline-flex;align-items:center;gap:6px}
 .call-bench-hint{font:400 12px/18px var(--font-body);color:var(--on-surface-variant)}
 .call-bench-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;border-radius:var(--radius-pill);background:var(--surface-container-highest);color:var(--on-surface);font:500 13px/18px var(--font-body);border:1px solid transparent}
 button.call-bench-chip{cursor:grab}
@@ -214,6 +216,7 @@ button.call-bench-chip{cursor:grab}
 }
 .call-menu{position:absolute;z-index:30;left:0;bottom:calc(100% + 6px);min-width:180px;max-height:min(420px,calc(100dvh - 120px));overflow-y:auto;padding:6px;border-radius:var(--radius-md);background:var(--surface-container-highest);box-shadow:var(--shadow-floating)}
 .call-menu button{all:unset;box-sizing:border-box;cursor:pointer;color:var(--on-surface);font:500 13px var(--font-body);display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:8px;inline-size:100%;padding-block:8px;padding-inline:10px;border-radius:var(--radius-sm)}
+.call-screen-audio-state{margin:4px 10px;color:var(--on-surface-variant);font:500 12px/18px var(--font-body)}
 .call-menu button:hover,.call-menu button[aria-checked="true"]{background:var(--surface-container-high)}
 .call-menu button:has(.call-background-menu-thumb){grid-template-columns:2.5rem minmax(0,1fr) auto}
 
@@ -265,12 +268,12 @@ button.call-bench-chip{cursor:grab}
 @media (prefers-reduced-motion:no-preference){.call-popout-controls{transition:opacity .15s ease}}
 .call-popout-controls .call-control{width:34px;height:34px}
 .call-popout-controls .call-chip.quality{position:static;right:auto;top:auto;left:auto;width:34px;height:34px;flex:none}
-.call-popout-controls .call-control.hangup{margin-left:8px}
+.call-popout-controls .call-control.hangup{margin-left:2px}
 .call-popout-controls-note{position:absolute;left:10px;right:10px;top:2px;margin:0;font:500 11px/14px var(--font-body);color:var(--on-surface-variant);text-align:center;pointer-events:none}
 @media (max-height:200px),(max-width:280px){
   .call-popout-shell{--call-popout-top-inset:4px;--call-popout-bottom-inset:44px}
   .call-popout{padding-inline:8px}
-  .call-popout-controls{gap:4px;padding:4px 6px}
+  .call-popout-controls{gap:3px;padding:4px 4px}
   .call-popout-controls .call-control{width:30px;height:30px}
   .call-popout-controls .call-chip.quality{width:30px;height:30px}
   .call-popout-controls-note{display:none}

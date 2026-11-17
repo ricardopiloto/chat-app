@@ -100,6 +100,18 @@ function PopoutControls(props: { channelId: string }) {
         </button>
         <button
           type="button"
+          class="call-control"
+          classList={{ on: owner()?.screen ?? false }}
+          aria-pressed={owner()?.screen ?? false}
+          disabled={!ready() || listenOnly()}
+          title={listenOnly() ? t("call.listenOnlyWhy") : owner()?.screen ? t("call.screenStop") : t("call.screenStart")}
+          aria-label={listenOnly() ? t("call.listenOnlyWhy") : owner()?.screen ? t("call.screenStop") : t("call.screenStart")}
+          onClick={() => send({ channelId: props.channelId, action: "setScreen", value: !(owner()?.screen ?? false) })}
+        >
+          <Icon name="call_screen_share" />
+        </button>
+        <button
+          type="button"
           class="call-control hangup"
           disabled={!ready()}
           title={t("call.hangup")}

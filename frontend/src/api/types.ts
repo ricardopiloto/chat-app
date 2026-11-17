@@ -303,6 +303,7 @@ export interface MediaFlags {
   mic_on?: boolean;
   cam_on?: boolean;
   screen_on?: boolean;
+  deafened_on?: boolean;
 }
 
 export interface Occupant {
@@ -311,6 +312,7 @@ export interface Occupant {
   mic_on: boolean;
   cam_on: boolean;
   screen_on: boolean;
+  deafened_on?: boolean;
   has_avatar: boolean;
   display_name?: string;
 }

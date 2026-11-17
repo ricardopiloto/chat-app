@@ -4,7 +4,7 @@
 
 ### Requirement: Optional audio with screen sharing
 
-The system SHALL offer an explicit control to include system or game audio when an eligible person starts screen sharing. It SHALL pass the selected choice to screen capture and SHALL show the resulting screen-sharing state. The supported-platform behavior when audio capture is unavailable remains pending architect review; the control SHALL NOT claim that audio is being shared unless an audio track is actually captured and published.
+The system SHALL offer an explicit control to include system or game audio when an eligible person starts screen sharing. It SHALL pass the selected choice to screen capture and SHALL show the resulting screen-sharing state. The audio choice SHALL remain available on all platforms. If audio capture is unavailable or fails, screen sharing SHALL continue as video-only without a blocking error. The control SHALL NOT claim that audio is being shared unless an audio track is actually captured and published.
 
 #### Scenario: Start sharing with audio selected
 

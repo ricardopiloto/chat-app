@@ -1,51 +1,49 @@
 # Review — Desenvolvedor Fullstack
 
 **Change:** add-screen-share-audio-and-popout-controls
-**Data:** 2026-11-14
+**Data:** 2026-11-16
 **Veredito geral:** Aprovado com ressalvas
 
 ## 1. Desenvolvimento do backend
 
 Veredito: N/A
 
-- Confirmado por grep: não existe `active_screen_shares`, endpoints `screen-share/start|stop` nem eventos `voice.screen_share_changed`/`channel.layout_changed` no backend — o único estado de servidor relacionado é o booleano `screen_on` em `backend/src/domain/voice_occupancy.rs:18,29`, já existente e não alterado por esta change. `proposal.md` declara correctamente "No backend or LiveKit protocol change is proposed", e nenhuma task em `tasks.md` toca `backend/`. Nada a implementar aqui.
+- Reconfirmado por grep agora: ainda não existe `active_screen_shares`, endpoints de screen-share nem eventos `voice.screen_share_changed`/`channel.layout_changed` no backend. `proposal.md` continua correto ao declarar "No backend or LiveKit protocol change is proposed"; nenhuma task toca `backend/`.
 
 ## 2. Desenvolvimento do frontend
 
 Veredito: Atenção
 
-- Viável com a stack real (SolidJS + `livekit-client` já instalado com `ScreenShareCaptureOptions.audio`). A task 3.1 ("Add the audio choice to `frontend/src/voice/CallControls.tsx`") não nomeia o padrão de UI a reutilizar. Este ficheiro já tem um precedente pronto para exactamente este caso: o botão de blur de câmara abre um pequeno menu secundário (`CallControls.tsx:86-103`, `aria-haspopup="menu"`, `aria-expanded`, lista de opções com `aria-checked`). Recomendo a task 3.1 apontar explicitamente para esse padrão (um botão secundário junto ao de partilhar ecrã, abrindo um menu pequeno com a opção de áudio) em vez de deixar a forma em aberto — evita que a implementação resolva isto de forma ad-hoc e inconsistente com o resto do ficheiro.
-- `CallPopoutWindow.tsx` já tem o padrão de botão+`ready()`+`owner()?.x` replicável (`CallControls`/`PopoutControls` lado a lado) — task 4.3 está correctamente especificada.
-- Responsividade: task 4.3 já pede para verificar a grelha 240×180 mínima do popout; bom, é o ponto real de aperto de espaço nesta UI.
+- **Decisões do Arquiteto (`review-architect.md`, 2026-11-16) confirmadas como implementáveis**: (A) sempre mostrar a escolha de áudio e deixar a publicação real decidir o estado exibido — isto já é exatamente o que `call.screen()`/`call.setScreen(on)` em `CallControls.tsx:118-133` e o padrão `derive from local publications` de D1 suportam, nenhuma mudança de forma necessária. (B) elegibilidade do popout = `canSpeak()`, sem escolha de áudio no popout — reduz o escopo de `CallPopoutWindow.tsx`/`env.d.ts`/`preload.ts`/`main.ts` a um único campo booleano `setScreen`/`screen`, sem campo de áudio adicional no IPC — mais simples de implementar e de validar do que a redação anterior de D2 deixava em aberto.
+- **Achado concreto de padrão de UI (reli `CallControls.tsx:85-116` agora)**: o ficheiro já tem o precedente exato para a Decisão A — o botão de blur de câmara abre um menu secundário (`aria-haspopup="menu"`, `<div class="call-menu" role="menu">`, itens `role="menuitemradio"` com `aria-checked`). Recomendo a task 3.1 apontar explicitamente para reaproveitar essa mesma estrutura (`call-menu`) para a escolha de áudio junto ao botão de partilha de ecrã (`CallControls.tsx:118-133`), em vez de inventar um padrão novo de UI para uma escolha binária simples (áudio on/off ao iniciar).
+- `CallPopoutWindow.tsx:15-96` tem o padrão `owner()?.x` + `send({...})` replicável para o novo botão de ecrã (confirmado de novo); como a Decisão B remove a escolha de áudio do popout, a task 4.3 fica mais simples do que a redação original fazia parecer — só um botão on/off, sem segundo controlo.
+- `frontend/src/i18n/catalogs/voice.en.ts` e `voice.pt-BR.ts` existem e são os ficheiros certos citados na task 3.1.
 
 ## 3. Deploy e operação
 
 Veredito: Atenção
 
-- N/A para infraestrutura: sem porta, variável de ambiente, ou serviço novo.
-- Achado operacional concreto desta própria sessão: alterações em `frontend/electron/main.ts` (a task 2.2 mexe exactamente aí) só são recarregadas depois de **reiniciar o processo Electron por completo** — o reload normal do Vite não chega ao processo principal. Acabámos de perder um ciclo de diagnóstico noutra change por esquecer isto. Recomendo acrescentar uma nota explícita em `tasks.md` (secção 5, verificação) lembrando quem for implementar de reiniciar o Electron inteiro a cada alteração em `main.ts`/`preload.ts`, não só recarregar a janela.
-- Debug em produção: nenhum log ou health-check novo é necessário para esta feature (é local, por chamada); não é uma lacuna.
+- N/A para infraestrutura: sem porta, variável de ambiente ou serviço novo.
+- **Achado operacional (reconfirmado, ainda não escrito no `tasks.md`)**: alterações em `frontend/electron/main.ts`/`preload.ts` (tasks 2.2 e 4.1) só são recarregadas reiniciando o processo Electron por completo — o reload do Vite não alcança o processo principal. Ainda não há nota sobre isto em `tasks.md` secção 5. Recomendação mantida: acrescentar essa nota explícita antes de implementar, para não repetir um ciclo de diagnóstico perdido.
 
 ## 4. Qualidade de código
 
 Veredito: OK
 
-- `tasks.md` já embute verificação em cada task (padrão já usado nas outras changes desta leva), incluindo caminhos de cancelamento/permissão negada (task 2.1: "cancellation and teardown"; task 5.1: "capture rejection, owner loss, and listen-only calls").
-- Resiliência: D1 do `design.md` ("derive displayed state from actual local publications rather than the requested flag") evita que a UI afirme um estado que a captura real não confirmou — boa prática já antecipada na arquitetura, nada a acrescentar aqui.
-- Concorrência: o relay popout reaproveita os mesmos guardas de canal/chamada-ao-vivo já validados por `add-popout-call-controls` e `add-connection-quality-indicator`; não é lógica nova a testar do zero.
-- Organização: cabe nos módulos existentes (`callSession.tsx`, `CallControls.tsx`, `CallPopoutWindow.tsx`, `main.ts`/`preload.ts`/`env.d.ts`), sem refactor não declarado.
+- `tasks.md` já embute verificação por task, incluindo caminhos de cancelamento/rejeição de permissão (task 2.1, task 5.1).
+- Com a Decisão B do arquiteto, a task 1.1/1.2 (revisão) pode agora ser marcada como concluída com referência a `review-architect.md`/`review-fullstack.md` datados de 2026-11-16 — hoje ainda aparecem como `[ ]` não marcadas em `tasks.md`, apesar de as duas perguntas estarem decididas.
+- Organização: continua a caber nos módulos existentes, sem refactor não declarado.
 
 ## 5. Execução das decisões arquiteturais
 
 Veredito: OK
 
-- `tasks.md` respeita a sequência decidida: secção 1 (revisão de arquiteto+fullstack) antes de qualquer código, exactamente como `design.md` pediu ao deixar as duas perguntas em aberto em vez de as fechar sozinho.
-- Nenhuma task reabre D1/D2 ou o escopo excluído (blur/background, output device, segundo popout) sem justificar.
+- `tasks.md` respeita a sequência decidida (revisão antes de código).
+- Nenhuma task reabre D1/D2 ou o escopo excluído (blur/background, output device, segundo popout).
+- Achado de drift confirmado também do lado de implementação: as linhas citadas em `design.md` para `main.ts` (`626-653`, `736-775`, `836-866`) e `callSession.tsx` (`1039-1109`) já não correspondem às linhas atuais (hoje: `587`, `697`, `799-818`, `1052-1097`, respectivamente) devido ao commit `0915045` ("1.13.0", 2026-11-14). Mesma causa raiz já identificada pelo Arquiteto — não é um achado de implementabilidade novo, é confirmação da mesma lacuna do lado do código real.
 
 ## Bloqueantes antes de implementar
-
 - nenhum
 
 ## Limitações técnicas a reportar ao Arquiteto
-
-- A pergunta 1 em aberto (política de fallback de áudio por plataforma) tem uma implicação de teste prático: validar isto exige testar em pelo menos Linux X11, Linux Wayland e, idealmente, Windows antes de fechar a política — não é só uma decisão de produto, é trabalho de QA manual em três ambientes que vale planear com antecedência.
+- nenhuma nova — a limitação já reportada na revisão de 2026-11-14 (teste manual em X11/Wayland/Windows antes de fechar a política de áudio) continua válida e já está refletida na Decisão A do arquiteto.

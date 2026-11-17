@@ -1,0 +1,1 @@
+ALTER TABLE voice_occupant ADD COLUMN deafened_on INTEGER NOT NULL DEFAULT 0;

@@ -30,7 +30,7 @@ export function CompositionView(props: { scene: Scene }) {
         </For>
       </div>
       <footer class="call-bench" aria-label={t("call.bench")}>
-        <span class="mono-label"><Icon name="airline_seat_recline_extra" class="text-[16px] text-outline" />{t("call.bench")}</span>
+        <span class="mono-label call-bench-heading"><Icon name="airline_seat_recline_extra" class="text-[16px] text-outline" />{t("call.bench")}</span>
         <Show when={benched().length > 0} fallback={<span class="call-bench-hint">{t("call.benchEmpty")}</span>}>
           <For each={benched()}>
             {(id) => {

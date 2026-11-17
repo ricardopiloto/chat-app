@@ -25,6 +25,7 @@ export function useCallPeople() {
         camera: p.camera,
         micOn: p.micOn,
         listener: p.listener,
+        deafened: known?.deafened_on ?? false,
         isLocal: p.isLocal,
       };
     }),

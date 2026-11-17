@@ -15,6 +15,7 @@ export interface CallPopoutRequest {
 export type CallPopoutCommand =
   | { channelId: string; action: "setMic"; value: boolean }
   | { channelId: string; action: "setCam"; value: boolean }
+  | { channelId: string; action: "setScreen"; value: boolean }
   | { channelId: string; action: "toggleDeafened" }
   | { channelId: string; action: "leave" };
 
@@ -23,6 +24,7 @@ export interface CallPopoutOwnerState {
   live: boolean;
   mic: boolean;
   cam: boolean;
+  screen: boolean;
   deafened: boolean;
   quality: "excellent" | "good" | "poor" | "lost" | "unknown";
   canSpeak: boolean;

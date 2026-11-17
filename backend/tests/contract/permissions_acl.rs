@@ -397,6 +397,25 @@ async fn permissions_listen_only_cannot_enable_mic_or_cam() {
         )
         .await;
     assert_eq!(status, StatusCode::FORBIDDEN, "{patch}");
+
+    let (status, _, _) = app
+        .request(
+            "PATCH",
+            &format!("/api/channels/{channel_id}/voice/media"),
+            Some(json!({ "deafened_on": true })),
+            Some(&setup.member),
+        )
+        .await;
+    assert_eq!(status, StatusCode::NO_CONTENT);
+    let (_, occupancy, _) = app
+        .request(
+            "GET",
+            &format!("/api/servers/{}/voice-occupancy", setup.server_id),
+            None,
+            Some(&setup.member),
+        )
+        .await;
+    assert_eq!(occupancy["channels"][0]["occupants"][0]["deafened_on"], true);
 }
 
 #[tokio::test]
