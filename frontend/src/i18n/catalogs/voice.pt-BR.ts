@@ -7,6 +7,7 @@ export const voicePtBR: MessageTree = {
     muted: "Mudo",
     participantsListening: "{n} em tela ({l} ouvinte)",
     camState: { on: "Câmera ligada", off: "Câmera desligada" },
+    hearingState: { on: "Ouvindo normalmente", off: "Ensurdecido" },
     live: "Ao vivo",
     participants: "{n} na chamada",
     connecting: "Entrando na chamada…",

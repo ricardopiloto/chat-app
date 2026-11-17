@@ -128,6 +128,7 @@ function createCall() {
   const [audioBlocked, setAudioBlocked] = createSignal(false);
   const [blurError, setBlurError] = createSignal(false);
   const [localQuality, setLocalQuality] = createSignal<CallConnectionQuality>("unknown");
+  const [qualityByIdentity, setQualityByIdentity] = createSignal<Record<string, CallConnectionQuality>>({});
 
   let lk: LiveKit | null = null;
   let room: Room | null = null;
@@ -164,6 +165,19 @@ function createCall() {
   type BoostGraph = { context: AudioContext; source: MediaElementAudioSourceNode; gain: GainNode };
   const boostByTrack = new Map<string, BoostGraph>();
   let sharedAudioContext: AudioContext | null = null;
+  const handlesByIdentity = new Map<string, string>();
+
+  function resumeBoostAudio(): void {
+    if (sharedAudioContext?.state === "suspended") void sharedAudioContext.resume().catch(() => setAudioBlocked(true));
+  }
+
+  function seedQuality(current: Room): void {
+    const next: Record<string, CallConnectionQuality> = {};
+    for (const participant of [current.localParticipant, ...current.remoteParticipants.values()]) {
+      next[participant.identity] = mapConnectionQuality(participant.connectionQuality);
+    }
+    setQualityByIdentity(next);
+  }
 
   // --- snapshots ------------------------------------------------------------------------------
 
@@ -233,38 +247,49 @@ function createCall() {
   }
 
   /** Apply 0–200% local volume. ≤100% uses element.volume until a boost graph already exists. */
-  function applyElementVolume(el: HTMLMediaElement, percent: number): void {
+  function applyElementVolume(el: HTMLMediaElement, percent: number): boolean {
     const trackSid = el.dataset.track ?? "";
     const clamped = Math.min(200, Math.max(0, Math.round(percent)));
     let graph = boostByTrack.get(trackSid);
     if (clamped <= 100 && !graph) {
       el.volume = clamped / 100;
       applyOutput(el);
-      return;
+      return true;
     }
     // Once boosted, MediaElementAudioSourceNode owns the element for good — keep using gain.
     if (!graph) {
-      const context = sharedAudioContext ?? new AudioContext();
-      sharedAudioContext = context;
-      const source = context.createMediaElementSource(el);
-      const gain = context.createGain();
-      source.connect(gain);
-      gain.connect(context.destination);
-      graph = { context, source, gain };
-      boostByTrack.set(trackSid, graph);
-      void routeBoostContext(context);
+      try {
+        const context = sharedAudioContext ?? new AudioContext();
+        sharedAudioContext = context;
+        const source = context.createMediaElementSource(el);
+        const gain = context.createGain();
+        source.connect(gain);
+        gain.connect(context.destination);
+        graph = { context, source, gain };
+        boostByTrack.set(trackSid, graph);
+        void routeBoostContext(context);
+      } catch {
+        el.volume = 1;
+        applyOutput(el);
+        setAudioBlocked(true);
+        return false;
+      }
     }
     el.volume = 1;
     el.muted = deafened();
     graph.gain.gain.value = clamped / 100;
+    resumeBoostAudio();
     void routeBoostContext(graph.context);
+    return true;
   }
 
-  function applyVolumeForIdentity(identity: string, percent: number): void {
+  function applyVolumeForIdentity(identity: string, percent: number): boolean {
+    let applied = true;
     audioHost.querySelectorAll("audio").forEach((node) => {
       const el = node as HTMLMediaElement;
-      if (el.dataset.identity === identity) applyElementVolume(el, percent);
+      if (el.dataset.identity === identity && !applyElementVolume(el, percent)) applied = false;
     });
+    return applied;
   }
 
   createEffect(() => {
@@ -277,8 +302,8 @@ function createCall() {
     el.dataset.track = track.sid ?? "";
     el.dataset.identity = identity;
     applyOutput(el);
-    // Handle may not be known yet; Tile reapplies the stored preference once the handle resolves.
-    applyElementVolume(el, VOLUME_DEFAULT);
+    const handle = handlesByIdentity.get(identity);
+    applyElementVolume(el, handle ? volumeForHandle(handle) : VOLUME_DEFAULT);
     audioHost.appendChild(el);
   }
 
@@ -310,6 +335,8 @@ function createCall() {
     mobileSoftBackground = false;
     for (const sid of [...boostByTrack.keys()]) clearBoost(sid);
     audioHost.replaceChildren();
+    handlesByIdentity.clear();
+    setQualityByIdentity({});
     setParticipants([]);
     setSpeaking(new Set<string>());
     setMicState(false);
@@ -457,7 +484,8 @@ function createCall() {
 
   async function resumeAudio() {
     await room?.startAudio();
-    setAudioBlocked(room ? !room.canPlaybackAudio : false);
+    if (sharedAudioContext?.state === "suspended") await sharedAudioContext.resume().catch(() => setAudioBlocked(true));
+    setAudioBlocked((room ? !room.canPlaybackAudio : false) || sharedAudioContext?.state === "suspended");
   }
 
   async function leave() {
@@ -748,11 +776,12 @@ function createCall() {
       armArrivalSounds?.();
       setStartedAt(Date.now());
       setStatus("live");
+      seedQuality(next);
       if (!viewer) setLocalQuality(mapConnectionQuality(next.localParticipant.connectionQuality));
       if (!viewer && !silent) notify("callJoin");
       setAudioBlocked(!next.canPlaybackAudio);
       refresh();
-      report({ mic_on: next.localParticipant.isMicrophoneEnabled, cam_on: next.localParticipant.isCameraEnabled });
+      report({ mic_on: next.localParticipant.isMicrophoneEnabled, cam_on: next.localParticipant.isCameraEnabled, deafened_on: false });
       heartbeat = window.setInterval(() => report(), HEARTBEAT_MS);
       return true;
     } catch (error) {
@@ -783,6 +812,7 @@ function createCall() {
     };
     next.on(E.ParticipantConnected, (participant: LkParticipant) => {
       if (!alive()) return;
+      setQualityByIdentity((values) => ({ ...values, [participant.identity]: mapConnectionQuality(participant.connectionQuality) }));
       refresh();
       const id = participant.identity;
       if (!announceArrivals) {
@@ -802,6 +832,7 @@ function createCall() {
     });
     next.on(E.ParticipantDisconnected, (participant: LkParticipant) => {
       if (!alive()) return;
+      setQualityByIdentity((values) => { const nextValues = { ...values }; delete nextValues[participant.identity]; return nextValues; });
       refresh();
       const id = participant.identity;
       if (!seenRemotes.has(id)) return;
@@ -843,9 +874,11 @@ function createCall() {
       refresh();
     });
     next.on(E.ActiveSpeakersChanged, (list: LkParticipant[]) => alive() && setSpeaking(new Set(list.map((p) => p.identity))));
-    next.on(E.AudioPlaybackStatusChanged, () => alive() && setAudioBlocked(!next.canPlaybackAudio));
+    next.on(E.AudioPlaybackStatusChanged, () => alive() && setAudioBlocked(!next.canPlaybackAudio || sharedAudioContext?.state === "suspended"));
     next.on(E.ConnectionQualityChanged, (quality: string, participant: LkParticipant) => {
-      if (!alive() || viewer || !participant.isLocal) return;
+      if (!alive()) return;
+      setQualityByIdentity((values) => ({ ...values, [participant.identity]: mapConnectionQuality(quality) }));
+      if (viewer || !participant.isLocal) return;
       setLocalQuality(mapConnectionQuality(quality));
     });
     next.on(E.Reconnecting, () => {
@@ -853,11 +886,13 @@ function createCall() {
       setStatus("reconnecting");
       // Do not keep a stale Excellent/Good while the link is unresolved.
       if (!viewer) setLocalQuality("unknown");
+      setQualityByIdentity((values) => ({ ...values, [next.localParticipant.identity]: "unknown" }));
     });
     next.on(E.Reconnected, () => {
       if (!alive()) return;
       setStatus("live");
       if (!viewer) setLocalQuality(mapConnectionQuality(next.localParticipant.connectionQuality));
+      seedQuality(next);
       refresh();
     });
     next.on(E.MediaDevicesError, () => alive() && setNotice("cameraFailed"));
@@ -1130,6 +1165,7 @@ function createCall() {
           break;
         case "toggleDeafened":
           setDeafened(!deafened());
+          report({ deafened_on: deafened() });
           break;
         case "leave":
           void leave();
@@ -1183,6 +1219,7 @@ function createCall() {
       if (viewer || status() === "idle") return null;
       return localQuality();
     },
+    connectionQualityFor: (identity: string): CallConnectionQuality | null => status() === "idle" ? null : (qualityByIdentity()[identity] ?? "unknown"),
     join,
     leave,
     watch,
@@ -1194,7 +1231,7 @@ function createCall() {
     setScreen,
     setBlur,
     setEffect,
-    toggleDeafened: () => setDeafened(!deafened()),
+    toggleDeafened: () => { setDeafened(!deafened()); report({ deafened_on: deafened() }); },
     resumeAudio,
     onRealtime,
     refreshAccess,
@@ -1216,13 +1253,13 @@ function createCall() {
     remoteVolume: (handle: string) => volumeForHandle(handle),
     setRemoteVolume: (identity: string, handle: string, percent: number) => {
       if (!handle || viewer) return VOLUME_DEFAULT;
-      const saved = setVolumeForHandle(handle, percent);
-      applyVolumeForIdentity(identity, saved);
-      return saved;
+      if (!applyVolumeForIdentity(identity, percent)) return setVolumeForHandle(handle, VOLUME_DEFAULT);
+      return setVolumeForHandle(handle, percent);
     },
     /** Apply the stored handle preference to a participant's current audio elements. */
     applyStoredRemoteVolume: (identity: string, handle: string) => {
       if (!handle || viewer) return;
+      handlesByIdentity.set(identity, handle);
       applyVolumeForIdentity(identity, volumeForHandle(handle));
     },
     devices,

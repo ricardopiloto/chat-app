@@ -30,7 +30,6 @@ export function AttachmentThumb(props: { attachmentId: string; serverKey: Uint8A
           <>
             <button type="button" class="ch-attachment-image" onClick={props.onOpen} aria-label={t("txt.attachment.zoom")}>
               <img src={shown().url} alt="" loading="lazy" />
-              <span class="ch-attachment-chip"><Icon name="lock_open" />{t("txt.attachment.decrypted")}</span>
               <span class="ch-attachment-zoom"><Icon name="zoom_in" /></span>
             </button>
             <figcaption>

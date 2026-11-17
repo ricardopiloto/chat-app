@@ -7,6 +7,7 @@ export const voiceEn: MessageTree = {
     muted: "Muted",
     participantsListening: "{n} on screen ({l} listening)",
     camState: { on: "Camera on", off: "Camera off" },
+    hearingState: { on: "Hearing normally", off: "Deafened" },
     live: "Live",
     participants: "{n} in the call",
     connecting: "Joining the call…",

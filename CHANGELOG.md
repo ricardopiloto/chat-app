@@ -9,6 +9,25 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [1.15.0] - 2026-11-17
+
+### Added
+
+- Screen sharing now offers an option to include computer/system audio (Windows loopback; Wayland via portal where supported, otherwise falling back to video-only), and the desktop popout gains a screen-share control that relays to the owning call (`add-screen-share-audio-and-popout-controls`).
+- Deafened state is now persisted per voice occupant and shown as a headset icon beside the mic/camera status on every call tile, including for listeners (`fix-call-controls-regressions-and-cleanup`).
+
+### Changed
+
+- Call tile chips and caption (name, handle, mic/camera/deafened state, volume slider) are hidden by default and reveal on hover, keyboard focus, or a tap on touch devices (`fix-call-controls-regressions-and-cleanup`).
+- LiveKit connection quality is now shown for every call participant, not only the local user, in the existing top-right tile position (`fix-call-controls-regressions-and-cleanup`).
+
+### Fixed
+
+- Per-participant remote volume (0–200%) now reliably applies and survives reconnects and track replacement; the shared Web Audio context resumes on user interaction instead of silently staying suspended (`fix-call-controls-regressions-and-cleanup`).
+- Removed the redundant "Speaking" text chip from call tiles; the speaking ring, bench highlight, and sidebar tooltip still indicate who is talking (`fix-call-controls-regressions-and-cleanup`).
+- Removed the "Decrypted on this device" overlay from chat attachment thumbnails; the encrypted caption, zoom, and download controls are unaffected (`fix-call-controls-regressions-and-cleanup`).
+- Aligned the "On the bench" icon and label in the call composition footer (`fix-call-controls-regressions-and-cleanup`).
+
 ## [1.14.0] - 2026-11-16
 
 ### Changed

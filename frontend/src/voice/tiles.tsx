@@ -31,6 +31,12 @@ export function ConnectionQualityGlyph(props: { level: CallConnectionQuality }) 
 }
 
 const TONES = ["ember", "plum", "slate", "wine", "umber"] as const;
+export const [revealedTile, setRevealedTile] = createSignal<HTMLElement | null>(null);
+if (typeof document !== "undefined") {
+  document.addEventListener("pointerdown", (event) => {
+    if (event.pointerType === "touch" && revealedTile() && !revealedTile()!.contains(event.target as Node)) setRevealedTile(null);
+  });
+}
 export type SeatTone = (typeof TONES)[number];
 
 /** The same account always gets the same colour, on every screen and for every viewer. */
@@ -65,6 +71,7 @@ export interface TileData {
   camera: Track | null;
   micOn: boolean;
   listener: boolean;
+  deafened: boolean;
   isLocal: boolean;
 }
 
@@ -78,22 +85,41 @@ export function Tile(props: {
   onClick?: () => void;
 }) {
   const call = useCall();
+  let tile: HTMLElement | undefined;
+  let touchClick = false;
+  const [hovering, setHovering] = createSignal(false);
+  const [focusWithin, setFocusWithin] = createSignal(false);
+  const visible = () => hovering() || focusWithin() || revealedTile() === tile;
+  onCleanup(() => { if (revealedTile() === tile) setRevealedTile(null); });
   const size = () => props.size ?? "grid";
   const initial = () => props.person.name.slice(0, 1).toUpperCase();
   const avatar = useAuthedSrc(() => props.person.avatar);
-  /** Primary local tile only — not strip/mini, not remotes, not the popout viewer connection. */
+  /** Each stage/grid tile shows its own LiveKit participant's quality. */
   const quality = () => {
-    if (!props.person.isLocal) return null;
     if (size() !== "stage" && size() !== "grid") return null;
-    return call.connectionQuality();
+    return call.connectionQualityFor(props.person.id);
   };
   const showVolume = () => !props.person.isLocal && !!props.person.handle && size() !== "mini";
   return (
     <figure
+      ref={tile}
       class={`call-tile tone-${seatTone(props.person.id)} size-${size()}`}
-      classList={{ "is-speaking": props.speaking, "is-local": props.person.isLocal, "is-clickable": !!props.onClick }}
-      onClick={props.onClick}
-      tabIndex={size() === "grid" ? 0 : undefined}
+      classList={{ "is-speaking": props.speaking, "is-local": props.person.isLocal, "is-clickable": !!props.onClick, "is-info-visible": visible() }}
+      onPointerEnter={(event) => { if (event.pointerType === "mouse") setHovering(true); }}
+      onPointerLeave={() => setHovering(false)}
+      onPointerDown={(event) => { touchClick = event.pointerType === "touch"; }}
+      onFocusIn={() => { if (!touchClick) setFocusWithin(true); }}
+      onFocusOut={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocusWithin(false); }}
+      onClick={(event) => {
+        if (event.target !== event.currentTarget && (event.target as Element).closest("button,input,a,label")) return;
+        if (touchClick) {
+          touchClick = false;
+          setRevealedTile(revealedTile() === tile ? null : tile ?? null);
+          return;
+        }
+        props.onClick?.();
+      }}
+      tabIndex={0}
       data-person={props.person.id}
     >
       <Show
@@ -107,12 +133,6 @@ export function Tile(props: {
         }
       >
         {(track) => <TrackVideo track={track()} />}
-      </Show>
-      <Show when={props.speaking}>
-        <span class="call-chip speaking" role="status">
-          <Icon name="graphic_eq" class="text-[14px]" />
-          {t("call.speaking")}
-        </span>
       </Show>
       <Show when={!props.person.listener && !props.person.micOn && size() !== "mini"}>
         <span class="call-chip muted">
@@ -140,6 +160,7 @@ export function Tile(props: {
             <Icon name={props.person.micOn ? "mic" : "mic_off"} label={props.person.micOn ? t("call.micOn") : t("call.micOff")} class={`text-[16px] ${props.person.micOn ? "" : "muted"}`} />
             <Icon name={props.person.camera ? "videocam" : "videocam_off"} label={props.person.camera ? t("call.camState.on") : t("call.camState.off")} class={`text-[16px] ${props.person.camera ? "" : "muted"}`} />
           </Show>
+          <Icon name={props.person.deafened ? "headset_off" : "headset_mic"} label={props.person.deafened ? t("call.hearingState.off") : t("call.hearingState.on")} class={`text-[16px] ${props.person.deafened ? "muted" : ""}`} />
         </span>
         <Show when={showVolume()}>
           <ParticipantVolumeControl identity={props.person.id} handle={props.person.handle!} />

@@ -51,7 +51,6 @@ export const chatPtBR: MessageTree = {
     attachment: {
       name: "Imagem anexada",
       encrypted: "Cifrado no cliente",
-      decrypted: "Decifrado neste dispositivo",
       zoom: "Ampliar",
       download: "Baixar",
       failed: "Não foi possível abrir este anexo.",

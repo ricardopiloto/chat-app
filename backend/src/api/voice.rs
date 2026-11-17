@@ -96,6 +96,7 @@ pub struct VoiceMediaBody {
     pub mic_on: Option<bool>,
     pub cam_on: Option<bool>,
     pub screen_on: Option<bool>,
+    pub deafened_on: Option<bool>,
 }
 
 fn parse_json_or_default<T: Default + DeserializeOwned>(body: &Bytes) -> Result<T, ApiError> {
@@ -208,6 +209,7 @@ async fn upsert_occupant(
                 Some(mic_on),
                 Some(cam_on),
                 None,
+                Some(false),
                 now,
             )
             .await?;
@@ -229,6 +231,7 @@ async fn upsert_occupant(
             mic_on,
             cam_on,
             screen_on: false,
+            deafened_on: false,
             joined_at: now,
             last_seen_at: now,
         },
@@ -396,6 +399,7 @@ pub async fn patch_media(
         media.mic_on,
         media.cam_on,
         media.screen_on,
+        media.deafened_on,
         Utc::now(),
     )
     .await?;

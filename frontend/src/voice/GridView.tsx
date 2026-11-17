@@ -6,7 +6,7 @@ import { t } from "../i18n";
 import { useCall } from "./callSession";
 import { computeGridSize } from "./gridSize";
 import { useCallPeople } from "./people";
-import { Tile, TrackVideo } from "./tiles";
+import { Tile, TrackVideo, revealedTile, setRevealedTile } from "./tiles";
 
 export function GridView(props: { fill?: boolean }) {
   const call = useCall();
@@ -49,6 +49,10 @@ export function GridView(props: { fill?: boolean }) {
 
   const ScreenTile = (props: { share: ReturnType<typeof screens>[number]; main?: boolean }) => {
     let figureRef: HTMLElement | undefined;
+    let touchClick = false;
+    const [hovering, setHovering] = createSignal(false);
+    const [focusWithin, setFocusWithin] = createSignal(false);
+    const visible = () => hovering() || focusWithin() || revealedTile() === figureRef;
     const [isFullscreen, setIsFullscreen] = createSignal(false);
 
     onMount(() => {
@@ -67,7 +71,18 @@ export function GridView(props: { fill?: boolean }) {
       else if (figureRef) void figureRef.requestFullscreen().catch(() => {});
     };
 
-    return <figure ref={figureRef} class="call-tile call-screen" classList={{ "is-main": props.main, "is-dimmed": !!focused() && !props.main }}>
+    onCleanup(() => { if (revealedTile() === figureRef) setRevealedTile(null); });
+    return <figure ref={figureRef} class="call-tile call-screen" tabIndex={0}
+      classList={{ "is-main": props.main, "is-dimmed": !!focused() && !props.main, "is-info-visible": visible() }}
+      onPointerEnter={(event) => { if (event.pointerType === "mouse") setHovering(true); }}
+      onPointerLeave={() => setHovering(false)}
+      onPointerDown={(event) => { touchClick = event.pointerType === "touch"; }}
+      onFocusIn={() => { if (!touchClick) setFocusWithin(true); }}
+      onFocusOut={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocusWithin(false); }}
+      onClick={(event) => {
+        if ((event.target as Element).closest("button,input,a,label")) return;
+        if (touchClick) { touchClick = false; setRevealedTile(revealedTile() === figureRef ? null : figureRef ?? null); }
+      }}>
       <TrackVideo track={props.share.track} fit="contain" />
       <span class="call-chip screen">
         <Icon name="present_to_all" class="text-[14px]" />

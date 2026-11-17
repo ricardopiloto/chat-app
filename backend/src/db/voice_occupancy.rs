@@ -13,6 +13,7 @@ struct OccupantRow {
     mic_on: i64,
     cam_on: i64,
     screen_on: i64,
+    deafened_on: i64,
     joined_at: String,
     last_seen_at: String,
 }
@@ -24,6 +25,7 @@ struct OccupantViewRow {
     mic_on: i64,
     cam_on: i64,
     screen_on: i64,
+    deafened_on: i64,
     has_avatar: i64,
     display_name: Option<String>,
 }
@@ -38,6 +40,7 @@ fn map_occupant(row: OccupantRow) -> Result<VoiceOccupant, sqlx::Error> {
         mic_on: row.mic_on != 0,
         cam_on: row.cam_on != 0,
         screen_on: row.screen_on != 0,
+        deafened_on: row.deafened_on != 0,
         joined_at: crate::db::parse_time(&row.joined_at)?,
         last_seen_at: crate::db::parse_time(&row.last_seen_at)?,
     })
@@ -51,6 +54,7 @@ fn map_view(row: OccupantViewRow) -> Result<OccupantView, sqlx::Error> {
         mic_on: row.mic_on != 0,
         cam_on: row.cam_on != 0,
         screen_on: row.screen_on != 0,
+        deafened_on: row.deafened_on != 0,
         has_avatar: row.has_avatar != 0,
         display_name: row.display_name,
     })
@@ -61,7 +65,7 @@ pub async fn find_by_account(
     account_id: Uuid,
 ) -> Result<Option<VoiceOccupant>, sqlx::Error> {
     let row = sqlx::query_as::<_, OccupantRow>(
-        "SELECT account_id, channel_id, server_id, mic_on, cam_on, screen_on, joined_at, last_seen_at
+        "SELECT account_id, channel_id, server_id, mic_on, cam_on, screen_on, deafened_on, joined_at, last_seen_at
          FROM voice_occupant WHERE account_id = ?",
     )
     .bind(account_id.to_string())
@@ -73,8 +77,8 @@ pub async fn find_by_account(
 pub async fn insert(pool: &SqlitePool, occupant: &VoiceOccupant) -> Result<(), sqlx::Error> {
     sqlx::query(
         "INSERT INTO voice_occupant
-         (account_id, channel_id, server_id, mic_on, cam_on, screen_on, joined_at, last_seen_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+         (account_id, channel_id, server_id, mic_on, cam_on, screen_on, deafened_on, joined_at, last_seen_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(occupant.account_id.to_string())
     .bind(occupant.channel_id.to_string())
@@ -82,6 +86,7 @@ pub async fn insert(pool: &SqlitePool, occupant: &VoiceOccupant) -> Result<(), s
     .bind(if occupant.mic_on { 1 } else { 0 })
     .bind(if occupant.cam_on { 1 } else { 0 })
     .bind(if occupant.screen_on { 1 } else { 0 })
+    .bind(if occupant.deafened_on { 1 } else { 0 })
     .bind(occupant.joined_at.to_rfc3339())
     .bind(occupant.last_seen_at.to_rfc3339())
     .execute(pool)
@@ -135,6 +140,7 @@ pub async fn update_media(
     mic_on: Option<bool>,
     cam_on: Option<bool>,
     screen_on: Option<bool>,
+    deafened_on: Option<bool>,
     now: DateTime<Utc>,
 ) -> Result<bool, sqlx::Error> {
     let Some(existing) = find_by_account(pool, account_id).await? else {
@@ -146,13 +152,15 @@ pub async fn update_media(
     let mic = mic_on.unwrap_or(existing.mic_on);
     let cam = cam_on.unwrap_or(existing.cam_on);
     let screen = screen_on.unwrap_or(existing.screen_on);
+    let deafened = deafened_on.unwrap_or(existing.deafened_on);
     sqlx::query(
-        "UPDATE voice_occupant SET mic_on = ?, cam_on = ?, screen_on = ?, last_seen_at = ?
+        "UPDATE voice_occupant SET mic_on = ?, cam_on = ?, screen_on = ?, deafened_on = ?, last_seen_at = ?
          WHERE account_id = ? AND channel_id = ?",
     )
     .bind(if mic { 1 } else { 0 })
     .bind(if cam { 1 } else { 0 })
     .bind(if screen { 1 } else { 0 })
+    .bind(if deafened { 1 } else { 0 })
     .bind(now.to_rfc3339())
     .bind(account_id.to_string())
     .bind(channel_id.to_string())
@@ -194,7 +202,7 @@ pub async fn list_views_for_channel(
     channel_id: Uuid,
 ) -> Result<Vec<OccupantView>, sqlx::Error> {
     let rows = sqlx::query_as::<_, OccupantViewRow>(
-        "SELECT o.account_id, a.handle, o.mic_on, o.cam_on, o.screen_on,
+        "SELECT o.account_id, a.handle, o.mic_on, o.cam_on, o.screen_on, o.deafened_on,
                 (a.avatar_filename IS NOT NULL) AS has_avatar,
                 a.display_name
          FROM voice_occupant o
@@ -242,7 +250,7 @@ pub async fn list_stale(
 ) -> Result<Vec<VoiceOccupant>, sqlx::Error> {
     let cutoff = now - Duration::seconds(OCCUPANT_STALE_SECS);
     let rows = sqlx::query_as::<_, OccupantRow>(
-        "SELECT account_id, channel_id, server_id, mic_on, cam_on, screen_on, joined_at, last_seen_at
+        "SELECT account_id, channel_id, server_id, mic_on, cam_on, screen_on, deafened_on, joined_at, last_seen_at
          FROM voice_occupant WHERE last_seen_at < ?",
     )
     .bind(cutoff.to_rfc3339())

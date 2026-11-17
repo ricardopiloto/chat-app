@@ -51,7 +51,6 @@ export const chatEn: MessageTree = {
     attachment: {
       name: "Attached image",
       encrypted: "Encrypted on the client",
-      decrypted: "Decrypted on this device",
       zoom: "Enlarge",
       download: "Download",
       failed: "This attachment could not be opened.",
