@@ -188,7 +188,6 @@ function ParticipantVolumeControl(props: { identity: string; handle: string }) {
   return (
     <label
       class="call-volume"
-      title={t("call.volume.hint")}
       onClick={(event) => event.stopPropagation()}
       onPointerDown={(event) => event.stopPropagation()}
     >
