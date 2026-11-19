@@ -19,7 +19,7 @@ Parley gives friends, families, teams, communities, and creators a private insta
 
 | | |
 |---|---|
-| **Status** | **1.15.0** — Rust backend, v2 frontend, and Electron desktop client ([changelog](CHANGELOG.md)) |
+| **Status** | **1.15.1** — Rust backend, v2 frontend, and Electron desktop client ([changelog](CHANGELOG.md)) |
 | **Download** | [Desktop releases for Windows, macOS, and Linux](https://github.com/ricardopiloto/chat-app/releases) |
 | **Stack** | Rust (Axum + SQLite), SolidJS (Vite + Tailwind), Electron, LiveKit |
 | **Frontend** | [`frontend/`](frontend/) is the current v2 client. The v1 0.8.1 release remains in Git history for rollback. |
@@ -67,10 +67,11 @@ The current client supports the following. See the [v2 parity checklist](docs/v2
 
 ### Voice and video
 
-- A pre-join room with device preview, microphone meter, background blur, and a listen-only option where permitted.
-- Microphone, deafen, camera, screen-share, and leave controls; audio-only fallback when camera access fails.
+- Joining a voice channel starts the call directly, with microphone and camera defaults, a listen-only mode where permitted, and device previews in **Audio & Video** settings.
+- Microphone, deafen, camera, screen-share, and leave controls; audio-only fallback when camera access fails. Screen sharing can include computer audio where supported.
+- Per-participant local volume controls from 0% to 200%, saved by account handle on this device; connection quality and microphone, camera, and deafen status on call tiles.
 - Three composition layouts (Featured Speaker, Panel, Strip), two to eight seats, a bench for unseated participants, a drag-and-drop scene editor, and an equal-size grid with optional screen-share spotlight.
-- A draggable picture-in-picture player and, on desktop, a separate view-only call window. The separate window does not publish media or play room audio.
+- A draggable picture-in-picture player and, on desktop, a separate view-only call window with controls relayed to the main call. The separate window does not publish media or play room audio.
 - Voice-channel E2EE status, a persistent disabled warning, and a **Reconnect E2EE** flow that validates the channel key against its sealed server copy.
 - Audio/video device settings, a test sound, preview, blur preferences, and synchronized speaking indicators.
 

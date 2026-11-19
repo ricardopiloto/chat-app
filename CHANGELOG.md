@@ -9,6 +9,17 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [1.15.1] - 2026-11-18
+
+### Fixed
+
+- Corrected the per-participant volume application result: selecting a participant with no matching remote audio element now reports failure instead of silently succeeding. A diagnostic warning includes the searched identity and identities on the current audio elements, and focused automated coverage checks both matching and missing elements (`fix-participant-volume-slider`).
+- Removed the oversized native tooltip from the participant volume slider while retaining its accessible label (`fix-participant-volume-slider`).
+
+### Documentation
+
+- Added OpenSpec plans for Linux screen-share system audio and native capture, and for investigating a composition editor freeze. These are planned work, not implemented features.
+
 ## [1.15.0] - 2026-11-17
 
 ### Added

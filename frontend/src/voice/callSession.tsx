@@ -15,6 +15,7 @@ import type { Identity } from "../crypto/identity";
 import { devices, prefs, refreshDevices, resolveDevice, SEGMENTATION_MODEL_ASSET_PATH, type BlurLevel, type CameraEffect } from "./devices";
 import { backgroundBlob } from "./cameraBackgrounds";
 import { volumeForHandle, setVolumeForHandle, VOLUME_DEFAULT } from "./participantVolume";
+import { applyVolumeForIdentity as applyVolumeForIdentityInHost } from "./applyVolumeForIdentity";
 import { notify } from "../sound/effects";
 
 export type CallStatus = "idle" | "connecting" | "live" | "reconnecting";
@@ -284,12 +285,7 @@ function createCall() {
   }
 
   function applyVolumeForIdentity(identity: string, percent: number): boolean {
-    let applied = true;
-    audioHost.querySelectorAll("audio").forEach((node) => {
-      const el = node as HTMLMediaElement;
-      if (el.dataset.identity === identity && !applyElementVolume(el, percent)) applied = false;
-    });
-    return applied;
+    return applyVolumeForIdentityInHost(audioHost, identity, percent, applyElementVolume);
   }
 
   createEffect(() => {
