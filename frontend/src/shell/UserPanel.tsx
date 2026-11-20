@@ -7,7 +7,7 @@ import { CallControls } from "../voice/CallControls";
 import { AccountMenu } from "./AccountMenu";
 
 // Shared navigation card: who you are, and the entry to the account menu.
-export function UserPanel(props: { onHeightChange: (height: number) => void }) {
+export function UserPanel(props: { onHeightChange: (height: number) => void; showCallControls: boolean }) {
   const session = useSession();
   const [open, setOpen] = createSignal(false);
   const me = () => session.account()!;
@@ -23,7 +23,7 @@ export function UserPanel(props: { onHeightChange: (height: number) => void }) {
   });
   return (
     <div ref={card} class="user-strip relative mx-2 mb-2 space-y-2 rounded-md bg-surface-container-high p-2 shadow-floating [&_.presence]:h-2.5 [&_.presence]:w-2.5 [&_.presence]:border-surface-container-high">
-      <CallControls />
+      <Show when={props.showCallControls}><CallControls /></Show>
       <div class="flex items-center justify-between gap-2 px-1.5 py-1">
       <div class="flex min-w-0 items-center gap-2">
       <Avatar name={name()} src={avatar()} online size="sm" />

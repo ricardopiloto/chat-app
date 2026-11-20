@@ -9,6 +9,12 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [1.15.3] - 2026-11-20
+
+### Fixed
+
+- Account settings (My Account, Audio and Video, etc.) no longer show a squeezed or duplicated call-control row in the collapsed navigation rail during a call; the floating call player remains available while away from the call's channel (`fix-account-settings-call-controls-overlap`).
+
 ## [1.15.2] - 2026-11-20
 
 ### Changed
