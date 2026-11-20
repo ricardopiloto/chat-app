@@ -35,15 +35,16 @@ linux:
   executableName: parley-chat-app
   maintainer: Parley
   syncDesktopName: true
-  artifactName: "parley-chat-app-${version}-${arch}.${ext}"
+  artifactName: "parley-chat-app-linux-${version}-${arch}.${ext}"
 win:
   target:
     - nsis
   icon: electron/icons/icon.ico
-  artifactName: "Parley-${version}.${ext}"
+  artifactName: "Parley-windows-${version}.${ext}"
 mac:
   target:
     - dmg
+  artifactName: "Parley-macos-${version}.${ext}"
   icon: electron/icons/icon.png
   category: public.app-category.social-networking
   extendInfo:

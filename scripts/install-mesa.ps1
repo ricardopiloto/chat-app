@@ -12,7 +12,7 @@ $assets = @($release.assets)
 $manifest = @($assets | Where-Object { $_.name -eq 'SHA256SUMS' })
 if ($manifest.Count -ne 1) { throw 'Parley: a release não contém SHA256SUMS.' }
 $installers = @($assets | Where-Object {
-    $_.name -match '(?i)\.exe$' -and $_.name -match '(?i)Parley' -and
+    $_.name -match '(?i)\.exe$' -and $_.name -match '(?i)^Parley-windows-' -and
     (($_.name -match '(?i)arm64' -and $architecture -eq 'Arm64') -or
      ($_.name -notmatch '(?i)arm64' -and $architecture -eq 'X64'))
 })

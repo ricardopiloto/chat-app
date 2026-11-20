@@ -43,7 +43,7 @@ if len(checksums) != 1:
 candidates = [
     asset for asset in assets
     if asset.get("name", "").endswith("." + format)
-    and asset.get("name", "").startswith(("parley-chat-app-" if format == "AppImage" else "Parley-"))
+    and asset.get("name", "").startswith(("parley-chat-app-linux-" if format == "AppImage" else "Parley-windows-"))
     and architecture.lower() in asset.get("name", "").lower()
 ]
 if len(candidates) != 1:

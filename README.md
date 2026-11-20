@@ -19,7 +19,7 @@ Parley gives friends, families, teams, communities, and creators a private insta
 
 | | |
 |---|---|
-| **Status** | **1.15.1** — Rust backend, v2 frontend, and Electron desktop client ([changelog](CHANGELOG.md)) |
+| **Status** | **1.15.2** — Rust backend, v2 frontend, and Electron desktop client ([changelog](CHANGELOG.md)) |
 | **Download** | [Desktop releases for Windows, macOS, and Linux](https://github.com/ricardopiloto/chat-app/releases) |
 | **Stack** | Rust (Axum + SQLite), SolidJS (Vite + Tailwind), Electron, LiveKit |
 | **Frontend** | [`frontend/`](frontend/) is the current v2 client. The v1 0.8.1 release remains in Git history for rollback. |
@@ -211,9 +211,9 @@ When moving from Mesa to Parley, install Parley and remove the old Mesa installa
 
 | Platform | Release files | Notes |
 |---|---|---|
-| Linux | `parley-chat-app-<version>-x86_64.AppImage` | Executable and desktop entry use `parley-chat-app` to avoid conflict with KDE Parley. Make the AppImage executable before running it. Many distributions require FUSE 2; use `--appimage-extract-and-run` if unavailable. |
-| Windows | `Parley-<version>.exe` (NSIS) | Self-updates when installed via NSIS. |
-| macOS | `Parley-<version>.dmg` | Drag the contained app to Applications; updates are manual. |
+| Linux | `parley-chat-app-linux-<version>-x86_64.AppImage` | Executable and desktop entry use `parley-chat-app` to avoid conflict with KDE Parley. Make the AppImage executable before running it. Many distributions require FUSE 2; use `--appimage-extract-and-run` if unavailable. |
+| Windows | `Parley-windows-<version>.exe` (NSIS) | Self-updates when installed via NSIS. |
+| macOS | `Parley-macos-<version>.dmg` | Drag the contained app to Applications; updates are manual. |
 
 Windows and macOS installers are currently unsigned and not notarized. SmartScreen or Gatekeeper may ask users to confirm they trust the download. The project has no Authenticode certificate or Apple Developer account, and the release workflow does not sign packages. See the [desktop release guide](docs/desktop-release.md); GitHub releases start as drafts.
 

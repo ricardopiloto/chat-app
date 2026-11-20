@@ -37,7 +37,7 @@ The draft is deliberate so the files can be reviewed before the first real relea
 | Windows | `.exe` (NSIS), without Authenticode signatures |
 | macOS | `.dmg` (containing the `.app`), without notarization |
 
-Each filename includes the version from the three manifests. On Linux, the AppImage, executable name, and `.desktop` entry use `parley-chat-app`; `parley` alone conflicts with KDE's Parley application. `productName` is `Parley` and `appId` is `com.parley.desktop`. Windows and macOS installers use `Parley-<version>`. The changed `appId` creates a new Electron profile; old-installation cleanup happens after the first launch, with consent.
+Each filename includes the version from the three manifests. On Linux, the AppImage, executable name, and `.desktop` entry use `parley-chat-app`; `parley` alone conflicts with KDE's Parley application. `productName` is `Parley` and `appId` is `com.parley.desktop`. Windows and macOS installers use `Parley-windows-<version>.exe` and `Parley-macos-<version>.dmg`. The changed `appId` creates a new Electron profile; old-installation cleanup happens after the first launch, with consent.
 
 Tagged builds appear on the draft `vX.Y.Z` release at [GitHub releases](https://github.com/ricardopiloto/chat-app/releases). Manual builds appear only in that workflow run's artifacts.
 
