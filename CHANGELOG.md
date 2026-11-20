@@ -9,6 +9,18 @@ Product versions align with `frontend/package.json` and `backend/Cargo.toml` unl
 
 ## [Unreleased]
 
+## [1.15.3] - 2026-11-20
+
+### Fixed
+
+- Account settings (My Account, Audio and Video, etc.) no longer show a squeezed or duplicated call-control row in the collapsed navigation rail during a call; the floating call player remains available while away from the call's channel (`fix-account-settings-call-controls-overlap`).
+
+## [1.15.2] - 2026-11-20
+
+### Changed
+
+- Desktop release installers now include the operating system in their filenames: `parley-chat-app-linux-<version>-<arch>.AppImage`, `Parley-windows-<version>.exe`, and `Parley-macos-<version>.dmg`. Updated the installation scripts to select the new Linux and Windows names.
+
 ## [1.15.1] - 2026-11-18
 
 ### Fixed

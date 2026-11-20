@@ -63,7 +63,7 @@ function Frame() {
             </Show>
           </Show>
           <div class="absolute bottom-0 left-0 right-0">
-            <UserPanel onHeightChange={updateCardHeight} />
+            <UserPanel onHeightChange={updateCardHeight} showCallControls={shell.route().page !== "account"} />
           </div>
         </div>
         <Content />
